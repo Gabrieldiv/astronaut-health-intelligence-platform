@@ -111,7 +111,7 @@ Units, cadence and body region for each code are in the [Data Dictionary](/data/
 
 **How it is measured on missions.** Medical surveillance includes pre, in and post flight assessment with optical coherence tomography (OCT), ocular ultrasound, ophthalmic imaging and visual acuity tests, plus brain and eye MRI before flight and soon after return.[^r5] Artemis II Standard Measures includes MRI scans to examine eye and brain health.[^r27]
 
-**What AHI does today.** Nothing. No eye monitoring device feeds the platform, and the eyes in the 3D body are drawn as passive anatomy that cannot be selected. Adding imaging derived eye indicators is roadmap work: see the [Roadmap](/resources/roadmap).
+**What AHI does today.** Nothing. No eye monitoring device feeds the platform. The eyes in the 3D body are reference anatomy: they can be selected, but they are "context only" and never show a status. Adding imaging derived eye indicators is roadmap work: see the [Roadmap](/resources/roadmap).
 
 ::: tip How the platform uses this
 - Personal normal ranges per activity context: [Personal Baseline](/intelligence/personal-baseline).

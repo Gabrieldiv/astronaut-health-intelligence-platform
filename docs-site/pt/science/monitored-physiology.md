@@ -111,7 +111,7 @@ Unidade, cadência e região do corpo de cada código estão no [Dicionário de 
 
 **Como é medido em missões.** A vigilância médica inclui avaliação antes, durante e depois do voo com tomografia de coerência óptica (OCT), ultrassom ocular, imagens oftálmicas e testes de acuidade visual, além de ressonância magnética de cérebro e olhos antes do voo e logo após o retorno.[^r5] As Artemis II Standard Measures incluem ressonância magnética para avaliar a saúde dos olhos e do cérebro.[^r27]
 
-**O que o AHI faz hoje.** Nada. Nenhum dispositivo de monitoramento ocular alimenta a plataforma, e os olhos do corpo 3D são desenhados como anatomia passiva, que não pode ser selecionada. Incluir indicadores oculares derivados de imagem é trabalho de roadmap: veja o [Roadmap](/pt/resources/roadmap).
+**O que o AHI faz hoje.** Nada. Nenhum dispositivo de monitoramento ocular alimenta a plataforma. Os olhos do corpo 3D são anatomia de referência: podem ser selecionados, mas são "só contexto" e nunca mostram status. Incluir indicadores oculares derivados de imagem é trabalho de roadmap: veja o [Roadmap](/pt/resources/roadmap).
 
 ::: tip Como a plataforma usa isso
 - Faixas normais pessoais por contexto de atividade: [Linha de base pessoal](/pt/intelligence/personal-baseline).

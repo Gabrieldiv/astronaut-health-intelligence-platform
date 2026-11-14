@@ -63,6 +63,9 @@ How these devices relate to the simulated ones: [Health monitoring in space miss
 | Tailwind CSS | Styling | [tailwindcss.com](https://tailwindcss.com/) |
 | three.js | 3D rendering | [threejs.org](https://threejs.org/) |
 | react-three-fiber | React renderer for three.js | [docs.pmnd.rs](https://docs.pmnd.rs/react-three-fiber) |
+| Z-Anatomy | Source of the 3D anatomical atlas (CC BY-SA 4.0), see [3D anatomy assets](../data/anatomy-assets) | [z-anatomy.com](https://www.z-anatomy.com/) |
+| Blender | Headless preparation of the 3D atlas (development time) | [blender.org](https://www.blender.org/) |
+| glTF Transform and meshoptimizer | Cleaning and compressing the GLB files of the atlas | [gltf-transform.dev](https://gltf-transform.dev/), [meshoptimizer.org](https://meshoptimizer.org/) |
 | zustand | State store | [github.com/pmndrs/zustand](https://github.com/pmndrs/zustand) |
 | Recharts | Charts | [recharts.org](https://recharts.org/) |
 | vitest | Tests | [vitest.dev](https://vitest.dev/) |

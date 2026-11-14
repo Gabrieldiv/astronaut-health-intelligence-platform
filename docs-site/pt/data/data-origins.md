@@ -34,12 +34,17 @@ Nunca misturar sem marcar: dado simulado com dado real, astronauta com participa
 Um valor `DERIVED` herda as limitações dos dados de entrada. Um escore de risco calculado sobre dados `SIMULATED` continua sendo um resultado sobre dados simulados: **não é evidência clínica**.
 :::
 
+::: info A anatomia 3D não é dado de saúde
+O modelo anatômico do corpo 3D é um **asset de referência** de terceiros (Z-Anatomy, CC BY-SA 4.0), não um registro sobre uma pessoa. Ele não leva o selo `data_origin`; a proveniência dele (fonte, checksum, licença, modificações) é mantida com o mesmo cuidado em [Assets de anatomia 3D](/pt/data/anatomy-assets). As cores de status desenhadas sobre ele vêm dos dados de saúde com selo, descritos acima.
+:::
+
 ## Como a origem aparece na interface
 
 | Lugar | O que mostra |
 | --- | --- |
 | Barra superior | Selo `SIMULATED` sempre visível. Ao clicar, abre "Where this data comes from", com a lista dos adapters ativos |
-| Detalhe de cada métrica | Selos de qualidade e de origem ao lado do valor |
+| Detalhe de cada métrica | Selos de qualidade e de origem ao lado do valor, e em cada alerta e sinalização estatística |
+| Detalhe da estrutura e corpo 3D | Selo "Reference anatomy" ("Z-Anatomy atlas" ou "AHI procedural") na estrutura selecionada; legenda de fonte sob o corpo |
 | Relatório de turno | Selo "SIMULATED DATA" |
 | Exportação FHIR | A origem vai como tag em cada recurso |
 | "Data and model" > "Data origins" | As quatro categorias e as regras de transparência |

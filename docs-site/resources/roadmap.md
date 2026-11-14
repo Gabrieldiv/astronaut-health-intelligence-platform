@@ -1,6 +1,6 @@
 ---
 title: Roadmap
-description: Next steps for the Astronaut Health Intelligence Platform in rough priority order, from real NASA cabin and radiation data to a FastAPI backend, review workflow and role based access.
+description: Next steps for the Astronaut Health Intelligence Platform in rough priority order, from real NASA cabin and radiation data to a FastAPI backend, review workflow, role based access and the next steps of the 3D anatomy.
 status: PLANNED
 verified: 2026-11-14
 ---
@@ -15,7 +15,8 @@ The Astronaut Health Intelligence Platform (AHI) today is a browser only prototy
 | --- | --- |
 | Simulation of crew devices and cabin, six scenarios | Done |
 | Health engine (baselines, anomalies, risk, forecasts, recommendations, alerts) | Done, unit tested, evaluated on simulated data |
-| Ground and Crew views, 3D anatomy, guided demo | Done |
+| Ground and Crew views, guided demo | Done |
+| 3D anatomy on a real anatomical atlas (Z-Anatomy): 250 selectable structures, system layers, structure panel, health mapping, reproducible asset pipeline, procedural fallback | Done |
 | Earth link, check-in, mission overview, handover report with FHIR R4 export, what-if | Done |
 | Real NASA OSDR data (OSD-569 CBC, OSD-575 CMP) as `REAL_PUBLIC` reference | Done |
 | Documentation portal on GitHub Pages (EN and PT-BR) | Done |
@@ -61,9 +62,23 @@ Authentication and roles for crew, crew medical officer, flight surgeon, mission
 
 ### 8. SANS tracking from periodic exams
 
-Spaceflight associated neuro-ocular syndrome is tracked from periodic exams (OCT, ocular ultrasound), not from a continuous wearable. A future extension would import those exam results as point measurements and give the eyes a status. Today the eyes are passive anatomy with no monitoring device.
+Spaceflight associated neuro-ocular syndrome is tracked from periodic exams (OCT, ocular ultrasound), not from a continuous wearable. A future extension would import those exam results as point measurements and give the eyes a status. Today the eyes are context only structures of the 3D atlas: they can be selected but no monitoring device feeds them, so they show no status.
 
-### 9. Deployment
+### 9. 3D anatomy next steps {#anatomy-next-steps}
+
+The atlas viewer is done ([3D anatomy](../architecture/anatomy-3d)). What comes next:
+
+| Item | Why |
+| --- | --- |
+| **Female reference model** | Today one reference model (adult male source, neutral groin) stands for every crew member. A second reference model would let the body follow the crew member's sex. It needs a source with a compatible license and the same structure ids |
+| **Textures** | The source has flat colors only, so all detail comes from geometry and materials. Textures would add surface detail, at a cost in download size |
+| **BodyParts3D kidney alternative** | The kidneys are simple procedural shapes because the kidney model inside Z-Anatomy has a non commercial license. BodyParts3D, the database Z-Anatomy is based on, is a candidate source for real kidney geometry under a share alike license; its license terms must be checked first |
+| **Eye monitoring (SANS)** | See step 8: the eye structures already exist and only need data |
+| **Keyboard selection of structures and automated visual tests** | Structures can only be selected with a pointer, and rendering is checked by hand |
+
+Not planned: per astronaut anatomy (scans or body size). The body is reference anatomy by design.
+
+### 10. Deployment
 
 - Publish this documentation portal: done with GitHub Actions and GitHub Pages ([Documentation and deployment](../engineering/deployment)).
 - Host the static web app so judges can open it without installing anything.

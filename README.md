@@ -7,7 +7,8 @@
 [![CI](https://github.com/lucaspalharesbarbosa/astronaut-health-intelligence-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/lucaspalharesbarbosa/astronaut-health-intelligence-platform/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-EN%20%7C%20PT--BR-5eead4?style=flat-square)](https://lucaspalharesbarbosa.github.io/astronaut-health-intelligence-platform/)
 [![NASA Space Apps 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026-0b3d91?style=flat-square)](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Code license: MIT](https://img.shields.io/badge/code-MIT-blue?style=flat-square)](LICENSE)
+[![3D assets: CC BY-SA 4.0](https://img.shields.io/badge/3D%20assets-CC%20BY--SA%204.0-lightgrey?style=flat-square)](frontend/web/public/anatomy/LICENSE.md)
 ![TypeScript](https://img.shields.io/badge/TypeScript-React%2019-3178c6?style=flat-square)
 ![three.js](https://img.shields.io/badge/3D-three.js-black?style=flat-square)
 
@@ -50,7 +51,7 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
 
 | | |
 | --- | --- |
-| **3D anatomy** | A procedural holographic body (skin, muscles, skeleton, organs, vessels). Organs glow in their status color, the heart beats at the live heart rate and the lungs breathe at the live breathing rate. |
+| **3D anatomy** | A realistic anatomical atlas (Z-Anatomy) with 250 selectable structures in system layers. Body systems that need attention light up in their status color, the heart beats at the live heart rate and the lungs breathe at the live breathing rate. Click a structure to see the data it is monitored with, or that it is context only. |
 | **Personal baselines** | Each metric is compared with that astronaut's own normal band (robust median and MAD, aware of sleep, rest, work and exercise). |
 | **Explainable risk** | Transparent rules produce a status (All good, Keep an eye, Act soon, Act now, Signal lost) with the reasons in plain language. Missing data is never shown as normal. |
 | **What to do** | Non-prescriptive recommended actions, tagged "Can act on board now" or "Needs flight surgeon", plus a hypothetical with vs without comparison. |
@@ -62,7 +63,7 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
 
 <table>
   <tr>
-    <td width="50%"><img src="docs-site/public/screenshots/critical-alert.png" alt="Acute cardio event: critical banner, red heart and lungs, recommended actions" /><br/><sub><b>Acute event:</b> critical banner, organs in red, actions with flight surgeon flag.</sub></td>
+    <td width="50%"><img src="docs-site/public/screenshots/critical-alert.png" alt="Acute cardio event: critical banner, heart and lungs highlighted on the 3D body, recommended actions" /><br/><sub><b>Acute event:</b> critical banner, heart and lungs highlighted in red, actions with flight surgeon flag.</sub></td>
     <td width="50%"><img src="docs-site/public/screenshots/crew-view.png" alt="Crew view for the astronaut" /><br/><sub><b>Crew view:</b> plain language, top two actions, daily check-in.</sub></td>
   </tr>
   <tr>
@@ -95,8 +96,10 @@ Open http://localhost:5173 (best at 1440x900 or larger) and click **Start demo**
 | `npx tsc -b` | Type check |
 | `npx vite build` | Production build into `dist/` |
 | `npm run evaluate` | Re-runs the engine evaluation and regenerates `docs/model-card.md` |
+| `npm run anatomy:validate` | Checks the published 3D atlas against its manifest contract |
+| `npm run anatomy:build` | Rebuilds the 3D atlas from the Z-Anatomy source (needs Blender 4.5 LTS; not needed to run the app) |
 
-The first load builds the 3D geometry and calibrates personal baselines, so it takes a few seconds. Later loads use a browser cache.
+The first load calibrates personal baselines and downloads the 3D anatomy (about 3 MB for the default view), so it takes a few seconds.
 
 ## Demo scenarios
 
@@ -131,9 +134,9 @@ flowchart LR
 
 - **Everything runs in the browser.** A zustand store drives a simulation clock (from real time up to 1 hour per second). The engine is pure TypeScript and unit tested.
 - **Adapter contract.** Each simulated device follows the adapter contract from the project spec, so real feeds or a FastAPI ingestion backend can replace the simulators without changing the UI.
-- **Procedural 3D.** The anatomy is generated from signed distance functions polygonized with Surface Nets in Web Workers, simplified to about 200k triangles and cached. No external model files.
+- **Anatomical atlas in 3D.** The body is the open Z-Anatomy atlas, prepared in Blender and shipped as one compressed GLB per anatomical system (250 structures, about 880k triangles, 4.64 MB), loaded on demand. One file (`atlas/health.ts`) maps each structure to a monitored body region; structures that nothing measures are shown as context only, with no status. If the atlas cannot load, a procedural model generated in code takes over automatically.
 
-**Stack:** React 19, TypeScript, Vite, Tailwind CSS v4, three.js with react-three-fiber, zustand, recharts, vitest. Documentation site: VitePress.
+**Stack:** React 19, TypeScript, Vite, Tailwind CSS v4, three.js with react-three-fiber, zustand, recharts, vitest. 3D asset preparation: Blender (headless) and glTF Transform. Documentation site: VitePress.
 
 ## Data and science
 
@@ -143,12 +146,16 @@ flowchart LR
 | Daily check-in (mood, fatigue, stress, sleep quality) | Typed in the app | `MANUAL` |
 | Cabin CO₂, temperature, humidity, radiation | Simulated (NASA EDA real replay is the next step) | `SIMULATED` |
 | Blood count and metabolic panel (Inspiration4, OSD-569 and OSD-575) | NASA Open Science Data Repository | `REAL_PUBLIC` (reference only) |
+| 3D anatomical model (reference anatomy, not health data) | Z-Anatomy atlas, based on BodyParts3D; kidneys are AHI procedural geometry | Third party asset, CC BY-SA 4.0 |
+
+The 3D body is one reference model shown for every crew member. It is not a scan of anyone, and the status colors on it come from the simulated health data.
 
 Principles: every record carries its origin, astronaut and analog or animal data are never mixed, thresholds are **demo configuration, not official NASA limits**, and correlation is never presented as causation.
 
 - Data sources and provenance: [docs/data-source-inventory.md](docs/data-source-inventory.md)
 - Data team guide (metrics, schemas, NASA sources, in Portuguese): [docs/data-guide.md](docs/data-guide.md)
 - Model card and evaluation: [docs/model-card.md](docs/model-card.md)
+- 3D anatomy assets (provenance, license, rebuild guide): [docs/anatomy-assets.md](docs/anatomy-assets.md)
 
 ## Project structure
 
@@ -159,9 +166,10 @@ Principles: every record carries its origin, astronaut and analog or animal data
 │   ├── src/state/            # zustand store and simulation clock
 │   ├── src/features/         # UI features (anatomy, crew, attention, timeline, comms, ...)
 │   ├── src/types/domain.ts   # Canonical data model and shared contract
-│   └── scripts/              # Engine evaluation and NASA OSDR import scripts
+│   ├── public/anatomy/       # 3D atlas: one GLB per anatomical system, manifest.json, LICENSE.md (CC BY-SA 4.0)
+│   └── scripts/              # Engine evaluation, NASA OSDR import, anatomy asset pipeline (scripts/anatomy)
 ├── data/                     # NASA OSDR raw files, manifests (provenance) and processed data
-├── docs/                     # Demo script, model card, data inventory, data team guide
+├── docs/                     # Demo script, model card, data inventory, data team guide, anatomy assets guide
 ├── docs-site/                # Documentation website (VitePress, English and Portuguese)
 └── PROJECT_MASTER.md         # Product, data and architecture specification (Portuguese)
 ```
@@ -186,13 +194,30 @@ npm run docs:dev
 
 - Device data is simulated. No public continuous physiological telemetry of astronauts exists, so vital signs stay simulated and calibrated. No claim of live ISS connectivity.
 - Physiology model, thresholds and intervention effects are simplified and hypothetical.
-- Eyes are drawn as passive anatomy only. Tracking spaceflight associated neuro-ocular syndrome (SANS) from periodic exams is future work.
+- The 3D body is one reference model for every crew member (adult male source model with a neutral groin; build, proportions and chest remain those of the source). It is not the astronaut's scan and does not adapt to sex, height or body composition. It has no textures, and the kidneys are simple procedural shapes.
+- Indicators relate to a body system, not to a single structure: a highlighted structure marks its body system, never a finding in that structure. Structures that nothing measures (digestive organs, glands, nerves, eyes and others) are context only and show no status.
+- Eyes are not monitored. Tracking spaceflight associated neuro-ocular syndrome (SANS) from periodic exams is future work.
+- Performance was only observed on one development laptop; it is not a benchmark.
 
-Next steps: replay of real ISS cabin telemetry from NASA EDA, radiation data from RadLab, more NASA OSDR imports, a FastAPI ingestion backend behind the same adapters, a flight surgeon review workflow and role-based access.
+Next steps: replay of real ISS cabin telemetry from NASA EDA, radiation data from RadLab, more NASA OSDR imports, a FastAPI ingestion backend behind the same adapters, a flight surgeon review workflow, role-based access, and for the 3D anatomy a female reference model and textures.
 
 ## License and acknowledgments
 
-Code released under the [MIT License](LICENSE).
+This repository has two licenses:
+
+- **Code**: released under the [MIT License](LICENSE).
+- **3D anatomy assets** (`frontend/web/public/anatomy/*.glb` and `manifest.json`): a derived work of the Z-Anatomy atlas, distributed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The MIT License does not apply to these files. See [frontend/web/public/anatomy/LICENSE.md](frontend/web/public/anatomy/LICENSE.md) and [docs/anatomy-assets.md](docs/anatomy-assets.md).
+
+Required attribution for the anatomy assets:
+
+```text
+Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0 (https://www.z-anatomy.com/)
+BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan
+```
+
+The assets were modified by this project (structures grouped, decimated, re-oriented and compressed; ear, kidney and reproductive structures left out; kidneys rebuilt as AHI procedural geometry).
+
+Acknowledgments:
 
 - Real data: NASA Open Science Data Repository, studies **OSD-569** and **OSD-575** (SpaceX Inspiration4 biospecimen program). The source does not state a license; see [docs/data-source-inventory.md](docs/data-source-inventory.md).
 - Built for the [NASA Space Apps Challenge 2026](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/), *Health Monitoring Software*.

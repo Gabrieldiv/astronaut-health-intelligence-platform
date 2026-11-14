@@ -25,7 +25,7 @@ hero:
 features:
   - icon: 🫀
     title: 3D anatomy at a glance
-    details: A procedural body (skin, muscles, skeleton, organs, vessels) where each body system glows in its status color. The heart beats at the live heart rate and the lungs breathe at the live breathing rate.
+    details: A realistic anatomical atlas (Z-Anatomy) with 250 selectable structures in system layers. A body system that needs attention lights up in its status color, the heart beats at the live heart rate and the lungs breathe at the live breathing rate.
     link: /architecture/anatomy-3d
     linkText: How the body is built
   - icon: 📈
@@ -50,7 +50,7 @@ features:
     linkText: Dataset catalog
   - icon: ✅
     title: Measured, not claimed
-    details: 101 unit and scenario tests and a headless evaluation of six scenarios on simulated data. Every number on these pages links back to code or to a generated file.
+    details: 143 automated tests and a headless evaluation of six scenarios on simulated data. Every number on these pages links back to code or to a generated file.
     link: /validation/results
     linkText: Results and evidence
 ---
@@ -71,7 +71,7 @@ features:
 <div class="ahi-shot-grid">
 <figure>
 
-![Critical banner during the acute cardio event, with the heart and lungs in red](/screenshots/critical-alert.png)
+![Critical banner during the acute cardio event, with the heart and lungs highlighted on the 3D body](/screenshots/critical-alert.png)
 
 <figcaption><b>Acute event.</b> A combined rule fires within simulated minutes; actions say who can act.</figcaption>
 </figure>
@@ -97,7 +97,7 @@ features:
 
 ## Architecture at a glance
 
-<p class="lead">Everything runs in the browser today: no backend, no database, no network call after load. A backend is planned behind the same contracts (see <a href="./architecture/target-architecture">Target architecture</a>).</p>
+<p class="lead">Everything runs in the browser today: no backend, no database, no external service. The app only loads its own static files, including the 3D anatomy. A backend is planned behind the same contracts (see <a href="./architecture/target-architecture">Target architecture</a>).</p>
 
 <div class="ahi-arch">
 

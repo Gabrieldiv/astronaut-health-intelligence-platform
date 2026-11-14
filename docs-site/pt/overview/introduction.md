@@ -74,7 +74,7 @@ O motor é estatístico e baseado em regras. Não há LLM nem modelo de aprendiz
 | Baseline pessoal, anomalias, risco, previsão, recomendações, alertas | Prescrição de medicamentos ou tratamentos |
 | Comunicação com atraso, check-in, visão de missão, relatório de turno | Substituir o médico de voo ou o Mission Control |
 | Dois datasets reais do NASA OSDR como referência histórica | Conexão em tempo real com dispositivos da ISS |
-| Corpo 3D procedural, "Ground view" e "Crew view" | Controle remoto de equipamentos |
+| Corpo 3D sobre um atlas anatômico real (anatomia de referência), "Ground view" e "Crew view" | Controle remoto de equipamentos |
 | Documentação bilíngue, testes e avaliação reproduzível | Garantia de previsão de eventos médicos |
 
 A lista completa, com status e origem de cada capacidade, está na [Matriz de status das funcionalidades](/pt/overview/feature-status).
@@ -96,7 +96,8 @@ flowchart LR
 - **Não há conexão com a ISS** nem com equipamentos reais. O contrato de adapters está pronto para fontes reais no futuro.
 - O "médico de voo" que responde pelo "Earth link" é **simulado**.
 - Os dados reais da NASA **não são a tripulação mostrada** e não alimentam baselines, regras ou limiares.
-- Os **olhos** são desenhados só como anatomia passiva. O acompanhamento da SANS (síndrome neuro-ocular associada ao voo espacial) está no [roadmap](/pt/resources/roadmap).
+- O **corpo 3D** é um modelo de referência de terceiros (atlas Z-Anatomy, CC BY-SA 4.0), o mesmo para todos os tripulantes. Não é um exame de ninguém e não é dado de saúde ([Assets de anatomia 3D](/pt/data/anatomy-assets)).
+- Os **olhos** são estruturas só de contexto, sem status. O acompanhamento da SANS (síndrome neuro-ocular associada ao voo espacial) está no [roadmap](/pt/resources/roadmap).
 
 As categorias de origem de dado (`SIMULATED`, `MANUAL`, `DERIVED`, `REAL_PUBLIC`) estão explicadas em [Origens e proveniência dos dados](/pt/data/data-origins).
 

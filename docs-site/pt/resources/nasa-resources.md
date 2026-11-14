@@ -61,6 +61,9 @@ Estas fontes sustentam a existência dos repositórios, modalidades de pesquisa,
 | Vite | https://vite.dev/ |
 | three.js | https://threejs.org/ |
 | react-three-fiber | https://r3f.docs.pmnd.rs/ |
+| Z-Anatomy (fonte do atlas anatômico 3D, CC BY-SA 4.0; veja [Assets de anatomia 3D](/pt/data/anatomy-assets)) | https://www.z-anatomy.com/ |
+| Blender (preparação do atlas 3D, sem interface, em desenvolvimento) | https://www.blender.org/ |
+| glTF Transform e meshoptimizer (limpeza e compressão dos arquivos GLB do atlas) | https://gltf-transform.dev/ e https://meshoptimizer.org/ |
 | zustand | https://zustand.docs.pmnd.rs/ |
 | Recharts | https://recharts.org/ |
 | Tailwind CSS | https://tailwindcss.com/ |

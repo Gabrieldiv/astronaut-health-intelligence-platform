@@ -13,7 +13,7 @@ verified: 2026-11-14
 
 # Visão geral da arquitetura
 
-Hoje a Astronaut Health Intelligence Platform (AHI) é um **aplicativo web que roda inteiro no navegador**. Simuladores, motor de análise, estado e interface 3D vivem no mesmo bundle. Não há backend, API REST, banco de dados nem autenticação. Isso deixa a demo rápida, reproduzível e capaz de rodar offline depois da instalação.
+Hoje a Astronaut Health Intelligence Platform (AHI) é um **aplicativo web que roda inteiro no navegador**. Simuladores, motor de análise, estado e interface 3D vivem no mesmo bundle. Não há backend, API REST, banco de dados nem autenticação, e o app não chama nenhum serviço externo: só carrega os seus próprios arquivos estáticos (código, painéis do OSDR e a anatomia 3D). Isso deixa a demo rápida, reproduzível e capaz de rodar offline depois da instalação.
 
 O desenho alvo com backend está em [Arquitetura alvo](/pt/architecture/target-architecture) e é **conceitual**.
 
@@ -25,6 +25,7 @@ O desenho alvo com backend está em [Arquitetura alvo](/pt/architecture/target-a
 | Build e servidor de desenvolvimento | Vite 8 |
 | Estilo | Tailwind CSS v4 |
 | 3D | three.js + react-three-fiber (com drei e postprocessing) |
+| Preparação dos assets 3D (em desenvolvimento) | Blender 4.5 LTS (sem interface), glTF Transform, meshoptimizer |
 | Estado | zustand |
 | Gráficos | Recharts |
 | Ícones | lucide-react |
@@ -54,6 +55,7 @@ flowchart LR
 ```
 
 - A ligação com o OSDR **não acontece em tempo de execução**: os scripts de importação rodam uma vez, e os painéis compactos são empacotados no app. Veja [Catálogo de datasets](/pt/data/dataset-catalog).
+- O mesmo vale para a anatomia 3D: o modelo de origem (Z-Anatomy) é baixado pelo pipeline de assets em desenvolvimento, e o app distribui os arquivos já prontos. Veja [Assets de anatomia 3D](/pt/data/anatomy-assets).
 - Não há sistema externo conectado: nem ISS, nem equipamentos, nem serviços de IA.
 
 ## Nível 2: contêineres
@@ -64,17 +66,21 @@ flowchart TB
       UI[Interface React<br/>features, components]
       STORE[Store zustand<br/>AppState, relógio]
       ENG[HealthEngine<br/>simuladores e análise, TypeScript puro]
-      W[Web Workers<br/>geometria 3D]
-      IDB[(IndexedDB<br/>cache da geometria)]
+      VIEW["Visualizador 3D<br/>src/features/anatomy"]
+      ATLAS[("Atlas de anatomia<br/>public/anatomy, um GLB por sistema<br/>e manifest.json")]
+      FB["Fallback procedural<br/>Web Workers e cache IndexedDB"]
       LS[(localStorage<br/>preferências)]
       DATA[(Painéis OSDR<br/>JSON empacotado)]
     end
+    PIPE["Pipeline de assets<br/>Blender e glTF Transform<br/>em desenvolvimento"]
     UI <--> STORE
     STORE <--> ENG
-    UI --> W
-    W --> IDB
+    UI --> VIEW
+    ATLAS --> VIEW
+    VIEW -. "só se o atlas não carregar" .-> FB
     UI --> LS
     UI --> DATA
+    PIPE -. "npm run anatomy:build" .-> ATLAS
 ```
 
 | Contêiner | Responsabilidade | Página |
@@ -82,8 +88,10 @@ flowchart TB
 | Interface React | Telas, interação, 3D, gráficos | [Frontend e estado](/pt/architecture/frontend) |
 | Store zustand | Implementa `AppState`, move o relógio, publica fatias que mudaram | [Frontend e estado](/pt/architecture/frontend) |
 | HealthEngine | Simulação, baseline, anomalias, risco, previsão, recomendações, alertas, comunicação | [Motor e simulação](/pt/architecture/engine-and-simulation) |
-| Web Workers | Constroem a geometria do corpo fora da thread principal | [Anatomia 3D](/pt/architecture/anatomy-3d) |
-| Armazenamento local | Preferências e cache da geometria; nada de dados de saúde | [Governança e privacidade](/pt/data/governance-and-privacy) |
+| Visualizador 3D | Atlas anatômico com estruturas selecionáveis, destaques de status, coração e pulmões ao vivo | [Anatomia 3D](/pt/architecture/anatomy-3d) |
+| Atlas de anatomia | Arquivos GLB estáticos (meshopt) e `manifest.json`: anatomia de referência de terceiros (Z-Anatomy, CC BY-SA 4.0), gerada pelo pipeline de assets em desenvolvimento | [Assets de anatomia 3D](/pt/data/anatomy-assets) |
+| Fallback procedural | Corpo simplificado gerado em código (Web Workers), usado só quando o atlas não carrega | [Anatomia 3D](/pt/architecture/anatomy-3d#fallback) |
+| Armazenamento local | Preferências e, no fallback, cache da geometria; nada de dados de saúde | [Governança e privacidade](/pt/data/governance-and-privacy) |
 
 ## Fluxo em tempo de execução
 
@@ -112,10 +120,11 @@ Tudo gira em torno de `frontend/web/src/types/domain.ts`, compartilhado por moto
 | Decisão | Motivo | Consequência |
 | --- | --- | --- |
 | Tudo no navegador, sem backend | Demo rápida, offline e reproduzível para o hackathon | Sem persistência, sem multiusuário, sem autenticação |
-| Motor em TypeScript puro, separado da interface | Testável com vitest sem DOM | 101 testes rodam sem navegador |
+| Motor em TypeScript puro, separado da interface | Testável com vitest sem DOM | 143 testes rodam sem navegador |
 | Simulação semeada | Reprodutibilidade de cenários e avaliação | Mesmos dados com a mesma semente |
 | Contrato de adapters | Trocar simulação por fonte real sem mudar a interface | Um backend futuro entra pelo mesmo contrato |
-| 3D procedural, sem arquivos de modelo | Sem licenças de modelos, controle total de regiões e cores | Geração em Web Workers e cache |
+| Corpo 3D sobre um atlas anatômico aberto (Z-Anatomy), com fallback procedural | Anatomia real, com estruturas nomeadas que podem ser selecionadas e ligadas aos dados; o fallback mantém o painel funcionando | Os arquivos de anatomia têm licença própria (CC BY-SA 4.0, com atribuição); um pipeline com Blender gera os assets; um GLB por sistema, carregado sob demanda |
+| Anatomia e saúde ligadas em um único arquivo (`atlas/health.ts`) | O atlas pode ser reconstruído sem tocar nas regras de saúde | Estruturas sem métrica relacionada ficam só de contexto, sem status |
 | Estatística e regras, sem ML | Explicável e testável | Veja [IA e análise](/pt/intelligence/ai-and-analytics) |
 
 ## Próximos passos

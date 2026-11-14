@@ -51,6 +51,7 @@ const SECTIONS: Section[] = [
       { path: 'data/dataset-catalog', en: 'Dataset Catalog', pt: 'Catálogo de datasets' },
       { path: 'data/data-dictionary', en: 'Data Dictionary', pt: 'Dicionário de dados' },
       { path: 'data/pipeline-and-quality', en: 'Pipeline, Normalization & Quality', pt: 'Pipeline, normalização e qualidade' },
+      { path: 'data/anatomy-assets', en: '3D Anatomy Assets', pt: 'Assets de anatomia 3D' },
       { path: 'data/governance-and-privacy', en: 'Governance & Privacy', pt: 'Governança e privacidade' },
     ],
   },

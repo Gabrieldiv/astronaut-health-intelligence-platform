@@ -7,6 +7,8 @@ code:
   - frontend/web/src/app/App.tsx
   - frontend/web/src/features/topbar/TopBar.tsx
   - frontend/web/src/features/attention/AttentionPanel.tsx
+  - frontend/web/src/features/attention/StructureDetail.tsx
+  - frontend/web/src/features/attention/RegionEvents.tsx
   - frontend/web/src/features/crewview/CrewView.tsx
 verified: 2026-11-14
 ---
@@ -80,15 +82,44 @@ Click a card, or press `1` to `4`, to select that astronaut. Everything else on 
 The center stage shows the selected astronaut:
 
 - **Headline**: callsign, role, mission day, current activity (Sleeping, Resting, Working, Exercising) and one plain sentence about their state.
-- **3D body**: a procedural holographic body. Each body system glows in its status color, the heart beats at the live heart rate and the lungs breathe at the live breathing rate. A status change sends a short scan pulse from that region.
-- **Body system chips** beside the body: Brain, Lungs, Heart and Kidneys on the left; Muscles, Skeleton and Skin on the right. Each chip shows a status dot. Click a chip or an organ to open its detail.
-- **Layer pill** under the body: Skin, Muscles, Skeleton, Organs, Vessels, plus a camera reset. Muscles appear automatically when they are selected or not nominal.
+- **3D body**: a realistic anatomical model (the Z-Anatomy atlas) with natural tissue colors under a translucent skin. A body system that needs attention lights up in its status color, the heart beats at the live heart rate and the lungs breathe at the live breathing rate. A status change sends a short scan pulse from that region. When data is missing the organ turns grey and stops moving.
+- **Body system chips** beside the body: Brain, Lungs, Heart and Kidneys on the left; Muscles, Skeleton and Skin on the right. Each chip shows a status dot. A chip always means the whole body system.
+- **Control pill** under the body: **Layers**, the preset views **Front**, **Back**, **Left** and **Right**, and a reset button.
 - **Status legend** in the corner, with the five levels and the note "Vs personal baseline. Simulated data."
+- **Reference anatomy caption** under the body: "Reference anatomy: Z-Anatomy atlas (CC BY-SA 4.0)". Its info button explains that this is one adult reference model shown for every crew member, not the astronaut's own scan, and lists the credits.
 
-Details on how the body is built: [3D anatomy](../architecture/anatomy-3d).
+### Layers, views and skin opacity
+
+| Control | What it does |
+| --- | --- |
+| **Layers** | One switch per anatomical system: Skin, Muscular, Skeletal, Cardiovascular, Respiratory, Nervous, Nerves, Digestive, Urinary, Other. Muscles are "auto": they appear when they are selected or need attention. Nerves and Other start hidden |
+| **Skin opacity** | A slider from 0 to 100% (22% by default), to see more of the surface or more of the inside |
+| **Presets** | Default, Organs, Skeleton, Muscles, All |
+| **Front / Back / Left / Right** | Turn the body to a preset view with a smooth transition |
+| **Reset** | Shows the whole body again and clears the selection |
+
+You can also drag to rotate, scroll to zoom and pan. The body turns slowly on its own when nothing is selected. A system that is still downloading shows its progress; the rest of the body stays usable.
+
+### Selecting a structure {#selecting-a-structure}
+
+Hover any part of the body to see its name, its anatomical system and its status, or "Not monitored". Click to select it: the camera moves to the structure, the rest of the body fades to a see-through outline and the right panel becomes **Anatomy detail**.
+
+| Part of the panel | Content |
+| --- | --- |
+| **Selected structure** | Name, anatomical system and side (for example "Left femur, Skeletal system, Left side") |
+| **Reference anatomy** | Where the 3D shape comes from: "Z-Anatomy atlas" or "AHI procedural" (the kidneys) |
+| **Structures in the atlas** | How many structures that anatomical system has, and "Part of" when the structure belongs to a larger one (for example the coronary arteries are part of the heart) |
+| **Monitored with** | For monitored structures: the body system it is monitored with, that system's status, one plain sentence saying how the indicators relate to the structure, and the same metric rows, charts, alerts and flags as the body system detail. **Whole region** switches to the whole body system |
+| **Context only: not monitored** | For structures no device or metric relates to (for example the stomach, a nerve or the eyes): a calm card with no status. "No status is shown here because nothing is measured. That is not the same as normal." |
+
+Indicators describe a body system as a whole. They are **related indicators, not measurements of the selected structure**: selecting the left femur shows the accumulated radiation dose as bone health context, not a measurement of that bone. Which structures relate to which metrics: [Anatomy to health mapping](../architecture/data-model#anatomy-to-health-mapping).
+
+**Alerts on structures.** An open alert belongs to a body system. Its structures show a pulsing rim in the alert's status color, a monitored organ in alert is visible through the body wall without any click, and a floating label names the system and its key value. In the panel, **Alerts and flags** lists what triggered each alert, the value observed when it was raised next to the personal normal, the data origin badge and the rule id.
+
+Click the selected structure again, click empty space, press `Esc` or use **Overview** to go back. If the reference atlas cannot load, the app shows a simplified body with the notice "Reference atlas unavailable. Showing simplified model."; body systems, chips and alerts keep working. How the body is built: [3D anatomy](../architecture/anatomy-3d).
 
 ::: info Eyes are not monitored
-The eyes are drawn as passive anatomy only. No eye monitoring device feeds this prototype. Tracking spaceflight associated neuro-ocular syndrome (SANS) from periodic exams is on the [roadmap](../resources/roadmap).
+The eyes can be selected, but they are context only: no eye monitoring device feeds this prototype, so they never show a status. Tracking spaceflight associated neuro-ocular syndrome (SANS) from periodic exams is on the [roadmap](../resources/roadmap).
 :::
 
 ## What needs attention
@@ -116,9 +147,9 @@ Every recommendation says who can close the loop:
 
 ## Region detail and trend chart
 
-Click an organ or a body system chip to switch the right panel to **Body system detail**.
+Click a body system chip to switch the right panel to **Body system detail**. Clicking a monitored structure in the body shows the same data under its own header ([Selecting a structure](#selecting-a-structure)).
 
-![Body system detail for LYRA's heart with metric rows, personal normal and trend chart](/screenshots/body-detail.png)
+![Body system detail: the 3D body with one body system selected, and its metric rows, personal normal and trend chart in the right panel](/screenshots/body-detail.png)
 
 Each metric row shows the current value, the deviation from the personal normal ("11% above your normal"), the normal range ("Your normal: 66 to 80 bpm") and the robust z score. Expand a row to see:
 
@@ -129,6 +160,8 @@ Each metric row shows the current value, the deviation from the personal normal 
   - **event markers** on the time axis for alerts, logged actions and check-ins.
 - **Data quality** and **data origin** badges (for example GOOD SIGNAL, SIMULATED).
 - **"Why is this my normal?"** (the info button): the window, number of readings, median and MAD behind the band, and the baseline version. Until there is enough data it says "Still learning your normal".
+
+Below the metrics, **Alerts and flags** lists the open alerts of that body system (severity, time, the metric that triggered it, the value observed when it was raised against the personal normal, data origin, rule id) and the statistical flags of the last 24 hours. A line above the metrics says how many alerts are open and jumps to them. The wording stays non diagnostic: alerts and flags ask for a review.
 
 Press `Esc` or **Overview** to go back.
 
@@ -181,7 +214,7 @@ A prominent **critical banner** also appears over the stage for the newest unack
 | `P` | Presentation mode (also in Tools) |
 | `A` | Open or close alerts |
 | `Space` | Play or pause the simulation |
-| `Esc` | Close a panel, or back from body detail |
+| `Esc` | Close a panel, or back from body or anatomy detail |
 | `?` | Show the shortcuts help |
 | `←` `→` | Previous / next step in the guided demo |
 

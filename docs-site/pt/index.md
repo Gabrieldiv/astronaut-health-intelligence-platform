@@ -26,7 +26,7 @@ hero:
 
 features:
   - title: Anatomia 3D ao vivo
-    details: "Corpo humano procedural (pele, músculos, esqueleto, órgãos e vasos). Cada sistema brilha na cor do seu status, o coração bate na frequência cardíaca atual e os pulmões respiram na frequência respiratória atual."
+    details: "Um atlas anatômico realista (Z-Anatomy), com 250 estruturas selecionáveis em camadas por sistema. Um sistema que pede atenção acende na cor do seu status, o coração bate na frequência cardíaca atual e os pulmões respiram na frequência respiratória atual."
     link: /pt/architecture/anatomy-3d
   - title: Baseline pessoal
     details: "Ninguém é comparado com uma média populacional. A faixa normal de cada métrica é aprendida com os dados da própria pessoa (mediana e MAD), separada por contexto: sono, repouso, trabalho e exercício."
@@ -41,7 +41,7 @@ features:
     details: "Dois datasets públicos do NASA OSDR (hemograma e painel metabólico da Inspiration4) aparecem como referência histórica, com arquivo, SHA-256 e data de download."
     link: /pt/data/dataset-catalog
   - title: Validação transparente
-    details: "101 testes automatizados e uma avaliação reproduzível do motor em 5 sementes. Cada número publicado aponta para o código e para o teste que o sustenta."
+    details: "143 testes automatizados e uma avaliação reproduzível do motor em 5 sementes. Cada número publicado aponta para o código e para o teste que o sustenta."
     link: /pt/validation/results
 ---
 

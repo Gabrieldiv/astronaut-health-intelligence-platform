@@ -68,7 +68,8 @@ npm run evaluate
 
 | Measure | Value (2026-11-14) |
 | --- | --- |
-| vitest tests | **101 in 14 files, all passing** |
+| vitest tests | **143 in 17 files, all passing** |
+| Anatomy atlas validation (`npm run anatomy:validate`) | passes on the published files: 250 structures in 9 GLB files, 880,356 triangles, 4.64 MB |
 | Typecheck (`npx tsc -b`) | clean |
 | Production build (`npx vite build`) | ok |
 
@@ -76,17 +77,29 @@ What each file covers: [Testing strategy](../engineering/testing).
 
 ## Measured performance
 
-Informal observations by the team on the development laptop, not a controlled benchmark:
+Informal observations by the team on one development laptop (AMD Ryzen 5 3500U, integrated Radeon Vega 8 graphics), not a controlled benchmark. Nothing here was repeated on other machines.
+
+**3D atlas viewer** (headless Chrome, frame rate capped at 60 by vsync). The full table, with draw calls and triangles per frame, is in [3D anatomy](../architecture/anatomy-3d#performance-observations).
 
 | Measure | Value |
 | --- | --- |
-| Frame rate at 60x simulation speed | 58 to 60 fps |
-| Frame rate at 3600x | about 45 fps |
-| Development first load | about 2 to 4 s |
+| Frame rate, default systems | 58 to 60 fps |
+| Frame rate, all nine systems | 56 to 59 fps |
+| Frame rate, Ground view at 1440x900 | 55 to 57 fps |
+| Frame rate, Ground view with a body system detail open | 39 to 42 fps (the detail panel is the limit: the previous procedural viewer measured 38 in the same state) |
+| Hover pick | 0.4 to 2.8 ms per raycast |
+| Atlas on screen after navigation, warm browser cache | 2.4 to 3.6 s |
+| Atlas size | 4.64 MB in 9 files (880,356 triangles); the default view downloads 8 files, about 3.0 MB |
+
+**Engine and app.** The first three rows were measured before the atlas viewer replaced the procedural body and were not measured again.
+
+| Measure | Value |
+| --- | --- |
+| Frame rate at 60x simulation speed (procedural body) | 58 to 60 fps |
+| Frame rate at 3600x (procedural body) | about 45 fps |
+| 3D body height at 1280x720 with an active critical alert (procedural body) | 247 px before, 359 px after the banner overlay change |
 | Startup pre-generation (from the engine docs) | about 1.2 s warm, 2 to 3 s cold |
 | What-if comparison | under 5 ms per call |
-| 3D geometry | about 842k triangles generated, about 200k drawn per frame; built in 8 Web Workers and cached in the browser |
-| 3D body height at 1280x720 with an active critical alert | 247 px before, 359 px after the banner overlay change |
 
 ## Evidence that is not available
 
@@ -95,6 +108,8 @@ Informal observations by the team on the development laptop, not a controlled be
 | Accuracy on real astronaut data | Not available: no public continuous data, no labeled outcomes |
 | Sensitivity and specificity against a clinical reference | Not available |
 | Usability study with crew or flight surgeons | Not done |
+| Performance on other machines, browsers or screens | Not measured |
+| Anatomical review of the 3D atlas by a specialist | Not done; the model is used as published by Z-Anatomy, simplified by the asset pipeline |
 | Formal accessibility audit | Not done |
 | End to end browser tests | <StatusBadge status="PLANNED" /> |
 

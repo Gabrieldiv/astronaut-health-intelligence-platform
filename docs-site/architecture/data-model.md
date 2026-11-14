@@ -1,10 +1,16 @@
 ---
 title: Data Model & Contracts
-description: The canonical HealthObservation, the domain entities with an ER diagram, and the enumerations of the Astronaut Health Intelligence Platform, from src/types/domain.ts.
+description: The canonical HealthObservation, the domain entities with an ER diagram, the enumerations, the anatomy to health mapping and the selection contract of the Astronaut Health Intelligence Platform.
 status: IMPLEMENTED
 code:
   - frontend/web/src/types/domain.ts
   - frontend/web/src/engine/sim/adapters.ts
+  - frontend/web/src/features/anatomy/atlas/health.ts
+  - frontend/web/src/features/anatomy/atlas/types.ts
+  - frontend/web/src/state/store.ts
+tests:
+  - frontend/web/src/features/anatomy/atlas/health.test.ts
+  - frontend/web/src/state/selection.test.ts
 verified: 2026-11-14
 ---
 
@@ -132,6 +138,63 @@ Other shared types: `RegionState` (status and summary per body region), `Astrona
 | `CommMessage.kind` | `HEALTH_PACKET`, `CONSULT_REQUEST`, `GROUND_REPLY`, `HANDOVER_REPORT` | Direction `DOWNLINK` (to Earth) or `UPLINK` (to the vehicle) |
 | `ScenarioId` | `NOMINAL`, `PROGRESSIVE_FATIGUE`, `ENVIRONMENTAL_CO2`, `PERFORMANCE_DECLINE`, `SENSOR_FAILURE`, `ACUTE_CARDIO` | See [Demo scenarios](../product/demo-scenarios) |
 
+## Anatomy to health mapping {#anatomy-to-health-mapping}
+
+The 3D atlas has 250 anatomical structures; the platform monitors seven body regions. One file, `src/features/anatomy/atlas/health.ts`, decides which region a structure reports under. It is the **only place that links anatomy to health data**: it reuses `BodyRegionId` and the metric catalog and adds no data of its own. This table is the canonical copy of that mapping.
+
+| Structures (rule) | Region | Related metrics (from the catalog) | In the atlas | How to read it |
+| --- | --- | --- | --- | --- |
+| Integumentary system: skin | `skin` | `SKIN_TEMPERATURE` | 1 | One surface reading from the smart shirt. It is not a map of the whole skin |
+| Skeletal system: bones and cartilage | `bones` | `RADIATION_DOSE` | 39 | Accumulated dose is whole body exposure, shown as long term bone health context. No device measures bone density |
+| Skeletal system: teeth (tissue `tooth`) | none | none | 2 | **Context only** |
+| Muscular system: muscles and tendons | `muscles` | `ACTIVITY_LEVEL`, `EXERCISE_LOAD` | 133 | Activity and exercise performance describe the muscles as a whole. They are not measurements of the selected muscle |
+| Cardiovascular system: heart, arteries, veins | `heart` | `HEART_RATE`, `HRV_RMSSD`, `SYSTOLIC_BP`, `DIASTOLIC_BP` | 29 | They describe the heart and circulation as a whole, not one vessel |
+| Respiratory system: lungs, airways, larynx, diaphragm | `lungs` | `SPO2`, `RESPIRATORY_RATE` | 6 | They describe breathing and gas exchange as a whole |
+| Nervous system: brain structures only (cortex, deep structures of the cerebrum, cerebellum, brainstem) | `brain` | `SLEEP_DURATION`, `SLEEP_EFFICIENCY`, `REACTION_TIME`, `MOOD`, `PERCEIVED_FATIGUE`, `STRESS` | 4 | **Related indicators** of alertness and recovery. They are behavioral and self reported signals, never neurological measurements |
+| Nervous system: spinal cord and nerves | none | none | 13 | **Context only** |
+| Urinary system: kidneys (tissue `kidney`) | `kidneys` | `HYDRATION` | 2 | Hydration index estimated from fluid intake logs. A **related indicator**, not a measurement of kidney function |
+| Urinary system: ureters and bladder | none | none | 2 | **Context only** |
+| Digestive system; other organs (glands, thymus, spleen, eyes) | none | none | 19 | **Context only** |
+
+Rules of the mapping:
+
+- **Related indicators, not measurements.** A metric belongs to a region, never to one structure. The structure panel says so in plain words for every region (`REGION_RELATION`), so an indicator is never read as a measurement of the selected structure, and never as a diagnosis.
+- **Context only** means no device or metric of the prototype relates to the structure. It can be explored, but it never shows a health status, not even "All good": no status is shown because nothing is measured, which is not the same as normal.
+- **Metrics always come from the catalog.** `relatedMetrics()` returns the codes whose `region` in `METRIC_CATALOG` matches; the mapping file never lists or invents indicators. Metric definitions: [Data dictionary](../data/data-dictionary).
+- **Missing data is never normal.** A monitored structure whose astronaut has no health state yet is `NO_DATA`.
+- **The manifest holds anatomy only.** The asset pipeline never encodes monitoring rules, so the atlas can be rebuilt without touching health logic.
+
+Main functions (all pure TypeScript, unit tested in `health.test.ts`):
+
+| Function | Returns |
+| --- | --- |
+| `regionOfStructure(s)` | The `BodyRegionId` a structure reports under, or `null` when it is context only |
+| `isContextOnly(s)` | `true` when nothing monitors the structure |
+| `relatedMetrics(s)`, `metricsOfRegion(region)` | Catalog metric codes of the region |
+| `structureStatus(health, s)` | Status of the structure's region, `NO_DATA` when health is missing, `null` when context only |
+| `primaryStructureOfRegion(manifest, region)` | The organ a region is named after (camera target); `null` for muscles and bones on purpose |
+| `selectStructureHealth(state, astronautId, s)` | Everything the panel shows: region, status, summary, metrics, missing metrics, active alerts and recent statistical flags |
+| `regionAlerts(...)`, `regionAnomalies(...)` | Active alerts (most severe first) and anomalies (newest first) of one astronaut in one region |
+
+## Selection contract {#selection-contract}
+
+The app store keeps one selection that every panel and the 3D viewer share. The structure fields are additive (marked "Additive (v3, anatomical atlas)" in `domain.ts`).
+
+| State or action | Behavior |
+| --- | --- |
+| `selectedStructureId` (string or `null`) | Id of the structure selected in the 3D viewer. `null` when only a region, or nothing, is selected |
+| `selectStructure(id, region?)` | Sets the structure and its region **in one update** and clears the selected metric. For a context only structure the region is `null`. `selectStructure(null)` clears structure, region and metric |
+| `selectRegion(region)` | Selects the whole region and clears the structure (a body system chip always means the whole region) |
+| `selectAstronaut(id)` | Clears structure, region and metric |
+| `selectMetric(metric)` | Keeps the structure and the region |
+
+- The viewer calls `selectStructure(id, regionOfStructure(structure))`, so a structure and its region can never disagree.
+- Alerts, factors and vitals use `focusTarget()` (`src/features/shared/hooks.ts`): it selects the region and clears a structure of another region, but keeps a structure of the same region and only opens the metric.
+- `Esc` and the **Overview** button clear the selection (`clearSelection()`).
+- A clock tick never touches the selection.
+
+Covered by `src/state/selection.test.ts` (13 tests).
+
 ## Contracts between modules
 
 | Contract | Rule |
@@ -139,7 +202,9 @@ Other shared types: `RegionState` (status and summary per body region), `Astrona
 | `domain.ts` | Additive changes only: new optional fields or new union members; never rename or remove a used field |
 | Device adapter | `id`, `kind`, `name`, `assignedTo`, `metrics`, `read(simNow)` returning `HealthObservation[]`, optional `readEvents(from, to)`, `status(simNow)` ([Extending](../engineering/contributing#add-a-device-adapter)) |
 | Engine to store | `EngineEvaluation` slices with a version per slice; unchanged slices keep their references |
-| Store to UI | `AppState` / `AppStateV2` (state plus actions) |
+| Store to UI | `AppState` / `AppStateV2` (state plus actions), including the [selection contract](#selection-contract) |
+| Asset pipeline to viewer | `AtlasManifest` in `public/anatomy/manifest.json` ([Manifest contract](./anatomy-3d#manifest-contract)) |
+| Anatomy to health | `atlas/health.ts` only ([Anatomy to health mapping](#anatomy-to-health-mapping)) |
 | Export | FHIR R4 `Bundle` (`collection`) with `Patient`, `Device`, `Observation` ([FHIR export](../product/mission-features#fhir-r4-export)) |
 
 The planned REST API that would expose the same entities is described in [Target architecture](./target-architecture).
@@ -149,3 +214,4 @@ The planned REST API that would expose the same entities is described in [Target
 - [Data dictionary](../data/data-dictionary): every metric code.
 - [Data origins and provenance](../data/data-origins)
 - [Engine and simulation](./engine-and-simulation)
+- [3D anatomy rendering](./anatomy-3d): the viewer that uses the mapping.

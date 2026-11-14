@@ -23,7 +23,8 @@ Todos os resultados do motor vêm de **dados simulados** e medem as regras do pr
 
 | Evidência | Resultado | Fonte |
 | --- | --- | --- |
-| Testes automatizados | 101 testes em 14 arquivos, todos passando | `npm test` em 14/11/2026 |
+| Testes automatizados | 143 testes em 17 arquivos, todos passando | `npm test` em 14/11/2026 |
+| Validação do atlas de anatomia | Passa nos arquivos publicados: 250 estruturas em 9 arquivos GLB, 880.356 triângulos, 4,64 MB | `npm run anatomy:validate` em 14/11/2026 |
 | Checagem de tipos | Limpa | `npx tsc -b` |
 | Build de produção | Ok | `npx vite build` |
 | Alertas falsos no cenário nominal | 0 por dia-tripulante, em 60 dias-tripulante | `evaluation.json` |
@@ -74,22 +75,33 @@ No cenário de cabine, o nível é o pior entre o status da cabine e o da tripul
 
 ## Testes automatizados
 
-101 testes em 14 arquivos, todos passando em 14/11/2026. A lista arquivo por arquivo está em [Estratégia de testes](/pt/engineering/testing).
+143 testes em 17 arquivos, todos passando em 14/11/2026. A lista arquivo por arquivo está em [Estratégia de testes](/pt/engineering/testing).
 
 ## Desempenho observado
 
-Medidas observadas pelo autor no notebook de desenvolvimento. **Não são benchmarks formais** nem foram repetidas em outras máquinas.
+Medidas observadas pela equipe em um único notebook de desenvolvimento (AMD Ryzen 5 3500U, gráficos integrados Radeon Vega 8). **Não são benchmarks formais** nem foram repetidas em outras máquinas.
+
+**Visualizador do atlas 3D** (Chrome sem interface, taxa de quadros limitada a 60 pelo vsync). A tabela completa, com draw calls e triângulos por quadro, está em [Renderização da anatomia 3D](/pt/architecture/anatomy-3d#performance-observations).
 
 | Medida | Valor |
 | --- | --- |
-| Quadros por segundo a 60x | 58 a 60 fps |
-| Quadros por segundo a 3600x | cerca de 45 fps |
-| Primeira carga em desenvolvimento | cerca de 2 a 4 s |
+| Quadros por segundo, sistemas padrão | 58 a 60 fps |
+| Quadros por segundo, os nove sistemas | 56 a 59 fps |
+| Quadros por segundo, "Ground view" em 1440x900 | 55 a 57 fps |
+| Quadros por segundo, "Ground view" com o detalhe de um sistema aberto | 39 a 42 fps (o limite é o painel de detalhe: o visualizador procedural anterior mediu 38 no mesmo estado) |
+| Picking de hover | 0,4 a 2,8 ms por raio |
+| Atlas na tela depois da navegação, com cache do navegador aquecido | 2,4 a 3,6 s |
+| Tamanho do atlas | 4,64 MB em 9 arquivos (880.356 triângulos); a vista padrão baixa 8 arquivos, cerca de 3,0 MB |
+
+**Motor e app.** As três primeiras linhas foram medidas antes de o visualizador do atlas substituir o corpo procedural e não foram medidas de novo.
+
+| Medida | Valor |
+| --- | --- |
+| Quadros por segundo a 60x (corpo procedural) | 58 a 60 fps |
+| Quadros por segundo a 3600x (corpo procedural) | cerca de 45 fps |
+| Altura do corpo 3D com alerta CRITICAL em 1280x720 (corpo procedural) | de 247 para 359 px depois da faixa sobreposta |
 | Geração do histórico inicial | cerca de 1,2 s com cache aquecido; 2 a 3 s a frio |
-| Triângulos do corpo 3D | cerca de 842 mil gerados, cerca de 200 mil desenhados por quadro |
-| Geometria | construída em 8 Web Workers e guardada em cache no navegador |
 | Projeção "e se" | menos de 5 ms por chamada |
-| Altura do corpo 3D com alerta CRITICAL em 1280x720 | de 247 para 359 px depois da faixa sobreposta |
 
 ## Checagem das fontes da NASA
 
@@ -110,6 +122,7 @@ Detalhes em [Fontes de dados da NASA](/pt/data/sources).
 - Cobertura real do intervalo de 80% da previsão.
 - Usabilidade com tripulantes ou médicos de voo.
 - Desempenho em outras máquinas, navegadores ou telas.
+- Revisão anatômica do atlas 3D por especialista: o modelo é usado como publicado pelo Z-Anatomy, simplificado pelo pipeline de assets.
 
 ## Próximos passos
 

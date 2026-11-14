@@ -34,7 +34,7 @@ Today AHI can claim **internal consistency on simulated data** and nothing more.
 
 ### L0 and L1: tests
 
-101 vitest tests in 14 files run on every push and pull request ([Testing strategy](../engineering/testing)). Safety properties are asserted explicitly, for example "missing or stale data is NO_DATA, never LOW" and "self report alone reaches MODERATE at most and no alert".
+143 vitest tests in 17 files run on every push and pull request ([Testing strategy](../engineering/testing)). Safety properties are asserted explicitly, for example "missing or stale data is NO_DATA, never LOW" and "self report alone reaches MODERATE at most and no alert".
 
 ### L2: headless evaluation
 

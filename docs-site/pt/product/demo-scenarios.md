@@ -46,7 +46,7 @@ A tela calma é o ponto. Sem alarme falso, o painel diz "No actions needed right
 ![Alerta crítico durante o evento cardíaco agudo](/screenshots/critical-alert.png)
 
 - a faixa vermelha CRITICAL sobre o cabeçalho do corpo;
-- o coração e os pulmões mudando de cor no 3D;
+- o coração e os pulmões acendendo em vermelho no 3D, visíveis através do tórax sem nenhum clique;
 - as ações recomendadas, com revisão do médico de voo sinalizada;
 - "Mark done" no protocolo de repouso: a intervenção vai para a auditoria e a simulação mostra uma recuperação hipotética;
 - o escalonamento se ninguém reconhecer o alerta.
@@ -70,7 +70,7 @@ A tripulação inteira se desloca um pouco ao mesmo tempo. A regra R-ENV-CO2-02 
 
 ### Exercise performance decline
 
-A região dos músculos muda de cor e a camada muscular aparece sozinha no 3D. A ação sugere ajustar carga e recuperação com o treinador.
+A região dos músculos ganha a cor do status e a camada muscular aparece sozinha no 3D. A ação sugere ajustar carga e recuperação com o treinador.
 
 ## Demo guiada ("Start demo")
 
@@ -81,7 +81,7 @@ O botão **"Start demo"** inicia uma história de cerca de 2 minutos em 10 passo
 | # | Título (interface) | O que mostra |
 | --- | --- | --- |
 | 1 | "Meet the crew" | Quatro astronautas, cada um comparado com o próprio normal |
-| 2 | "The body at a glance" | Órgãos na cor do status, coração e pulmões ao vivo |
+| 2 | "The body at a glance" | A anatomia 3D ligada aos dados: o que pede atenção acende na cor do status, coração e pulmões ao vivo. Dica: clicar em qualquer estrutura (o painel mostra os dados dela, ou diz que é só referência) |
 | 3 | "Acute cardio event" | ORION: frequência cardíaca sobe, oxigênio cai, faixa CRITICAL e escalonamento |
 | 4 | "What to do, and who can do it" | Ações com motivo e autonomia; experimente "Mark done" no protocolo de repouso |
 | 5 | "Far from Earth" | Perfil "Mars (farthest)": qualquer resposta da Terra leva pelo menos 44 minutos |
@@ -108,14 +108,14 @@ Missões longas expõem a tripulação a cinco perigos (radiação, isolamento, 
 
 **2. A tela em 10 segundos (40 s)**
 - Esquerda: a tripulação, com status em palavras simples.
-- Centro: o corpo 3D. Órgãos na cor do status; coração e pulmões ao vivo.
+- Centro: o corpo 3D, um modelo anatômico realista. O que pede atenção acende na cor do status; coração e pulmões ao vivo.
 - Direita: "What needs attention": status, por quê e o que fazer.
 - Base: vitais, cabine e dispositivos. O selo `SIMULATED DATA` está sempre visível.
 
 **3. Fadiga progressiva (60 s)**
 1. Escolha "Progressive fatigue" (LYRA), velocidade "1 h/s".
 2. O sono cai, a HRV sai da faixa de LYRA, a frequência de repouso sobe.
-3. Cérebro e coração ficam âmbar e depois laranja. Clique no coração: faixa pessoal, histórico e cone de previsão.
+3. Cérebro e coração acendem em âmbar e depois em laranja. Clique no chip "Heart": faixa pessoal, histórico e cone de previsão.
 4. Mensagem: padrão, persistência e contexto contra o normal de cada pessoa.
 
 **4. Evento agudo e decisão rápida (50 s)**

@@ -96,7 +96,9 @@ As métricas da cabine não têm baseline pessoal: um módulo não tem "normal p
 | `bones` | Skeleton | Bone and radiation | dose acumulada |
 | `skin` | Skin | Thermal | temperatura da pele |
 
-Os olhos não são região monitorada.
+Os olhos não são região monitorada: no corpo 3D são estruturas só de contexto.
+
+Quais estruturas anatômicas do atlas 3D pertencem a cada região, e quais são só de contexto, está em [Mapeamento da anatomia para a saúde](/pt/architecture/data-model#anatomy-to-health-mapping).
 
 ## Frases em linguagem simples
 
