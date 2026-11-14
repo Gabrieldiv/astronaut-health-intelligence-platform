@@ -82,6 +82,31 @@ Termos usados na interface, no código e nesta documentação da Astronaut Healt
 | LOINC | Sistema de códigos de observações clínicas; usado só para os vitais bem estabelecidos |
 | UCUM | Sistema de códigos de unidades de medida |
 
+## Anatomia 3D
+
+| Termo | Significado |
+| --- | --- |
+| Atlas | O modelo anatômico por trás do corpo 3D: o Z-Anatomy, um atlas 3D aberto de anatomia humana (CC BY-SA 4.0), preparado para o app como 250 estruturas em nove arquivos. Veja [Assets de anatomia 3D](/pt/data/anatomy-assets) |
+| Anatomia de referência ("Reference anatomy") | Um único modelo adulto de referência, mostrado para todos os tripulantes. Não é um exame do astronauta |
+| Estrutura | Uma parte selecionável do atlas (um osso, um músculo, um órgão, ou um grupo como "Bones of left hand"), com um id estável como `femur-left` |
+| Sistema anatômico | Um dos nove grupos de estruturas (pele, esquelético, muscular, cardiovascular, respiratório, nervoso, digestivo, urinário, outros). Também é uma camada do visualizador e um arquivo |
+| Região do corpo (sistema do corpo) | Uma das sete regiões monitoradas, com métricas: cérebro, coração, pulmões, rins, músculos, esqueleto, pele. Uma estrutura pertence a no máximo uma região |
+| Classe de tecido | O tipo de tecido de uma estrutura (osso, músculo, artéria, nervo e mais 15). Define o material com que o visualizador a desenha |
+| Monitorada | Estrutura cuja região do corpo tem métricas. Mostra o status e os dados dessa região |
+| Só contexto ("Context only") | Estrutura à qual nenhum aparelho ou métrica se relaciona (por exemplo o estômago, os nervos, os olhos). Pode ser explorada, mas nunca mostra status, porque nada é medido |
+| Indicador relacionado | Métrica que descreve um sistema do corpo como um todo ou um comportamento associado, não uma medida da estrutura selecionada (por exemplo o sono para o cérebro, o índice de hidratação para os rins) |
+| Fantasma ("ghost") | A aparência translúcida e fraca de tudo o que não é a seleção atual. Auxílio de visualização, não status |
+| Manifesto do atlas | `manifest.json`: a lista de estruturas e arquivos do atlas, com fonte e licença. O contrato entre o pipeline de assets e o visualizador |
+| GLB | Forma binária do glTF 2.0, o formato aberto de arquivos 3D. O atlas tem um GLB por sistema anatômico |
+| glTF Transform | Conjunto de ferramentas de código aberto usado pelo pipeline para limpar e comprimir os arquivos GLB |
+| Meshopt | Compressão de malhas (`EXT_meshopt_compression`) usada nos arquivos GLB. O decodificador vem com o three.js, então nenhum arquivo é buscado em CDN |
+| Decimação | Redução do número de triângulos de uma malha mantendo a forma |
+| Procedural | Gerado por código em vez de carregado de um arquivo de modelo. Usado nos rins do atlas e no corpo de fallback |
+| Fallback procedural | O corpo simplificado mostrado automaticamente quando o atlas não carrega |
+| BVH | Hierarquia de volumes envolventes: um índice espacial que torna rápido achar a estrutura sob o ponteiro |
+| Blender | Software 3D de código aberto, usado sem interface para preparar o atlas |
+| CC BY-SA 4.0 | Licença Creative Commons Atribuição-CompartilhaIgual dos arquivos de anatomia: reutilizar exige atribuição e a mesma licença. O código do app é MIT |
+
 ## Espaço e fontes
 
 | Termo | Significado |
@@ -99,7 +124,7 @@ Termos usados na interface, no código e nesta documentação da Astronaut Healt
 | Standard Measures | Conjunto padronizado de medidas que a NASA coleta antes, durante e depois das missões |
 | Inspiration4 | Missão comercial de 3 dias (2021) de onde vêm os datasets OSD-569 e OSD-575 |
 | GCR / SAA | Raios cósmicos galácticos / Anomalia do Atlântico Sul (fontes de dose na ISS) |
-| SANS | Síndrome neuro-ocular associada ao voo espacial. Fora do MVP; está no roadmap |
+| SANS | Síndrome neuro-ocular associada ao voo espacial. Fora do MVP; está no roadmap. Hoje os olhos são estruturas só de contexto |
 | Bio-Monitor / Astroskin | Camiseta inteligente da Agência Espacial Canadense usada na ISS (simulada na AHI) |
 | Actiwatch | Relógio de actigrafia usado em estudos de sono (simulado na AHI) |
 | CEVIS, ARED, T2 | Cicloergômetro, aparelho de exercício resistido e esteira da ISS. Equipamentos de exercício, não monitores médicos |
@@ -121,7 +146,7 @@ Termos usados na interface, no código e nesta documentação da Astronaut Healt
 | RAG | Geração aumentada por recuperação. **Não usada** na plataforma |
 | RBAC | Controle de acesso por papel. Planejado |
 | SHAP | Método de explicação de modelos de ML. Planejado junto com eventuais modelos |
-| SDF | Campo de distância com sinal, usado para gerar a anatomia 3D |
+| SDF | Campo de distância com sinal. Usado só na geometria procedural (os rins do atlas e o corpo de fallback), junto com o método Surface Nets, que transforma o campo em malha |
 | MVP | Produto mínimo viável |
 
 ## Próximos passos

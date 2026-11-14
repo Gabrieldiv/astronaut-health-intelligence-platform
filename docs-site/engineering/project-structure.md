@@ -26,7 +26,8 @@ The Astronaut Health Intelligence Platform (AHI) repository is a small monorepo:
 │   ├── raw/<OSD>/             Original NASA OSDR files, byte for byte, plus API responses
 │   ├── manifests/             Provenance manifests (DatasetRecord), discovery output, import log
 │   └── processed/             Long format observations (data_origin REAL_PUBLIC)
-├── docs/                      Demo script, generated model card, data source inventory, data guide (pt-BR)
+├── docs/                      Demo script, generated model card, data source inventory, data guide (pt-BR),
+│                              anatomy assets guide
 ├── docs-site/                 This documentation portal (VitePress, EN and PT-BR)
 └── frontend/web/              The web app (React, TypeScript, Vite)
 ```
@@ -38,9 +39,16 @@ frontend/web/
 ├── index.html                 App entry (loading screen while baselines are prepared)
 ├── anatomy-lab.html           Dev only: every visual state of the 3D body
 ├── features-lab.html          Dev only: feature components with fake state
+├── public/
+│   └── anatomy/               3D atlas: nine *.glb files (one per anatomical system), manifest.json,
+│                              LICENSE.md (CC BY-SA 4.0). Generated, never edited by hand
 ├── scripts/
 │   ├── evaluate.ts            Headless engine evaluation (npm run evaluate)
+│   ├── anatomy/               Asset pipeline (npm run anatomy:build): build.mjs, fetch-source.mjs,
+│   │                          export_atlas.py (Blender), build-kidneys.ts, optimize.mjs, validate.mjs,
+│   │                          decode-for-preview.mjs, render_previews.py
 │   └── osdr/                  discover.mjs, import.mjs, lib.mjs
+├── .cache/anatomy/            Pipeline work folder (source archive, raw export, previews). Ignored by git
 └── src/
     ├── main.tsx, index.css    Entry and global styles (tokens, screen modes, presentation mode)
     ├── app/                   App shell, keyboard shortcuts, UI store (view, presentation, tour)
@@ -62,12 +70,14 @@ frontend/web/
 | `src/engine/` | Pure TypeScript engine and simulator, no React | [Engine and simulation](../architecture/engine-and-simulation) |
 | `src/engine/config.ts` | Every tunable number (demo configuration) | [Thresholds](../intelligence/thresholds) |
 | `src/engine/catalog.ts` | Metrics, regions, mission, crew, scenarios, Earth link profiles | [Data dictionary](../data/data-dictionary) |
-| `src/engine/*.test.ts`, `src/lib/fhir.test.ts`, `src/state/store.test.ts` | vitest tests | [Testing strategy](./testing) |
+| `src/engine/*.test.ts`, `src/lib/fhir.test.ts`, `src/state/*.test.ts`, `src/features/anatomy/atlas/*.test.ts` | vitest tests | [Testing strategy](./testing) |
 | `src/state/store.ts` | zustand store, `startTicker()` | [Frontend and state](../architecture/frontend) |
 | `src/features/*` | UI features | [Frontend and state](../architecture/frontend#feature-modules) |
-| `src/features/anatomy/` | Procedural 3D body, workers, cache | [3D anatomy](../architecture/anatomy-3d) |
+| `src/features/anatomy/` | 3D body: `atlas/` (manifest contract, health mapping), `viewer/` (atlas viewer), `procedural/` (fallback model) | [3D anatomy](../architecture/anatomy-3d#component-map) |
+| `src/features/attention/` | Attention panel, body system detail, structure detail, alerts and flags | [Product tour](../product/product-tour#selecting-a-structure) |
 | `src/lib/` | `status.ts`, `fhir.ts` | [Design system](../product/design-system) |
-| `scripts/` | Evaluation and OSDR import | [Results](../validation/results), [Dataset catalog](../data/dataset-catalog) |
+| `public/anatomy/` | Published atlas files, under CC BY-SA 4.0 (the code is MIT) | [3D anatomy assets](../data/anatomy-assets) |
+| `scripts/` | Evaluation, anatomy asset pipeline and OSDR import | [Results](../validation/results), [3D anatomy assets](../data/anatomy-assets#rebuild), [Dataset catalog](../data/dataset-catalog) |
 
 The TypeScript configuration enables `erasableSyntaxOnly` (no `enum`, no parameter properties) and `noUnusedLocals`.
 

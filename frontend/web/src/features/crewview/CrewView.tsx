@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Check, Earth, ListChecks, PartyPopper, X } from 'lucide-react'
+import { BookOpen, Check, Earth, ListChecks, PartyPopper, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
@@ -13,7 +13,19 @@ import { deltaVsNormal } from '../../components/format'
 import { CriticalBanner } from '../alerts/Alerts'
 import { AutonomyBadge } from '../attention/AutonomyBadge'
 import { ACTIVITY_LABEL, REGION_ICON, Stage3D } from '../stage/CenterStage'
-import { SIGNAL_LOST_HEADLINE, earthLinkSentence, useActions, useCommDelaySec, useCrewStatus, usePendingActions, useSignalLost } from '../shared/hooks'
+import {
+  SIGNAL_LOST_HEADLINE,
+  clearSelection,
+  earthLinkSentence,
+  useActions,
+  useCommDelaySec,
+  useCrewStatus,
+  useEscapeClearsStructure,
+  usePendingActions,
+  useSelectedStructure,
+  useSignalLost,
+} from '../shared/hooks'
+import { CONTEXT_ONLY_TEXT, CONTEXT_ONLY_TITLE, SYSTEM_INFO, sideLabel } from '../anatomy/atlas/health'
 import { CheckInButton } from '../checkin'
 import { WhatIfButton } from '../whatif'
 
@@ -120,7 +132,10 @@ function Hero() {
   )
 }
 
-/** Small card over the body when an organ is selected: plain-language summary only. */
+/**
+ * Small card over the body when an organ or an anatomical structure is selected: plain-language
+ * summary only. A structure nothing monitors gets a calm "context only" note and never a status.
+ */
 function RegionCard() {
   const id = useAppStore((s) => s.selectedAstronautId)
   const region = useAppStore((s) => s.selectedRegion)
@@ -130,26 +145,46 @@ function RegionCard() {
       return { status: (r?.status ?? 'NO_DATA') as Status, summary: r?.summary ?? '' }
     }),
   )
-  const { selectRegion } = useActions()
-  if (!region) return null
-  const label = REGION_LABELS[region]
-  const Icon = REGION_ICON[region]
+  const { structure } = useSelectedStructure()
+  useEscapeClearsStructure()
+  if (!region && !structure) return null
+  const label = region ? REGION_LABELS[region] : null
+  const Icon = region ? REGION_ICON[region] : BookOpen
+  const system = structure ? (SYSTEM_INFO[structure.system] ?? SYSTEM_INFO.other) : null
+  const side = structure ? sideLabel(structure) : null
+  const title = structure ? structure.name : label!.label
+  const subtitle = structure ? `${system!.label}${side ? ` · ${side}` : ''}` : label!.system
+  // "Tracked with: Heart" only says something when the structure is not the organ the region is named after.
+  const partOfRegion = !!structure && !!label && structure.name.toLowerCase() !== label.label.toLowerCase()
   return (
-    <div className="glass-strong animate-fade-in absolute bottom-4 left-4 z-20 w-[min(360px,calc(100%-32px))] rounded-2xl p-4">
+    // Lower right of the body area, above the viewer controls: clear of the status legend (bottom left),
+    // the controls (bottom center) and the floating organ labels around the chest.
+    <div className="glass-strong animate-fade-in absolute right-4 bottom-16 z-20 w-[min(360px,calc(100%-32px))] rounded-2xl p-4">
       <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.05] ring-1 ring-white/10">
-          <Icon size={18} className="text-accent" aria-hidden />
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] ring-1 ring-white/10">
+          <Icon size={18} className={region ? 'text-accent' : 'text-ink-300'} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-[16px] font-semibold text-ink-100">{label.label}</div>
-          <div className="text-xs text-ink-500">{label.system}</div>
+          <div className="text-[16px] leading-tight font-semibold [overflow-wrap:anywhere] text-ink-100">{title}</div>
+          <div className="text-xs text-ink-500">{subtitle}</div>
         </div>
-        <StatusPill status={status} />
-        <button type="button" aria-label="Close (Esc)" onClick={() => selectRegion(null)} className="focus-ring rounded-lg p-1 text-ink-500 hover:text-ink-100">
+        {region && <StatusPill status={status} />}
+        <button type="button" aria-label="Close (Esc)" onClick={clearSelection} className="focus-ring rounded-lg p-1 text-ink-500 hover:text-ink-100">
           <X size={16} />
         </button>
       </div>
-      <p className="mt-2.5 text-[14px] leading-snug text-ink-100">{summary || label.description}</p>
+      {region ? (
+        <>
+          {partOfRegion && <div className="mt-2.5 text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">Tracked with: {label!.label}</div>}
+          <p className={clsx('text-[14px] leading-snug text-ink-100', partOfRegion ? 'mt-1' : 'mt-2.5')}>
+            {summary || (status === 'NO_DATA' ? 'No recent data. Missing data is never treated as normal.' : label!.description)}
+          </p>
+        </>
+      ) : (
+        <p className="mt-2.5 text-[14px] leading-snug text-ink-300">
+          <span className="font-semibold text-ink-100">{CONTEXT_ONLY_TITLE}.</span> {CONTEXT_ONLY_TEXT}
+        </p>
+      )}
     </div>
   )
 }

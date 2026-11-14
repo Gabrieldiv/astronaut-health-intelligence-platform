@@ -1,6 +1,6 @@
 ---
 title: Standards, Contracts & Extending
-description: Coding standards, module contracts and step by step recipes to add a metric, a device adapter, a scenario or a real dataset to the Astronaut Health Intelligence Platform.
+description: Coding standards, module contracts and step by step recipes to add a metric, a device adapter, a scenario, an anatomical structure or a real dataset to the Astronaut Health Intelligence Platform.
 status: IMPLEMENTED
 code:
   - frontend/web/src/types/domain.ts
@@ -26,7 +26,9 @@ npx vite build       # production build
 
 If you changed engine rules or the simulator, also run `npm run evaluate` and commit the regenerated `src/engine/evaluation.json` and `docs/model-card.md`. The same checks run in CI ([Documentation and deployment](./deployment)).
 
-Dev only pages served by `npm run dev`: `/anatomy-lab.html` (every visual state of the 3D body) and `/features-lab.html`. In development the store is also exposed on `window.__ahi` for poking scenarios from the console. Where each file lives: [Project structure](./project-structure).
+If you rebuilt the 3D atlas, also run `npm run anatomy:validate`. The files in `public/anatomy/` are under CC BY-SA 4.0, not MIT: keep `LICENSE.md` next to them ([3D anatomy assets](../data/anatomy-assets)).
+
+Dev only pages served by `npm run dev`: `/anatomy-lab.html` (every visual state of the 3D body, layers, structure selection and the forced fallback) and `/features-lab.html`. In development the store is also exposed on `window.__ahi` for poking scenarios from the console. Where each file lives: [Project structure](./project-structure).
 
 ## Contracts
 
@@ -82,6 +84,33 @@ A **real** adapter (file import or live feed) follows the same contract with `da
 2. In `src/engine/sim/scenarios.ts`, add its timing to `SCENARIO_TIMING` and a severity function (0 to 1 over time from the scenario start). Feed it into the scenario effects that `sim/physiology.ts` (body) or `sim/cabin.ts` (cabin) consume.
 3. If an intervention should ease it, add a **hypothetical** relief entry (clearly a simulation device, never a clinical claim).
 4. Add it to the scenario list in `scripts/evaluate.ts` (simulated hours and evaluation step), run `npm run evaluate`, and document the timings in [Demo scenarios](../product/demo-scenarios) and [Results](../validation/results).
+
+## Add or rename an anatomical structure {#add-or-rename-an-anatomical-structure}
+
+The 3D atlas is generated. Never edit `public/anatomy/*.glb` or `manifest.json` by hand: change the rules and rebuild ([3D anatomy assets](../data/anatomy-assets#rebuild)).
+
+1. **Rule**: in `frontend/web/scripts/anatomy/export_atlas.py`, edit the rule function of the system (`rule_skeletal`, `rule_muscular`, `rule_cardio`, `rule_nervous`, `rule_visceral`). A rule matches source objects by name and by their ancestor labels and returns the structure id, display name, system and tissue class.
+2. **Naming**: follow the [naming rules](../data/anatomy-assets#naming-rules): kebab-case English anatomical ids, the side in the id for paired structures, ids stable between builds.
+3. **License check**: never add content from the two non commercial upstream models (ear, kidney), and keep the reproductive structures out (neutral reference body). `validate.mjs` fails the build if one slips in.
+4. **Rebuild**: `npm run anatomy:build -- --previews` (needs Blender 4.5 LTS). Read the log for unmatched objects and dropped structures, and look at the preview sheets.
+5. **Renaming an id** is a breaking change. If it is one of the seven required ids (`REQUIRED_STRUCTURE_IDS` in `src/features/anatomy/atlas/types.ts`), the viewer, the validator and the tests rely on it: avoid it. For any other id, check the patterns in `atlas/health.ts` (brain structures are recognized by id) and bump `version` in the manifest writer (`optimize.mjs`).
+6. **Verify**: `npm run anatomy:validate`, `npm test` (the manifest contract test reads the real files) and a look at `/anatomy-lab.html`.
+7. **Document**: update the numbers in [3D anatomy](../architecture/anatomy-3d#systems-and-files) and, if the mapping changed, the [mapping table](../architecture/data-model#anatomy-to-health-mapping).
+
+A new tissue class needs three coordinated changes: the `TissueClass` union in `atlas/types.ts`, a material in `TISSUE` (`viewer/tissueMaterials.ts`) and the `TISSUES` list in `validate.mjs`.
+
+## Map a structure to a region {#map-a-structure-to-a-region}
+
+Which body region a structure reports under is decided in one file: `src/features/anatomy/atlas/health.ts`. The manifest never carries health rules.
+
+1. **Check that a metric really relates to it.** A structure may map to a region only if a metric of the catalog describes that body system. If nothing measures it, leave it context only. Do not map a structure just to give it a color.
+2. **Edit `regionOfStructure()`.** The rules go by anatomical system and tissue class (for example the urinary system maps to `kidneys` only for tissue `kidney`), not by a list of ids.
+3. **Say how the indicators relate.** Update `REGION_RELATION` (what the numbers are based on, and what they are not) and `SYSTEM_INFO` (coverage: monitored, partial or context) in plain, non diagnostic language.
+4. **Never list metrics in the mapping.** Metrics come from `METRIC_CATALOG` by region. To relate a new indicator, [add a metric](#add-a-metric) with the right `region`.
+5. **Tests**: extend `atlas/health.test.ts` (by rule) and run `manifest.contract.test.ts`, which applies the rules to the real atlas.
+6. **Document**: update the canonical [mapping table](../architecture/data-model#anatomy-to-health-mapping).
+
+A new body region is a contract change: add it to `BodyRegionId` in `domain.ts` (additive), to `REGION_LABELS` in the catalog and to `REGIONS` in `src/features/anatomy/regions.ts`.
 
 ## Add a real dataset
 

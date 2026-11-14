@@ -8,6 +8,8 @@ code:
   - frontend/web/src/features/topbar/TopBar.tsx
   - frontend/web/src/features/crew/CrewRail.tsx
   - frontend/web/src/features/attention/AttentionPanel.tsx
+  - frontend/web/src/features/attention/StructureDetail.tsx
+  - frontend/web/src/features/attention/RegionEvents.tsx
   - frontend/web/src/features/timeline/index.tsx
   - frontend/web/src/features/alerts/Alerts.tsx
   - frontend/web/src/features/crewview/CrewView.tsx
@@ -110,13 +112,15 @@ O status nunca depende só da cor: sempre há cor, ícone e palavra. Os cinco es
 
 ## Corpo 3D e chips dos sistemas
 
-![Corpo 3D com detalhe de região](/screenshots/body-detail.png)
+![Corpo 3D com um sistema do corpo selecionado e o detalhe no painel da direita](/screenshots/body-detail.png)
 
 No centro fica o nome da pessoa, o dia de missão, a atividade atual ("Sleeping", "Resting", "Working", "Exercising" ou "On spacewalk (EVA)") e uma **frase de status** em linguagem simples.
 
-O corpo 3D é procedural (sem arquivos de modelo externos). Cada sistema brilha na cor do seu status, o coração bate na frequência cardíaca ao vivo e os pulmões respiram na frequência respiratória ao vivo. Quando falta dado, o órgão fica cinza e para de animar.
+O corpo 3D é um modelo anatômico realista (o atlas Z-Anatomy), com as cores naturais dos tecidos sob uma pele translúcida. Um sistema que pede atenção acende na cor do seu status, o coração bate na frequência cardíaca ao vivo e os pulmões respiram na frequência respiratória ao vivo. Uma mudança de status dispara um pulso de varredura curto a partir daquela região. Quando falta dado, o órgão fica cinza e para de se mover.
 
-Ao lado do corpo ficam os **chips dos sistemas**, como rótulos anatômicos:
+Sob o corpo ficam a pílula de controles ("Layers", as vistas "Front", "Back", "Left" e "Right" e o botão de reset), a legenda de status e a **legenda de anatomia de referência**: "Reference anatomy: Z-Anatomy atlas (CC BY-SA 4.0)". O botão de informação dela explica que este é um único modelo adulto de referência, mostrado para todos os tripulantes, não um exame do astronauta, e lista os créditos.
+
+Ao lado do corpo ficam os **chips dos sistemas**, como rótulos anatômicos. Um chip sempre significa o sistema inteiro:
 
 | Coluna esquerda | Coluna direita |
 | --- | --- |
@@ -125,10 +129,38 @@ Ao lado do corpo ficam os **chips dos sistemas**, como rótulos anatômicos:
 | "Heart" (Cardiovascular) | "Skin" (Thermal) |
 | "Kidneys" (Renal and hydration) | |
 
-Clique em um chip ou em um órgão para abrir o detalhe no painel da direita. Detalhes técnicos em [Renderização da anatomia 3D](/pt/architecture/anatomy-3d).
+### Camadas, vistas e opacidade da pele
+
+| Controle | O que faz |
+| --- | --- |
+| "Layers" | Uma chave por sistema anatômico: "Skin", "Muscular", "Skeletal", "Cardiovascular", "Respiratory", "Nervous", "Nerves", "Digestive", "Urinary", "Other". Os músculos são "auto": aparecem quando são selecionados ou pedem atenção. "Nerves" e "Other" começam escondidos |
+| "Skin opacity" | Um controle deslizante de 0 a 100% (22% por padrão), para ver mais da superfície ou mais do interior |
+| "Presets" | "Default", "Organs", "Skeleton", "Muscles", "All" |
+| "Front" / "Back" / "Left" / "Right" | Giram o corpo para uma vista predefinida, com transição suave |
+| Reset | Mostra o corpo inteiro de novo e limpa a seleção |
+
+Também dá para arrastar para girar, rolar para dar zoom e deslocar a vista. O corpo gira devagar sozinho quando nada está selecionado. Um sistema que ainda está baixando mostra o progresso; o resto do corpo continua utilizável.
+
+### Selecionar uma estrutura {#selecting-a-structure}
+
+Passe o ponteiro sobre qualquer parte do corpo para ver o nome, o sistema anatômico e o status, ou "Not monitored". Clique para selecionar: a câmera vai até a estrutura, o resto do corpo esmaece em um contorno translúcido e o painel da direita vira "Anatomy detail".
+
+| Parte do painel | Conteúdo |
+| --- | --- |
+| "Selected structure" | Nome, sistema anatômico e lado (por exemplo "Left femur", "Skeletal system", "Left side") |
+| "Reference anatomy" | De onde vem a forma 3D: "Z-Anatomy atlas" ou "AHI procedural" (os rins) |
+| Estruturas no atlas | Quantas estruturas aquele sistema anatômico tem, e "Part of" quando a estrutura pertence a uma maior (por exemplo, as artérias coronárias fazem parte do coração) |
+| "Monitored with" | Para estruturas monitoradas: o sistema do corpo com o qual ela é monitorada, o status desse sistema, uma frase simples dizendo como os indicadores se relacionam à estrutura, e as mesmas métricas, gráficos, alertas e sinalizações do detalhe do sistema. "Whole region" passa para o sistema inteiro |
+| "Context only: not monitored" | Para estruturas às quais nenhum aparelho ou métrica se relaciona (por exemplo o estômago, um nervo ou os olhos): um cartão calmo, sem status. "No status is shown here because nothing is measured. That is not the same as normal." |
+
+Os indicadores descrevem um sistema do corpo como um todo. São **indicadores relacionados, não medidas da estrutura selecionada**: selecionar o fêmur esquerdo mostra a dose de radiação acumulada como contexto de saúde óssea, não uma medida daquele osso. Quais estruturas se relacionam a quais métricas: [Mapeamento da anatomia para a saúde](/pt/architecture/data-model#anatomy-to-health-mapping).
+
+**Alertas nas estruturas.** Um alerta aberto pertence a um sistema do corpo. As estruturas dele mostram um contorno pulsante na cor de status do alerta, um órgão monitorado em alerta fica visível através da parede do corpo sem nenhum clique, e um rótulo flutuante dá o nome do sistema e o valor-chave. No painel, "Alerts and flags" lista o que disparou cada alerta, o valor observado no momento do alerta ao lado do normal pessoal, o selo de origem do dado e o identificador da regra.
+
+Clique de novo na estrutura selecionada, clique no espaço vazio, aperte `Esc` ou use "Overview" para voltar. Se o atlas de referência não carregar, o app mostra um corpo simplificado com o aviso "Reference atlas unavailable. Showing simplified model."; os sistemas do corpo, os chips e os alertas continuam funcionando. Detalhes técnicos em [Renderização da anatomia 3D](/pt/architecture/anatomy-3d).
 
 ::: warning ATENÇÃO
-Os olhos são desenhados apenas como anatomia de contexto. Não existe aparelho de medição ocular no MVP, então os olhos não são uma região monitorada.
+Os olhos podem ser selecionados, mas são só de contexto: não existe aparelho de medição ocular no MVP, então eles nunca mostram status. O acompanhamento da SANS a partir de exames periódicos está no [roadmap](/pt/resources/roadmap).
 :::
 
 ## Painel "What needs attention"
@@ -179,12 +211,14 @@ Clique em uma linha para abrir o gráfico da métrica.
 
 ## Detalhe da região
 
-Ao clicar em um sistema, o painel vira "Body system detail" com o botão "Overview" para voltar (ou tecla `Esc`). Cada métrica do sistema tem:
+Ao clicar em um chip de sistema, o painel vira "Body system detail" com o botão "Overview" para voltar (ou tecla `Esc`). Clicar em uma estrutura monitorada do corpo mostra os mesmos dados sob o cabeçalho da estrutura ([Selecionar uma estrutura](#selecting-a-structure)). Cada métrica do sistema tem:
 
 - valor atual e diferença em relação ao normal;
 - **"Your normal"**: a faixa pessoal (ou "Still learning your normal" enquanto não há dados suficientes);
 - selos de **qualidade** e de **origem** (`SIMULATED`);
 - um **gráfico** com janela de 6 h, 24 h ou 72 h.
+
+Abaixo das métricas, "Alerts and flags" lista os alertas abertos daquele sistema (gravidade, hora, a métrica que disparou, o valor observado no momento do alerta contra o normal pessoal, a origem do dado e o identificador da regra) e as sinalizações estatísticas das últimas 24 horas. Uma linha acima das métricas diz quantos alertas estão abertos e leva até eles. O texto continua não diagnóstico: alertas e sinalizações pedem uma revisão.
 
 ### O gráfico
 
@@ -251,7 +285,7 @@ Um alerta CRITICAL também aparece como **faixa sobre o cabeçalho** do corpo, s
 | `P` | Modo apresentação (também no "Tools") |
 | `A` | Abrir ou fechar os alertas |
 | `Space` | Play ou pause da simulação |
-| `Esc` | Fechar um painel, ou voltar do detalhe do corpo |
+| `Esc` | Fechar um painel, ou voltar do detalhe do corpo ou da anatomia |
 | `?` | Mostrar a ajuda de atalhos |
 | `←` `→` | Passo anterior / próximo na demo guiada |
 
@@ -264,7 +298,7 @@ O layout se adapta à tela sem configuração:
 - **Tela baixa** (largura de 1024 px ou mais e altura de até 820 px, por exemplo 1366x768 ou 1280x720 com escala de 150%): a linha do tempo vira uma **faixa fina** que se expande ao passar o mouse, ao receber foco ou ao toque; os vitais perdem a minicurva; os cartões da tripulação viram linhas compactas.
 - **Tela grande** (1680x1000 ou mais): painel da direita mais largo, linha do tempo mais alta, previsões expandidas.
 - **Barra superior**: recolhe itens conforme a largura (veja [Barra adaptável](#barra-adaptavel)).
-- **Corpo 3D**: em painéis estreitos, os controles de camadas viram um único botão "Layers".
+- **Corpo 3D**: em painéis estreitos, os controles viram uma pílula compacta com o botão "Layers" e o reset; as vistas vão para dentro do popover.
 
 ## Próximos passos
 

@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { Bone, Brain, Droplets, Dumbbell, Heart, Thermometer, Wind, type LucideIcon } from 'lucide-react'
-import { lazy, memo, Suspense } from 'react'
+import { lazy, memo, Suspense, useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
@@ -9,7 +9,8 @@ import { REGION_LABELS } from '../../engine/catalog'
 import { StatusDot, StatusPill } from '../../components/Status'
 import { CriticalBanner } from '../alerts/Alerts'
 import { PANEL_HEADER, PANEL_TITLE } from '../../components/ui'
-import { SIGNAL_LOST_HEADLINE, useAstronaut, useSignalLost } from '../shared/hooks'
+import { SIGNAL_LOST_HEADLINE, useAstronaut, useSelectedStructure, useSignalLost } from '../shared/hooks'
+import { regionStructureCount } from '../anatomy/atlas/health'
 import { CheckInButton } from '../checkin'
 
 // three.js and the anatomy scene load as a separate chunk so the dashboard paints first.
@@ -89,8 +90,28 @@ function Headline() {
  * Body system chip. Lives in a column beside the body (anatomical callout): icon, name, status dot
  * and a short leader line toward the body. Adapts to the stage width with container queries:
  * icon only under 560 px, name only under 880 px, name plus system subtitle above.
+ *
+ * Two way sync with the 3D atlas: a structure selected in the viewer selects its region too, so
+ * the chip of that region lights up and its subtitle names the structure. A chip always means
+ * the whole region: clicking it selects the region and clears the structure.
  */
-function RegionChip({ region, astronautId, selected, side }: { region: BodyRegionId; astronautId: string; selected: boolean; side: 'left' | 'right' }) {
+function RegionChip({
+  region,
+  astronautId,
+  selected,
+  side,
+  structureName,
+  atlasCount,
+}: {
+  region: BodyRegionId
+  astronautId: string
+  selected: boolean
+  side: 'left' | 'right'
+  /** Name of the structure selected inside this region, when there is one. */
+  structureName: string | null
+  /** Structures of the atlas that report under this region (null while the atlas is not loaded). */
+  atlasCount: number | null
+}) {
   const { status, summary, monitored } = useAppStore(
     useShallow((s) => {
       const r = s.health[astronautId]?.regions[region]
@@ -109,10 +130,12 @@ function RegionChip({ region, astronautId, selected, side }: { region: BodyRegio
     <button
       type="button"
       aria-pressed={selected}
-      aria-label={`${label.label}, ${label.system}. ${monitored ? meta.crewLabel : 'Not monitored'}. ${summary}`}
-      title={`${label.label}: ${summary || label.description}`}
+      aria-label={`${label.label}, ${label.system}. ${monitored ? meta.crewLabel : 'Not monitored'}. ${summary}${structureName ? ` Selected structure: ${structureName}. Press to select the whole system.` : ''}`}
+      title={`${label.label}: ${summary || label.description}${atlasCount ? ` (${atlasCount} structures in the anatomy atlas)` : ''}`}
       onClick={() => {
-        selectRegion(selected ? null : region)
+        // With a structure selected inside this region the click widens the selection to the
+        // whole region (selectRegion clears the structure) instead of toggling the region off.
+        selectRegion(selected && !structureName ? null : region)
         selectMetric(null)
       }}
       className={clsx(
@@ -132,8 +155,8 @@ function RegionChip({ region, astronautId, selected, side }: { region: BodyRegio
       <Icon size={16} className={clsx('shrink-0', selected ? 'text-accent' : 'text-ink-300')} aria-hidden />
       <span className="hidden min-w-0 flex-1 leading-tight @min-[560px]/stage:block">
         <span className="block text-xs font-semibold whitespace-nowrap text-ink-100 roomy:text-[13px]">{label.label}</span>
-        <span className="hidden text-[10px] whitespace-nowrap text-ink-500 present:hidden @min-[880px]/stage:block roomy:text-[11px]">
-          {monitored ? label.system : 'Context only'}
+        <span className={clsx('hidden truncate text-[10px] present:hidden @min-[880px]/stage:block roomy:text-[11px]', structureName ? 'text-accent/90' : 'text-ink-500')}>
+          {structureName ?? (monitored ? label.system : 'Context only')}
         </span>
       </span>
       <span className={clsx('absolute top-1 flex @min-[560px]/stage:static', side === 'left' ? 'right-1' : 'left-1')}>
@@ -150,6 +173,8 @@ const RIGHT_REGIONS: BodyRegionId[] = ['muscles', 'bones', 'skin']
 function RegionColumn({ side, regions }: { side: 'left' | 'right'; regions: BodyRegionId[] }) {
   const id = useAppStore((s) => s.selectedAstronautId)
   const selected = useAppStore((s) => s.selectedRegion)
+  const { structure, manifest } = useSelectedStructure()
+  const counts = useMemo(() => (manifest ? Object.fromEntries(regions.map((r) => [r, regionStructureCount(manifest, r)])) : null), [manifest, regions])
   return (
     <div
       role="group"
@@ -157,7 +182,7 @@ function RegionColumn({ side, regions }: { side: 'left' | 'right'; regions: Body
       className="relative z-10 flex w-10 shrink-0 flex-col justify-center gap-2 @min-[560px]/stage:w-[108px] @min-[880px]/stage:w-[150px] roomy:gap-3 @min-[1100px]/stage:roomy:w-[168px]"
     >
       {regions.map((r) => (
-        <RegionChip key={r} region={r} astronautId={id} selected={selected === r} side={side} />
+        <RegionChip key={r} region={r} astronautId={id} selected={selected === r} side={side} structureName={selected === r && structure ? structure.name : null} atlasCount={counts?.[r] ?? null} />
       ))}
     </div>
   )

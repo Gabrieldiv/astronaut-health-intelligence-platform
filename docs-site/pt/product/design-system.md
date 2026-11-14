@@ -23,14 +23,14 @@ A interface da Astronaut Health Intelligence Platform (AHI) segue uma ideia: **e
 | Linguagem simples primeiro | "All good", "Keep an eye", "Act soon", "Act now", "Signal lost" antes do termo técnico |
 | Cor nunca é a única pista | Cada status tem cor, ícone e palavra |
 | Dado ausente nunca parece normal | Cinza, contorno tracejado e "Signal lost" |
-| Calma por padrão | Paleta fria no estado saudável; cores quentes só quando algo pede atenção |
+| Calma por padrão | No estado saudável o corpo 3D mostra só as cores naturais dos tecidos; cores de status só quando algo pede atenção |
 | Menos é mais para a tripulação | "Crew view" mostra no máximo duas ações |
 | Origem sempre visível | Selo `SIMULATED` fixo na barra superior |
 | Interface em inglês | Júri internacional; termo técnico depois da linguagem simples |
 
 ## Status: cor, ícone e palavra
 
-Fonte única: `STATUS_META` em `src/lib/status.ts` e `STATUS_ICON` em `src/components/Status.tsx`. O corpo 3D usa as mesmas cores para os níveis de atenção.
+Fonte única: `STATUS_META` em `src/lib/status.ts` e `STATUS_ICON` em `src/components/Status.tsx`. O corpo 3D usa as mesmas cores para os níveis de atenção (veja [Corpo 3D](#corpo-3d)).
 
 | Nível interno | Rótulo técnico | Rótulo para a tripulação | Cor | Ícone (lucide) |
 | --- | --- | --- | --- | --- |
@@ -41,6 +41,27 @@ Fonte única: `STATUS_META` em `src/lib/status.ts` e `STATUS_ICON` em `src/compo
 | `NO_DATA` | No data | "Signal lost" | cinza `#94a3b8`, contorno tracejado | Wi-Fi cortado |
 
 Em HIGH e CRITICAL, o ponto de status pulsa (mais rápido em CRITICAL). Quando o usuário pede menos movimento (`prefers-reduced-motion`), a animação dos valores numéricos é desligada.
+
+## Corpo 3D
+
+O corpo é um atlas anatômico realista, então a cor tem dois papéis separados. As **cores dos tecidos** (osso, músculo, vasos, órgãos) são anatomia de referência e não dizem nada sobre saúde. As **cores de status** são as mesmas cinco do `STATUS_META` usadas no resto do app e aparecem só como destaque por cima da anatomia.
+
+| Estado de uma estrutura | Visual | Significado |
+| --- | --- | --- |
+| Normal | Cor natural do tecido | Nominal, ou só de contexto |
+| Sob o ponteiro | Tom ciano e tooltip | Estrutura sob o ponteiro |
+| Selecionado | Contorno ciano; todo o resto vira um fantasma translúcido fraco | Foco. O efeito fantasma é auxílio de visualização, não status |
+| Relacionado a alerta | Contorno pulsante na cor do status (âmbar, laranja, vermelho), com rótulo flutuante | O sistema do corpo dela não está nominal |
+| Dado indisponível | Cinza, dessaturado, sem movimento | `NO_DATA` |
+
+- Um corpo nominal não mostra nenhuma cor de status, então qualquer âmbar, laranja ou vermelho chama atenção.
+- **Ciano é seleção, nunca status.** É a cor de destaque do visualizador (`#5ee7f5`), próxima do destaque do app.
+- **Monitorado e só contexto.** Uma estrutura à qual nenhum aparelho ou métrica se relaciona nunca ganha cor nem palavra de status. O painel dela mostra o selo neutro "Context only" e diz que não há status porque nada é medido.
+- **Indicadores relacionados.** O painel da estrutura sempre diz que os números descrevem o sistema do corpo como um todo, não a estrutura selecionada.
+- **Legenda de anatomia de referência.** "Reference anatomy: Z-Anatomy atlas (CC BY-SA 4.0)" fica sempre visível sob o corpo, com um botão de informação para os créditos e a declaração de que há um único modelo de referência para todos os tripulantes.
+- **Controles** no mesmo estilo de vidro: "Layers" (uma chave por sistema anatômico, com uma amostra da cor do tecido), opacidade da pele, presets de camadas, as vistas "Front", "Back", "Left" e "Right" e o reset.
+
+Lista completa dos estados e de como são desenhados: [Renderização da anatomia 3D](/pt/architecture/anatomy-3d#visual-states). Como as pessoas encontram esses estados: [Tour do produto](/pt/product/product-tour#selecting-a-structure).
 
 ## Tokens
 
@@ -69,7 +90,7 @@ O layout se ajusta sem configuração, só com CSS:
 | Barra superior | Pela largura medida | Recolhe itens em ordem fixa: rótulos primeiro, depois reinício e seletor de visão vão para "Tools"; "Start demo" vira "Demo" e depois só ícone; o sino de alertas nunca some |
 | Rótulos dos vitais | Abaixo de 1440 px ou tela baixa | Siglas (HR, HRV, SpO₂); o nome completo fica no título e no nome acessível |
 
-**Decisão de layout medida.** A faixa de alerta CRITICAL passou a ser sobreposta ao cabeçalho do corpo, em vez de empurrar o conteúdo. Em 1280x720 com alerta ativo, a altura do corpo 3D subiu de 247 para 359 px.
+**Decisão de layout medida.** A faixa de alerta CRITICAL passou a ser sobreposta ao cabeçalho do corpo, em vez de empurrar o conteúdo. Em 1280x720 com alerta ativo, a altura do corpo 3D subiu de 247 para 359 px (medida feita com o corpo procedural anterior).
 
 ## Modo apresentação
 
@@ -90,7 +111,7 @@ Tecla `P` ou menu "Tools". Aumenta fontes (piso de 13 px em qualquer texto), ró
 | Armazenamento | Funciona sem `localStorage` (janela anônima): só não lembra preferências |
 
 ::: warning ATENÇÃO
-Não houve auditoria formal de acessibilidade (por exemplo WCAG com leitor de tela) nem teste com usuários reais. Contraste e navegação foram verificados pelo autor durante o desenvolvimento.
+Não houve auditoria formal de acessibilidade (por exemplo WCAG com leitor de tela) nem teste com usuários reais. Contraste e navegação foram verificados pelo autor durante o desenvolvimento. O conteúdo 3D não é acessível a leitores de tela além dos rótulos e dos painéis de texto equivalentes: estruturas isoladas só podem ser selecionadas com o ponteiro, enquanto os sistemas do corpo são alcançáveis pelos chips, com o teclado.
 :::
 
 ## Decisões de UX registradas
@@ -98,6 +119,8 @@ Não houve auditoria formal de acessibilidade (por exemplo WCAG com leitor de te
 | Decisão | Motivo |
 | --- | --- |
 | Corpo 3D no centro | Leitura imediata do sistema afetado, sem ler números |
+| Anatomia realista com o status como destaque | A cor do tecido mostra o que a estrutura é; a cor de status mostra só o que pede atenção |
+| Estruturas só de contexto não mostram status | "Nada é medido" nunca pode parecer "normal" |
 | Faixa pessoal sombreada em todo gráfico | Mostrar "seu normal", não um limite populacional |
 | Lacunas não preenchidas nos gráficos | "Gaps mean no data": ausência fica visível |
 | Selo de autonomia em cada ação | Com a Terra longe, quem pode agir importa tanto quanto o quê |

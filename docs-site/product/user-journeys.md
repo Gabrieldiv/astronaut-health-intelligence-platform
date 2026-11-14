@@ -49,7 +49,7 @@ flowchart LR
 
 1. In the **Ground view**, a crew card or the timeline shows a lane turning amber.
 2. Select the astronaut (click the card or press `1` to `4`). **What needs attention** shows the status, score, confidence and contributing factors.
-3. Click the heart (or the body system chip). **Body system detail** lists each metric with "11% above your normal", the normal range and the robust z.
+3. Click the **Heart** chip (or the highlighted organ in the 3D body). The detail panel lists each metric with "11% above your normal", the normal range and the robust z.
 4. Expand HRV: the trend chart shows the personal band, gaps where data is missing, the forecast cone and markers for alerts, actions and check-ins. **Why is this my normal?** shows the window, readings, median and MAD.
 5. Read the forecast: "Projected to leave your normal range in ~5 h" or "Not enough data to forecast yet".
 

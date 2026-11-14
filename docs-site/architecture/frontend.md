@@ -10,6 +10,7 @@ code:
   - frontend/web/src/index.css
 tests:
   - frontend/web/src/state/store.test.ts
+  - frontend/web/src/state/selection.test.ts
 verified: 2026-11-14
 ---
 
@@ -35,8 +36,9 @@ The reading order of the Ground view is deliberate: who (crew) > what (body and 
 | `features/topbar` | Identity, SIMULATED chip and provenance popover, scenario player, Earth link control, tools menu, priority collapse on narrow widths |
 | `features/crew` | Crew rail cards |
 | `features/stage` | Center stage: headline, body system chips, lazy 3D viewer |
-| `features/anatomy` | 3D body ([3D anatomy](./anatomy-3d)) |
-| `features/attention` | Overall status, recommended actions, autonomy badges, factors, forecasts, region detail |
+| `features/anatomy` | 3D body: atlas viewer, health mapping, procedural fallback ([3D anatomy](./anatomy-3d)) |
+| `features/attention` | Overall status, recommended actions, autonomy badges, factors, forecasts, region detail, structure detail, alerts and flags per body system |
+| `features/shared` | Shared hooks and selection helpers (`focusTarget`, `clearSelection`, `useSelectedStructure`) |
 | `features/timeline` | Status lanes and event markers |
 | `features/vitals` | Live vitals, cabin, devices indicator |
 | `features/alerts` | Alerts drawer, banner support, optional chime |
@@ -66,7 +68,7 @@ Implements the `AppState` contract of `src/types/domain.ts` (plus the additive v
 | Clock | `clock` (`scenarioId`, `running`, `speed`, `simNow`, `startedAt`) |
 | Analytics | `health` (per astronaut: metrics, regions, risk, predictions), `environment`, `history`, `anomalies`, `alerts`, `recommendations`, `interventions`, `audit` |
 | v2 | `comms`, `checkIns`, `missionDays`, `statusTimeline`, `commProfileId` |
-| Selection | `selectedAstronautId`, `selectedRegion`, `selectedMetric` |
+| Selection | `selectedAstronautId`, `selectedRegion`, `selectedMetric`, `selectedStructureId` with `selectAstronaut`, `selectRegion`, `selectMetric`, `selectStructure` ([selection contract](./data-model#selection-contract)) |
 | Actions | `setScenario`, `play`, `pause`, `setSpeed`, `reset`, `acknowledgeAlert`, `logIntervention`, `dismissRecommendation`, `fastForward`, `setCommProfile`, `sendToGround`, `submitCheckIn`, `compareIntervention` |
 
 **Publishing model.** A ticker (`startTicker()`, every 100 ms real time) advances the sim clock. Analytics are re-evaluated at most every 250 ms real time, and only slices whose engine version changed get new object references. Components subscribe with narrow selectors and re-render only when their own data changes. Details: [Engine and simulation](./engine-and-simulation#simulation-clock-and-publishing).
@@ -83,6 +85,8 @@ View mode (Ground or Crew), presentation mode, alert sound preference, alerts dr
 | 3D scene reads vitals from the store without subscribing | Animation every frame with zero React renders |
 | Floating 3D labels are plain DOM positioned by a projector | Crisp text, no per frame React work |
 | Lazy chunks for the 3D viewer, Data and model dialog and OSDR panels | Faster first paint |
+| The 3D atlas is one file per anatomical system, fetched on demand and cached for the session | The default view downloads about 3 MB; switching astronaut never reloads geometry |
+| The right panel has three levels: structure, body region, overview | A structure selected in the 3D body reuses the region detail, so the data is shown one way only |
 | `fastForward(simMs)` | The guided demo jumps the simulation synchronously (for example to sim hour 48 of the fatigue scenario) |
 
 ## Layout modes
@@ -100,7 +104,7 @@ Visual language, colors and accessibility measures: [Design system and accessibi
 
 ## Status
 
-<StatusBadge status="IMPLEMENTED" /> Covered by `store.test.ts` (v2 slices published, references stable when unchanged, actions wired). UI components have no automated tests yet; end to end tests are [planned](../engineering/testing).
+<StatusBadge status="IMPLEMENTED" /> Covered by `store.test.ts` (v2 slices published, references stable when unchanged, actions wired) and `selection.test.ts` (structure, region and metric selection). UI components have no automated tests yet; end to end tests are [planned](../engineering/testing).
 
 ## Next steps
 

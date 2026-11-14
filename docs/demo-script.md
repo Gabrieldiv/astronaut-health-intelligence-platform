@@ -11,14 +11,14 @@ Long missions expose crews to five hazards (radiation, isolation, distance from 
 
 ## 2. The screen in 10 seconds (40 s)
 - Left: the crew. Each card says in plain words how that person is doing ("All good", "Keep an eye", "Act soon", "Act now").
-- Center: the 3D body. Organs glow in the color of their status. The heart beats at the live heart rate, the lungs breathe at the live breathing rate.
+- Center: the 3D body, a realistic anatomical model. Organs that need attention light up in the color of their status. The heart beats at the live heart rate, the lungs breathe at the live breathing rate. Click any structure to see what it is and the data it is monitored with.
 - Right: **What needs attention**: status, why, and what to do.
 - Bottom: live vitals, cabin environment and device status. The `SIMULATED DATA` badge is always visible.
 
 ## 3. Progressive fatigue (60 s)
 1. Pick **Progressive fatigue** (affects LYRA), speed **1 h/s**.
 2. Sleep drops, HRV falls below LYRA's own normal band, resting heart rate drifts up.
-3. The brain and heart turn amber, then orange. Click the heart: the trend chart shows the personal baseline band, the history and the forecast cone.
+3. The brain and heart light up in amber, then orange. Click the **Heart** chip beside the body: the trend chart shows the personal baseline band, the history and the forecast cone.
 4. Message: the system does not wait for one number to cross an arbitrary line. It looks at pattern, persistence and context against each person's own baseline.
 
 ## 4. Acute event and fast decision (50 s)

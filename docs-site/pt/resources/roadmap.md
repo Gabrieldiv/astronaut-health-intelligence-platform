@@ -1,6 +1,6 @@
 ---
 title: Roadmap
-description: O que a Astronaut Health Intelligence Platform já entrega, o que vem a seguir em dados, plataforma, fluxo clínico e análise, e o que está mais longe.
+description: O que a Astronaut Health Intelligence Platform já entrega, o que vem a seguir em dados, plataforma, fluxo clínico, análise e anatomia 3D, e o que está mais longe.
 status: PLANNED
 verified: 2026-11-14
 ---
@@ -16,10 +16,11 @@ O que a Astronaut Health Intelligence Platform (AHI) já entrega, o que vem a se
 | --- | --- |
 | Simulação | Tripulação de 4 pessoas, adapters de dispositivos simulados, 6 cenários, semeada e reproduzível |
 | Motor | Baseline pessoal robusta, detecção aguda, deriva e persistência, regras combinadas, escore de risco explicável, previsão com incerteza, recomendações com autonomia, alertas com escalonamento |
-| Interface | "Ground view" e "Crew view", corpo 3D procedural, linha do tempo, gaveta de alertas, modo apresentação, atalhos de teclado, demo guiada de 10 passos |
+| Interface | "Ground view" e "Crew view", linha do tempo, gaveta de alertas, modo apresentação, atalhos de teclado, demo guiada de 10 passos |
+| Anatomia 3D | Corpo 3D sobre um atlas anatômico real (Z-Anatomy): 250 estruturas selecionáveis, camadas por sistema, painel da estrutura, mapeamento de saúde, pipeline de assets reproduzível e fallback procedural |
 | Missão | Perfis de comunicação ISS, Lua e Marte; check-in diário; visão de longo prazo; relatório de passagem de turno com exportação FHIR R4; comparação "e se" |
 | Dados reais | OSD-569 e OSD-575 (Inspiration4) importados como `REAL_PUBLIC`, com proveniência completa |
-| Qualidade | 101 testes unitários e de cenário (vitest), avaliação reproduzível (`npm run evaluate`) e model card gerado |
+| Qualidade | 143 testes unitários e de cenário (vitest), avaliação reproduzível (`npm run evaluate`) e model card gerado |
 | Documentação | Portal bilíngue (VitePress) publicado no GitHub Pages, com CI |
 
 ## Próximo: dados reais e fundamentação
@@ -77,7 +78,22 @@ Reconhecimento de atividade por sensor (hoje o contexto vem do cronograma) tamb�
 ## Saúde ocular: SANS
 
 <StatusBadge status="PLANNED" />
-Hoje os olhos são só anatomia passiva no corpo 3D: **nenhum aparelho de medição ocular alimenta o MVP**. A extensão planejada é acompanhar a **SANS** (síndrome neuro-ocular associada ao voo espacial) a partir de **exames periódicos**, como OCT e ultrassom ocular. Seriam medidas pontuais (não um sinal contínuo), que entrariam no mesmo modelo canônico como observações de exame.
+Hoje os olhos são estruturas só de contexto do atlas 3D: podem ser selecionados, mas **nenhum aparelho de medição ocular alimenta o MVP**, então não mostram status. A extensão planejada é acompanhar a **SANS** (síndrome neuro-ocular associada ao voo espacial) a partir de **exames periódicos**, como OCT e ultrassom ocular. Seriam medidas pontuais (não um sinal contínuo), que entrariam no mesmo modelo canônico como observações de exame.
+
+## Anatomia 3D: próximos passos {#anatomy-next-steps}
+
+<StatusBadge status="PLANNED" />
+O visualizador do atlas está pronto ([Renderização da anatomia 3D](/pt/architecture/anatomy-3d)). O que vem a seguir:
+
+| Item | Por quê |
+| --- | --- |
+| **Modelo feminino de referência** | Hoje um único modelo de referência (fonte adulta masculina, com a virilha neutra) representa todos os tripulantes. Um segundo modelo deixaria o corpo acompanhar o sexo do tripulante. Precisa de uma fonte com licença compatível e dos mesmos ids de estrutura |
+| **Texturas** | A fonte só tem cores chapadas, então todo o detalhe vem da geometria e dos materiais. Texturas dariam detalhe de superfície, ao custo de mais download |
+| **Alternativa de rim do BodyParts3D** | Os rins são formas procedurais simples porque o modelo de rim dentro do Z-Anatomy tem licença não comercial. O BodyParts3D, a base em que o Z-Anatomy se apoia, é uma fonte candidata de geometria real de rim, sob uma licença do tipo "compartilha igual"; os termos precisam ser conferidos antes |
+| **Monitoramento ocular (SANS)** | Veja a seção acima: as estruturas dos olhos já existem e só precisam de dados |
+| **Seleção de estruturas pelo teclado e testes visuais automatizados** | As estruturas só podem ser selecionadas com o ponteiro, e a renderização é conferida à mão |
+
+Fora dos planos: anatomia por astronauta (exames ou tamanho do corpo). O corpo é anatomia de referência por decisão de projeto.
 
 ## Engenharia
 

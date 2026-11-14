@@ -12,8 +12,9 @@ import { Badge, Button, PANEL_HEADER, PANEL_TITLE, SectionLabel } from '../../co
 import { WhatIfButton } from '../whatif'
 import { AutonomyBadge } from './AutonomyBadge'
 import { formatHours, formatUtcTime, relTime } from '../../components/format'
-import { BODY_REGIONS, focusTarget, useActions, usePendingActions, useSignalLost } from '../shared/hooks'
+import { BODY_REGIONS, focusTarget, useActions, useEscapeClearsStructure, usePendingActions, useSelectedStructure, useSignalLost } from '../shared/hooks'
 import { RegionDetail } from './RegionDetail'
+import { StructureDetail, StructureUnavailable } from './StructureDetail'
 
 export const DISCLAIMER = 'Decision support only. Not a diagnosis. Simulated data.'
 
@@ -352,18 +353,38 @@ function Overview({ astronautId }: { astronautId: string }) {
   )
 }
 
+/**
+ * Right panel. Three levels, most specific first:
+ * a structure selected in the 3D atlas (what it is, plus the data of the region it is monitored
+ * with, or a "context only" note), a body region (metrics, alerts and flags), or the overview.
+ */
 export function AttentionPanel({ className }: { className?: string }) {
   const astronautId = useAppStore((s) => s.selectedAstronautId)
   const callsign = useAppStore((s) => s.crew.find((c) => c.id === s.selectedAstronautId)?.callsign)
   const region = useAppStore((s) => s.selectedRegion)
+  const { structureId, structure, manifest, pending } = useSelectedStructure()
+  useEscapeClearsStructure()
+  let title = 'What needs attention'
+  let body = <Overview astronautId={astronautId} />
+  if (structure && manifest) {
+    title = 'Anatomy detail'
+    body = <StructureDetail astronautId={astronautId} structure={structure} manifest={manifest} />
+  } else if (region) {
+    // Also the fallback while the atlas loads or when it is unavailable: the region data never waits for anatomy.
+    title = 'Body system detail'
+    body = <RegionDetail astronautId={astronautId} region={region} />
+  } else if (structureId) {
+    title = 'Anatomy detail'
+    body = <StructureUnavailable loading={pending} />
+  }
   return (
     <aside aria-label="What needs attention" data-tour="attention" className={clsx('glass flex min-h-0 flex-col rounded-2xl', className)}>
       <header className={PANEL_HEADER}>
-        <h2 className={PANEL_TITLE}>{region ? 'Body system detail' : 'What needs attention'}</h2>
+        <h2 className={PANEL_TITLE}>{title}</h2>
         <span className="text-[11px] leading-none font-semibold tracking-wide text-ink-300">{callsign}</span>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4" key={`${astronautId}-${region ?? 'overview'}`}>
-        <div className="animate-fade-in">{region ? <RegionDetail astronautId={astronautId} region={region} /> : <Overview astronautId={astronautId} />}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4" key={`${astronautId}-${structure ? `s-${structure.id}` : (region ?? (structureId ? 'structure' : 'overview'))}`}>
+        <div className="animate-fade-in">{body}</div>
       </div>
       <footer className="flex items-center gap-1.5 border-t border-white/[0.06] px-4 py-2 text-[10.5px] text-ink-500 present:py-1.5">
         <Info size={11} className="shrink-0" aria-hidden />

@@ -1,7 +1,7 @@
 /** Local UI state of one anatomy viewer instance (hover, layer toggles, camera reset). */
 import { create } from 'zustand'
-import type { BodyRegionId, Status } from '../../types/domain'
-import type { LayerId } from './regions'
+import type { BodyRegionId, Status } from '../../../types/domain'
+import type { LayerId } from '../regions'
 
 export interface HoverInfo {
   region: BodyRegionId

@@ -55,7 +55,7 @@ Slow scenarios are capped at **HIGH**: they call for review, not an emergency re
 Everything is green: "All good" on every card, "All indicators are within your normal range." Point out the personal normal bands and that the risk score is 0.
 
 ### Acute cardio event (ORION)
-- Heart rate rises and blood oxygen drops; the heart and lungs turn red.
+- Heart rate rises and blood oxygen drops; the heart and lungs light up in red on the 3D body, visible through the chest without a click.
 - A **CRITICAL banner** appears; the alerts bell pulses. Combined rule **R-CARD-01** fires when heart rate and SpO2 are both HIGH or worse.
 - Recommended actions: "Pause activity, rest, and request flight surgeon review" and "Request flight surgeon review now", both flagged **Needs flight surgeon**. Under the Mars profiles an on board first step for the crew medical officer is added on top.
 - **Mark done** on the rest action logs a rest protocol in the audit trail; the simulator then shows a hypothetical recovery, clearly labeled as simulation.
@@ -66,7 +66,7 @@ Everything is green: "All good" on every card, "All indicators are within your n
 
 ### Sensor failure (VEGA)
 - The shirt goes Degraded, then Data stale, then Offline in the devices panel.
-- Regions turn **grey**, the heart stops animating and the card says **Signal lost**: missing data is never shown as normal.
+- The organs fed by the shirt turn **grey**, the heart stops beating and the card says **Signal lost**: missing data is never shown as normal.
 - The recommendation is to check sensor fit and skin contact. Confidence drops.
 
 ### Cabin CO2 rise (cabin)
@@ -76,8 +76,8 @@ Everything is green: "All good" on every card, "All indicators are within your n
 
 ### Progressive fatigue (LYRA)
 - Sleep shortens, HRV falls below LYRA's own normal band, resting heart rate drifts up.
-- Brain and heart turn amber, then orange. Rule **R-FAT-01** combines the three signals: two of them give MODERATE, all three give HIGH.
-- Her timeline lane drifts over days. Click the heart and select HRV: the chart shows the personal band, the history and the forecast cone.
+- Brain and heart are highlighted in amber, then orange. Rule **R-FAT-01** combines the three signals: two of them give MODERATE, all three give HIGH.
+- Her timeline lane drifts over days. Click the **Heart** chip and select HRV: the chart shows the personal band, the history and the forecast cone.
 - Simulated check-ins report more fatigue and stress, which corroborates the pattern without raising an alert by itself.
 
 ![Status timeline during progressive fatigue](/screenshots/timeline-fatigue.png)
@@ -96,7 +96,7 @@ Click **Start demo** in the top bar. A 10 step tour spotlights each part of the 
 | # | Step | What it sets up |
 | --- | --- | --- |
 | 1 | Meet the crew | Nominal day, 1 min/s, ISS link, ORION selected |
-| 2 | The body at a glance | Spotlight on the 3D body. Hint: click any organ |
+| 2 | The body at a glance | Spotlight on the 3D body. Hint: click any structure (the panel shows its data, or says it is shown for reference only) |
 | 3 | Acute cardio event | Acute cardio scenario on ORION; CRITICAL banner and escalation |
 | 4 | What to do, and who can do it | Recommended actions with autonomy badges. Hint: Mark done on the rest protocol |
 | 5 | Far from Earth | Switches the Earth link to Mars farthest (22 min each way) |
@@ -117,7 +117,7 @@ Based on `docs/demo-script.md`, updated for the v2 interface. All device data is
 | Time | Beat | What to do and say |
 | --- | --- | --- |
 | 0:00 to 0:30 | **Problem** | Long missions expose crews to five hazards: radiation, isolation, distance from Earth, altered gravity and closed environments. Signals come from many devices at different rates. Medical support is far away, so the crew needs to understand its own state fast. |
-| 0:30 to 1:00 | **The screen in 10 seconds** | Click **Start demo** and let steps 1 and 2 run: crew cards in plain words, the 3D body glowing by status, the heart beating at the live heart rate. Point at the always visible `SIMULATED` badge. |
+| 0:30 to 1:00 | **The screen in 10 seconds** | Click **Start demo** and let steps 1 and 2 run: crew cards in plain words, the realistic 3D body where anything that needs attention lights up in its status color, the heart beating at the live heart rate. Point at the always visible `SIMULATED` badge. |
 | 1:00 to 1:50 | **Acute event, fast decision** | Steps 3 and 4: ORION's heart rate jumps, oxygen drops, CRITICAL banner. Show the actions: each says why, and flight surgeon review is flagged. Click **Mark done** on the rest action (it is logged in the audit trail), then acknowledge the alert from the bell. |
 | 1:50 to 2:20 | **Far from Earth** | Step 5: switch to Mars farthest. Any answer from Earth now takes at least 44 minutes, so AHI puts an on board first step on top and shows the wait. |
 | 2:20 to 3:10 | **Slow drift** | Steps 6 and 7: progressive fatigue on LYRA. Sleep down, HRV below her own band, resting heart rate up. Open the HRV chart: personal band, markers, forecast cone. Message: the system does not wait for one number to cross an arbitrary line; it looks at pattern, persistence and context against each person's own baseline. |

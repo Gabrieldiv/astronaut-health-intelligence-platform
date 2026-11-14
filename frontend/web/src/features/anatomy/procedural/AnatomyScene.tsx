@@ -4,19 +4,19 @@ import { useFrame, useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 import { Color, MeshBasicMaterial, PerspectiveCamera } from 'three'
 import type { Group, Intersection, Mesh, Vector3 } from 'three'
-import type { BodyRegionId, Status } from '../../types/domain'
-import { useAppStore } from '../../state/store'
+import type { BodyRegionId, Status } from '../../../types/domain'
+import { useAppStore } from '../../../state/store'
 import type { AnatomyGeometries } from './loader'
 import { HEART_CENTER, LUNG_PIVOT } from './geometry/organs'
 import type { Globals, HoloMaterial } from './materials'
 import { createBoneMaterial, createGlobals, createMuscleMaterial, createOrganMaterial, createSkinMaterial, createVesselMaterial } from './materials'
-import { ANCHORS, BODY_FRAME, LOW_COLORS, REGIONS, REGION_LAYER, parseStatusKey, statusKey, statusVisual } from './regions'
+import { ANCHORS, BODY_FRAME, LOW_COLORS, REGIONS, REGION_LAYER, parseStatusKey, statusKey, statusVisual } from '../regions'
 import { effectiveLayers } from './viewerStore'
 import type { ViewerStore } from './viewerStore'
-import type { LabelRegistry } from './Labels'
-import { LabelProjector } from './Labels'
+import type { LabelRegistry } from '../Labels'
+import { LabelProjector } from '../Labels'
 import { Particles, ScanPlane, ScannerFloor } from './Environment'
-import { STATUS_META } from '../../lib/status'
+import { STATUS_META } from '../../../lib/status'
 
 const VESSEL_LOW = new Color('#38bdf8')
 const tmpColor = new Color()
@@ -382,6 +382,12 @@ export function AnatomyScene({ geos, scale, store, labels, subject, accent = '#3
     return region ? { region, point: [body.point.x, body.point.y, body.point.z] } : null
   }
 
+  const anchor = useMemo(() => {
+    const scaled = Object.fromEntries(REGIONS.map((r) => [r, ANCHORS[r].map((v) => v * scale)])) as unknown as Record<BodyRegionId, [number, number, number]>
+    return (r: BodyRegionId) => scaled[r]
+  }, [scale])
+  const hoverPoint = () => store.getState().hover?.point ?? null
+
   const onMove = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
     setHover(resolve(e.intersections))
@@ -428,7 +434,7 @@ export function AnatomyScene({ geos, scale, store, labels, subject, accent = '#3
           </group>
         </group>
       )}
-      <LabelProjector registry={labels} scale={scale} store={store} />
+      <LabelProjector registry={labels} anchor={anchor} hoverPoint={hoverPoint} />
     </>
   )
 }

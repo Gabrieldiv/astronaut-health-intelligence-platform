@@ -1,6 +1,6 @@
 ---
 title: Limitações e problemas conhecidos
-description: Limitações científicas, de dados, do motor, do produto e da plataforma da Astronaut Health Intelligence Platform, e problemas conhecidos com contorno.
+description: Limitações científicas, de dados, da anatomia 3D, do motor, do produto e da plataforma da Astronaut Health Intelligence Platform, e problemas conhecidos com contorno.
 status: IMPLEMENTED
 origin: SIMULATED, REAL_PUBLIC
 verified: 2026-11-14
@@ -20,7 +20,23 @@ Esta página reúne o que a Astronaut Health Intelligence Platform (AHI) **não 
 | Datasets reais: 4 pessoas, voo de 3 dias, sem amostras em voo | Não representam missões longas; não permitem afirmação estatística | Ampliar com outros estudos, sempre rotulados ([Catálogo](/pt/data/dataset-catalog)) |
 | Licença dos datasets do OSDR não informada | Uso registrado como "not stated" | Acompanhar a fonte |
 | NASA RadLab fora do ar (HTTP 500 em 14/11/2026) | Sem série real de dosimetria | Usar doses do EDA |
-| Olhos não monitorados | SANS fora do escopo | Exames periódicos no [roadmap](/pt/resources/roadmap) |
+| Olhos não monitorados | SANS fora do escopo; os olhos são estruturas só de contexto, sem status | Exames periódicos no [roadmap](/pt/resources/roadmap) |
+
+## Anatomia 3D
+
+| Limitação | Consequência | Caminho |
+| --- | --- | --- |
+| Um único modelo de referência, em uma única escala, para todos os tripulantes. A fonte é um modelo adulto masculino; só a região da virilha foi neutralizada, então a constituição, as proporções e o tórax continuam os da fonte | O corpo nunca mostra anatomia individual, sexo, altura ou composição corporal. Não é um exame do astronauta | [Roadmap](/pt/resources/roadmap#anatomy-next-steps) (modelo feminino de referência) |
+| Os indicadores se relacionam a um sistema do corpo, não a uma estrutura | A cor de status em uma estrutura marca o sistema dela; nunca é um achado naquela estrutura | [Mapeamento da anatomia para a saúde](/pt/architecture/data-model#anatomy-to-health-mapping) |
+| 36 das 250 estruturas são só de contexto (dentes, medula espinhal e nervos, ureteres e bexiga, órgãos digestivos, glândulas, timo, baço, olhos) | Podem ser exploradas, mas não mostram informação de saúde | [Mapeamento da anatomia para a saúde](/pt/architecture/data-model#anatomy-to-health-mapping) |
+| Os indicadores do cérebro são comportamentais e de autorrelato (sono, tempo de reação, check-in) | São indicadores relacionados de alerta e recuperação, nunca medidas neurológicas | [Mapeamento da anatomia para a saúde](/pt/architecture/data-model#anatomy-to-health-mapping) |
+| O índice de hidratação mostrado com os rins vem dos registros de ingestão de líquidos | Não é uma medida da função renal | [Mapeamento da anatomia para a saúde](/pt/architecture/data-model#anatomy-to-health-mapping) |
+| Rins são formas procedurais simples; sem ouvido e sem estruturas reprodutivas; sem linfonodos, fáscias, ligamentos ou meninges | O atlas não é anatomicamente completo | [Assets de anatomia 3D](/pt/data/anatomy-assets#exclusions) |
+| Sem texturas; malhas decimadas e estruturas pequenas agrupadas por região | Menos detalhe de superfície que a fonte; vértebras, costelas e dentes não podem ser selecionados um a um | [Assets de anatomia 3D](/pt/data/anatomy-assets#limitations) |
+| Os rins ficam atrás dos intestinos na vista frontal | A região dos rins é mostrada pelas costas | [Anatomia 3D](/pt/architecture/anatomy-3d#limitations) |
+| Não existe hover em telas de toque; estruturas isoladas não podem ser selecionadas pelo teclado | No toque, um toque seleciona; pelo teclado, os sistemas do corpo são alcançados pelos chips | [Anatomia 3D](/pt/architecture/anatomy-3d#limitations) |
+| Se o atlas não carrega, aparece um corpo procedural simplificado | Os sistemas do corpo continuam funcionando; as estruturas isoladas, não | [Anatomia 3D](/pt/architecture/anatomy-3d#fallback) |
+| Os arquivos de anatomia usam CC BY-SA 4.0, não MIT | Reutilizar exige atribuição e a mesma licença | [Assets de anatomia 3D](/pt/data/anatomy-assets#license-and-attribution) |
 
 ## Motor
 
@@ -54,17 +70,19 @@ Esta página reúne o que a Astronaut Health Intelligence Platform (AHI) **não 
 | Sem backend, API ou banco | Nada persiste; recarregar reinicia a simulação | <StatusBadge status="PLANNED" /> |
 | Sem autenticação nem controle de acesso | Qualquer pessoa vê tudo | <StatusBadge status="PLANNED" /> |
 | Auditoria só em memória | Some ao recarregar | <StatusBadge status="PLANNED" /> |
-| Sem testes de componente, 3D ou ponta a ponta | Regressões visuais dependem de checagem manual | <StatusBadge status="PLANNED" /> |
+| Sem testes de componente, de renderização 3D ou ponta a ponta (a camada de dados da anatomia é testada) | Regressões visuais dependem de checagem manual | <StatusBadge status="PLANNED" /> |
+| Desempenho observado em um único notebook | Não é benchmark; outras máquinas, navegadores e telas não foram medidos | [Resultados](/pt/validation/results#desempenho-observado) |
 | App sem implantação pública | Avaliadores precisam rodar localmente | Não planejado no repositório |
 
 ## Problemas conhecidos
 
 | Sintoma | Causa | Contorno |
 | --- | --- | --- |
-| A primeira carga demora alguns segundos | Geração do histórico e da geometria 3D | Normal; visitas seguintes usam cache em produção |
+| A primeira carga demora alguns segundos | Geração do histórico e download da anatomia 3D (cerca de 3 MB na vista padrão) | Normal |
+| O corpo aparece simplificado, com o aviso "Reference atlas unavailable" | O atlas não carregou e o app usou o modelo de fallback | Confira `public/anatomy/` e rode `npm run anatomy:validate` |
 | Padrões lentos não aparecem | Velocidade baixa | Use "1 h/s" ou a demo guiada |
 | Preferências não ficam salvas | Janela anônima ou armazenamento bloqueado | Esperado: o app funciona sem `localStorage` |
-| O corpo 3D não aparece | WebGL ou aceleração de hardware desligados | Ative a aceleração de hardware |
+| O corpo 3D não aparece ("3D body view unavailable") | Em geral, WebGL ou aceleração de hardware desligados | Ative a aceleração de hardware |
 | Relação BUN/creatinina quase vazia no OSD-575 | `NA` na fonte | Exibido como está, sem imputação |
 | OSD-575 tem ponto R+194 que a descrição não cita | Divergência na fonte | Exibido como no arquivo e sinalizado no manifesto |
 | O model card gerado mostra 100,0% / 0,0% de tempo em LOW / MODERATE | Arredondamento | O valor exato é 99,97% / 0,03% ([Resultados](/pt/validation/results)) |

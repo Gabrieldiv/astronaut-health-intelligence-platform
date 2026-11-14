@@ -61,7 +61,9 @@ Notes:
 | `bones` | Skeleton | Bone and radiation | Accumulated dose |
 | `skin` | Skin | Thermal | Skin temperature |
 
-Cabin metrics map to `environment`. A region with all its metrics missing is `NO_DATA`, never `LOW`. The eyes are passive anatomy with no metric.
+Cabin metrics map to `environment`. A region with all its metrics missing is `NO_DATA`, never `LOW`. The eyes have no metric: in the 3D body they are context only structures.
+
+Which anatomical structures of the 3D atlas report under each region, and which are context only, is defined in [Anatomy to health mapping](../architecture/data-model#anatomy-to-health-mapping).
 
 ## Simulated devices
 

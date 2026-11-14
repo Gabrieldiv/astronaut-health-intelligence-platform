@@ -29,7 +29,7 @@ export function StatusLegend({ labelScale = 1, defaultOpen, bottom, registry }: 
   }, [registry])
   return (
     <div ref={ref} className="pointer-events-none absolute left-3 z-10" style={{ bottom, visibility: open === null ? 'hidden' : undefined }}>
-      <div className="pointer-events-auto rounded-xl border border-white/10 bg-slate-950/45 text-slate-300 shadow-[0_0_24px_rgba(56,214,245,0.06)] backdrop-blur-md">
+      <div className="pointer-events-auto rounded-xl border border-white/10 bg-slate-950/75 text-slate-300 shadow-[0_0_24px_rgba(56,214,245,0.06)] backdrop-blur-md">
         <button
           type="button"
           aria-expanded={!!open}

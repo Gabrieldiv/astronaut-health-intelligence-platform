@@ -25,6 +25,10 @@ Every record in the Astronaut Health Intelligence Platform (AHI) carries a `data
 
 The type is `DataOrigin` in `src/types/domain.ts`. In the app, the always visible **SIMULATED** chip in the top bar opens a popover with this breakdown, and **Tools > Data and model > Data origins** lists the four labels with where each appears.
 
+::: info The 3D anatomy is not health data
+The anatomical model of the 3D body is a third party **reference asset** (Z-Anatomy, CC BY-SA 4.0), not a record about a person. It has no `data_origin` label; its provenance (source, checksum, license, modifications) is kept in the same spirit in [3D anatomy assets](./anatomy-assets). The status colors drawn on it come from the labeled health data above.
+:::
+
 ## Rules that follow from the labels
 
 1. **Never mix without a label.** Astronauts are not mixed with analog participants, humans with animals, ground with flight, continuous with point measurements, or different units.
@@ -79,7 +83,8 @@ flowchart LR
 | --- | --- |
 | Top bar SIMULATED chip | Simulated device adapters, planned real data, derived values |
 | Data and model, Real datasets tab | Source, accession, version, file, SHA-256, download time, license ("not stated" when absent), assay protocol |
-| Region detail | Data quality and data origin badges per metric |
+| Region detail | Data quality and data origin badges per metric, and on every alert and statistical flag |
+| Structure detail and 3D body | "Reference anatomy" badge (Z-Anatomy atlas or AHI procedural) on the selected structure; source caption under the body |
 | Handover report | A SIMULATED DATA label in the header |
 | FHIR export | Data origin as a meta tag on every resource |
 

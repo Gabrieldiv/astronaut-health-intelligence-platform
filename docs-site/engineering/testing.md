@@ -1,6 +1,6 @@
 ---
 title: Testing Strategy
-description: How the Astronaut Health Intelligence Platform is tested, the 14 vitest files with 101 tests and what each covers, plus what is not tested yet.
+description: How the Astronaut Health Intelligence Platform is tested, the 17 vitest files with 143 tests and what each covers, plus what is not tested yet.
 status: IMPLEMENTED
 code:
   - frontend/web/package.json
@@ -9,6 +9,9 @@ code:
 tests:
   - frontend/web/src/engine/engine.test.ts
   - frontend/web/src/engine/risk.test.ts
+  - frontend/web/src/features/anatomy/atlas/health.test.ts
+  - frontend/web/src/features/anatomy/atlas/manifest.contract.test.ts
+  - frontend/web/src/state/selection.test.ts
 verified: 2026-11-14
 ---
 
@@ -18,8 +21,8 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 
 | Fact | Value (2026-11-14) |
 | --- | --- |
-| Test files | 14 |
-| Tests | 101, all passing |
+| Test files | 17 |
+| Tests | 143, all passing |
 | Typecheck | `npx tsc -b` clean |
 | Production build | `npx vite build` ok |
 | Where | Next to the code (`*.test.ts`) |
@@ -31,14 +34,17 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | --- | --- | --- |
 | Unit | Statistics, baseline, forecast, risk, alerts, FHIR export | <StatusBadge status="IMPLEMENTED" /> |
 | Scenario (engine level integration) | Full engine runs per scenario with seeded data | <StatusBadge status="IMPLEMENTED" /> |
-| Store | Slices, references, actions | <StatusBadge status="IMPLEMENTED" /> (1 test) |
+| Store | Slices, references, actions; structure, region and metric selection | <StatusBadge status="IMPLEMENTED" /> (14 tests in 2 files) |
+| Anatomy data layer | Structure to region mapping, structure health view, manifest contract against the real GLB files | <StatusBadge status="IMPLEMENTED" /> (29 tests in 2 files) |
+| Anatomy assets | `npm run anatomy:validate` on the published files ([3D anatomy assets](../data/anatomy-assets#rebuild)) | <StatusBadge status="IMPLEMENTED" /> (script, not a test) |
+| 3D rendering | Visual states, picking, loading and fallback, checked by hand on `anatomy-lab.html` | <StatusBadge status="NOT_IMPLEMENTED" /> (no automated test) |
 | Evaluation | Headless replay with metrics ([Results](../validation/results)) | <StatusBadge status="IMPLEMENTED" /> (script, not a test) |
 | UI component tests | React components | <StatusBadge status="PLANNED" /> |
 | End to end (browser) | Open dashboard, select astronaut, run scenario, acknowledge alert (spec section 16) | <StatusBadge status="PLANNED" /> |
 | API, database, ingestion integration | Spec section 16 | <StatusBadge status="PLANNED" /> (no backend) |
 | Data tests | Schema, units, timestamps, duplicates, provenance | Partial: enforced inside the OSDR import script (fails on sex mismatch, counts missing cells), not as separate tests |
 
-## The 14 test files
+## The 17 test files
 
 | File | Tests | What it covers |
 | --- | --- | --- |
@@ -56,6 +62,9 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | <CodeLink path="frontend/web/src/engine/timeline.test.ts" /> | 3 | Last 24 sim hours every 15 min after startup; live frames follow the risk level, also after a big jump; bounded to the history window |
 | <CodeLink path="frontend/web/src/lib/fhir.test.ts" /> | 7 | Collection bundle with unique full URLs; pseudonymized patients without personal fields; LOINC only for known vital signs; data origin tag on every observation; missing data never exported as a value; cabin observations without a patient; valid FHIR ids and stable UUIDs |
 | <CodeLink path="frontend/web/src/state/store.test.ts" /> | 1 | v2 slices published, references stable when unchanged, actions wired |
+| <CodeLink path="frontend/web/src/state/selection.test.ts" /> | 13 | Nothing selected at start; `selectStructure` sets structure and region in one update and clears the metric; a context only structure clears the region; `selectStructure(null)` clears everything; `selectRegion` clears the structure; `selectAstronaut` clears structure, region and metric; `selectMetric` keeps them; a clock tick never touches the selection; `focusTarget` (alert View buttons) clears a structure of another region, keeps one of the same region, changes astronaut first and ignores cabin targets; `clearSelection` goes back to the overview |
+| <CodeLink path="frontend/web/src/features/anatomy/atlas/health.test.ts" /> | 21 | Every anatomical system mapped by rule; only brain structures map to the brain and only the kidneys map to the kidneys (procedural origin kept); digestive organs, glands, lymphoid and sense organs stay context only; required ids; primary structure of a region; atlas counts; related metrics come only from the catalog and never include cabin metrics; status is `null` for context only, `NO_DATA` (never normal) when health is missing, else the region status; region alerts by severity then time; anomalies inside a time window; observed value at a time, never invented; structure health view for monitored and context only structures; plain language texts never claim a diagnosis or a neurological measurement and contain no em dash or en dash |
+| <CodeLink path="frontend/web/src/features/anatomy/atlas/manifest.contract.test.ts" /> | 8 | Reads the real `public/anatomy`: GLB JSON chunk reader; top level shape, source and license facts; valid structures with unique ids; the seven required ids mapped to their regions; paired structures on the side their id names; real structures mapped by the health rules; one file entry per system with consistent counts; every GLB shipped with one mesh node named after each structure id |
 
 ## Principles
 
@@ -63,6 +72,7 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 - **Deterministic.** Seeds make every scenario test reproducible.
 - **Scenario tests check behavior, not exact numbers**, so tuning a demo value does not break them unless the behavior changes.
 - **Evaluation is separate.** Detection times and false alert rates come from `npm run evaluate`, not from asserts.
+- **Anatomy is tested as data, not as pixels.** The mapping from structures to regions, the selection rules and the manifest are pure TypeScript and run in node. The contract test reads the published GLB files, so a rebuilt atlas that breaks an id the app relies on fails `npm test`.
 
 ## In CI
 

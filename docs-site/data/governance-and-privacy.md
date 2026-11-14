@@ -23,6 +23,7 @@ How the Astronaut Health Intelligence Platform (AHI) handles personal data, acce
 - The FHIR R4 export contains `Patient` resources with pseudonymized ids only: no name, birth date, gender or other personal data (covered by a test in `fhir.test.ts`).
 - Only processed, publicly accessible OSDR files were used. Controlled access data (for example astronaut sequencing data) was never requested or touched.
 - UI preferences (view, presentation mode, alert sound) are stored only in the browser's `localStorage`. There is no backend, no account and no tracking.
+- The 3D body is one reference model shown for every crew member. It is not a scan of anyone and holds no personal data.
 
 ## Populations are never mixed
 
@@ -40,7 +41,7 @@ The proposed `metadata.population_type` values for future imports are listed in 
 | # | Rule | Status today |
 | --- | --- | --- |
 | 1 | Do not import identifiable personal data without authorization | <StatusBadge status="IMPLEMENTED" /> only public, pseudonymized files |
-| 2 | Respect terms, licenses and restrictions of each dataset | <StatusBadge status="IMPLEMENTED" /> license recorded, "not stated" when absent |
+| 2 | Respect terms, licenses and restrictions of each dataset | <StatusBadge status="IMPLEMENTED" /> license recorded, "not stated" when absent; the 3D anatomy keeps its CC BY-SA 4.0 license and attribution ([Third party licenses](#third-party-licenses)) |
 | 3 | Do not bypass OSDR access controls | <StatusBadge status="IMPLEMENTED" /> allow listed hosts, public files only |
 | 4 | Use pseudonyms in demo data | <StatusBadge status="IMPLEMENTED" /> |
 | 5 | Do not log unnecessary sensitive information | <StatusBadge status="IMPLEMENTED" /> no server logs exist; audit holds actions, not personal data |
@@ -51,6 +52,16 @@ The proposed `metadata.population_type` values for future imports are listed in 
 | 10 | Show limitations and uncertainty | <StatusBadge status="IMPLEMENTED" /> confidence, intervals, limitations on every assessment |
 | 11 | Require human validation for health decisions | <StatusBadge status="IMPLEMENTED" /> `requiresHumanReview` on HIGH, CRITICAL and flight surgeon items |
 | 12 | Use generative AI only for controlled explanation and summarization | <StatusBadge status="NOT_IMPLEMENTED" /> no generative AI at runtime; a guarded layer is [planned](../intelligence/ai-and-analytics#planned-llm-explanation-layer) |
+
+## Third party licenses {#third-party-licenses}
+
+| Material | License | Obligation |
+| --- | --- | --- |
+| Application code | MIT (`LICENSE` at the repository root) | Keep the license notice |
+| 3D anatomy files (`frontend/web/public/anatomy/*.glb`, `manifest.json`) | **CC BY-SA 4.0**, derived from Z-Anatomy, which is based on BodyParts3D (CC BY-SA 2.1 Japan) | Keep the attribution, state the changes, share derived files under the same license. The MIT license does not cover these files |
+| NASA OSDR datasets (OSD-569, OSD-575) | Not stated by the source | Recorded as "not stated"; no license is assumed |
+
+The anatomy files carry their own `LICENSE.md`, the app shows the attribution under the 3D body, and upstream content with a non commercial license (ear, kidney) is excluded from the files. Full record: [3D anatomy assets](./anatomy-assets#license-and-attribution).
 
 ## Audit trail
 
@@ -67,7 +78,7 @@ The audit trail lives in the browser tab and is lost on reload. A persistent, ta
 | Authentication and roles | None; anyone with the page sees everything | RBAC for crew, crew medical officer, flight surgeon, mission control, researcher, data engineer |
 | Transport | Static files; the docs portal is served over HTTPS by GitHub Pages | TLS for every published service |
 | Secrets | None needed: no API keys | Secrets outside the code |
-| Third party calls | Web fonts from Google Fonts when the page loads; no other network call, none after load | Self hosted fonts if needed |
+| Third party calls | Web fonts from Google Fonts when the page loads; no other third party call. Everything else, including the 3D anatomy files, is served from the app's own origin (no CDN) | Self hosted fonts if needed |
 | Downloaded files | Treated as untrusted: hashed, parsed as text, never executed | Same |
 
 ## Next steps

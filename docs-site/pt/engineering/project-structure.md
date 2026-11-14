@@ -29,15 +29,23 @@ O repositório da Astronaut Health Intelligence Platform (AHI) tem três partes:
 │   ├── raw/<OSD>/            arquivos originais do OSDR, byte a byte
 │   ├── manifests/            proveniência (SHA-256, URLs, versões) e log de importação
 │   └── processed/            formato longo canônico
-├── docs/                     demo-script, model-card (gerado), inventário de fontes, guia de dados
+├── docs/                     demo-script, model-card (gerado), inventário de fontes, guia de dados,
+│                             guia dos assets de anatomia
 ├── docs-site/                portal VitePress (inglês na raiz, português em /pt/)
 └── frontend/web/
     ├── index.html            página do app
     ├── anatomy-lab.html      página de desenvolvimento do corpo 3D
     ├── features-lab.html     página de desenvolvimento das telas v2
+    ├── public/
+    │   └── anatomy/          atlas 3D: nove *.glb (um por sistema anatômico), manifest.json e
+    │                         LICENSE.md (CC BY-SA 4.0). Gerado, nunca editado à mão
     ├── scripts/
     │   ├── evaluate.ts       avaliação do motor (npm run evaluate)
+    │   ├── anatomy/          pipeline de assets (npm run anatomy:build): build.mjs, fetch-source.mjs,
+    │   │                     export_atlas.py (Blender), build-kidneys.ts, optimize.mjs, validate.mjs,
+    │   │                     decode-for-preview.mjs, render_previews.py
     │   └── osdr/             descoberta e importação do NASA OSDR
+    ├── .cache/anatomy/       pasta de trabalho do pipeline (fonte, exportação bruta, previews); ignorada pelo git
     └── src/
         ├── app/              App, atalhos, estado de interface
         ├── components/       componentes compartilhados (gráfico, status, sparkline, medidor)
@@ -62,14 +70,18 @@ O repositório da Astronaut Health Intelligence Platform (AHI) tem três partes:
 | `src/engine/evaluation.json` | Resultado da avaliação | Gerado por `npm run evaluate`, não editar à mão |
 | `src/state/store.ts` | Implementa `AppState`; `startTicker()` move o relógio | API estável: `useAppStore`, `startTicker` |
 | `src/lib/status.ts` | Cores e rótulos de status | Cor nunca sozinha |
-| `src/features/anatomy/` | Corpo 3D procedural | Sem arquivos de modelo externos |
+| `src/features/anatomy/` | Corpo 3D: `atlas/` (contrato do manifesto, mapeamento de saúde), `viewer/` (visualizador do atlas), `procedural/` (modelo de fallback) | A ligação entre anatomia e saúde fica só em `atlas/health.ts` ([Anatomia 3D](/pt/architecture/anatomy-3d#component-map)) |
+| `src/features/attention/` | Painel de atenção, detalhe do sistema, detalhe da estrutura, alertas e sinalizações | [Tour do produto](/pt/product/product-tour#selecting-a-structure) |
+| `public/anatomy/` | Arquivos publicados do atlas | Licença CC BY-SA 4.0 (o código é MIT); gerados por `npm run anatomy:build` ([Assets de anatomia 3D](/pt/data/anatomy-assets)) |
+| `scripts/anatomy/` | Pipeline de assets de anatomia | Precisa do Blender 4.5 LTS; `npm run anatomy:validate` confere o resultado |
+| `docs/anatomy-assets.md` | Guia completo dos assets de anatomia (proveniência, regras, rebuild) | Versão de site em [Assets de anatomia 3D](/pt/data/anatomy-assets) |
 | `docs/model-card.md` | Model card oficial | Gerado por `npm run evaluate` |
 | `docs/data-guide.md` | Guia do time de dados (pt-BR) | Versão de site em [Pipeline e qualidade](/pt/data/pipeline-and-quality) |
 | `docs/data-source-inventory.md` | Relatórios de adequação de cada fonte | |
 
 ## Testes
 
-Os 14 arquivos de teste ficam ao lado do código que testam (`*.test.ts` em `src/engine/`, `src/lib/` e `src/state/`). Lista e cobertura em [Estratégia de testes](/pt/engineering/testing).
+Os 17 arquivos de teste ficam ao lado do código que testam (`*.test.ts` em `src/engine/`, `src/lib/`, `src/state/` e `src/features/anatomy/atlas/`). Lista e cobertura em [Estratégia de testes](/pt/engineering/testing).
 
 ## Portal de documentação
 

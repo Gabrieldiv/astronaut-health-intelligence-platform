@@ -55,7 +55,7 @@ journey
 ![Ações recomendadas com autonomia](/screenshots/attention-actions.png)
 
 1. Na **lista da tripulação**, vê quem precisa de atenção.
-2. No **corpo 3D**, clica no sistema em cor quente para abrir o detalhe.
+2. No **corpo 3D**, clica no chip do sistema (ou no órgão destacado na cor do status) para abrir o detalhe.
 3. No gráfico, compara a linha medida com a **faixa pessoal** e o **cone de previsão**; usa o ícone (i) para ver como o normal foi aprendido.
 4. Em **"Why"**, lê os fatores com peso e a confiança.
 5. Usa **"Compare"** para discutir a trajetória hipotética com e sem uma ação ([limitações](/pt/intelligence/recommendations)).

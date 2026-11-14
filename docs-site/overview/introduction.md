@@ -80,7 +80,7 @@ flowchart LR
     UI -. "FHIR JSON download,<br/>print" .-> FILES["Local files"]
 ```
 
-- Inside the boundary: simulation, engine, store and UI, all in one browser tab. After the page loads there is no network call.
+- Inside the boundary: simulation, engine, store and UI, all in one browser tab. The app calls no external service; it only loads its own static files, including the 3D anatomy.
 - Outside: people (who read and act), and files they export. No backend, no database, no authentication: these are [planned](../architecture/target-architecture).
 
 ## What is real and what is simulated
@@ -91,6 +91,7 @@ flowchart LR
 | Check-ins typed in the app, logged actions, acknowledgements | <OriginBadge origin="MANUAL" /> | Entered by a person in the interface |
 | Personal baselines, risk scores, forecasts, group means | <OriginBadge origin="DERIVED" /> | Computed from records of known origin |
 | Inspiration4 blood panels (OSD-569, OSD-575) | <OriginBadge origin="REAL_PUBLIC" /> | Historical reference only, never mixed with the simulated crew |
+| The anatomical model of the 3D body | third party reference asset | Z-Anatomy atlas (CC BY-SA 4.0). One reference body for every crew member, not a scan and not health data ([3D anatomy assets](../data/anatomy-assets)) |
 
 The labels are defined in [Data origins and provenance](../data/data-origins).
 

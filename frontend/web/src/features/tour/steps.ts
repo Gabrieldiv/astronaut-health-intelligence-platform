@@ -77,8 +77,9 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'body',
     title: 'The body at a glance',
-    caption: 'Organs glow in the color of their status. The heart beats at the live heart rate and the lungs breathe at the live breathing rate.',
-    hint: 'Click any organ to see why it has that color.',
+    caption:
+      'The 3D anatomy is linked to the live data. Organs that need attention light up in the color of their status. The heart beats at the live heart rate and the lungs breathe at the live breathing rate.',
+    hint: 'Click any structure: the panel shows its data, or says it is shown for reference only.',
     anchors: ['body'],
     view: 'ground',
     durationMs: 9000,
