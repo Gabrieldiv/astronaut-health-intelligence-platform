@@ -1,0 +1,23 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+\subsection{Summary}
+\label{subsec:summary}
+
+This report presented Astronaut Health Intelligence (AHI), a platform for the prevention of health problems and the predictive protection of crew health on space missions. AHI integrates physiological, behavioral and environmental data from equipment in use on the International Space Station: the Bio-Monitor, the Actiwatch Spectrum and the Dry-EEG Headband among the wearables; the blood pressure and ECG monitor, the Holter monitor, the pulse oximeter, the Ultrasound 2, the urine analyzer and the sample collection kits among the medical equipment; CEVIS, ARED and T2 for exercise; and the air quality, carbon dioxide, combustion, radiation, water and microbial monitors for the cabin.
+
+The platform organizes health into eight dimensions and uses the five hazards of human spaceflight as the axis of its risk analysis. It works on three levels. Real-time monitoring compares each person with their own normal and detects acute changes, slow drifts and missing data. Predictive analytics projects trends for 24 to 72 hours and estimates risks with transparent rules first and learned models as real data allow. Prescriptive intelligence recommends exercise, nutrition, sleep, well-being and medical follow-up actions, each with its evidence, its autonomy and its follow-up. A language model explains the results in plain language under strict guardrails, and never computes them.
+
+\subsection{Contributions}
+\label{subsec:contributions}
+
+\begin{enumerate}
+\item \textbf{A hardware grounded design,} in which every data source is a device that public sources describe as used on the ISS, with what each source does and does not establish.
+\item \textbf{A canonical health observation model} with origin, quality, source and context on every record, and one adapter per device, so that the analysis does not depend on where a value comes from.
+\item \textbf{An explainable analysis chain} from personal baselines to risk, forecasts and recommendations, in which every output can be traced to its data and to a versioned rule or model.
+\item \textbf{A treatment of missing data as a first class state,} reported as such and never as normal.
+\item \textbf{An operational view of distance,} in which recommendations carry an autonomy tag and a long Earth link places on board steps first.
+\item \textbf{A staged evaluation plan,} from simulated scenarios to the replay of real public data and an operational shadow mode, with the evidence each stage can and cannot provide.
+\end{enumerate}
+
+The limits are stated as clearly as the design. AHI does not diagnose, does not prescribe, and does not replace the flight surgeon. Its hardware premise is an assumption about access that the project does not have, and its clinical performance can only be established with authorized crew data and expert review. Within those limits, AHI shows how heterogeneous health signals from real space station equipment can be turned into early, explainable and honest support for the decisions of crews and their medical teams.

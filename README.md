@@ -78,7 +78,7 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
 
 ## Quick start
 
-Requirements: **Node.js 20 or newer**. No backend, no API keys. After `npm install` the demo works offline.
+Requirements: **Node.js 20.19 or newer (22.12 or newer recommended)**. No backend, no API keys. After `npm install` the demo works offline.
 
 ```bash
 git clone https://github.com/lucaspalharesbarbosa/astronaut-health-intelligence-platform.git
@@ -93,6 +93,7 @@ Open http://localhost:5173 (best at 1440x900 or larger) and click **Start demo**
 | --- | --- |
 | `npm run dev` | Development server on port 5173 |
 | `npm test` | Engine, scenario and FHIR unit tests (vitest) |
+| `npm run lint` | Lint (oxlint) |
 | `npx tsc -b` | Type check |
 | `npx vite build` | Production build into `dist/` |
 | `npm run evaluate` | Re-runs the engine evaluation and regenerates `docs/model-card.md` |
@@ -142,7 +143,7 @@ flowchart LR
 
 | Data | Origin | Status |
 | --- | --- | --- |
-| Vital signs, sleep, activity, exercise, hydration, cognition | Simulated devices, calibrated to plausible ranges | `SIMULATED` |
+| Vital signs, sleep, activity, exercise, hydration, cognition | Simulated devices with plausible ranges (not yet calibrated against published data) | `SIMULATED` |
 | Daily check-in (mood, fatigue, stress, sleep quality) | Typed in the app | `MANUAL` |
 | Cabin CO₂, temperature, humidity, radiation | Simulated (NASA EDA real replay is the next step) | `SIMULATED` |
 | Blood count and metabolic panel (Inspiration4, OSD-569 and OSD-575) | NASA Open Science Data Repository | `REAL_PUBLIC` (reference only) |
@@ -156,6 +157,7 @@ Principles: every record carries its origin, astronaut and analog or animal data
 - Data team guide (metrics, schemas, NASA sources, in Portuguese): [docs/data-guide.md](docs/data-guide.md)
 - Model card and evaluation: [docs/model-card.md](docs/model-card.md)
 - 3D anatomy assets (provenance, license, rebuild guide): [docs/anatomy-assets.md](docs/anatomy-assets.md)
+- Repository audit and implementation roadmap (in Portuguese): [docs/AUDIT.md](docs/AUDIT.md), [docs/IMPLEMENTATION_ROADMAP.md](docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Project structure
 

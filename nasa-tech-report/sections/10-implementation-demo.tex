@@ -1,0 +1,85 @@
+\section{Implementation and Demonstration}
+\label{sec:implementation-demo}
+
+This section describes how AHI is built in stages and how it is demonstrated. Real crew data from ISS equipment are not available to the project, so the demonstration replays simulated data through the same device adapters, analysis and screens that real data would use. Every simulated value is labeled \texttt{SIMULATED}, and the platform is decision support and not a medical device.
+
+\subsection{Implementation Plan}
+\label{subsec:features}
+
+The platform is built in stages that follow the device priority of \ref{sec:hardware-sensors}. A complete, consistent integration of a few devices with real prediction is worth more than a shallow integration of all of them. \ref{tab:features} lists the stages.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Implementation stages of AHI.}
+\label{tab:features}
+\footnotesize
+\begin{tabular}{p{2.6cm}p{5.6cm}p{5.8cm}}
+\hline
+\textbf{Stage} & \textbf{Devices and data} & \textbf{Capabilities} \\
+\hline
+1. Core & Bio-Monitor, Actiwatch Spectrum, CEVIS, ARED, T2 & Canonical model, adapters, personal baselines, anomaly detection, data quality, crew and ground views \\
+2. Prediction & Same, plus blood pressure and ECG & Trend forecasts, combined rules, transparent risk score, recommendations with autonomy, scenarios with and without intervention \\
+3. Environment & CO\textsubscript{2} monitors, AQM, radiation monitors and dosimeters; replay of real cabin data & Environmental context and cabin rules, accumulated exposure \\
+4. Periodic data & Sample results, urine analyzer, ultrasound findings, Holter, Dry-EEG Headband & Immune and metabolic dimensions, examination results on the timeline \\
+5. Learned models & Mission and authorized historical data & Isolation Forest and XGBoost behind the same interface, with model cards and shadow mode \\
+6. Explanation and review & Curated source library & Language model explanation layer with guardrails, flight surgeon review workflow, persistent audit \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\subsection{Scenarios}
+\label{subsec:scenarios}
+
+A seeded, reproducible simulator produces a crew of four with fictional callsigns and the cabin, through simulated counterparts of the device adapters. Its noise is correlated in time, not white, so that signals behave like physiological series. Scripted scenarios exercise specific behaviors of the platform, as listed in \ref{tab:scenarios}. Their magnitudes and durations are demonstration parameters and do not describe any real physiology.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Scripted scenarios used for demonstration and testing. All simulated.}
+\label{tab:scenarios}
+\small
+\begin{tabular}{p{3.4cm}p{6.4cm}p{4.2cm}}
+\hline
+\textbf{Scenario} & \textbf{What happens} & \textbf{Behavior exercised} \\
+\hline
+Nominal day & Everyone stays within their personal ranges & No false alerts \\
+Acute cardio event & Heart rate rises at rest while oxygen saturation falls & Fast critical alert and escalation \\
+Sensor failure & The Bio-Monitor shirt becomes degraded, stale and offline & Missing data never shown as normal \\
+Cabin CO\textsubscript{2} rise & Carbon dioxide rises for hours; breathing and reaction time shift for everyone & Shared environmental cause, co-occurrence \\
+Progressive fatigue & Sleep worsens, heart rate variability falls and resting heart rate rises over days & Slow multi signal pattern \\
+Exercise performance decline & Exercise output falls day after day & Slow single metric decline \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\subsection{Presentation Script}
+\label{subsec:presentation-script}
+
+The demonstration follows one crew member through a mission scenario in five steps. The figures of this subsection are screenshots of the AHI demonstrator running the scripted scenarios with simulated data.
+
+\begin{enumerate}
+\item \textbf{Data collection.} Simulated Bio-Monitor, Actiwatch Spectrum and exercise equipment feed the platform through their adapters. Each value carries its device, time, context and origin.
+\item \textbf{Anomaly identification.} Sleep, heart rate variability and exercise performance change at the same time. No single value crosses a line, but the combined pattern against the person's own normal is flagged (\ref{fig:timeline-fatigue}).
+\item \textbf{Health prediction.} The predictive screen shows the trend for 24, 48 and 72 hours, with its uncertainty, and the scenario without intervention (\ref{fig:body-detail}).
+\item \textbf{Recommendation.} The platform suggests recovery, rest, hydration and medical follow-up actions, each with its evidence, its autonomy and its time for reassessment, and the language model explains the pattern in plain words.
+\item \textbf{Outcome evaluation.} After the intervention is logged, the indicators are followed, and the screen compares their evolution with the projection without intervention (\ref{fig:whatif}).
+\end{enumerate}
+
+\hwfigure{0.96}{images/ahi-timeline-fatigue.png}{Progressive fatigue: LYRA moves to act soon because shorter sleep, lower heart rate variability and a higher resting heart rate show up together; the status timeline shows the pattern building over time.}{fig:timeline-fatigue}{AHI demonstrator, screenshot by the authors with simulated data, published in the project documentation portal (\texttt{docs-site/public/screenshots/timeline-fatigue.png}).}
+
+\hwfigure{0.96}{images/ahi-body-detail.png}{Body system detail: the heart of LYRA is selected on the atlas, the rest of the body is ghosted, and the panel shows each metric against the personal normal with its history and forecast.}{fig:body-detail}{AHI demonstrator, screenshot by the authors with simulated data, published in the project documentation portal (\texttt{docs-site/public/screenshots/body-detail.png}).}
+
+\hwfigure{0.96}{images/ahi-whatif.png}{What-if comparison for sleep extension: heart rate variability projected with and without the action, against the personal normal, labeled as a simulation for discussion and not evidence of clinical efficacy.}{fig:whatif}{AHI demonstrator, screenshot by the authors with simulated data, published in the project documentation portal (\texttt{docs-site/public/screenshots/whatif.png}).}
+
+The demonstration also shows the acute cardiac event, to show fast alerting and escalation (\ref{fig:critical-alert}), the sensor failure, to show that missing data is never shown as normal, and the cabin CO\textsubscript{2} rise, to show co-occurrence without a claim of cause. Two mission tools complete it: the Earth link, which shows the communication delay and why on board steps come first (\ref{fig:mars-comms}), and the shift handover report with its FHIR export (\ref{fig:handover}).
+
+\hwfigure{0.96}{images/ahi-critical-alert.png}{Acute cardiac event: critical banner, heart and lungs highlighted on the atlas, risk score 100 and recommended actions with their autonomy.}{fig:critical-alert}{AHI demonstrator, screenshot by the authors with simulated data, published in the project documentation portal (\texttt{docs-site/public/screenshots/critical-alert.png}).}
+
+\hwfigure{0.96}{images/ahi-mars-comms.png}{Earth link under the farthest Mars profile: about 22 minutes one way and 44 minutes for a round trip, so a question to Earth waits at least 44 minutes and on board steps come first.}{fig:mars-comms}{AHI demonstrator, screenshot by the authors with simulated data, published in the project documentation portal (\texttt{docs-site/public/screenshots/mars-comms.png}).}
+
+\hwfigure{0.96}{images/ahi-handover-report.png}{Shift handover report: crew at a glance, status, open alerts and pending actions, with print and FHIR R4 export.}{fig:handover}{AHI demonstrator, screenshot by the authors with simulated data, published in the project documentation portal (\texttt{docs-site/public/screenshots/handover-report.png}).}
+
+A note for presenters: the same sentence must accompany every claim. The data in the demonstration are simulated, and the tool supports decisions and does not make them.

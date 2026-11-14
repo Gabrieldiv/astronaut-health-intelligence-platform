@@ -1,0 +1,262 @@
+\section{Hardware and Sensors}
+\label{sec:hardware-sensors}
+
+This section defines the equipment that AHI assumes as its data sources. The premise of the report is that all operational data, for the crew and for the cabin, come from these devices. The selection criterion is strict: \textbf{a device is included only if public NASA, CSA or JAXA sources describe it as used on the ISS.} Devices that were tested only on the ground or in analog habitats are left out, even when they are relevant.
+
+The descriptions below repeat what the cited sources state. Where a source does not establish which signal a device exposes, the report says so, and AHI does not assume more. The existence of a device on board does not imply that a data interface is open or available to third parties (\ref{subsec:integration-assumptions}). Figures \ref{fig:hw-biomonitor-info} to \ref{fig:hw-env-jaxa} show each device as published by NASA, CSA and JAXA.
+
+\subsection{Wearables}
+\label{subsec:wearables}
+
+Wearables are the most important source for AHI, because they collect data without interrupting the activities of the crew.
+
+\medskip\noindent\textbf{Bio-Monitor (CSA).} A wearable system made of a smart shirt, a headband and a tablet application. It records heart pulse and electrical activity, blood pressure, breathing rate and volume, skin temperature, blood oxygen saturation and physical activity, and it was launched to the ISS in December 2018 \cite{canadian_space_agency_biomonitor}. It was developed under CSA contracts from the Astroskin technology \cite{csa_wireless_body_sensors}. Bio-Monitor is the closest real example of the concept behind AHI: several sensors combined in one wearable system that consolidates physiological information. It is the primary continuous source of the platform.
+
+\medskip\noindent\textbf{Actiwatch Spectrum.} A waterproof sleep and wake monitor worn on the wrist that measures motion and ambient light. It is used to analyze circadian rhythms, sleep and wake patterns and activity \cite{nasa_issmp_hardware,nasa_wearable_tech_iss}. The Actiwatch Spectrum Plus is in use on the station for the Standard Measures study \cite{nasa_sleep_on_station}. The same class of device, a wrist actigraph that records movement and light, was adopted by NASA for the Artemis II crew (\ref{fig:hw-actiwatch}).
+
+\medskip\noindent\textbf{Dry-EEG Headband (Dreams).} A headband used by the ESA investigation Dreams that lets astronauts monitor their sleep wherever they sleep and over several nights \cite{nasa_sleep_on_station}. It is research hardware used during an investigation, not a device worn by every crew member. AHI uses it, when present, as a richer sleep source than wrist actigraphy.
+
+\medskip\noindent\textbf{Excluded: Astroskin as a separate garment.} Astroskin is the commercial technology behind the Bio-Monitor. The Astroskin evaluation found in the sources was carried out with 16 crew members in the HERA ground analog \cite{toscano2017astroskin}, so it is represented in AHI only through the Bio-Monitor that flies on the ISS.
+
+\hwfigure{0.92}{images/hardware/bio-monitor-infographic.jpg}{Bio-Monitor infographic: what the smart shirt and headband monitor, and how data flow from the crew member to an on-orbit controller and to scientists on the ground.}{fig:hw-biomonitor-info}{Canadian Space Agency, Bio-Monitor, \url{https://www.asc-csa.gc.ca/eng/sciences/bio-monitor.asp}}
+
+\hwfigure{0.70}{images/hardware/bio-monitor-saint-jacques.jpg}{CSA astronaut David Saint-Jacques with the Bio-Monitor on board the ISS.}{fig:hw-biomonitor-photo}{Canadian Space Agency, Bio-Monitor, \url{https://www.asc-csa.gc.ca/eng/sciences/bio-monitor.asp}}
+
+\hwfigure{0.85}{images/hardware/artemis-ii-actigraph.jpg}{Artemis II crew (left) and the wrist actigraph adopted by NASA to track their sleep, activity and light exposure (right). Developed at the University of S\~ao Paulo and commercialized by Condor Instruments, it is a wrist actigraph of the same class as the Actiwatch Spectrum used on the ISS.}{fig:hw-actiwatch}{Particle News, NASA Uses USP-Born Actigraph to Monitor Artemis II Crew, \url{https://particle.news/story/nasa-uses-usp-born-actigraph-to-monitor-artemis-ii-crew}}
+
+\hwfigure{0.75}{images/hardware/dreams-headband.jpg}{Sleep Monitoring in Space with Dry-EEG Headband (Dreams) hardware in the Columbus module of the ISS, 20 September 2021 (NASA image iss065e423775).}{fig:hw-dreams}{NASA Image and Video Library, \url{https://images.nasa.gov/details/iss065e423775}}
+
+\subsection{Medical Equipment}
+\label{subsec:medical-equipment}
+
+Medical equipment produces scheduled, clinical measurements. Its data arrive as sessions or as results, not as a continuous stream.
+
+\begin{itemize}
+\item \textbf{Blood pressure and ECG monitor.} JAXA lists a blood pressure and ECG monitor among the ISS medical equipment \cite{jaxa_medops_system}, and NASA lists health monitoring of blood pressure, ECG and heart rate among the systems it maintains on the ISS \cite{nasa_jsc_exercise_countermeasures}.
+\item \textbf{Holter Monitor 2.} An ambulatory ECG that measures the electrical activity of the heart for up to 24 hours through electrode pads on the torso \cite{nasa_issmp_hardware}.
+\item \textbf{Pulse oximeter.} A finger device that measures pulse and oxygen saturation, used with ISS medical project hardware \cite{nasa_issmp_hardware}.
+\item \textbf{Ultrasound 2.} A General Electric Vivid q unit used for cardiac, muscle, vessel and blood flow analysis, with features to estimate muscle volume changes and analyze cardiac strain \cite{nasa_issmp_hardware}. It is used regularly on the station, and its scans of the heart and veins can be viewed by doctors on the ground in real time \cite{nasa_ultrasound_2025}.
+\item \textbf{Urine analyzer.} JAXA lists the Urolax urine analyzer among the ISS medical equipment \cite{jaxa_medops_system}. The source does not detail the parameters it reports, so AHI treats its output as a set of named results with units, defined when the interface is documented.
+\item \textbf{Blood, saliva and urine collection.} The ISS medical project carries blood collection kits, saliva session packs, urine collection kits and a refrigerated centrifuge \cite{nasa_issmp_hardware}, and blood collection and saliva samples are part of NASA Standard Measures \cite{nasa_standard_measures}. These are not sensors. Samples are collected at set times and analyzed later, so their results reach AHI with a delay. NASA immune research uses such samples to study stress hormones and the reactivation of dormant viruses \cite{nasa_immune_biomarkers}.
+\end{itemize}
+
+\hwfigure{0.45}{images/hardware/bp-ecg-monitor-jaxa.jpg}{Blood pressure and ECG monitor of the ISS medical operations equipment.}{fig:hw-bpecg}{JAXA, Medical Operations, \url{https://humans-in-space.jaxa.jp/en/biz-lab/med-in-space/healthcare/medops/system/}}
+
+\hwfigure{0.55}{images/hardware/holter-monitor-2-components.jpg}{Flight certified Holter Monitor 2 components: recorder, electrode lead set and memory cards. The Holter Monitor 2 is an ambulatory ECG that records the electrical activity of the heart for up to 24 hours.}{fig:hw-holter}{NASA Ames Research Center, Holter Monitor (STS-126), \url{https://www.nasa.gov/ames/space-biosciences/holter-monitor-sts-126}}
+
+\hwfigure{0.92}{images/hardware/pulse-oximeter-ccfp-slide.jpg}{Cerebral Cochlear Fluid Pressure Analyzer, whose finger pulse oximeter measures pulse and oxygen saturation.}{fig:hw-oximeter}{NASA ISS Medical Project, On-Orbit Hardware (2016), slide 4, \url{https://www.nasa.gov/sites/default/files/atoms/files/issmp_on-orbit_hardware.pdf}}
+
+\hwfigure{0.85}{images/hardware/ultrasound-2-cassidy-parmitano.jpg}{NASA astronaut Chris Cassidy, Expedition 36, performs an ultrasound on ESA astronaut Luca Parmitano in the Columbus laboratory for the Spinal Ultrasound investigation (NASA image ISS036-E-035750).}{fig:hw-ultrasound}{NASA, image ISS036-E-035750, public domain, via Wikimedia Commons, \url{https://commons.wikimedia.org/wiki/File:ISS-36_Luca_Parmitano_and_Chris_Cassidy_in_the_Columbus_lab.jpg}}
+
+\hwfigure{0.45}{images/hardware/urolax-jaxa.jpg}{Urolax urine analyzer of the ISS medical operations equipment.}{fig:hw-urolax}{JAXA, Medical Operations, \url{https://humans-in-space.jaxa.jp/en/biz-lab/med-in-space/healthcare/medops/system/}}
+
+\hwfigure{0.92}{images/hardware/blood-collection-slide.jpg}{Blood collection consumables of the ISS Medical Project: open blood tube kit, blood sample kits and insulated blood pouch.}{fig:hw-blood}{NASA ISS Medical Project, On-Orbit Hardware (2016), slide 17, \url{https://www.nasa.gov/sites/default/files/atoms/files/issmp_on-orbit_hardware.pdf}}
+
+\subsection{Exercise Equipment}
+\label{subsec:exercise-equipment}
+
+Crews exercise every day to limit the loss of bone, muscle and cardiovascular fitness caused by microgravity. NASA lists three regular devices on the ISS: the CEVIS cycle ergometer, the ARED resistive exercise device and the T2 treadmill with COLBERT, which allows walking and running in microgravity \cite{nasa_jsc_exercise_countermeasures}. The software that works with ARED and T2 collects, stores and displays data and shows the exercise prescription to the crew member \cite{nasa_jsc_exercise_countermeasures}.
+
+\begin{itemize}
+\item \textbf{CEVIS.} A cycle ergometer with electronically controlled workload. AHI uses workload, duration, cadence and the heart rate during the session, which is the basis for following cardiovascular fitness against the personal baseline.
+\item \textbf{ARED.} Resistive exercise similar to weight training. AHI uses load, repetitions, sets and duration to follow strength and adherence to training.
+\item \textbf{T2 with COLBERT.} A treadmill. AHI uses speed, duration and the load applied by the harness to follow aerobic capacity.
+\end{itemize}
+
+\medskip\noindent\textbf{Caution.} The public sources used here confirm the three devices and that their software collects data, but they do not list the exact fields each device exports. The fields above are the ones AHI is designed to consume, to be confirmed against the interface documentation of each device.
+
+\hwfigure{0.42}{images/hardware/cevis-teal.jpg}{Astronaut Loral O'Hara (Increment 70) exercises on the new teal CEVIS ergometer on board the ISS.}{fig:hw-cevis}{NASA Johnson Space Center, Exercise Countermeasures, \url{https://www.nasa.gov/reference/jsc-exercise-countermeasures/}}
+
+\hwfigure{0.42}{images/hardware/ared.jpg}{Koichi Wakata, Expedition 38 flight engineer, exercising on the Advanced Resistive Exercise Device (ARED) in Node 3.}{fig:hw-ared}{NASA Johnson Space Center, Exercise Countermeasures, \url{https://www.nasa.gov/reference/jsc-exercise-countermeasures/}}
+
+\hwfigure{0.42}{images/hardware/t2-colbert.jpg}{JAXA astronaut Satoshi Furukawa, Expedition 70, jogs on the T2 treadmill with COLBERT.}{fig:hw-colbert}{NASA Johnson Space Center, Exercise Countermeasures, \url{https://www.nasa.gov/reference/jsc-exercise-countermeasures/}}
+
+\subsection{Environmental Monitoring}
+\label{subsec:environmental-monitoring}
+
+The health of a crew does not depend only on the body. A closed cabin can cause or worsen physiological problems, and AHI uses its monitors as context for every crew signal.
+
+\begin{itemize}
+\item \textbf{Air Quality Monitor (AQM).} Two AQM units use gas chromatography and differential mobility spectrometry to detect and quantify 23 target volatile organic compounds \cite{nasa_toxicology_envchem}.
+\item \textbf{CO\textsubscript{2} monitors.} A CO\textsubscript{2} monitor uses non-dispersive infrared to detect elevated carbon dioxide \cite{nasa_toxicology_envchem}. The Personal CO\textsubscript{2} Monitor investigation used sensors attached to clothing to measure the immediate surroundings of the wearer \cite{nasa_wearable_tech_iss}. Elevated CO\textsubscript{2} has been linked to headaches in ISS crews \cite{nasa_ochmo_tb004_co2}.
+\item \textbf{Combustion product analyzer.} The compound specific analyzer for combustion products uses electrochemical sensors to detect compounds produced by fire \cite{nasa_toxicology_envchem}.
+\item \textbf{Radiation monitors and personal dosimeters.} Radiation measurement devices installed in the ISS are monitored in real time, and each astronaut wears a personal dosimeter that records the accumulated dose \cite{jaxa_medops_system}. Examples on the ISS include the ESA Active Dosimeter and the CSA EVARM dosimeters \cite{nasa_wearable_tech_iss}.
+\item \textbf{Water and microbial monitoring.} The Environmental Health System includes monitoring of water, air and microbes \cite{jaxa_medops_system}. Water quality is checked with a colorimetric kit for biocide concentration and a total organic carbon analyzer \cite{nasa_toxicology_envchem}.
+\item \textbf{Cabin temperature and humidity.} Station environmental data, of the kind published for research mission periods in the Environmental Data Application \cite{osdr_eda}.
+\end{itemize}
+
+\hwfigure{0.75}{images/hardware/aqm.jpg}{Air quality monitors used for volatile organic compound detection, positioned in the U.S. Lab on the ISS (highlighted in red).}{fig:hw-aqm}{NASA, Toxicology and Environmental Chemistry, \url{https://www.nasa.gov/directorates/esdmd/hhp/toxicology-and-environmental-chemistry/}}
+
+\hwfigure{0.75}{images/hardware/personal-co2-monitor.jpg}{One of the wearable carbon dioxide monitors clipped to the wall near a crew sleeping compartment.}{fig:hw-co2}{NASA, Wearable Tech for Space Station Research, \url{https://www.nasa.gov/missions/station/iss-research/wearable-tech-for-space-station-research/}}
+
+\hwfigure{0.80}{images/hardware/csa-cp.jpg}{The compound specific analyzer for combustion products (CSA-CP), used to monitor for evidence of fires or smoldering events on the ISS.}{fig:hw-csacp}{NASA, Toxicology and Environmental Chemistry, \url{https://www.nasa.gov/directorates/esdmd/hhp/toxicology-and-environmental-chemistry/}}
+
+\hwfigure{0.75}{images/hardware/active-dosimeter.jpg}{ESA astronaut Thomas Pesquet holds one of the mobile units of the Active Dosimeter.}{fig:hw-dosimeter}{NASA, Wearable Tech for Space Station Research, \url{https://www.nasa.gov/missions/station/iss-research/wearable-tech-for-space-station-research/}}
+
+\hwfigure{0.40}{images/hardware/toca.jpg}{The U.S. Total Organic Carbon Analyzer (TOCA), used to test water quality in real time on the ISS.}{fig:hw-toca}{NASA, Toxicology and Environmental Chemistry, \url{https://www.nasa.gov/directorates/esdmd/hhp/toxicology-and-environmental-chemistry/}}
+
+\hwfigure{0.65}{images/hardware/environment-sampling-jaxa.jpg}{Image used by JAXA to illustrate station environment monitoring of air, water and microbes.}{fig:hw-env-jaxa}{JAXA, Medical Operations, \url{https://humans-in-space.jaxa.jp/en/biz-lab/med-in-space/healthcare/medops/system/}}
+
+\subsection{Measured Variables}
+\label{subsec:measured-variables}
+
+\ref{tab:variables} relates each device to the variables AHI consumes and to the health dimensions of \ref{sec:analytical-methodology} that use them.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{ISS equipment assumed as data source, variables consumed by AHI and dimensions served.}
+\label{tab:variables}
+\footnotesize
+\begin{tabular}{p{3.0cm}p{6.4cm}p{4.6cm}}
+\hline
+\textbf{Device} & \textbf{Variables consumed by AHI} & \textbf{Dimensions} \\
+\hline
+Bio-Monitor & Heart rate, ECG derived heart rate variability, blood pressure, breathing rate and volume, skin temperature, blood oxygen saturation, activity & Cardiovascular, respiratory, sleep \\
+Actiwatch Spectrum & Motion, activity level, ambient light, sleep and wake timing & Sleep and circadian rhythm \\
+Dry-EEG Headband & Sleep stages, sleep duration, awakenings & Sleep and circadian rhythm \\
+BP/ECG monitor & Systolic and diastolic pressure, ECG, heart rate & Cardiovascular \\
+Holter Monitor 2 & 24 hour ECG, rhythm & Cardiovascular \\
+Pulse oximeter & Oxygen saturation, pulse & Respiratory \\
+Ultrasound 2 & Cardiac, vascular and muscle examination results & Cardiovascular, musculoskeletal \\
+Urine analyzer & Urinalysis results & Metabolic, renal and nutrition \\
+Blood and saliva samples & Blood counts, chemistry, stress hormones, immune markers & Immune, metabolic \\
+CEVIS & Workload, duration, heart rate during exercise & Cardiovascular, musculoskeletal \\
+ARED & Load, repetitions, sets, duration & Musculoskeletal \\
+T2 with COLBERT & Speed, duration, harness load & Musculoskeletal, cardiovascular \\
+AQM, CO\textsubscript{2} monitors & Volatile organic compounds, cabin and personal CO\textsubscript{2} & Respiratory, environment \\
+Radiation monitors, dosimeters & Area dose rate, personal accumulated dose & Environment \\
+Water and microbial monitoring & Water quality, microbial sampling results & Immune, environment \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+Some variables are measured directly and others are estimated. Heart rate variability is derived from the ECG, and sleep stages from the headband are estimates. Each value carries a quality status that records whether it is measured, estimated or questionable.
+
+\subsection{Imaging and Periodic Examinations}
+\label{subsec:imaging}
+
+Several risks are followed by periodic examinations and not by continuous sensors. On the ISS the main imaging device is the Ultrasound 2. Bone mineral density is measured by densitometry before and after flight \cite{lang2004bone,leblanc2007skeletal}, and the eye findings of spaceflight associated neuro-ocular syndrome are followed with optical coherence tomography, ultrasound and other examinations \cite{nasa_hrr_sans}. AHI does not process images. It receives the results of an examination as point measurements, with the date, the examiner's structured findings and the device, and places them on the timeline of the crew member.
+
+\subsection{Device Priority}
+\label{subsec:device-priority}
+
+Integrating every device at once is not realistic. \ref{tab:device-priority} gives the order in which AHI integrates the equipment. The first three already support monitoring and prediction for the dimensions with the most frequent data.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Integration priority of the ISS equipment.}
+\label{tab:device-priority}
+\small
+\begin{tabular}{p{1.4cm}p{4.0cm}p{8.6cm}}
+\hline
+\textbf{Priority} & \textbf{Equipment} & \textbf{Main data} \\
+\hline
+1 & Bio-Monitor & Heart rate, ECG derived variability, breathing, blood oxygen, skin temperature \\
+2 & Actiwatch Spectrum & Sleep, activity and light \\
+3 & CEVIS, ARED, T2 & Physical performance and training load \\
+4 & BP/ECG monitor & Systolic and diastolic blood pressure, ECG \\
+5 & CO\textsubscript{2} monitors and AQM & Environmental exposure \\
+6 & Radiation dosimeters & Area and personal dose \\
+7 & Sample results, ultrasound, urine analyzer, Holter, Dry-EEG Headband & Periodic clinical and research data \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\subsection{Conceptual Integration with ISS Equipment}
+\label{subsec:integration-assumptions}
+
+\textbf{AHI does not consume data from any ISS device.} The project has no access to the equipment, to its interfaces or to crew data, and every value in the AHI demonstrator comes from a simulator. Even so, the team studied how a real integration would work, from the moment a device records a value to the moment that value is stored in the database of the platform. The purpose of this study is that the data model, the database and the adapters are designed for the real data path from the start, so that a simulator can later be replaced by a real feed without changing the analysis. This subsection describes that study at a theoretical and conceptual level. Where a step rests on a public source it is cited, and every other step is a design assumption of the team.
+
+\medskip\noindent\textbf{What the public sources establish about the data path.} The ISS research hardware already provides much of the infrastructure an integration needs. The Human Research Facility racks connect to the ISS Ethernet and video services, and their laptops are used to control equipment, to collect and store data and crew notes, and to provide uplink and downlink \cite{nasa_issmp_hardware}. The Ultrasound 2 connects to the Human Research Facility rack to allow real-time downlink of its video \cite{nasa_issmp_hardware}, and doctors on the ground can view the scans in real time \cite{nasa_ultrasound_2025}. The Actiwatch Spectrum kit includes a dock, a USB cable and the Actiware software \cite{nasa_issmp_hardware}, which means its data are recorded on the watch and transferred later. The Bio-Monitor includes a tablet application \cite{canadian_space_agency_biomonitor}, and the software of ARED and T2 collects, stores and displays exercise data \cite{nasa_jsc_exercise_countermeasures}. In ground testing of the Astroskin technology, 24 hour monitoring showed lessons about data loss and wireless connectivity \cite{toscano2017astroskin}. Radiation devices installed in the station are monitored in real time, while personal dosimeters record the accumulated dose \cite{jaxa_medops_system}.
+
+\medskip\noindent\textbf{Integration patterns.} From these facts, the team identified four ways in which data leave a device. Each pattern needs a different kind of adapter, as summarized in \ref{tab:integration-patterns}.
+
+\begin{itemize}
+\item \textbf{Near real-time stream.} The device or its host application produces values continuously, and the adapter reads them as they arrive. This is the target pattern for the Bio-Monitor and for cabin environmental telemetry.
+\item \textbf{Session file.} The device records a session and the data are transferred afterwards as a file, through a dock, a cable or the host computer. This is the pattern of the Actiwatch Spectrum, the Holter Monitor 2, the Dry-EEG Headband and the exercise sessions of CEVIS, ARED and T2. The adapter reads the exported file and keeps the original measurement times.
+\item \textbf{Examination record.} A clinical examination, such as an ultrasound scan, a blood pressure and ECG session or a urinalysis, produces a result reviewed by a person. The adapter receives the structured findings, not the raw image or waveform, with the date, the device and the examiner.
+\item \textbf{Laboratory result.} Blood, saliva and urine samples are collected on board, stored and analyzed later, often on the ground. The result reaches AHI days or weeks after the collection, and the adapter keeps the collection time and the result time apart.
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Conceptual integration pattern for each ISS device. Sourced facts are cited in the text; the patterns are design assumptions of the team.}
+\label{tab:integration-patterns}
+\footnotesize
+\begin{tabular}{p{3.0cm}p{2.6cm}p{4.4cm}p{4.0cm}}
+\hline
+\textbf{Device} & \textbf{Pattern} & \textbf{Point of capture (assumed)} & \textbf{Expected latency} \\
+\hline
+Bio-Monitor & Stream & Export from the tablet application & Seconds to minutes; gaps when out of range \\
+Actiwatch Spectrum & Session file & Actiware export after docking & Hours, after each download \\
+Dry-EEG Headband & Session file & Export after each night & Hours \\
+Holter Monitor 2 & Session file & Recording download after up to 24 hours & One day \\
+BP/ECG monitor & Examination record & Session result on the host computer & Minutes after the session \\
+Pulse oximeter & Examination record & Session result & Minutes \\
+Ultrasound 2 & Examination record & Structured findings after review & Hours to days \\
+Urine analyzer & Examination record & Analyzer result & Minutes to hours \\
+Blood and saliva samples & Laboratory result & Ground laboratory report & Days to weeks \\
+CEVIS, ARED, T2 & Session file & Exercise software export per session & Minutes to hours \\
+CO\textsubscript{2} monitors, AQM & Stream & Station environmental telemetry & Minutes \\
+Radiation monitors & Stream & Station radiation telemetry & Minutes \\
+Personal dosimeters & Session file & Periodic dosimeter readout & Days or longer \\
+Water and microbial monitoring & Laboratory result & Analysis report & Days \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\medskip\noindent\textbf{From the device to the database.} Whatever the pattern, every value follows the same ingestion pipeline on the on board node, described in \ref{sec:software-architecture}:
+
+\begin{enumerate}
+\item \textbf{Capture.} The adapter receives the native payload: a stream message, an exported file, an examination record or a laboratory report.
+\item \textbf{Raw landing.} The original payload is stored unchanged, with its SHA-256 hash, the adapter version and the time of arrival. Nothing is lost if a later step fails, and any stored value can be traced back to the payload it came from.
+\item \textbf{Parsing and validation.} The adapter reads the payload as data and never executes it. It checks the structure, the units and the physical plausibility of each value. A value that fails is kept with the status invalid, not discarded silently.
+\item \textbf{Normalization.} Units are converted to the canonical unit of each metric, while the original value and unit are kept. Times are converted to UTC, and the clock offset of the device, when known, is recorded.
+\item \textbf{Identification.} The value is linked to its subject, through the pseudonym assigned to the device for that period, and to its device, mission phase and activity context.
+\item \textbf{Deduplication.} Each record carries an idempotent key built from the device, the metric and the measurement time, so that a file read twice or a batch resent after a link interruption creates no duplicate.
+\item \textbf{Quality.} The adapter sets the quality status (valid, questionable, invalid or missing), the confidence and whether the value is estimated, and it updates the state of the device: online, degraded, stale or offline.
+\item \textbf{Storage.} The canonical observation is written to the database of the on board node, and the analysis is triggered for the affected person and metric.
+\item \textbf{Synchronization.} The record enters the store and forward queue to the ground node, which holds the full history (\ref{subsec:data-flow}).
+\end{enumerate}
+
+\medskip\noindent\textbf{Database design for real data.} The study shaped the database so that it can hold the four patterns without special cases. \ref{tab:integration-db} lists the main storage areas. Continuous observations are stored in a time series table, partitioned by time, because they make up most of the volume. Sessions, examinations and laboratory results are stored as parent records, and their individual values are canonical observations linked to them, so that a heart rate from a CEVIS session and a heart rate from the Bio-Monitor are queried in the same way but keep their different origin.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Storage areas of the AHI database designed for real device data.}
+\label{tab:integration-db}
+\footnotesize
+\begin{tabular}{p{3.4cm}p{6.6cm}p{4.0cm}}
+\hline
+\textbf{Storage area} & \textbf{Content} & \textbf{Fed by} \\
+\hline
+Raw payloads & Original payload, hash, adapter version, arrival time & Every adapter \\
+Devices & Device identifier, model, version, assigned subject and period, state, battery and signal & Adapter status reports \\
+Observations & Canonical observations (\ref{tab:observation}), partitioned by time & Streams and all child values \\
+Sessions & Start, end, device, subject and context of a recording or exercise session & Session files \\
+Examinations & Type, date, device, examiner and structured findings & Examination records \\
+Laboratory results & Sample type, collection time, result time, analyte, value, unit and reported reference range & Laboratory results \\
+Ingestion log & Accepted and rejected records with the reason for each rejection & The ingestion pipeline \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\medskip\noindent\textbf{Problems a real integration must solve.} The study also listed the difficulties that real data would bring and that the design already accounts for:
+
+\begin{itemize}
+\item \textbf{Late and out of order data.} Session files and laboratory results arrive long after the measurement. The database keeps the measurement time separate from the arrival time, and the analysis recomputes the affected baselines and trends when older data arrive.
+\item \textbf{Clock differences.} Each device has its own clock. Times are converted to UTC and the known offset of each device is recorded, so that values from different devices can be aligned.
+\item \textbf{Gaps and connectivity.} Wireless links can drop, as the Astroskin ground tests showed \cite{toscano2017astroskin}. A gap is stored as missing data, and the expected cadence of each stream decides when a signal becomes stale.
+\item \textbf{Device changes.} Hardware is replaced over time, as with the new teal CEVIS ergometer \cite{nasa_jsc_exercise_countermeasures}. Each adapter is versioned, and a new model needs a new adapter version, not a change to the database or to the analysis.
+\item \textbf{Shared devices.} Several devices are used by more than one crew member. The assignment of a device to a subject is stored with its period of validity, so that each value is linked to the right person.
+\end{itemize}
+
+\medskip\noindent\textbf{What a real integration would still require.} No open interface of ISS equipment is assumed. A real integration would require the interface documentation of each device, the permission of the agencies that own the equipment and the data, a review of the security of the station network, an agreement for the handling of crew medical data, and a validation of each adapter against recorded data before use. Until then, every adapter has a simulated counterpart that produces the same canonical observations, labeled \texttt{SIMULATED}, which is how the AHI demonstrator works.

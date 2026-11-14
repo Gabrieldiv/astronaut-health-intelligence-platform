@@ -1,0 +1,109 @@
+\section{Data Sources}
+\label{sec:data-sources}
+
+This report describes the final scope of AHI. In that scope the platform draws on two families of data. The first and main family is \textbf{operational data from equipment in use on the International Space Station (ISS)}: wearables, medical equipment, exercise equipment and environmental monitors. The second family is \textbf{public NASA research data}, used to ground the analysis in real measurements and to support the development and evaluation of the models. \ref{tab:data-sources} summarizes both families and the role of each.
+
+\medskip\noindent\textbf{Design premise.} AHI assumes that every operational value comes from the ISS equipment described in \ref{sec:hardware-sensors}, for both the crew and the cabin. Only equipment that public NASA, Canadian Space Agency (CSA) or Japan Aerospace Exploration Agency (JAXA) sources describe as in use on the ISS is part of this premise. The premise defines what the platform is designed to receive. It does not mean that the project has access to these devices or to their data. Access to real crew data would require authorization, documentation of each interface and a data handling agreement, and it is treated in \ref{sec:limitations-ethics}.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Data families in the final scope of AHI and their role.}
+\label{tab:data-sources}
+\small
+\begin{tabular}{p{3.4cm}p{5.2cm}p{5.4cm}}
+\hline
+\textbf{Family} & \textbf{Examples} & \textbf{Role in AHI} \\
+\hline
+Wearables & Bio-Monitor, Actiwatch Spectrum, Dry-EEG Headband & Continuous or session based physiology, activity and sleep \\
+Medical equipment & BP/ECG monitor, Holter Monitor 2, pulse oximeter, Ultrasound 2, urine analyzer, blood and saliva collection & Scheduled and periodic clinical measurements \\
+Exercise equipment & CEVIS, ARED, T2 with COLBERT & Physical performance, training load and adherence \\
+Environmental monitors & Air Quality Monitor, CO\textsubscript{2} monitors, combustion product analyzer, radiation monitors and dosimeters, water and microbial monitoring & Context for interpreting physiology; cabin hazards \\
+Self report on station computers & Daily check-in, sleep report, cognition tests & Behavioral health, fatigue and cognition \\
+Public NASA research data & OSDR, EDA, RadLab, NLSP, LSDA & Reference ranges, model development and retrospective evaluation \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\subsection{Operational Data from ISS Equipment}
+\label{subsec:operational-data}
+
+The medical structure of the ISS is the Crew Health Care System. It brings together health maintenance, environmental monitoring and exercise equipment, and the JAXA medical operations page describes its main components \cite{jaxa_medops_system}. AHI organizes the operational data into four categories that follow this structure.
+
+\begin{itemize}
+\item \textbf{Wearables} collect physiological data during daily activities without stopping the work of the crew. They are the main source of continuous data.
+\item \textbf{Medical equipment} produces clinical measurements at scheduled times, such as blood pressure, an electrocardiogram (ECG) recording, an ultrasound examination or a urine analysis.
+\item \textbf{Exercise equipment} describes the daily countermeasure sessions that crews perform to limit the loss of bone, muscle and cardiovascular fitness \cite{nasa_jsc_exercise_countermeasures}.
+\item \textbf{Environmental monitors} describe the cabin. They do not measure health directly, but air quality, carbon dioxide and radiation affect the crew and are needed to interpret physiological changes \cite{nasa_toxicology_envchem}.
+\end{itemize}
+
+Not every device is used by every crew member during the whole mission. Several wearables are research hardware used during specific investigations \cite{nasa_wearable_tech_iss,nasa_sleep_on_station}. AHI therefore treats each data stream as present only when the corresponding device is in use, and a stream that is expected but absent is reported as missing data and never as normal.
+
+\medskip\noindent\textbf{Self report.} Mood, perceived stress, workload and sleep reports are not produced by hardware. NASA Standard Measures already collects sleep reports and cognition tests in flight \cite{nasa_standard_measures}. AHI assumes that such inputs are entered on station computers or on the tablet of the Bio-Monitor system and are labeled as self report.
+
+\subsection{Collection Frequency}
+\label{subsec:collection-frequency}
+
+Not every indicator is collected at the same rate. \ref{tab:frequency} lists the cadence the platform is designed to handle for each kind of data. These cadences are integration targets for AHI. They are not a NASA operational specification.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Cadence that AHI is designed to handle for each kind of data. Design targets, not a NASA specification.}
+\label{tab:frequency}
+\small
+\begin{tabular}{p{4.6cm}p{4.2cm}p{5.2cm}}
+\hline
+\textbf{Kind of data} & \textbf{Cadence in AHI} & \textbf{Typical source} \\
+\hline
+Heart rate & Continuous or near continuous & Bio-Monitor \\
+Breathing & Continuous or per session & Bio-Monitor \\
+Blood oxygen saturation & Periodic or continuous, depending on the device & Bio-Monitor, pulse oximeter \\
+ECG & Per session or 24 hour recording & BP/ECG monitor, Holter Monitor 2 \\
+Sleep & Each rest period & Actiwatch Spectrum, Dry-EEG Headband \\
+Physical activity & During the day & Actiwatch Spectrum, Bio-Monitor \\
+Exercise performance & Per session & CEVIS, ARED, T2 \\
+Blood pressure & Scheduled measurements & BP/ECG monitor, Bio-Monitor \\
+Cabin CO\textsubscript{2} and air quality & Continuous & CO\textsubscript{2} monitors, Air Quality Monitor \\
+Radiation & Continuous area dose; accumulated personal dose & Radiation monitors, personal dosimeters \\
+Blood, saliva and urine & Scheduled collections & Collection kits, urine analyzer \\
+Ultrasound & Scheduled examinations & Ultrasound 2 \\
+Microbial and water quality & Scheduled sampling & Environmental Health System \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+A consequence of these cadences is that each signal has its own definition of fresh and stale. A heart rate that has not arrived for several minutes is stale, while a blood sample result is expected only at the next scheduled collection. AHI stores the expected cadence of every stream and uses it to decide when data become missing.
+
+\subsection{Public NASA Research Data}
+\label{subsec:public-data}
+
+No public source offers continuous physiological telemetry of astronauts. Public NASA repositories nevertheless hold real measurements that AHI uses in three ways: as historical reference shown next to crew data, as material to develop and test the analysis, and as a retrospective test of the engine outside simulated data.
+
+\begin{itemize}
+\item \textbf{NASA Open Science Data Repository (OSDR).} The main NASA repository for space life science, with studies, files and metadata \cite{nasa_about_osdr}. Among its human studies are the Inspiration4 complete blood count (OSD-569) and comprehensive metabolic panel (OSD-575), with four crew members at three time points before launch and four after return and no in-flight samples \cite{osdr_osd569,osdr_osd575}. They give AHI real laboratory values with units, the format that blood collection results take in the platform.
+\item \textbf{Environmental Data Application (EDA).} ISS cabin carbon dioxide, temperature, humidity and radiation dose for the periods of research payload missions \cite{osdr_eda}. AHI uses it to replay real cabin periods. The data describe the cabin during a payload mission and not a given crew.
+\item \textbf{RadLab.} An access point for radiation telemetry from several instruments \cite{osdr_radlab}. It was unavailable when tested on 2026-11-14, so its coverage and format are still to be checked.
+\item \textbf{NASA Life Sciences Portal (NLSP)} and \textbf{Life Sciences Data Archive (LSDA).} Discovery portals for historical life science and human health data, including analog studies \cite{nasa_nlsp,nasa_lsda}. Many datasets require a formal request. They are the path to sleep, cognition and analog data. Analog participants are never presented as astronauts.
+\item \textbf{NASA Standard Measures} and \textbf{Artemis~II Standard Measures.} Reference material and not datasets. They list the measures collected before, during and after missions and justify the catalog of indicators \cite{nasa_standard_measures,nasa_artemis_ii_standard_measures}.
+\end{itemize}
+
+A caution applies to all public data. It is not safe to assume that individual medical data of astronauts are publicly available, and in general they are not. Public datasets are small, often from short missions, and rarely include in-flight samples. They support grounding and testing, but they are not enough to train clinical models by themselves (\ref{sec:artificial-intelligence}).
+
+\subsection{Data Provenance}
+\label{subsec:data-provenance}
+
+Every observation carries a \texttt{data\_origin} field, shown in the interface as a badge, so that a reader always knows where a value comes from:
+
+\begin{itemize}
+\item \texttt{DEVICE}: received from ISS equipment through a device adapter (\ref{sec:hardware-sensors}).
+\item \texttt{MANUAL}: entered by a person, such as the daily check-in or a sleep report.
+\item \texttt{LAB}: a result of a sample collected in flight and analyzed later, with the collection time and the result time kept apart.
+\item \texttt{DERIVED}: computed by the platform, such as baselines, risk scores and forecasts.
+\item \texttt{REAL\_PUBLIC}: public NASA research data, shown as historical reference.
+\item \texttt{SIMULATED}: produced by the simulator used for development, testing and demonstration. Simulated values are never mixed with crew data.
+\end{itemize}
+
+Each record also carries its source device, unit, measurement time, quality status and activity context. Imported public datasets follow a reproducible path: the original file is downloaded from an allow list of NASA hosts, its SHA-256 hash and download time are recorded, and a manifest keeps the source address, version, population, design and license. Values are kept exactly as reported, nothing is imputed, and fields the source does not state are recorded as not stated.

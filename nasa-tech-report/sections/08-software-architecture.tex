@@ -1,0 +1,122 @@
+\section{Software Architecture}
+\label{sec:software-architecture}
+
+This section describes the architecture of AHI in its final scope. Two constraints shape it. First, the crew must keep monitoring, alerts and on board recommendations when the link to Earth is slow or interrupted, so the essential analysis runs on board. Second, the flight surgeon, mission control and researchers work on the ground with the full history, so data are synchronized to a ground system. The architecture is therefore a pair of nodes, one on board and one on the ground, built from the same six modules.
+
+\subsection{Components}
+\label{subsec:components}
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{The six modules of AHI and where they run.}
+\label{tab:components}
+\small
+\begin{tabular}{p{3.2cm}p{7.4cm}p{3.4cm}}
+\hline
+\textbf{Module} & \textbf{Responsibility} & \textbf{Runs} \\
+\hline
+Device integration & One adapter per ISS device. Converts native output to canonical observations, reports device state, accepts late batches & On board \\
+Health data platform & Current and historical observations, baselines, model outputs, recommendations and the audit trail, with origin and quality on every record & On board (recent window) and ground (full history) \\
+Analytics and prediction engine & Baselines, anomaly detection, combined rules, risk score, forecasts and learned models & On board (essential) and ground (full models and retraining) \\
+Recommendation engine & Selection of interventions from the catalog, autonomy, follow-up of their effect & On board and ground \\
+Explanation layer & Claude API with retrieval of curated sources and output checks; a local model specialized in AHI when contact is lost (\ref{sec:artificial-intelligence}) & Claude API through the link to Earth; local model on board \\
+Dashboards and review & Crew view, crew health overview, predictive and recommendation screens, flight surgeon review workflow & Crew view on board; all screens on the ground \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+The analytics engine is a library with no dependency on the interface or on storage, so the same code runs on board, on the ground and in an offline evaluation harness. The on board node keeps a recent window of data sufficient for baselines and short forecasts. The ground node keeps the full history and trains and evaluates the learned models, and approved model versions are sent to the on board node.
+
+\subsection{APIs}
+\label{subsec:apis}
+
+The ground node exposes a REST interface under a versioned path, and the on board node exposes the same subset it needs. The main groups of operations are the following:
+
+\begin{itemize}
+\item \textbf{Ingestion:} batches of canonical observations, answered with the counts of accepted and rejected records and the reason for each rejection. Ingestion is idempotent, so a batch resent after a link interruption creates no duplicates.
+\item \textbf{Health queries:} current status, history, baseline, anomalies, risk, predictions and recommendations for each astronaut, and the cabin environment.
+\item \textbf{Actions:} acknowledgment of an alert, logging of an intervention and its result, review decisions of the flight surgeon, and messages between crew and ground.
+\item \textbf{Devices and data:} device status, import of public datasets and readiness checks.
+\item \textbf{Export:} a FHIR R4 bundle of patient, device and observation resources, with pseudonymized identifiers and the origin of every value.
+\end{itemize}
+
+\subsection{Entity-Relationship Model}
+\label{subsec:entity-relationship-model}
+
+The central entity is the canonical health observation, one record per measurement, with the fields in \ref{tab:observation}. Vital signs, exercise sessions, cabin readings, laboratory results, examination findings and self report all use the same shape.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Fields of the canonical health observation.}
+\label{tab:observation}
+\small
+\begin{tabular}{p{3.6cm}p{10.4cm}}
+\hline
+\textbf{Field} & \textbf{Rule} \\
+\hline
+Observation identifier & Unique; an idempotent key from the source allows deduplication \\
+Subject & A pseudonym such as AST-01, or CABIN for the environment \\
+Metric code and unit & One code from the metric catalog; canonical unit after normalization, original value kept \\
+Value & A number, or null when missing. Never zero for a missing value \\
+Measured and received time & ISO 8601 in UTC; for samples, also the collection and result times \\
+Data origin & \texttt{DEVICE}, \texttt{MANUAL}, \texttt{LAB}, \texttt{DERIVED}, \texttt{REAL\_PUBLIC} or \texttt{SIMULATED} \\
+Source & Device and adapter version, or dataset accession and file for imported data \\
+Quality & Status (valid, questionable, invalid or missing), confidence from 0 to 1, and whether the value is estimated \\
+Context & Mission phase and activity context \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+Around this record the model has the following entities. An astronaut is assigned devices and is the subject of many observations, and each device produces observations. For each astronaut, metric and context the engine keeps a baseline. An astronaut has anomalies, predictions, alerts, check-ins, messages and one current risk assessment for each dimension. A risk assessment suggests recommendations, each recommendation can lead to an intervention, and each intervention records its follow-up indicators. Every prediction and recommendation records the version of the model or rule that produced it. Audit events record acknowledgments, interventions, review decisions, escalations and messages, with time and actor.
+
+\subsection{Data Flow}
+\label{subsec:data-flow}
+
+\begin{enumerate}
+\item The Bio-Monitor collects heart rate, breathing and other physiological signals.
+\item The Actiwatch Spectrum sends sleep and activity data.
+\item The exercise equipment provides performance data for each session, and the medical equipment and environmental monitors provide their measurements.
+\item Each adapter identifies the astronaut, the device, the time and the context of every measurement and produces canonical observations.
+\item The health data platform consolidates current and historical data and checks quality, units and duplicates.
+\item The analytics and prediction engine identifies anomalies, computes risks and estimates future trends.
+\item The dashboards present the current situation and the possible scenarios, and the explanation layer describes them in plain language.
+\item The recommendation engine suggests interventions and routes the relevant cases to medical review.
+\end{enumerate}
+
+The on board node synchronizes with the ground through a store and forward queue. Data and messages wait in the queue during a loss of signal and are sent in order when the link returns, and every message shows the communication delay of the mission profile (ISS, Moon or Mars).
+
+\subsection{Technology Stack}
+\label{subsec:technology-stack}
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Technology stack of AHI.}
+\label{tab:stack}
+\small
+\begin{tabular}{p{3.4cm}p{10.6cm}}
+\hline
+\textbf{Layer} & \textbf{Technology} \\
+\hline
+Interface & React, TypeScript, Tailwind CSS; three.js for the 3D body; a charting library for time series \\
+Server & Python, FastAPI, Pydantic, as a modular monolith with background jobs \\
+Storage & PostgreSQL with TimescaleDB for time series; Redis for queues and cache \\
+Analytics & pandas, NumPy, SciPy, scikit-learn, XGBoost; a deep learning library for sequence models \\
+Language model & Claude API with retrieval over a curated library of NASA and peer reviewed sources; a local model specialized in AHI on board for periods without contact \\
+Interoperability & FHIR R4 export; LOINC codes where they exist \\
+Delivery & Containers; continuous integration with lint, type checks, tests and build \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\medskip\noindent\textbf{Architectural decision.} A modular monolith with asynchronous processing was chosen over microservices. It is simpler to deploy on limited on board computers, easier to validate, and keeps clear module boundaries so that a module can be separated later if needed.
+
+\subsection{Security and Access}
+\label{subsec:security}
+
+Crew health data are among the most sensitive data of a mission. Access is role based, with roles for crew member, crew medical officer, flight surgeon, mission control, researcher and data engineer, and each role sees only what it needs. Data are encrypted in transit and at rest, identifiers are pseudonymized outside the medical roles, and the audit trail is persistent and tamper evident. Researchers receive de-identified extracts. Data imported from outside are treated as untrusted: they are hashed, parsed as data and never executed.

@@ -1,0 +1,44 @@
+\section{Future Work}
+\label{sec:future-work}
+
+The items below extend AHI beyond the scope described in this report. They are plans in rough order of priority and not commitments.
+
+\subsection{Validation}
+\label{subsec:future-validation}
+
+\begin{enumerate}
+\item Retrospective replay of real ISS cabin periods and of public laboratory and analog data, as the first test of the engine outside simulated data (\ref{sec:results}).
+\item Operational shadow mode with authorized crew data, with alerts and recommendations reviewed by flight surgeons, to obtain labeled cases.
+\item A citable source for every threshold, with document, section and version, and review of thresholds, wording and the recommendation catalog by flight surgeons.
+\item A usability study with crew members and flight surgeons, with tasks taken from the user journeys, and a formal accessibility audit.
+\item Prospective clinical validation, which is outside the scope of a project of this kind and would need a medical sponsor.
+\end{enumerate}
+
+\subsection{Data and Devices}
+\label{subsec:future-real-data}
+
+\begin{enumerate}
+\item A table that relates each metric to the real device that measures it, to the NASA Standard Measure and to the HRP hazard, confirmed against the interface documentation of each device.
+\item Further ISS hardware described in public sources and not part of the current premise, such as the T-Mini core temperature headband and the Wearable Monitoring vest \cite{nasa_wearable_tech_iss}, and the new teal CEVIS ergometer \cite{nasa_jsc_exercise_countermeasures}.
+\item Access to historical data through the Life Sciences Data Archive and the NASA Life Sciences Portal \cite{nasa_lsda,nasa_nlsp}, with formal requests where required.
+\item Real radiation data from RadLab once its coverage, units and format can be checked \cite{osdr_radlab}.
+\end{enumerate}
+
+\subsection{Missions Beyond Low Earth Orbit}
+\label{subsec:future-platform}
+
+\begin{enumerate}
+\item Adaptation to Artemis and lunar missions, whose Standard Measures differ from those of the ISS \cite{nasa_artemis_ii_standard_measures}, with smaller devices and less on board computing.
+\item Longer autonomy for Mars missions, with communication delays of up to about 24 minutes one way \cite{nasa_space_communications_seven_things}: a larger on board model set, an approved on board language model and on board steps for every high item.
+\item Bandwidth aware synchronization, with priorities so that alerts and summaries reach Earth before raw data.
+\end{enumerate}
+
+\subsection{Analytics}
+\label{subsec:future-analytics}
+
+\begin{enumerate}
+\item Activity recognition from sensors instead of the schedule, which would remove the assumption of a correct activity context.
+\item Sequence models for multivariate forecasting once long histories exist.
+\item Learning of intervention effects from the follow-up of logged interventions, within protocols approved by the medical team.
+\item Integration of examination results for the eyes and bone, so that spaceflight associated neuro-ocular syndrome and bone loss can be followed as point measurements on the timeline \cite{nasa_hrr_sans,lang2004bone}.
+\end{enumerate}

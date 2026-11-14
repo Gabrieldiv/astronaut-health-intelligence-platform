@@ -1,0 +1,110 @@
+\section{Results}
+\label{sec:results}
+
+This section defines how AHI is evaluated and what results are expected. \textbf{It reports no clinical performance.} No real crew data were available to the project, so no sensitivity, specificity or accuracy on astronauts can be claimed. The evaluation is designed in three stages of increasing realism, and each stage answers a different question.
+
+\subsection{Metrics}
+\label{subsec:metrics}
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Evaluation metrics of AHI.}
+\label{tab:checks}
+\small
+\begin{tabular}{p{4.0cm}p{6.0cm}p{4.0cm}}
+\hline
+\textbf{Metric} & \textbf{Definition} & \textbf{Applies to} \\
+\hline
+False alert rate & Alerts at moderate or above per crew day when nothing is wrong & Level 1, Level 2 \\
+Detection time & Time from the start of a deterioration to the first alert & Level 1, Level 2 \\
+Forecast error & Mean absolute error of projections at 24, 48 and 72 hours & Level 2 \\
+Interval coverage & Share of observed values inside the stated forecast interval & Level 2 \\
+Discrimination & Area under the ROC curve of the risk models, where labeled events exist & Level 2 \\
+Calibration & Agreement between estimated and observed event frequency & Level 2 \\
+Missing data handling & Share of missing or stale signals reported as no data & All levels \\
+Recommendation review & Share of recommendations accepted, modified or rejected by the flight surgeon & Level 3 \\
+Explanation fidelity & Share of generated texts whose numbers and citations match their inputs & Explanation layer \\
+Usability & Task success and time for crew and flight surgeons & Interface \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\subsection{Evaluation}
+\label{subsec:evaluation}
+
+\medskip\noindent\textbf{Stage 1: simulated scenarios.} A headless harness replays the engine on the scripted scenarios of \ref{sec:implementation-demo} over many seeds. The nominal scenario measures the false alert rate, since any alert there is false. The other scenarios measure detection time and check the intended behavior: the acute event reaches the critical level within minutes, slow patterns reach the high level and stop there, and a sensor failure produces no data and never a normal status. This stage shows that the rules and models behave as designed. It is optimistic by construction, because the same simulator generates and evaluates the data.
+
+\medskip\noindent\textbf{Stage 2: retrospective replay of real data.} Real public data are replayed through the engine: ISS cabin periods from the Environmental Data Application \cite{osdr_eda}, laboratory panels from OSDR \cite{osdr_osd569,osdr_osd575} and, where they can be obtained, sleep and cognition data from analog studies \cite{nasa_nlsp,nasa_lsda}. This stage tests the engine on data it was not tuned on, for false alert rate, forecast error and interval coverage. Analog results are reported as analog results.
+
+\medskip\noindent\textbf{Stage 3: operational shadow mode.} With authorization, AHI runs next to the existing medical operations on real crew data, without affecting decisions. Flight surgeons review its alerts and recommendations, which gives labeled cases for discrimination, calibration and recommendation review. This stage depends on access that the project does not have.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Expected results, stated as hypotheses to be tested.}
+\label{tab:detection}
+\footnotesize
+\begin{tabular}{p{4.4cm}p{9.6cm}}
+\hline
+\textbf{Hypothesis} & \textbf{How it is tested} \\
+\hline
+A personal baseline gives fewer false alerts than fixed population limits for the same detection time & Stage 1 and 2: compare both methods on the same data \\
+Combined rules detect slow multi signal deterioration earlier than any single metric & Stage 1: progressive fatigue scenario; Stage 3: reviewed cases \\
+Missing data is never reported as normal & Stage 1: sensor failure scenario and automated tests \\
+Forecast intervals cover close to their stated share of values & Stage 2: replay of cabin and daily metrics \\
+Learned models improve on rules only when enough real data exist & Stage 2 and 3: compare with the rules on held out data \\
+Generated explanations contain no number or limit absent from their input & Explanation fidelity on reference cases \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\medskip\noindent\textbf{Threats to validity.} \ref{tab:threats} lists the main reasons why results of the earlier stages should not be generalized.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Threats to the validity of the evaluation.}
+\label{tab:threats}
+\small
+\begin{tabular}{p{5.0cm}p{9.0cm}}
+\hline
+\textbf{Threat} & \textbf{Effect} \\
+\hline
+The same simulator generates and evaluates & Detection in Stage 1 is optimistic and shows internal consistency only \\
+Few scenarios & Risk of overfitting rules to a few stories; more scenarios and seeds are needed \\
+Public data are small and short & Inspiration4 panels cover four people on a three day flight with no in-flight samples \\
+Analog populations differ & Analog sleep and cognition data are not astronaut data \\
+Few labeled outcomes & Clinical sensitivity and specificity cannot be estimated before Stage 3 \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\subsection{Evidence}
+\label{subsec:evidence}
+
+The evidence produced by each stage is stored with the version of the engine and of every model, so that any change of a rule or model appears as a difference in the results. Each model card records its evaluation, and the evaluation can be reproduced with one command. \ref{tab:missing-evidence} lists the evidence that only later stages can provide.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Evidence that requires real data or expert review.}
+\label{tab:missing-evidence}
+\small
+\begin{tabular}{p{7.0cm}p{7.0cm}}
+\hline
+\textbf{Evidence} & \textbf{Requires} \\
+\hline
+Accuracy on real astronaut data & Authorized access to crew data (Stage 3) \\
+Sensitivity and specificity against a clinical reference & Labeled outcomes reviewed by flight surgeons \\
+Calibration of risk models & Enough labeled events \\
+Review of thresholds and recommendations & Flight surgeons \\
+Usability with crew and flight surgeons & A study with representative users \\
+Accessibility & A formal audit and screen reader tests \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}

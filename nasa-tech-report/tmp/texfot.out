@@ -1,0 +1,11 @@
+C:\dev\astronaut-health-intelligence-platform\nasa-tech-report\packages\tex_filter.pl: invoking: pdflatex -synctex=1 -file-line-error --shell-escape -interaction=nonstopmode -output-directory=tmp main.tex C:\dev\astronaut-health-intelligence-platform\nasa-tech-report\main.tex
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex)
+Package biblatex Warning: Using fall-back bibtex backend:
+Overfull \hbox (27.71309pt too wide) in paragraph at lines 86--86
+pdfTeX warning (ext4): destination with the same identifier (name{page.}) has b
+een already used, duplicate ignored
+l.86 \begin{document}
+Overfull \hbox (2.6475pt too wide) in paragraph at lines 86--86
+LaTeX Warning: There were undefined references.
+Package biblatex Warning: Please (re)run BibTeX on the file(s):
+Output written on tmp/main.pdf (34 pages, 361625 bytes).
