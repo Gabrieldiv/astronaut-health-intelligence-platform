@@ -60,7 +60,7 @@ Esta é a lista consolidada de referências da seção Ciência da documentaçã
 
 | Fonte | Motivo |
 | --- | --- |
-| Documento NTRS 20240000117 da NASA | Listado no `PROJECT_MASTER.md` como referência sobre biossensores não invasivos. O registro conferido em 2026-11-14 é uma apresentação de 2024, em espanhol, sobre inteligência artificial e exploração espacial tripulada, sem resumo sobre biossensores. Não foi usado. |
+| Documento NTRS 20240000117 da NASA | Estava listado no `PROJECT_MASTER.md` como referência sobre biossensores não invasivos. O registro conferido em 2026-11-14 é uma apresentação de 2024, em espanhol, sobre inteligência artificial e exploração espacial tripulada, sem resumo sobre biossensores. Não foi usado e, em 2026-11-14, foi substituído no `PROJECT_MASTER.md` pelo NTRS 20190001996 ([R30](#r30)). |
 | NASA Life Sciences Portal (NLSP), <https://nlsp.nasa.gov/> | No ar, mas nenhuma afirmação científica desta seção depende dele. Veja [Fontes de dados da NASA](/pt/data/sources). |
 
 ## Fora do escopo desta lista

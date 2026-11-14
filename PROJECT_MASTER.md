@@ -508,7 +508,8 @@ reutilizá-las em materiais públicos.
 ![Astronauta usando Astroskin na
 ISS](https://cdn.mos.cms.futurecdn.net/v2/t%3A0%2Cl%3A437%2Ccw%3A1125%2Cch%3A1125%2Cq%3A80%2Cw%3A1125/TMhp4hptkLSc3i8XQognc6.jpg)
 
-Referência NASA NTRS: https://ntrs.nasa.gov/citations/20240000117\
+Referência NASA NTRS (Astroskin testado no análogo HERA, 2017):
+https://ntrs.nasa.gov/citations/20190001996\
 Canadian Space Agency Bio-Monitor:
 https://www.csa-asc.gc.ca/eng/sciences/bio-monitor.asp
 
@@ -1764,71 +1765,11 @@ astronaut-health-intelligence/
 
 ------------------------------------------------------------------------
 
-# 18. Claude Code --- instruções de execução
+# 18. Definition of Done global
 
-## 18.1 Instrução inicial
-
-Cole no Claude Code após colocar este arquivo na raiz:
-
-``` text
-Leia integralmente o arquivo PROJECT_MASTER.md antes de executar qualquer ação.
-
-Você atuará como um time sênior multidisciplinar composto por:
-- Product Manager;
-- Software Architect;
-- Backend Engineer;
-- Frontend Engineer;
-- Data Engineer;
-- ML Engineer;
-- QA Engineer;
-- UX/UI Designer.
-
-Objetivo: implementar o Astronaut Health Intelligence descrito no documento.
-
-REGRAS:
-1. Não implemente tudo de uma vez.
-2. Primeiro analise o repositório existente e identifique o que já existe.
-3. Não sobrescreva arquivos sem entender seu conteúdo.
-4. Preserve as decisões arquiteturais do documento.
-5. Comece pela Etapa 0 — Data Discovery e Foundation.
-6. Transforme o backlog em tarefas rastreáveis.
-7. Antes de cada etapa, apresente plano, arquivos afetados e critérios de aceite.
-8. Implemente, teste e documente cada entrega.
-9. Não invente APIs, credenciais, dados ou capacidades de dispositivos.
-10. Toda fonte externa deve ter URL, data de consulta e proveniência.
-11. Dados simulados devem sempre carregar data_origin=SIMULATED.
-12. Não apresente estimativas como evidência clínica.
-13. Não crie microserviços desnecessários no MVP.
-14. Mantenha os diagramas Mermaid atualizados.
-15. Ao concluir uma etapa, informe entregas, testes executados, limitações e próxima etapa.
-
-Primeira tarefa:
-- inspecione o repositório;
-- identifique ferramentas disponíveis;
-- valide a estrutura e dependências;
-- produza um plano de execução da Etapa 0;
-- não comece funcionalidades fora do escopo antes de aprovar o plano.
-```
-
-## 18.2 Prompt para iniciar cada etapa
-
-``` text
-Leia PROJECT_MASTER.md e o backlog existente.
-
-Vamos executar a próxima etapa ainda não concluída.
-Antes de codificar:
-1. Liste as histórias incluídas.
-2. Liste dependências e riscos.
-3. Defina os arquivos que serão criados/alterados.
-4. Defina testes e critérios de aceite.
-
-Depois implemente em pequenos incrementos.
-Execute testes relevantes.
-Atualize documentação, backlog e diagramas.
-Não marque uma história como concluída sem evidência de teste.
-```
-
-## 18.3 Definition of Done global
+> Nota da versão pública: as instruções de execução para o assistente de desenvolvimento
+> (prompts das antigas seções 18.1 e 18.2) foram retiradas deste documento. A numeração
+> das seções seguintes foi mantida.
 
 Uma história só está concluída quando: - código implementado; -
 validações e erros tratados; - testes automatizados criados e
@@ -1912,8 +1853,9 @@ operacionais.
 
 -   Wearable Tech for Space Station Research:
     https://www.nasa.gov/missions/station/iss-research/wearable-tech-for-space-station-research/
--   NASA NTRS --- Spaceflight and Non-invasive Biosensors:
-    https://ntrs.nasa.gov/citations/20240000117
+-   NASA NTRS --- Wearable Biosensor Monitor to Support Autonomous Crew
+    Health and Readiness to Perform (Astroskin no HERA, 2017):
+    https://ntrs.nasa.gov/citations/20190001996
 -   Canadian Space Agency Bio-Monitor:
     https://www.csa-asc.gc.ca/eng/sciences/bio-monitor.asp
 -   NASA Exercise Countermeasures:

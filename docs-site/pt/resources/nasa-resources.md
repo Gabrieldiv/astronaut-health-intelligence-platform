@@ -41,7 +41,7 @@ Estas fontes sustentam a existência dos repositórios, modalidades de pesquisa,
 | Recurso | Link | Equipamento simulado na AHI |
 | --- | --- | --- |
 | Wearable Tech for Space Station Research | https://www.nasa.gov/missions/station/iss-research/wearable-tech-for-space-station-research/ | Actigrafia |
-| NASA NTRS: Spaceflight and Non-invasive Biosensors | https://ntrs.nasa.gov/citations/20240000117 | Contexto de biossensores |
+| NASA NTRS: Wearable Biosensor Monitor to Support Autonomous Crew Health and Readiness to Perform (Astroskin no HERA, 2017) | https://ntrs.nasa.gov/citations/20190001996 | Biossensor vestível testado no análogo HERA |
 | Canadian Space Agency: Bio-Monitor | https://www.csa-asc.gc.ca/eng/sciences/bio-monitor.asp | Camiseta inteligente |
 | NASA Exercise Countermeasures | https://www.nasa.gov/reference/jsc-exercise-countermeasures/ | CEVIS, ARED, T2 |
 | NASA ISS Reference Guide | https://www.nasa.gov/wp-content/uploads/2022/06/508318main_iss_ref_guide_nov2010.pdf | Contexto da estação |

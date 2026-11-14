@@ -39,7 +39,7 @@ NASA source availability was checked on 2026-11-14 (OSDR APIs reachable; EDA rea
 | Resource | Link |
 | --- | --- |
 | Wearable tech for space station research | [nasa.gov](https://www.nasa.gov/missions/station/iss-research/wearable-tech-for-space-station-research/) |
-| NTRS: spaceflight and non-invasive biosensors | [ntrs.nasa.gov](https://ntrs.nasa.gov/citations/20240000117) |
+| NTRS: Wearable Biosensor Monitor to Support Autonomous Crew Health and Readiness to Perform (Astroskin in HERA, 2017) | [ntrs.nasa.gov](https://ntrs.nasa.gov/citations/20190001996) |
 | Canadian Space Agency Bio-Monitor | [csa-asc.gc.ca](https://www.csa-asc.gc.ca/eng/sciences/bio-monitor.asp) |
 | NASA exercise countermeasures | [nasa.gov](https://www.nasa.gov/reference/jsc-exercise-countermeasures/) |
 | ISS reference guide (PDF) | [nasa.gov](https://www.nasa.gov/wp-content/uploads/2022/06/508318main_iss_ref_guide_nov2010.pdf) |

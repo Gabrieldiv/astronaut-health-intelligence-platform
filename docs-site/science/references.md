@@ -60,7 +60,7 @@ This is the consolidated reference list for the Science section of the Astronaut
 
 | Source | Reason |
 | --- | --- |
-| NASA NTRS document 20240000117 | Listed in `PROJECT_MASTER.md` as a reference on non invasive biosensors. The record checked on 2026-11-14 is a 2024 Spanish language presentation on artificial intelligence and human space exploration, with no abstract on biosensors. Not used. |
+| NASA NTRS document 20240000117 | Was listed in `PROJECT_MASTER.md` as a reference on non invasive biosensors. The record checked on 2026-11-14 is a 2024 Spanish language presentation on artificial intelligence and human space exploration, with no abstract on biosensors. Not used, and replaced in `PROJECT_MASTER.md` by NTRS 20190001996 ([R30](#r30)) on 2026-11-14. |
 | NASA Life Sciences Portal (NLSP), <https://nlsp.nasa.gov/> | Reachable, but no scientific statement in this section depends on it. See [NASA Data Sources](/data/sources). |
 
 ## Not covered by this list
