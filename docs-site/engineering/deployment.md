@@ -5,6 +5,7 @@ status: IMPLEMENTED
 code:
   - .github/workflows/docs-deploy.yml
   - .github/workflows/ci.yml
+  - .github/workflows/docs-check.yml
   - docs-site/.vitepress/config.mts
   - docs-site/package.json
 verified: 2026-11-14
@@ -77,9 +78,9 @@ Source: `docs-site/.vitepress/theme/` (`index.ts`, `components/*.vue`, `meta.ts`
 
 ```mermaid
 flowchart LR
-    PUSH["Push to master<br/>(docs-site/** changed)"] --> BUILD["Build job<br/>npm ci, docs:build"]
-    BUILD --> ART["upload-pages-artifact@v3<br/>.vitepress/dist"]
-    ART --> DEPLOY["Deploy job<br/>deploy-pages@v4"]
+    PUSH["Push to master<br/>(docs-site/** changed)"] --> JOB["Build and deploy job<br/>npm ci, docs:build"]
+    JOB --> ART["upload-pages-artifact@v3<br/>.vitepress/dist"]
+    ART --> DEPLOY["deploy-pages@v4<br/>(same job)"]
     DEPLOY --> PAGES["GitHub Pages<br/>github-pages environment"]
 ```
 
@@ -90,19 +91,26 @@ Workflow `.github/workflows/docs-deploy.yml`:
 | Triggers | Push to `master` touching `docs-site/**` or the workflow file; manual `workflow_dispatch` |
 | Permissions | `contents: read`, `pages: write`, `id-token: write` (minimal for Pages with the built-in token) |
 | Concurrency | Group `pages`, never cancels a deployment in progress |
-| Build | Node 22, `npm ci` with the npm cache, `actions/configure-pages@v5`, `npm run docs:build` (fails on dead links), `actions/upload-pages-artifact@v3` with `docs-site/.vitepress/dist` |
-| Deploy | `actions/deploy-pages@v4` in the `github-pages` environment |
+| Job | One job, "Build and deploy", in the `github-pages` environment, with a 10 minute timeout (one runner instead of two) |
+| Steps | Node 22, `npm ci` with the npm cache, `actions/configure-pages@v5`, `npm run docs:build` (fails on dead links), `actions/upload-pages-artifact@v3` with `docs-site/.vitepress/dist`, `actions/deploy-pages@v4` |
 
 **One time repository setting:** Settings > Pages > Build and deployment > Source = **GitHub Actions**. No `gh-pages` branch and no personal token are needed.
 
 ## Validation
 
-The CI workflow (`.github/workflows/ci.yml`) runs on every push and pull request to `master` with `contents: read` only:
+Workflows only run when the files they check change (path filters), all with `contents: read` (except the deploy), a 10 minute timeout and cancellation of superseded runs:
 
-| Job | Steps |
-| --- | --- |
-| App | `npm ci`, `npx tsc -b`, `npm test`, `npx vite build` in `frontend/web` |
-| Docs portal | `npm ci`, `npm run docs:build` in `docs-site` (VitePress fails the build on dead internal links) |
+| Workflow | Runs on | Steps |
+| --- | --- | --- |
+| `ci.yml` (App) | Push and pull request to `master` touching `frontend/web/**` | `npm ci`, `npm run lint` (oxlint, errors fail, warnings are reported), `npx tsc -b`, `npm test`, `npx vite build` |
+| `docs-check.yml` (Docs portal) | Pull request to `master` touching `docs-site/**` | `npm ci`, `npm run docs:build` (VitePress fails on dead internal links) |
+| `docs-deploy.yml` | Push to `master` touching `docs-site/**` | Same build as the docs check, then publish; on `master` this build is the gate, so the portal is never built twice for one push |
+
+A push that changes only the README, the spec, `docs/` or other non code files starts no workflow.
+
+::: info Branch protection
+Path filtered workflows do not report a status when they are skipped. If branch protection later requires these checks, add a small always running summary job (or use a path filter action inside one workflow) so pull requests that do not touch a path are not left waiting.
+:::
 
 Dead link policy: `ignoreDeadLinks: 'localhostLinks'`, so only links to a local dev server (for example `http://localhost:5173`) are allowed to be unreachable; every internal link must resolve.
 

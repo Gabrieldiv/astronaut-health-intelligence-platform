@@ -88,7 +88,7 @@ Definições completas em [Origens e proveniência dos dados](/pt/data/data-orig
 | Capacidade | Status | Origem | Código | Documentação |
 | --- | --- | --- | --- | --- |
 | Testes unitários e de cenário (101 testes em 14 arquivos) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> | [Estratégia de testes](/pt/engineering/testing) |
-| CI no GitHub Actions (tipos, testes, build do app e do portal) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path=".github/workflows/ci.yml" /> | [Documentação e deploy](/pt/engineering/deployment) |
+| CI no GitHub Actions (lint, tipos, testes e build do app; build do portal em pull requests) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path=".github/workflows/ci.yml" /> | [Documentação e deploy](/pt/engineering/deployment) |
 | Portal de documentação bilíngue no GitHub Pages | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path=".github/workflows/docs-deploy.yml" /> | [Documentação e deploy](/pt/engineering/deployment) |
 | Backend FastAPI e API REST de ingestão | <StatusBadge status="PLANNED" /> | | | [Arquitetura alvo](/pt/architecture/target-architecture) |
 | Banco de dados (PostgreSQL, TimescaleDB opcional) | <StatusBadge status="PLANNED" /> | | | [Arquitetura alvo](/pt/architecture/target-architecture) |

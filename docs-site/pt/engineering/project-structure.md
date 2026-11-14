@@ -22,8 +22,9 @@ O repositório da Astronaut Health Intelligence Platform (AHI) tem três partes:
 ├── README.md
 ├── LICENSE                   MIT
 ├── .github/workflows/
-│   ├── ci.yml                tipos, testes e build do app; build do portal
-│   └── docs-deploy.yml       publica o portal no GitHub Pages
+│   ├── ci.yml                lint, tipos, testes e build do app (só quando o app muda)
+│   ├── docs-check.yml        build do portal em pull requests (links quebrados reprovam)
+│   └── docs-deploy.yml       build e publicação do portal no GitHub Pages
 ├── data/
 │   ├── raw/<OSD>/            arquivos originais do OSDR, byte a byte
 │   ├── manifests/            proveniência (SHA-256, URLs, versões) e log de importação

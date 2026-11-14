@@ -5,6 +5,7 @@ status: IMPLEMENTED
 code:
   - frontend/web/package.json
   - .github/workflows/ci.yml
+  - .github/workflows/docs-check.yml
 tests:
   - frontend/web/src/engine/engine.test.ts
   - frontend/web/src/engine/risk.test.ts
@@ -65,7 +66,7 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 
 ## In CI
 
-The CI workflow (`.github/workflows/ci.yml`) runs the typecheck, `npm test` and the production build on every push and pull request to `master`, plus the documentation build. See [Documentation and deployment](./deployment).
+The CI workflow (`.github/workflows/ci.yml`) runs lint, the typecheck, `npm test` and the production build on pushes and pull requests to `master` that touch `frontend/web/**`. The documentation build runs in pull requests (`docs-check.yml`) and in the deploy on `master`. See [Documentation and deployment](./deployment#validation).
 
 ## Next steps
 

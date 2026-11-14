@@ -1,0 +1,37 @@
+name: Docs check
+
+# Validates the documentation portal in pull requests (build fails on dead internal links).
+# On master the deploy workflow builds the portal and acts as the same gate, so the portal is
+# not built twice for one push.
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'docs-site/**'
+      - '.github/workflows/docs-check.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: Docs portal (build and dead link check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: docs-site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+      - run: npm ci
+      - name: Build
+        run: npm run docs:build

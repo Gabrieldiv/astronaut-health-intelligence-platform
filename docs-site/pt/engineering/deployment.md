@@ -5,6 +5,7 @@ status: IMPLEMENTED
 code:
   - .github/workflows/docs-deploy.yml
   - .github/workflows/ci.yml
+  - .github/workflows/docs-check.yml
   - docs-site/package.json
   - docs-site/.vitepress/config.mts
 verified: 2026-11-14
@@ -77,9 +78,9 @@ npm run docs:preview   # serve o build
 
 ```mermaid
 flowchart LR
-    PUSH[push em master<br/>alterando docs-site/] --> BUILD[Job Build<br/>npm ci, docs:build]
-    BUILD --> ART[Artefato do Pages<br/>.vitepress/dist]
-    ART --> DEPLOY[Job Deploy<br/>actions/deploy-pages]
+    PUSH[push em master<br/>alterando docs-site/] --> JOB[Job único Build and deploy<br/>npm ci, docs:build]
+    JOB --> ART[Artefato do Pages<br/>.vitepress/dist]
+    ART --> DEPLOY[actions/deploy-pages<br/>no mesmo job]
     DEPLOY --> SITE[GitHub Pages]
 ```
 
@@ -88,11 +89,26 @@ O workflow `docs-deploy.yml`:
 - roda em push para `master` que altera `docs-site/**` ou o próprio workflow, e também manualmente (`workflow_dispatch`);
 - usa permissões mínimas (`contents: read`, `pages: write`, `id-token: write`);
 - faz uma implantação por vez, sem cancelar uma em andamento;
-- usa Node 22 com cache do npm.
+- usa Node 22 com cache do npm;
+- faz build e publicação num único job ("Build and deploy"), em uma só máquina, com limite de 10 minutos.
 
 Configuração necessária uma vez no repositório: **Settings > Pages > Build and deployment > Source = "GitHub Actions"**.
 
-O workflow `ci.yml` também constrói o portal em todo push e pull request, então um link quebrado bloqueia o merge quando a proteção de branch exige essa checagem. Detalhes em [Estratégia de testes](/pt/engineering/testing#ci).
+Os workflows só rodam quando mudam os arquivos que eles verificam (filtros de caminho), com limite de 10 minutos e cancelamento de execuções superadas:
+
+| Workflow | Quando roda | O que faz |
+| --- | --- | --- |
+| `ci.yml` (app) | Push e pull request para `master` que alteram `frontend/web/**` | `npm ci`, `npm run lint` (oxlint: erro reprova, aviso só é reportado), `npx tsc -b`, `npm test`, `npx vite build` |
+| `docs-check.yml` (portal) | Pull request para `master` que altera `docs-site/**` | `npm ci`, `npm run docs:build` (falha com link interno quebrado) |
+| `docs-deploy.yml` | Push para `master` que altera `docs-site/**` | O mesmo build e, em seguida, a publicação; em `master` esse build é o portão, então o portal não é compilado duas vezes no mesmo push |
+
+Um push que muda só o README, a especificação, `docs/` ou outros arquivos que não são código não dispara nenhum workflow.
+
+::: info Proteção de branch
+Workflows com filtro de caminho não reportam status quando não rodam. Se um dia a proteção de branch exigir essas checagens, adicione um job de resumo que sempre roda (ou um filtro de caminho dentro de um único workflow), para que pull requests sem alteração nesses caminhos não fiquem esperando.
+:::
+
+Detalhes dos testes em [Estratégia de testes](/pt/engineering/testing#ci).
 
 ## Regras de escrita do portal
 

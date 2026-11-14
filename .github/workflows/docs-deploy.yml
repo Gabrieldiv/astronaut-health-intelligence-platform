@@ -1,6 +1,8 @@
 name: Deploy docs to GitHub Pages
 
-# Publishes the documentation portal (docs-site, VitePress) after every push to master.
+# Builds and publishes the documentation portal (docs-site, VitePress) when it changes on master.
+# Build and deploy run in a single job (one runner instead of two). The build fails on dead
+# internal links, so a broken portal is never published.
 # Repository setting required once: Settings > Pages > Build and deployment > Source = "GitHub Actions".
 on:
   push:
@@ -22,12 +24,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build
+  deploy:
+    name: Build and deploy
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: docs-site
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,20 +39,14 @@ jobs:
           cache: npm
           cache-dependency-path: docs-site/package-lock.json
       - uses: actions/configure-pages@v5
-      - run: npm ci
+      - name: Install
+        run: npm ci
+        working-directory: docs-site
       - name: Build (fails on dead links)
         run: npm run docs:build
+        working-directory: docs-site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs-site/.vitepress/dist
-
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - id: deployment
         uses: actions/deploy-pages@v4

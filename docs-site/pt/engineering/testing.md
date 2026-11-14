@@ -7,6 +7,7 @@ code:
   - frontend/web/package.json
   - frontend/web/scripts/evaluate.ts
   - .github/workflows/ci.yml
+  - .github/workflows/docs-check.yml
 tests:
   - frontend/web/src/engine/engine.test.ts
   - frontend/web/src/engine/risk.test.ts
@@ -63,12 +64,14 @@ A avaliação já mudou o motor: ela revelou alertas falsos de pressão arterial
 
 ## CI
 
-O workflow `ci.yml` roda em todo push e pull request para `master`:
+Os workflows rodam só quando os arquivos que eles verificam mudam:
 
-| Job | Passos |
-| --- | --- |
-| App | `npm ci`, `npx tsc -b`, `npm test`, `npx vite build` (Node 22) |
-| Portal | `npm ci`, `npm run docs:build` (falha com link interno quebrado) |
+| Workflow | Quando roda | Passos |
+| --- | --- | --- |
+| `ci.yml` (app) | Push e pull request para `master` que alteram `frontend/web/**` | `npm ci`, `npm run lint`, `npx tsc -b`, `npm test`, `npx vite build` (Node 22) |
+| `docs-check.yml` (portal) | Pull request para `master` que altera `docs-site/**` | `npm ci`, `npm run docs:build` (falha com link interno quebrado) |
+
+Em `master`, o build do portal acontece uma vez só, dentro do deploy ([Documentação e deploy](/pt/engineering/deployment)).
 
 ## Lacunas e próximos passos
 
