@@ -5,8 +5,12 @@
  * per-label portals). A tiny component inside the canvas (LabelProjector) projects the anchors
  * every frame, stacks labels per side so they never overlap, and writes the positions straight
  * to the elements (no React renders per frame).
+ *
+ * Shared by the atlas viewer and the procedural fallback: each one supplies its own anchor
+ * points (world space) and its own tooltip content.
  */
 import { useEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { CircleCheck, Eye, OctagonAlert, TriangleAlert, WifiOff } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -15,8 +19,7 @@ import type { BodyRegionId, Status } from '../../types/domain'
 import { STATUS_META } from '../../lib/status'
 import { REGION_LABELS } from '../../engine/catalog'
 import { useAppStore } from '../../state/store'
-import { ANCHORS, HAS_METRICS, regionValueText } from './regions'
-import type { ViewerStore } from './viewerStore'
+import { HAS_METRICS, regionValueText } from './regions'
 
 /** Same status icons as the rest of the app: shape plus color plus words, never color alone. */
 export const STATUS_SHAPE: Record<Status, LucideIcon> = {
@@ -122,7 +125,17 @@ function stack(items: Item[], gap: number, lo: number, hiFor: (it: Item) => numb
   }
 }
 
-export function LabelProjector({ registry, scale, store }: { registry: LabelRegistry; scale: number; store: ViewerStore }) {
+export type WorldPoint = readonly [number, number, number]
+
+export interface LabelProjectorProps {
+  registry: LabelRegistry
+  /** World space anchor of a region label (null hides the label). Called every frame: keep it cheap. */
+  anchor: (region: BodyRegionId) => WorldPoint | null
+  /** World space point the hover tooltip follows (null when nothing is hovered). */
+  hoverPoint: () => WorldPoint | null
+}
+
+export function LabelProjector({ registry, anchor, hoverPoint }: LabelProjectorProps) {
   const items = useRef<Item[]>([])
   useFrame(({ camera, size }, dt) => {
     const reg = registry
@@ -135,13 +148,17 @@ export function LabelProjector({ registry, scale, store }: { registry: LabelRegi
     // read phase (layout reads only)
     for (const [region, slot] of reg.slots) {
       if (!slot.root || !slot.pill) continue
-      const a = ANCHORS[region]
-      tmpA.set(a[0] * scale, a[1] * scale, a[2] * scale).project(camera)
+      const a = anchor(region)
+      if (!a) {
+        slot.root.style.opacity = '0'
+        continue
+      }
+      tmpA.set(a[0], a[1], a[2]).project(camera)
       if (tmpA.z > 1) {
         slot.root.style.opacity = '0'
         continue
       }
-      tmpC.set(0, a[1] * scale, 0).project(camera)
+      tmpC.set(0, a[1], 0).project(camera)
       const ax = ((tmpA.x + 1) / 2) * W
       const ay = ((1 - tmpA.y) / 2) * H
       const cx = ((tmpC.x + 1) / 2) * W
@@ -191,9 +208,9 @@ export function LabelProjector({ registry, scale, store }: { registry: LabelRegi
     }
     // hover tooltip
     const tip = reg.tooltip
-    const hover = store.getState().hover
+    const hover = tip ? hoverPoint() : null
     if (tip && hover) {
-      tmpA.set(hover.point[0], hover.point[1], hover.point[2]).project(camera)
+      tmpA.set(hover[0], hover[1], hover[2]).project(camera)
       const x = ((tmpA.x + 1) / 2) * W
       const y = ((1 - tmpA.y) / 2) * H
       const tw = tip.offsetWidth
@@ -212,12 +229,12 @@ export function LabelProjector({ registry, scale, store }: { registry: LabelRegi
 // DOM overlay
 // ---------------------------------------------------------------------------
 
-function StatusMark({ status, size }: { status: Status; size: number }) {
+export function StatusMark({ status, size }: { status: Status; size: number }) {
   const Icon = STATUS_SHAPE[status]
   return <Icon aria-hidden size={size} strokeWidth={2.4} className="shrink-0" style={{ color: STATUS_META[status].color }} />
 }
 
-function ValueText({ region, status, ls }: { region: BodyRegionId; status: Status; ls: number }) {
+export function ValueText({ region, status, ls }: { region: BodyRegionId; status: Status; ls: number }) {
   const text = useAppStore((s) => regionValueText(s, region))
   if (status === 'NO_DATA') return <span className="whitespace-nowrap text-slate-400" style={{ fontSize: 10 * ls }}>{STATUS_META.NO_DATA.crewLabel}</span>
   if (!text) return null
@@ -294,12 +311,8 @@ export function labelledRegions(statuses: Record<BodyRegionId, Status>, selected
   })
 }
 
-function HoverTooltip({ store, statuses, selected, registry }: { store: ViewerStore; statuses: Record<BodyRegionId, Status>; selected: BodyRegionId | null; registry: LabelRegistry }) {
-  const hover = store((s) => s.hover?.region ?? null)
-  if (!hover) return null
-  const status = statuses[hover]
-  const meta = STATUS_META[status]
-  const info = REGION_LABELS[hover]
+/** Positioned shell of the hover tooltip (LabelProjector moves it). `glow` is a CSS color. */
+export function TooltipShell({ registry, glow, children }: { registry: LabelRegistry; glow?: string; children: ReactNode }) {
   const ls = registry.labelScale
   return (
     <div
@@ -310,31 +323,43 @@ function HoverTooltip({ store, statuses, selected, registry }: { store: ViewerSt
       style={{ opacity: 0, zIndex: 3 }}
     >
       <div
-        className="whitespace-nowrap rounded-xl border border-white/10 bg-slate-950/75 shadow-[0_8px_30px_rgba(0,0,0,0.45)] backdrop-blur-md"
-        style={{ boxShadow: `0 0 22px ${meta.glow}`, minWidth: 150 * ls, padding: `${8 * ls}px ${12 * ls}px` }}
+        className="whitespace-nowrap rounded-xl border border-white/10 bg-slate-950/80 shadow-[0_8px_30px_rgba(0,0,0,0.45)] backdrop-blur-md"
+        style={{ boxShadow: glow ? `0 0 22px ${glow}` : undefined, minWidth: 150 * ls, padding: `${8 * ls}px ${12 * ls}px` }}
       >
-        <div className="flex items-center" style={{ gap: 8 * ls }}>
-          <StatusMark status={status} size={Math.round(13 * ls)} />
-          <span className="font-semibold text-slate-50" style={{ fontSize: 12 * ls }}>
-            {info.label}
-          </span>
-          <span className="ml-auto font-medium uppercase tracking-wider" style={{ color: meta.color, fontSize: 10 * ls }}>
-            {meta.label}
-          </span>
-        </div>
-        <div className="mt-1 flex items-center justify-between" style={{ gap: 12 * ls }}>
-          <span className="text-slate-400" style={{ fontSize: 10 * ls }}>
-            {info.system}
-          </span>
-          <ValueText region={hover} status={status} ls={ls} />
-        </div>
-        {selected !== hover && (
-          <div className="mt-1 uppercase tracking-[0.14em] text-slate-500" style={{ fontSize: 9 * ls }}>
-            Click to focus
-          </div>
-        )}
+        {children}
       </div>
     </div>
+  )
+}
+
+/** Tooltip for a hovered body region (used by the procedural fallback). */
+export function RegionTooltip({ region, status, selected, registry }: { region: BodyRegionId; status: Status; selected: BodyRegionId | null; registry: LabelRegistry }) {
+  const meta = STATUS_META[status]
+  const info = REGION_LABELS[region]
+  const ls = registry.labelScale
+  return (
+    <TooltipShell registry={registry} glow={meta.glow}>
+      <div className="flex items-center" style={{ gap: 8 * ls }}>
+        <StatusMark status={status} size={Math.round(13 * ls)} />
+        <span className="font-semibold text-slate-50" style={{ fontSize: 12 * ls }}>
+          {info.label}
+        </span>
+        <span className="ml-auto font-medium uppercase tracking-wider" style={{ color: meta.color, fontSize: 10 * ls }}>
+          {meta.label}
+        </span>
+      </div>
+      <div className="mt-1 flex items-center justify-between" style={{ gap: 12 * ls }}>
+        <span className="text-slate-400" style={{ fontSize: 10 * ls }}>
+          {info.system}
+        </span>
+        <ValueText region={region} status={status} ls={ls} />
+      </div>
+      {selected !== region && (
+        <div className="mt-1 uppercase tracking-[0.14em] text-slate-500" style={{ fontSize: 9 * ls }}>
+          Click to focus
+        </div>
+      )}
+    </TooltipShell>
   )
 }
 
@@ -343,16 +368,17 @@ export function LabelOverlay({
   registry,
   statuses,
   selected,
-  store,
   visible,
   onSelect,
+  tooltip,
 }: {
   registry: LabelRegistry
   statuses: Record<BodyRegionId, Status>
   selected: BodyRegionId | null
-  store: ViewerStore
   visible: boolean
   onSelect: (r: BodyRegionId) => void
+  /** Hover tooltip element (a TooltipShell), or null. */
+  tooltip?: ReactNode
 }) {
   const list = visible ? labelledRegions(statuses, selected) : []
   return (
@@ -360,7 +386,7 @@ export function LabelOverlay({
       {list.map((r) => (
         <RegionLabel key={r} region={r} status={statuses[r]} registry={registry} onSelect={onSelect} />
       ))}
-      <HoverTooltip store={store} statuses={statuses} selected={selected} registry={registry} />
+      {tooltip}
     </div>
   )
 }

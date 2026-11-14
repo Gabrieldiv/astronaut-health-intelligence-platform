@@ -1,8 +1,10 @@
 /**
  * Dev-only lab page for the anatomy viewer (served at /anatomy-lab.html by `vite`).
- * Fakes region statuses and vitals through useAppStore.setState so every visual state can be checked.
+ * Fakes region statuses and vitals through useAppStore.setState so every visual state can be
+ * checked: atlas layers, structure selection, region statuses, the procedural fallback, and a
+ * live readout of renderer statistics.
  */
-import { StrictMode, useEffect, useState } from 'react'
+import { StrictMode, useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import '../../index.css'
 import type { BodyRegionId, MetricCode, Status } from '../../types/domain'
@@ -11,7 +13,14 @@ import { STATUS_META } from '../../lib/status'
 import { REGION_LABELS } from '../../engine/catalog'
 import { AnatomyViewer } from './index'
 import { REGIONS } from './regions'
-import type { Material, Mesh, Object3D } from 'three'
+import type { AtlasManifest } from './atlas/types'
+import { regionOfStructure } from './atlas/health'
+import { loadStats } from './viewer/atlasLoader'
+import { useAnatomyDebug, viewerStats } from './viewer/atlasStore'
+import type { AtlasStore, ViewPreset } from './viewer/atlasStore'
+import type { LayerModel } from './viewer/layers'
+import { PRESETS, effectiveLayers, presetChoice } from './viewer/layers'
+import { parseStatusKey, statusKey } from './regions'
 
 const CYCLE: Status[] = ['LOW', 'MODERATE', 'HIGH', 'CRITICAL', 'NO_DATA']
 
@@ -38,49 +47,46 @@ function preset(map: Partial<Record<BodyRegionId, Status>>) {
   for (const r of REGIONS) setRegion(r, map[r] ?? 'LOW')
 }
 
-function Fps() {
-  const [fps, setFps] = useState(0)
-  useEffect(() => {
-    let frames = 0
-    let last = performance.now()
-    let raf = 0
-    const loop = () => {
-      frames++
-      const now = performance.now()
-      if (now - last >= 1000) {
-        setFps(Math.round((frames * 1000) / (now - last)))
-        frames = 0
-        last = now
-      }
-      raf = requestAnimationFrame(loop)
-    }
-    raf = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(raf)
-  }, [])
-  return <span className="font-mono tabular">{fps} fps</span>
+interface ViewerHandle {
+  store: AtlasStore
+  manifest: AtlasManifest
+  model: LayerModel
 }
 
-/** Triangles drawn this frame by visible meshes (reads the dev hook set by AnatomyViewer). */
-function Tris() {
-  const [n, setN] = useState(0)
+/** Dev handle published by the atlas viewer (null while the fallback model is shown). */
+function useViewerHandle(): ViewerHandle | null {
+  const [handle, setHandle] = useState<ViewerHandle | null>(null)
   useEffect(() => {
     const id = window.setInterval(() => {
-      const scene = (window as unknown as { __ahiScene?: Object3D }).__ahiScene
-      if (!scene) return
-      let t = 0
-      scene.traverseVisible((o) => {
-        const m = o as Mesh
-        if (!m.isMesh || !m.geometry) return
-        const mat = m.material as Material
-        if (!mat.visible) return
-        const g = m.geometry
-        t += (g.index ? g.index.count : g.attributes.position!.count) / 3
-      })
-      setN(Math.round(t))
-    }, 1000)
+      const h = (window as unknown as { __ahiViewer?: ViewerHandle }).__ahiViewer ?? null
+      setHandle((cur) => (cur === h ? cur : h))
+    }, 300)
     return () => window.clearInterval(id)
   }, [])
-  return <span className="font-mono tabular">{(n / 1000).toFixed(0)}k tris</span>
+  return handle
+}
+
+/** Renderer statistics of the atlas viewer (frames per second, draw calls, triangles, pick time, downloads). */
+function Stats() {
+  const [, tick] = useState(0)
+  useEffect(() => {
+    const id = window.setInterval(() => tick((n) => n + 1), 1000)
+    return () => window.clearInterval(id)
+  }, [])
+  const bytes = loadStats.reduce((n, s) => n + s.bytes, 0)
+  const ms = loadStats.reduce((n, s) => n + s.ms, 0)
+  return (
+    <div data-lab="stats" className="grid grid-cols-2 gap-x-3 font-mono text-[11px] tabular text-slate-300">
+      <span>{viewerStats.fps} fps</span>
+      <span>{viewerStats.calls} draw calls</span>
+      <span>{(viewerStats.triangles / 1000).toFixed(0)}k triangles</span>
+      <span>{viewerStats.structures} structures</span>
+      <span>pick {viewerStats.pickMs.toFixed(1)} ms</span>
+      <span>
+        {(bytes / 1048576).toFixed(1)} MB in {(ms / 1000).toFixed(1)} s
+      </span>
+    </div>
+  )
 }
 
 export interface LabView {
@@ -88,9 +94,90 @@ export interface LabView {
   labelScale: number
   compact: boolean
   legend: boolean
+  bloom: boolean
 }
 
 const SIZES = ['fill', '700x560', '1000x800', '420x520']
+const VIEWS: ViewPreset[] = ['front', 'back', 'left', 'right']
+const chip = (on: boolean) => `rounded-md px-2 py-1 ${on ? 'bg-cyan-400/20 text-cyan-50' : 'bg-white/5 text-slate-400'}`
+
+function AtlasPanel({ handle }: { handle: ViewerHandle }) {
+  const { store, manifest, model } = handle
+  const choice = store((s) => s.layers)
+  const skinOpacity = store((s) => s.skinOpacity)
+  const selectedRegion = useAppStore((s) => s.selectedRegion)
+  const selectedStructureId = useAppStore((s) => s.selectedStructureId)
+  const key = useAppStore(statusKey)
+  const visible = useMemo(
+    () => effectiveLayers(model, choice, { statuses: parseStatusKey(key), selectedRegion, selectedStructureId }),
+    [model, choice, key, selectedRegion, selectedStructureId],
+  )
+  const [query, setQuery] = useState('')
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (q.length < 2) return []
+    return manifest.structures.filter((s) => s.name.toLowerCase().includes(q) || s.id.includes(q)).slice(0, 8)
+  }, [manifest, query])
+  return (
+    <>
+      <div className="flex flex-wrap gap-1">
+        {model.layers.filter((l) => !l.follows).map((l) => (
+          <button key={l.id} type="button" onClick={() => store.getState().setLayer(l.id, !visible[l.id])} className={chip(!!visible[l.id])}>
+            {l.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {PRESETS.map((p) => (
+          <button key={p.id} type="button" onClick={() => store.getState().setLayers(presetChoice(model, p), p.skinOpacity)} className="rounded-md bg-white/5 px-2 py-1">
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <label className="block">
+        Skin opacity {Math.round(skinOpacity * 100)}%
+        <input type="range" min={0} max={100} value={Math.round(skinOpacity * 100)} onChange={(e) => store.getState().setSkinOpacity(+e.target.value / 100)} className="w-full" />
+      </label>
+      <div className="flex flex-wrap gap-1">
+        {VIEWS.map((v) => (
+          <button key={v} type="button" onClick={() => store.getState().setView(v)} className="rounded-md bg-white/5 px-2 py-1 capitalize">
+            {v}
+          </button>
+        ))}
+        <button type="button" onClick={() => store.getState().resetView()} className="rounded-md bg-white/5 px-2 py-1">
+          Reset
+        </button>
+      </div>
+      <div>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={`Find a structure (${manifest.structures.length})`}
+          aria-label="Find a structure"
+          className="w-full rounded-md border border-white/10 bg-slate-900/70 px-2 py-1 text-slate-100 placeholder:text-slate-500"
+        />
+        <div className="mt-1 flex flex-wrap gap-1">
+          {matches.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => useAppStore.getState().selectStructure(s.id, regionOfStructure(s))}
+              className={chip(selectedStructureId === s.id)}
+              title={`${s.id} (${s.system}, ${s.tissue}, ${s.triangles} triangles)`}
+            >
+              {s.name}
+            </button>
+          ))}
+          {selectedStructureId && (
+            <button type="button" onClick={() => useAppStore.getState().selectStructure(null)} className="rounded-md bg-white/5 px-2 py-1 text-slate-400">
+              Clear ({selectedStructureId})
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
 
 function Panel({ view, setView }: { view: LabView; setView: (v: LabView) => void }) {
   const crew = useAppStore((s) => s.crew)
@@ -101,16 +188,19 @@ function Panel({ view, setView }: { view: LabView; setView: (v: LabView) => void
   const regions = useAppStore((s) => s.health[s.selectedAstronautId]?.regions)
   const hr = useAppStore((s) => s.health[s.selectedAstronautId]?.metrics.HEART_RATE?.current ?? 0)
   const rr = useAppStore((s) => s.health[s.selectedAstronautId]?.metrics.RESPIRATORY_RATE?.current ?? 0)
+  const forceFallback = useAnatomyDebug((s) => s.forceFallback)
+  const setForceFallback = useAnatomyDebug((s) => s.setForceFallback)
+  const handle = useViewerHandle()
   return (
-    <div className="absolute left-3 top-3 z-20 w-64 space-y-3 rounded-xl border border-white/10 bg-slate-950/60 p-3 text-[12px] text-slate-200 backdrop-blur-md">
+    <div className="absolute left-3 top-3 z-20 max-h-[calc(100%-24px)] w-72 space-y-3 overflow-y-auto rounded-xl border border-white/10 bg-slate-950/70 p-3 text-[12px] text-slate-200 backdrop-blur-md">
       <div className="flex items-center justify-between">
         <span className="font-semibold tracking-wide text-cyan-100">Anatomy lab</span>
-        <Tris />
-        <Fps />
+        <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-slate-300">{handle && !forceFallback ? 'atlas' : 'fallback'}</span>
       </div>
+      <Stats />
       <div className="flex flex-wrap gap-1">
         {SIZES.map((sz) => (
-          <button key={sz} type="button" onClick={() => setView({ ...view, size: sz })} className={`rounded-md px-2 py-1 ${view.size === sz ? 'bg-cyan-400/20 text-cyan-50' : 'bg-white/5 text-slate-400'}`}>
+          <button key={sz} type="button" onClick={() => setView({ ...view, size: sz })} className={chip(view.size === sz)}>
             {sz}
           </button>
         ))}
@@ -125,10 +215,17 @@ function Panel({ view, setView }: { view: LabView; setView: (v: LabView) => void
         <button type="button" onClick={() => setView({ ...view, legend: !view.legend })} className="rounded-md bg-white/5 px-2 py-1">
           legend {view.legend ? 'on' : 'off'}
         </button>
+        <button type="button" onClick={() => setView({ ...view, bloom: !view.bloom })} className="rounded-md bg-white/5 px-2 py-1">
+          bloom {view.bloom ? 'on' : 'off'}
+        </button>
+        <button type="button" onClick={() => setForceFallback(!forceFallback)} className={chip(forceFallback)} title="Force the simplified procedural model (what users see when the atlas cannot load)">
+          force fallback {forceFallback ? 'on' : 'off'}
+        </button>
       </div>
+      {handle && !forceFallback && <AtlasPanel handle={handle} />}
       <div className="flex flex-wrap gap-1">
         {crew.map((c) => (
-          <button key={c.id} type="button" onClick={() => selectAstronaut(c.id)} className={`rounded-md px-2 py-1 ${c.id === selectedId ? 'bg-cyan-400/20 text-cyan-50' : 'bg-white/5 text-slate-400'}`}>
+          <button key={c.id} type="button" onClick={() => selectAstronaut(c.id)} className={chip(c.id === selectedId)}>
             {c.callsign} ({c.sex})
           </button>
         ))}
@@ -172,15 +269,22 @@ function Panel({ view, setView }: { view: LabView; setView: (v: LabView) => void
 }
 
 function Lab() {
-  const [view, setView] = useState<LabView>({ size: '700x560', labelScale: 1, compact: false, legend: true })
+  const [view, setView] = useState<LabView>({ size: '700x560', labelScale: 1, compact: false, legend: true, bloom: true })
   const [w, h] = view.size === 'fill' ? [0, 0] : view.size.split('x').map(Number)
+  // dev handles for scripted checks (same names as the main app)
+  useEffect(() => {
+    const win = window as unknown as { __ahi?: unknown; __ahiLab?: unknown }
+    win.__ahi = useAppStore
+    win.__ahiLab = { setView: (patch: Partial<LabView>) => setView((v) => ({ ...v, ...patch })), setRegion, setMetric, preset, debug: useAnatomyDebug, stats: viewerStats, loads: loadStats }
+  }, [])
   return (
     <div className="relative h-full w-full">
       <div
-        className={view.size === 'fill' ? 'absolute inset-y-0 left-1/2 w-[min(760px,100%)] -translate-x-1/2' : 'absolute left-[300px] top-3 rounded-2xl ring-1 ring-white/10'}
+        data-lab="viewer"
+        className={view.size === 'fill' ? 'absolute inset-y-0 left-[312px] right-0' : 'absolute left-[312px] top-3 rounded-2xl ring-1 ring-white/10'}
         style={view.size === 'fill' ? undefined : { width: w, height: h }}
       >
-        <AnatomyViewer labelScale={view.labelScale} compact={view.compact} legend={view.legend} />
+        <AnatomyViewer key={view.bloom ? 'bloom' : 'plain'} labelScale={view.labelScale} compact={view.compact} legend={view.legend} bloom={view.bloom} />
       </div>
       <Panel view={view} setView={setView} />
     </div>

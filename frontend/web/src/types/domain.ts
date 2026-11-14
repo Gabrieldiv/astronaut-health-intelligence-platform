@@ -428,11 +428,21 @@ export interface AppState extends AppStateV2 {
   selectedAstronautId: string
   selectedRegion: BodyRegionId | null
   selectedMetric: MetricCode | null
+  /**
+   * Additive (v3, anatomical atlas): id of the anatomical structure selected in the 3D viewer
+   * (see src/features/anatomy/atlas). null when only a body region or nothing is selected.
+   */
+  selectedStructureId: string | null
 
   // actions
   selectAstronaut: (id: string) => void
   selectRegion: (region: BodyRegionId | null) => void
   selectMetric: (metric: MetricCode | null) => void
+  /**
+   * Additive (v3): select an anatomical structure and, atomically, the body region it maps to
+   * (null when the structure has no monitored region). selectRegion() clears the structure.
+   */
+  selectStructure: (structureId: string | null, region?: BodyRegionId | null) => void
   setScenario: (id: ScenarioId) => void
   play: () => void
   pause: () => void

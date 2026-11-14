@@ -7,9 +7,9 @@ import { useEffect, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { PerspectiveCamera, Spherical, Vector3 } from 'three'
-import type { BodyRegionId } from '../../types/domain'
-import { BODY_FRAME, DEFAULT_FRAMING, FRAMING } from './regions'
-import type { Framing } from './regions'
+import type { BodyRegionId } from '../../../types/domain'
+import { BODY_FRAME, DEFAULT_FRAMING, FRAMING } from '../regions'
+import type { Framing } from '../regions'
 
 type Controls = React.ComponentRef<typeof OrbitControls>
 

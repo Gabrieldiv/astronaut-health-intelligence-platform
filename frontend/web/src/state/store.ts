@@ -125,10 +125,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   selectedAstronautId: CREW[0]!.id,
   selectedRegion: null,
+  selectedStructureId: null,
   selectedMetric: null,
 
-  selectAstronaut: (id) => set({ selectedAstronautId: id, selectedRegion: null, selectedMetric: null }),
-  selectRegion: (region) => set({ selectedRegion: region }),
+  selectAstronaut: (id) => set({ selectedAstronautId: id, selectedRegion: null, selectedMetric: null, selectedStructureId: null }),
+  selectRegion: (region) => set({ selectedRegion: region, selectedStructureId: null }),
+  selectStructure: (structureId, region = null) => set({ selectedStructureId: structureId, selectedRegion: structureId ? region : null, selectedMetric: null }),
   selectMetric: (metric) => set({ selectedMetric: metric }),
 
   setScenario: (id: ScenarioId) => {

@@ -1,36 +1,31 @@
 /**
- * AHI anatomy viewer: procedural holographic human body that shows per-region status at a glance.
+ * AHI anatomy viewer: the 3D body that shows per region health status at a glance.
+ *
+ * It renders the reference atlas (Z-Anatomy, see ./viewer) and falls back automatically to the
+ * simplified procedural model (./procedural) when the atlas manifest or a required file cannot
+ * load. An error boundary guarantees that a 3D failure never breaks the dashboard.
  * Reads selection, region status and live vitals from useAppStore. Fills its parent.
  */
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { PerformanceMonitor } from '@react-three/drei'
-import { Bloom, EffectComposer } from '@react-three/postprocessing'
+import { Component, Suspense, lazy, useState } from 'react'
+import type { ReactNode } from 'react'
 import clsx from 'clsx'
-import { useAppStore } from '../../state/store'
-import { AnatomyScene } from './AnatomyScene'
-import { CameraRig } from './CameraRig'
-import type { FrameInsets } from './CameraRig'
-import { loadAnatomy, prefetchAnatomy } from './loader'
-import type { AnatomyGeometries } from './loader'
-import type { Sex } from './geometry/rig'
-import { LAYERS, parseStatusKey, statusKey } from './regions'
-import { createViewerStore, effectiveLayers } from './viewerStore'
-import type { ViewerStore } from './viewerStore'
-import { LabelOverlay, createLabelRegistry } from './Labels'
-import { StatusLegend } from './Legend'
+import { useAtlasManifest } from './atlas/manifest'
+import type { AtlasManifest } from './atlas/types'
+import { REQUIRED_STRUCTURE_IDS } from './atlas/types'
+import { AtlasViewer } from './viewer/AtlasViewer'
+import { useAnatomyDebug } from './viewer/atlasStore'
 
 export interface AnatomyViewerProps {
   /** Fills its parent. Reads selection, region status and live vitals from useAppStore. */
   className?: string
-  /** Show the layer toggle and reset pill (default true). */
+  /** Show the layer, view and reset controls (default true). */
   showControls?: boolean
   /** Idle auto-rotate when nothing is selected (default true). */
   autoRotate?: boolean
   /** Bloom glow post-processing (default true). Disable for very low end GPUs. */
   bloom?: boolean
   /**
-   * Size multiplier for floating labels, tooltip and legend (presentation mode, e.g. 1.3).
+   * Size multiplier for floating labels, tooltip, legend and controls (presentation mode, e.g. 1.3).
    * Default: 1, or 1.3 automatically while `<html data-present="true">` is set.
    */
   labelScale?: number
@@ -40,205 +35,64 @@ export interface AnatomyViewerProps {
   legend?: boolean
 }
 
-/** Female variant is rendered slightly smaller (population average height ratio). */
-const SCALE: Record<Sex, number> = { M: 1, F: 0.94 }
+// The procedural model is only downloaded when the atlas is unavailable.
+const ProceduralViewer = lazy(() => import('./procedural/ProceduralViewer').then((m) => ({ default: m.ProceduralViewer })))
 
-function useAnatomy(sex: Sex) {
-  const [geos, setGeos] = useState<{ sex: Sex; g: AnatomyGeometries } | null>(null)
-  const [error, setError] = useState(false)
-  useEffect(() => {
-    let alive = true
-    loadAnatomy(sex)
-      .then((g) => alive && setGeos({ sex, g }))
-      .catch(() => alive && setError(true))
-    return () => {
-      alive = false
-    }
-  }, [sex])
-  return { geos: geos?.sex === sex ? geos.g : null, error }
-}
+const FALLBACK_NOTICE = 'Reference atlas unavailable. Showing simplified model.'
 
-/** Width of an element, tracked with a ResizeObserver (0 until measured). */
-function useWidth(ref: React.RefObject<HTMLElement | null>): number {
-  const [w, setW] = useState(0)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const ro = new ResizeObserver(() => setW(el.clientWidth))
-    ro.observe(el)
-    setW(el.clientWidth)
-    return () => ro.disconnect()
-  }, [ref])
-  return w
-}
-
-/** true while the app runs in presentation mode (<html data-present="true">). */
-function usePresentationMode(): boolean {
-  const read = () => typeof document !== 'undefined' && document.documentElement.dataset.present === 'true'
-  const [on, setOn] = useState(read)
-  useEffect(() => {
-    const obs = new MutationObserver(() => setOn(read()))
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-present'] })
-    return () => obs.disconnect()
-  }, [])
-  return on
-}
-
-function ResetIcon({ size }: { size: number }) {
+function Message({ className, text, busy }: { className?: string; text: string; busy?: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M3 12a9 9 0 1 0 3-6.7" />
-      <path d="M3 4v5h5" />
-    </svg>
+    <div className={clsx('relative flex h-full w-full items-center justify-center', className)}>
+      <div role="status" className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/40 px-3 py-1.5 text-[11px] tracking-wide text-cyan-100/80 backdrop-blur-md">
+        <span className={clsx('h-1.5 w-1.5 rounded-full', busy ? 'animate-pulse bg-cyan-300' : 'bg-slate-400')} />
+        {text}
+      </div>
+    </div>
   )
 }
 
-function ControlsPill({ store, compact, ls }: { store: ViewerStore; compact: boolean; ls: number }) {
-  const layersRaw = store((s) => s.layers)
-  const toggle = store((s) => s.toggleLayer)
-  const resetView = store((s) => s.resetView)
-  const selectRegion = useAppStore((s) => s.selectRegion)
-  const selected = useAppStore((s) => s.selectedRegion)
-  const muscleStatus = useAppStore((s) => s.health[s.selectedAstronautId]?.regions?.muscles?.status ?? 'NO_DATA')
-  const eff = effectiveLayers(layersRaw, muscleStatus, selected)
-  const [open, setOpen] = useState(false)
-  const reset = (
-    <button
-      type="button"
-      title="Reset view"
-      aria-label="Reset view"
-      onClick={() => {
-        selectRegion(null)
-        resetView()
-      }}
-      className="flex shrink-0 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-      style={{ width: 24 * ls, height: 24 * ls }}
-    >
-      <ResetIcon size={Math.round(13 * ls)} />
-    </button>
-  )
-  const chips = LAYERS.map((l) => {
-    const on = eff[l.id]
-    return (
-      <button
-        key={l.id}
-        type="button"
-        aria-pressed={on}
-        onClick={() => toggle(l.id, on)}
-        className={clsx(
-          'shrink-0 rounded-full font-medium tracking-wide transition-colors',
-          on ? 'bg-cyan-300/12 text-cyan-50 ring-1 ring-cyan-300/30' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200',
-        )}
-        style={{ fontSize: (compact ? 10.5 : 11) * ls, padding: `${(compact ? 3 : 4) * ls}px ${(compact ? 8 : 10) * ls}px` }}
-      >
-        {l.label}
-      </button>
-    )
-  })
-  const shell = 'pointer-events-auto flex max-w-full items-center gap-0.5 rounded-full border border-white/10 bg-slate-950/45 p-1 shadow-[0_0_30px_rgba(56,214,245,0.08)] backdrop-blur-md'
-  if (compact) {
-    // compact: a single "Layers" toggle that unfolds the chips, plus reset
-    return (
-      <div className="pointer-events-none absolute bottom-2 right-2 z-10 flex flex-col items-end gap-1.5">
-        {open && <div className={clsx(shell, 'flex-wrap justify-end rounded-2xl')}>{chips}</div>}
-        <div className={shell}>
-          <button
-            type="button"
-            aria-expanded={open}
-            onClick={() => setOpen((o) => !o)}
-            className="rounded-full font-medium tracking-wide text-slate-300 transition-colors hover:bg-white/5 hover:text-white"
-            style={{ fontSize: 11 * ls, padding: `${3 * ls}px ${9 * ls}px` }}
-          >
-            Layers
-          </button>
-          <span className="mx-0.5 h-4 w-px shrink-0 bg-white/10" />
-          {reset}
-        </div>
-      </div>
-    )
+/** Catches render and WebGL errors of a viewer so the rest of the dashboard keeps working. */
+class ViewerBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+  static getDerivedStateFromError() {
+    return { failed: true }
   }
-  return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center px-3">
-      <div className={clsx(shell, 'overflow-x-auto')}>
-        {chips}
-        <span className="mx-1 h-4 w-px shrink-0 bg-white/10" />
-        {reset}
-      </div>
-    </div>
-  )
+  componentDidCatch(error: unknown) {
+    if (import.meta.env.DEV) console.warn('[anatomy] viewer failed, showing the fallback', error)
+  }
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children
+  }
 }
 
-export function AnatomyViewer({ className, showControls = true, autoRotate = true, bloom = true, labelScale, compact: compactProp = false, legend = true }: AnatomyViewerProps) {
-  const [store] = useState(createViewerStore)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const width = useWidth(rootRef)
-  const [labels] = useState(createLabelRegistry)
-  const present = usePresentationMode()
-  const ls = labelScale ?? (present ? 1.3 : 1)
-  // the full layer pill needs ~440 px at scale 1: narrower containers get the compact controls
-  const compact = compactProp || (width > 0 && width < 450 * ls)
-  const subject = useAppStore((s) => s.selectedAstronautId)
-  const sex = useAppStore((s) => s.crew.find((c) => c.id === s.selectedAstronautId)?.sex ?? 'M')
-  const selected = useAppStore((s) => s.selectedRegion)
-  const selectRegion = useAppStore((s) => s.selectRegion)
-  const key = useAppStore(statusKey)
-  const statuses = useMemo(() => parseStatusKey(key), [key])
-  const resetNonce = store((s) => s.resetNonce)
-  const hovering = store((s) => s.hover !== null)
-  const { geos, error } = useAnatomy(sex)
-  const sexes = useAppStore((s) => [...new Set(s.crew.map((c) => c.sex))].sort().join(''))
-  useEffect(() => {
-    if (!geos) return
-    const id = window.setTimeout(() => sexes.split('').forEach((x) => prefetchAnatomy(x as Sex)), 2000)
-    return () => window.clearTimeout(id)
-  }, [geos, sexes])
-  const [dpr, setDpr] = useState<number | [number, number]>([1, 2])
-  const scale = SCALE[sex]
+/** The atlas is usable only when it holds every structure the application relies on. */
+function isUsable(m: AtlasManifest): boolean {
+  if (!m.systems.length || !m.bounds) return false
+  const ids = new Set(m.structures.map((s) => s.id))
+  const files = new Set(m.systems.map((f) => f.id))
+  return REQUIRED_STRUCTURE_IDS.every((id) => ids.has(id)) && m.structures.every((s) => !REQUIRED_STRUCTURE_IDS.includes(s.id as (typeof REQUIRED_STRUCTURE_IDS)[number]) || files.has(s.system))
+}
 
-  // screen space kept clear of the body: bottom control pill (full width variant only) and a small top margin
-  const pillBand = showControls && !compact ? Math.round(44 * ls) + 8 : 10
-  const insets = useMemo<FrameInsets>(() => ({ top: 10, bottom: pillBand }), [pillBand])
-  labels.insets = insets
-  labels.labelScale = ls
+// dev only: scripted checks can force the fallback and tune render quality
+if (import.meta.env.DEV && typeof window !== 'undefined') (window as unknown as { __ahiAnatomyDebug?: unknown }).__ahiAnatomyDebug = useAnatomyDebug
 
+export function AnatomyViewer(props: AnatomyViewerProps) {
+  const forced = useAnatomyDebug((s) => s.forceFallback)
+  const { manifest, error } = useAtlasManifest()
+  const [fatal, setFatal] = useState<string | null>(null)
+  const unavailable = <Message className={props.className} text="3D body view unavailable" />
+  const procedural = (
+    <ViewerBoundary fallback={unavailable}>
+      <Suspense fallback={<Message className={props.className} text="Loading simplified model" busy />}>
+        <ProceduralViewer {...props} notice={FALLBACK_NOTICE} />
+      </Suspense>
+    </ViewerBoundary>
+  )
+  if (forced || error || fatal || (manifest && !isUsable(manifest))) return procedural
+  if (!manifest) return <Message className={props.className} text="Loading reference anatomy" busy />
   return (
-    <div ref={rootRef} className={clsx('relative h-full w-full overflow-hidden', className)}>
-      <Canvas
-        className="!absolute inset-0"
-        dpr={dpr}
-        gl={{ alpha: true, antialias: false, powerPreference: 'high-performance', stencil: false }}
-        camera={{ fov: 32, near: 0.02, far: 40, position: [0, 1.1, 3.75] }}
-        onCreated={({ gl, scene }) => {
-          gl.setClearColor(0x000000, 0)
-          // dev only: the lab page reads the scene to report drawn triangles
-          if (import.meta.env.DEV) (window as unknown as { __ahiScene?: unknown }).__ahiScene = scene
-        }}
-        onPointerMissed={() => {
-          if (useAppStore.getState().selectedRegion) selectRegion(null)
-        }}
-      >
-        <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr([1, 2])} flipflops={3} onFallback={() => setDpr(1)} />
-        <Suspense fallback={null}>
-          <AnatomyScene geos={geos} scale={scale} store={store} labels={labels} subject={subject} />
-        </Suspense>
-        <CameraRig selected={selected} resetNonce={resetNonce} scale={scale} hovering={hovering} autoRotate={autoRotate} insets={insets} />
-        {bloom && (
-          <EffectComposer multisampling={4} enableNormalPass={false}>
-            <Bloom mipmapBlur intensity={0.9} luminanceThreshold={0.28} luminanceSmoothing={0.3} radius={0.7} />
-          </EffectComposer>
-        )}
-      </Canvas>
-      <LabelOverlay registry={labels} statuses={statuses} selected={selected} store={store} visible={!!geos} onSelect={selectRegion} />
-      {!geos && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/40 px-3 py-1.5 text-[11px] tracking-wide text-cyan-100/80 backdrop-blur-md">
-            <span className={clsx('h-1.5 w-1.5 rounded-full', error ? 'bg-rose-400' : 'animate-pulse bg-cyan-300')} />
-            {error ? 'Body model unavailable' : 'Calibrating body scan'}
-          </div>
-        </div>
-      )}
-      {legend && <StatusLegend registry={labels} labelScale={ls} defaultOpen={compact ? false : undefined} bottom={showControls && !compact ? pillBand + 4 : 8} />}
-      {showControls && <ControlsPill store={store} compact={compact} ls={ls} />}
-    </div>
+    <ViewerBoundary fallback={procedural}>
+      <AtlasViewer {...props} manifest={manifest} onFatal={setFatal} />
+    </ViewerBoundary>
   )
 }

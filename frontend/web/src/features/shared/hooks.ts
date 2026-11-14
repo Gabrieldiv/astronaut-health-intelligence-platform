@@ -1,10 +1,13 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
+import { useUiStore } from '../../app/uiStore'
 import type { BodyRegionId, MetricCode, Recommendation, Status } from '../../types/domain'
 import { RISK_ORDER } from '../../lib/status'
 import { METRIC_CATALOG } from '../../engine/catalog'
 import type { ChartEvent } from '../../components/TrendChart'
+import { structureById, useAtlasManifest } from '../anatomy/atlas/manifest'
+import type { AtlasManifest, AtlasStructure } from '../anatomy/atlas/types'
 
 export const BODY_REGIONS: BodyRegionId[] = ['brain', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin']
 
@@ -61,7 +64,12 @@ export function useActions() {
   )
 }
 
-/** Select an astronaut, region and metric in one go (used by alerts, factors and tiles). */
+/**
+ * Select an astronaut, region and metric in one go (used by alerts, factors and tiles).
+ * Alerts and metrics are region level, so this selects the region and clears any selected
+ * anatomical structure. One exception: when a structure of that same region is already
+ * selected it stays selected (its panel shows the region data), and only the metric changes.
+ */
 export function focusTarget(target: { astronautId?: string | null; region?: BodyRegionId | 'environment' | null; metric?: MetricCode | null }) {
   const s = useAppStore.getState()
   if (target.astronautId && s.crew.some((c) => c.id === target.astronautId) && target.astronautId !== s.selectedAstronautId) {
@@ -70,9 +78,50 @@ export function focusTarget(target: { astronautId?: string | null; region?: Body
   let region = target.region ?? null
   if (!region && target.metric) region = METRIC_CATALOG[target.metric].region
   if (region && region !== 'environment') {
-    useAppStore.getState().selectRegion(region)
+    const cur = useAppStore.getState()
+    if (!(cur.selectedStructureId && cur.selectedRegion === region)) cur.selectRegion(region)
     useAppStore.getState().selectMetric(target.metric ?? null)
   }
+}
+
+/** Back to the overview: clears the selected structure, region and metric in one update. */
+export function clearSelection() {
+  useAppStore.getState().selectStructure(null)
+}
+
+/**
+ * The anatomical structure selected in the 3D atlas, resolved against the atlas manifest.
+ * `structure` is null while the manifest loads, when the atlas is unavailable (procedural
+ * fallback) or when the id is unknown; `pending` tells loading apart from unavailable.
+ */
+export function useSelectedStructure(): { structureId: string | null; structure: AtlasStructure | null; manifest: AtlasManifest | null; pending: boolean } {
+  const structureId = useAppStore((s) => s.selectedStructureId)
+  const { manifest, error } = useAtlasManifest()
+  const structure = useMemo(() => (manifest ? structureById(manifest, structureId) : null), [manifest, structureId])
+  return { structureId, structure, manifest, pending: !manifest && !error }
+}
+
+/**
+ * Esc clears a selected structure that has no monitored region (context only). When a region is
+ * selected the global shortcut already handles Esc (selectRegion(null) also clears the structure).
+ * Like the global shortcuts, it never fights an open dialog, the guided demo or a text field.
+ */
+export function useEscapeClearsStructure() {
+  const active = useAppStore((s) => s.selectedStructureId != null && s.selectedRegion == null)
+  useEffect(() => {
+    if (!active) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return
+      const el = e.target as HTMLElement | null
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return
+      const ui = useUiStore.getState()
+      if (ui.tour.active || ui.shortcutsOpen) return
+      if (document.querySelector('[role="dialog"], [aria-modal="true"]')) return
+      clearSelection()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [active])
 }
 
 /** One-way Earth link delay in seconds: the active comm profile, else the mission default. */
