@@ -403,7 +403,9 @@ export function TimelineStrip({ className }: TimelineStripProps) {
   const { w, h } = size
   const ribbon = h > 0 && h < 34
   const layout = useMemo(() => {
-    const axisH = h >= 50 ? 12 : 0
+    // The hour axis only shows on tall strips (72 px on big screens). On medium strips (about 60 px)
+    // its 12 px go to the lanes so callsigns stay readable; the hover tooltip still gives exact times.
+    const axisH = h >= 66 ? 12 : 0
     const padTop = ribbon ? 3 : h >= 50 ? 4 : 2
     const usable = Math.max(6, h - padTop - axisH - (ribbon ? 1 : h >= 50 ? 3 : 2))
     const n = crew.length
@@ -419,7 +421,8 @@ export function TimelineStrip({ className }: TimelineStripProps) {
     const pitch = unit + gap
     const markerSize = Math.min(13, Math.max(ribbon ? 5 : 8, unit + 3))
     // Labels are uppercase callsigns: the glyphs fit a lane pitch slightly smaller than the font size.
-    const fontSize = Math.min(12, Math.max(9, pitch * 1.15))
+    // Never below 11 px outside the ribbon (readability floor for the callsign labels).
+    const fontSize = Math.min(12, Math.max(ribbon ? 9 : 11, pitch * 1.15))
     const labelW = ribbon ? 78 : fontSize >= 11 ? 76 : 64
     return { lanes, axisH, markerSize, fontSize, pitch, labelW, laneBottom: y + unit * 0.6 }
   }, [h, crew, ribbon])
@@ -479,7 +482,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
             const px = xs(t)
             if (px > LABEL_W + plotW - 34 || px < LABEL_W + 14) return null
             return (
-              <text key={`tl-${t}`} x={px} y={h - 2} textAnchor="middle" fontSize={9} fill="#7d8ba6" className="tabular">
+              <text key={`tl-${t}`} x={px} y={h - 2} textAnchor="middle" fontSize={10} fill="#7d8ba6" className="tabular">
                 {tickLabel(t)}
               </text>
             )
@@ -494,7 +497,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
         <line x1={xs(to)} x2={xs(to)} y1={1} y2={layout.laneBottom + 2} stroke={ACCENT} strokeWidth={1.5} />
         <path d={`M${xs(to) - 3.5} 0L${xs(to) + 3.5} 0L${xs(to)} 4Z`} fill={ACCENT} />
         {layout.axisH > 0 && (
-          <text x={xs(to)} y={h - 2} textAnchor="end" fontSize={9} fontWeight={600} fill={ACCENT}>
+          <text x={xs(to)} y={h - 2} textAnchor="end" fontSize={10} fontWeight={600} fill={ACCENT}>
             Now
           </text>
         )}

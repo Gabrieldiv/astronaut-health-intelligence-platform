@@ -398,7 +398,11 @@ export function AlertsDrawer() {
 }
 
 /** Prominent, non-blocking banner for the newest unacknowledged CRITICAL alert. Stronger once escalated. */
-export function CriticalBanner({ className }: { className?: string }) {
+/**
+ * overlay: float over the stage header (absolute, opaque) instead of taking layout space, so a
+ * critical alert never shrinks the 3D body. The parent must be `relative`.
+ */
+export function CriticalBanner({ className, overlay = false }: { className?: string; overlay?: boolean }) {
   const alerts = useAppStore((s) => s.alerts)
   const now = useAppStore((s) => Math.floor(s.clock.simNow / 30000) * 30000)
   const acknowledgeAlert = useAppStore((s) => s.acknowledgeAlert)
@@ -421,11 +425,16 @@ export function CriticalBanner({ className }: { className?: string }) {
       data-tour="banner"
       role="alert"
       aria-live="assertive"
-      className={clsx('animate-drop-in relative z-30 flex w-full shrink-0 items-center gap-3 rounded-2xl px-4 py-3', className)}
+      className={clsx(
+        'animate-drop-in z-30 flex items-center gap-3 rounded-2xl px-4 py-3',
+        overlay ? 'absolute inset-x-2 top-2 bottom-1.5' : 'relative w-full shrink-0',
+        className,
+      )}
       style={{
+        // Opaque base color under the gradient: in overlay mode nothing underneath may show through.
         background: escalated
-          ? 'linear-gradient(90deg, rgba(244,63,94,0.42) 0%, rgba(64,10,26,0.95) 50%, rgba(30,10,22,0.95) 100%)'
-          : 'linear-gradient(90deg, rgba(244,63,94,0.24) 0%, rgba(30,12,22,0.94) 45%, rgba(16,14,26,0.94) 100%)',
+          ? 'linear-gradient(90deg, rgba(244,63,94,0.42) 0%, rgba(64,10,26,0.95) 50%, rgba(30,10,22,0.95) 100%), #1a0b16'
+          : 'linear-gradient(90deg, rgba(244,63,94,0.24) 0%, rgba(30,12,22,0.94) 45%, rgba(16,14,26,0.94) 100%), #140d19',
         boxShadow: escalated ? '0 0 0 2px rgba(244,63,94,0.85), 0 18px 56px -10px rgba(244,63,94,0.55)' : '0 0 0 1px rgba(244,63,94,0.55), 0 18px 48px -12px rgba(244,63,94,0.35)',
         backdropFilter: 'blur(14px)',
       }}

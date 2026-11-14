@@ -5,7 +5,7 @@ import { CrewRail } from '../features/crew/CrewRail'
 import { CenterStage } from '../features/stage/CenterStage'
 import { AttentionPanel } from '../features/attention/AttentionPanel'
 import { VitalsStrip } from '../features/vitals/VitalsStrip'
-import { AlertsDrawer, CriticalBanner } from '../features/alerts/Alerts'
+import { AlertsDrawer } from '../features/alerts/Alerts'
 import { useCriticalSound } from '../features/alerts/sound'
 import { TimelineStrip } from '../features/timeline'
 import { CrewView } from '../features/crewview/CrewView'
@@ -38,7 +38,6 @@ function GroundView() {
       <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[232px_minmax(0,1fr)_360px] xl:grid-cols-[256px_minmax(0,1fr)_392px] 2xl:grid-cols-[280px_minmax(0,1fr)_420px] roomy:grid-cols-[300px_minmax(0,1fr)_464px]">
         <CrewRail className="lg:min-h-0" />
         <div className="flex min-h-[520px] min-w-0 flex-col gap-3 lg:min-h-0">
-          <CriticalBanner />
           <CenterStage className="min-h-0 flex-1" />
         </div>
         <div id="attention" className="flex min-h-0 flex-col">
