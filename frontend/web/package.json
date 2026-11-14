@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
+    "evaluate": "tsx scripts/evaluate.ts",
     "typecheck": "tsc -b",
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -33,6 +34,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "oxlint": "^1.90.0",
     "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
     "typescript": "~7.0.2",
     "vite": "^8.3.6",
     "vitest": "^5.1.0"

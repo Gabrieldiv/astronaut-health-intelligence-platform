@@ -46,6 +46,10 @@ export type MetricCode =
   | 'RELATIVE_HUMIDITY'
   | 'RADIATION_DOSE_RATE'
   | 'RADIATION_DOSE'
+  // Additive (v2): daily crew check-in, self reported on a 1..5 scale
+  | 'MOOD'
+  | 'PERCEIVED_FATIGUE'
+  | 'STRESS'
 
 /**
  * Body regions rendered by the 3D anatomy viewer and used to group metrics.
@@ -53,7 +57,6 @@ export type MetricCode =
  */
 export type BodyRegionId =
   | 'brain' // sleep, cognition, reaction time
-  | 'eyes' // spaceflight associated neuro-ocular syndrome context (SANS), fluid shift
   | 'heart' // HR, HRV, blood pressure
   | 'lungs' // SpO2, respiratory rate
   | 'kidneys' // hydration
@@ -154,6 +157,8 @@ export interface Device {
   lastSeenAt: number // sim epoch ms
   data_origin: DataOrigin
   metrics: MetricCode[]
+  /** Additive (engine v1): plain-language device status, e.g. "No data since 08:22 UTC". */
+  detail?: string
 }
 
 /** Compact time-series point used for charts/history. t = sim epoch ms. */
@@ -191,6 +196,21 @@ export interface MetricState {
   lastUpdated: number // sim epoch ms
   quality: QualityStatus
   data_origin: DataOrigin
+  // Additive fields (engine v1). Optional so older code keeps compiling.
+  /** Drift indicator: EWMA of the robust z (signed, half-life 3 sim hours). */
+  driftZ?: number | null
+  /** Smoothed deviation from the personal median, in % (daily metrics: mean of the current run). */
+  deviationPct?: number | null
+  /** Hours the current drift has persisted (null when no drift). */
+  persistenceHours?: number | null
+  /** Activity context of the baseline used for the current value. */
+  baselineContext?: 'ALL' | 'SLEEP' | 'REST' | 'WORK' | 'EXERCISE'
+  /** Personal baselines per activity context (for drawing context bands). */
+  contextBaselines?: Partial<Record<'ALL' | 'SLEEP' | 'REST' | 'WORK' | 'EXERCISE', Baseline>>
+  /** Rule that set the status, if any (e.g. "R-HR-01"). */
+  ruleId?: string | null
+  /** Plain-language explanation of the status, if not normal. */
+  explanation?: string | null
 }
 
 export interface Anomaly {
@@ -258,6 +278,15 @@ export interface Recommendation {
   status: 'PENDING' | 'DONE' | 'DISMISSED'
   /** If the crew logs this action, the simulator can apply a hypothetical effect. */
   interventionKind: InterventionKind | null
+  /** Additive (engine v1): false once the triggering rule has been clear for a while. */
+  active?: boolean
+  /** Additive (engine v1): recommendation catalog version. */
+  catalogVersion?: string
+  /**
+   * Additive (v2): who can close the loop. ONBOARD = crew can act now (crew medical officer
+   * or self care). GROUND_REVIEW = needs the flight surgeon on Earth (subject to comm delay).
+   */
+  autonomy?: 'ONBOARD' | 'GROUND_REVIEW'
 }
 
 export type InterventionKind =
@@ -291,13 +320,30 @@ export interface Alert {
   createdAt: number
   acknowledgedAt: number | null
   acknowledgedBy: string | null
+  /** Additive (engine v1): set when the rule has been clear for a while (auto-resolved). */
+  resolvedAt?: number | null
+  /** Additive (v2): set when a HIGH/CRITICAL alert stays unacknowledged past ESCALATION config. */
+  escalatedAt?: number | null
+  /** Additive (v2): number of escalation steps reached (0 = none). */
+  escalationLevel?: number
 }
 
 export interface AuditEvent {
   id: string
   at: number
   actor: string
-  action: 'ALERT_ACK' | 'INTERVENTION_LOGGED' | 'SCENARIO_CHANGED' | 'RULE_EVALUATED' | 'RECOMMENDATION_UPDATED'
+  action:
+    | 'ALERT_ACK'
+    | 'INTERVENTION_LOGGED'
+    | 'SCENARIO_CHANGED'
+    | 'RULE_EVALUATED'
+    | 'RECOMMENDATION_UPDATED'
+    // Additive (v2)
+    | 'ALERT_ESCALATED'
+    | 'COMM_SENT'
+    | 'COMM_RECEIVED'
+    | 'COMM_PROFILE_CHANGED'
+    | 'CHECKIN_RECORDED'
   detail: string
 }
 
@@ -320,6 +366,10 @@ export interface AstronautHealth {
 export interface EnvironmentState {
   metrics: Partial<Record<MetricCode, MetricState>>
   status: Status
+  /** Additive (engine v1): cabin forecasts (e.g. CO2), astronautId "CABIN". */
+  predictions?: Partial<Record<MetricCode, Prediction>>
+  /** Additive (engine v1): one plain sentence about the cabin. */
+  headline?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -355,7 +405,7 @@ export interface SimulationClock {
 // Store contract (implemented in src/state/store.ts with zustand)
 // ---------------------------------------------------------------------------
 
-export interface AppState {
+export interface AppState extends AppStateV2 {
   mission: Mission
   crew: Astronaut[]
   devices: Device[]
@@ -392,5 +442,181 @@ export interface AppState {
   logIntervention: (input: { astronautId: string; kind: InterventionKind; recommendationId?: string; note?: string }) => void
   dismissRecommendation: (id: string) => void
   /** Advance simulation by dtRealMs (called by the ticker). */
+  /** Advance the simulation synchronously by simMs and publish (used by the guided demo). */
+  fastForward: (simMs: number) => void
   tick: (dtRealMs: number) => void
+}
+
+// ---------------------------------------------------------------------------
+// v2 additions (UX + functional package). All additive.
+// ---------------------------------------------------------------------------
+
+/** Communication profile with Earth (hazard: Distance from Earth). */
+export type CommProfileId = 'ISS' | 'MOON' | 'MARS_NEAR' | 'MARS_FAR'
+
+export interface CommProfile {
+  id: CommProfileId
+  label: string // e.g. "Mars (farthest)"
+  oneWayDelaySec: number // ISS ~0.5, Moon ~1.3, Mars 240..1320
+  description: string
+}
+
+/** A message between the vehicle and Earth. Delivery is delayed by the one-way delay. */
+export interface CommMessage {
+  id: string
+  direction: 'DOWNLINK' | 'UPLINK' // DOWNLINK = vehicle to Earth, UPLINK = Earth to vehicle
+  astronautId: string | null
+  kind: 'HEALTH_PACKET' | 'CONSULT_REQUEST' | 'GROUND_REPLY' | 'HANDOVER_REPORT'
+  title: string
+  body: string
+  sentAt: number // sim epoch ms
+  arrivesAt: number // sim epoch ms
+  /** IN_TRANSIT until arrivesAt, then DELIVERED. */
+  status: 'IN_TRANSIT' | 'DELIVERED'
+  relatedRecommendationId: string | null
+  relatedAlertId: string | null
+  data_origin: DataOrigin // SIMULATED for ground replies
+}
+
+/** Daily subjective check-in (NASA Standard Measures style questionnaire, simplified). */
+export interface CheckIn {
+  id: string
+  astronautId: string
+  at: number // sim epoch ms
+  mood: number // 1 (very low) .. 5 (very good)
+  fatigue: number // 1 (rested) .. 5 (exhausted)
+  stress: number // 1 (calm) .. 5 (very stressed)
+  sleepQuality: number // 1 (very poor) .. 5 (very good)
+  symptoms: string[] // free tags, e.g. "headache", "congestion", "back pain"
+  note: string
+  /** MANUAL when typed by the user in the UI, SIMULATED for auto-generated crew answers. */
+  data_origin: DataOrigin
+}
+
+/** One mission day summary for the long-term view (day 1 .. current mission day). */
+export interface MissionDaySummary {
+  astronautId: string
+  missionDay: number
+  date: string // ISO date (UTC)
+  sleepHours: number | null
+  exerciseMinutes: number | null
+  exercisePlannedMinutes: number
+  restingHr: number | null
+  hrv: number | null
+  radiationDoseMgy: number // dose received that day
+  cumulativeDoseMgy: number
+  riskLevel: Status
+  data_origin: DataOrigin
+  /** Additive (v2): mean exercise output that day, % of the personal usual (null = no session). */
+  exerciseLoadPct?: number | null
+  /** Additive (v2): true when the summary is synthesized (older days), false when derived from the simulated history. */
+  synthesized?: boolean
+}
+
+/** Long-term mission plan and budgets. Demo configuration, not official limits. */
+export interface MissionPlan {
+  plannedDurationDays: number
+  radiationBudgetMgy: number // demo budget for the whole mission
+  exercisePlanMinutesPerDay: number
+  sleepTargetHours: number
+  note: string
+}
+
+/** Coarse status snapshot used by the timeline strip. */
+export interface StatusFrame {
+  t: number // sim epoch ms
+  levels: Record<string, Status> // astronaut id (and "CABIN") -> status
+}
+
+/** Hypothetical trajectory comparison (US-022). Never a claim of clinical efficacy. */
+export interface InterventionComparison {
+  astronautId: string
+  metric: MetricCode
+  kind: InterventionKind
+  horizonHours: number
+  without: TimePoint[]
+  with: TimePoint[]
+  band: { low: number; high: number } | null
+  assumptions: string[]
+  disclaimer: string
+}
+
+/** Engine evaluation summary (generated by npm run evaluate into src/engine/evaluation.json). */
+export interface EngineEvaluation {
+  generatedAt: string
+  engineVersion: string
+  nominal: {
+    simulatedHours: number
+    crewHours: number
+    falseAlertsPerCrewDay: number
+    maxLevel: Status
+    /** Additive (v2): alerts at MODERATE or above per crew day (any rule). */
+    moderateAlertsPerCrewDay?: number
+    /** Additive (v2): seeds evaluated (each one simulatedHours long). */
+    seeds?: number[]
+    /** Additive (v2): share of 15 min frames per level across the nominal runs. */
+    levelShare?: Partial<Record<Status, number>>
+  }
+  scenarios: Array<{
+    scenarioId: ScenarioId
+    target: string | null
+    timeToFirstAlertMin: number | null
+    timeToHighMin: number | null
+    timeToCriticalMin: number | null
+    peakLevel: Status
+    /** Additive (v2): rule of the first alert and the simulated duration of the run. */
+    firstAlertRule?: string | null
+    simulatedHours?: number
+    peakScore?: number
+  }>
+  notes: string[]
+}
+
+/** A real public dataset record (provenance, PROJECT_MASTER 6.5). */
+export interface DatasetRecord {
+  id: string
+  source_name: string // e.g. "NASA OSDR"
+  source_url: string
+  dataset_accession: string | null
+  dataset_version: string | null
+  title: string
+  downloaded_at: string // ISO
+  license: string | null
+  access_classification: string
+  file_name: string | null
+  sha256: string | null
+  parser_version: string | null
+  study_population: string | null // only if verified from the source metadata
+  mission: string | null
+  study_design: string | null
+  collection_phase: string | null
+  notes: string
+  data_origin: 'REAL_PUBLIC' | 'DERIVED'
+}
+
+/**
+ * v2 store contract additions (AppState extends this).
+ * Implemented in src/state/store.ts by the engine.
+ */
+export interface AppStateV2 {
+  commProfiles: CommProfile[]
+  commProfileId: CommProfileId
+  comms: CommMessage[] // newest first
+  checkIns: CheckIn[] // newest first
+  missionPlan: MissionPlan
+  missionDays: Record<string, MissionDaySummary[]> // astronaut id -> day 1..N ascending
+  statusTimeline: StatusFrame[] // ascending by t
+  setCommProfile: (id: CommProfileId) => void
+  /** Queue a downlink message (e.g. consult request for a recommendation). Returns the message id. */
+  sendToGround: (input: {
+    astronautId: string | null
+    kind: CommMessage['kind']
+    title: string
+    body: string
+    recommendationId?: string
+    alertId?: string
+  }) => string
+  submitCheckIn: (input: Omit<CheckIn, 'id' | 'at' | 'data_origin'>) => void
+  /** Pure projection: two trajectories for the next hours, with and without the intervention. */
+  compareIntervention: (input: { astronautId: string; kind: InterventionKind; metric?: MetricCode; horizonHours?: number }) => InterventionComparison | null
 }
