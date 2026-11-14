@@ -189,15 +189,15 @@ Uma linha por medida. Vale para sinais vitais, ambiente (`subject_id: "CABIN"`),
 
 ```json
 {
-  "observation_id": "uuid ou chave idempotente da origem",
-  "subject_id": "AST-01",
-  "mission_id": "MISSION-001",
-  "device_id": "DEV-BIO-AST-01",
-  "metric_code": "HEART_RATE",
-  "value": 72.4,
-  "unit": "bpm",
-  "measured_at": "2026-11-13T14:30:00Z",
-  "received_at": "2026-11-13T14:30:02Z",
+  "observation_id": "OSD-569:C001:WBC:R+1",
+  "subject_id": "C001",
+  "mission_id": "INSPIRATION4",
+  "device_id": null,
+  "metric_code": "WBC",
+  "value": 5.0,
+  "unit": "Thousand/uL",
+  "measured_at": "2021-09-19T00:00:00Z",
+  "received_at": "2026-11-14T11:37:00Z",
   "data_origin": "REAL_PUBLIC",
   "source_reference": {
     "repository": "NASA OSDR",
@@ -205,16 +205,19 @@ Uma linha por medida. Vale para sinais vitais, ambiente (`subject_id: "CABIN"`),
     "file_name": "LSDS-7_Complete_Blood_Count_CBC.upload_SUBMITTED.csv",
     "record_reference": "linha 42"
   },
-  "quality": { "status": "VALID", "confidence": 1.0, "is_estimated": false },
+  "quality": { "status": "VALID", "confidence": 1.0, "is_estimated": true },
   "context": { "mission_phase": "POST_FLIGHT", "activity": "REST" },
   "metadata": {
-    "original_value": "5.4",
+    "original_value": "5.0",
     "original_unit": "Thousand/uL",
     "population_type": "COMMERCIAL_ASTRONAUT",
-    "timepoint_label": "R+1"
+    "timepoint_label": "R+1",
+    "date_note": "A fonte informa só o rótulo R+1 (1 dia após o retorno). A data é estimada a partir do retorno da missão (18/09/2021), por isso is_estimated = true."
   }
 }
 ```
+
+> Exemplo de uma linha real do hemograma (OSD-569, sujeito C001, R+1). `WBC` ainda não é um `metric_code` do app; ele está previsto no `PROJECT_MASTER` 6.4.
 
 | Campo | Obrigatório | Tipo | Regras |
 | --- | --- | --- | --- |

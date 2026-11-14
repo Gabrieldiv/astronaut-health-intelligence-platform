@@ -666,7 +666,8 @@ export function TimelineStrip({ className }: TimelineStripProps) {
                   style={{ top: l.y + l.h / 2 - layout.pitch / 2, height: layout.pitch, fontSize: l.cabin ? layout.fontSize - 1 : layout.fontSize }}
                 >
                   <span aria-hidden className="h-[5px] w-[5px] shrink-0 rounded-full" style={{ background: l.color, opacity: l.cabin ? 0.6 : 1 }} />
-                  <span className="truncate">{l.label}</span>
+                  {/* The cabin lane is thinner: on medium strips its text would touch the last crew label, so it keeps only the dot (name in the title and legend). */}
+                  {!(l.cabin && layout.pitch < 13) && <span className="truncate">{l.label}</span>}
                 </button>
               ))}
             </div>

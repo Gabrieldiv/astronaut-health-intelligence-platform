@@ -54,7 +54,7 @@ export function ProvenanceBadge() {
           </li>
           <li className="flex gap-2">
             <span className="mt-0.5 rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-bold text-ink-500">REAL_PUBLIC</span>
-            <span className="text-ink-500">Planned. Public spaceflight datasets from NASA OSDR to calibrate baselines.</span>
+            <span className="text-ink-500">Reference only. Public NASA OSDR blood panels (Inspiration4) in Data and model. They never feed the crew, baselines or alerts.</span>
           </li>
           <li className="flex gap-2">
             <span className="mt-0.5 rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-bold text-ink-500">DERIVED</span>

@@ -58,14 +58,14 @@ export function LogoMark({ size = 30 }: { size?: number }) {
 
 function Brand({ wordmark }: { wordmark: boolean }) {
   return (
-    <div className="flex shrink-0 items-center gap-2" title="AHI: Astronaut Health Intelligence">
+    <div className="flex shrink-0 items-center gap-2" title="Astronaut Health Intelligence Platform (AHI)">
       <LogoMark size={28} />
       {wordmark ? (
         <span className="text-[15px] font-bold tracking-[0.08em] text-ink-100">
-          AHI<span className="sr-only">: Astronaut Health Intelligence</span>
+          AHI<span className="sr-only">: Astronaut Health Intelligence Platform</span>
         </span>
       ) : (
-        <span className="sr-only">AHI: Astronaut Health Intelligence</span>
+        <span className="sr-only">Astronaut Health Intelligence Platform (AHI)</span>
       )}
     </div>
   )
@@ -182,7 +182,7 @@ function DemoButton({ mode }: { mode: 'full' | 'short' | 'icon' }) {
       type="button"
       data-tour="demo"
       onClick={startTour}
-      title="Guided demo: a 3 minute story of the app (arrows to move, Esc to exit)"
+      title="Guided demo: a 2 minute story of the app (arrows to move, Esc to exit)"
       aria-label="Start guided demo"
       className={clsx(
         'focus-ring flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all',

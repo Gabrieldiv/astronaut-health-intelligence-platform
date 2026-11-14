@@ -130,7 +130,7 @@ HR, HRV and SpO2; daily values for sleep duration and exercise load; 30 min mean
 - Actionable hits: any HIGH or CRITICAL rule, and MODERATE trend, combined, environment and data quality rules. A single acute z blip at MODERATE only changes the status.
 - Combined rules group their components (one alert instead of five) unless a component is CRITICAL.
 - One active alert per subject + rule. Escalation updates it, or raises a new one if it was already acknowledged. Alerts auto-resolve (`resolvedAt`) after 10 sim min clear. History is kept (max 150).
-- One recommendation per subject + rule per episode, from a versioned catalog (`rec-catalog v1.0`), with the linked `interventionKind`. HIGH, CRITICAL or flight surgeon items require human review. Cabin items use `astronautId: 'CABIN'`.
+- One recommendation per subject + rule per episode, from a versioned catalog (`rec-catalog v2.0`), with the linked `interventionKind`. HIGH, CRITICAL or flight surgeon items require human review. Cabin items use `astronautId: 'CABIN'`.
 
 ## Earth link (v2, `comms.ts`)
 
