@@ -24,6 +24,7 @@ import stage from './stage'
 import connectivity from './connectivity'
 import backdrop from './backdrop'
 import visual from './visual'
+import profile from './profile'
 import engine from './engine'
 
 const messages: Messages = {
@@ -51,6 +52,7 @@ const messages: Messages = {
   ...connectivity,
   ...backdrop,
   ...visual,
+  ...profile,
   ...engine,
 }
 export default messages

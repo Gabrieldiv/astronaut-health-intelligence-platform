@@ -13,6 +13,7 @@ import { regionStructureCount } from '../anatomy/atlas/health'
 import { CheckInButton } from '../checkin'
 import { MissionBackdrop, MissionHud } from '../mission/backdrops'
 import { IndicatorStrip } from './IndicatorStrip'
+import { ProfileButton } from '../profile/ProfileButton'
 import { wearablePausedHeadline, useWearablePaused } from '../vitals/deviceMeta'
 import { getLang, t, translatedRecord, useT } from '../../i18n'
 import { regionDescription, regionLabel, regionSystem, roleLabel } from '../../i18n/catalog'
@@ -93,6 +94,7 @@ function Headline() {
           <StatusPill status={status} size="lg" />
           <IndicatorStrip astronautId={id} sentence={sentence} className="hidden @min-[480px]/stage:flex" />
         </div>
+        <ProfileButton astronautId={id} callsign={astronaut.callsign} />
         <CheckInButton astronautId={id} variant="compact" />
       </header>
       <p aria-live="polite" className="sr-only">

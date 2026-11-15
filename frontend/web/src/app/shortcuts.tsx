@@ -4,6 +4,7 @@ import { useAppStore } from '../state/store'
 import { Kbd } from '../components/ui'
 import { useUiStore } from './uiStore'
 import { useT, type MessageKey } from '../i18n'
+import { CrewProfileHost, useProfileStore } from '../features/profile'
 
 /**
  * Global keyboard shortcuts. Ignored while typing in a field and when a modifier key is held.
@@ -56,6 +57,12 @@ export function useGlobalShortcuts() {
         case 'P':
           ui.togglePresentation()
           break
+        case 'i':
+        case 'I':
+          // P is taken by presentation mode: the crew profile uses I (identity).
+          if (useProfileStore.getState().openId) useProfileStore.getState().close()
+          else useProfileStore.getState().open(app.selectedAstronautId)
+          break
         case 'v':
         case 'V':
           ui.toggleViewMode()
@@ -85,6 +92,7 @@ const SHORTCUTS: { keys: string[]; label: MessageKey }[] = [
   { keys: ['V'], label: 'shortcuts.switchView' },
   { keys: ['P'], label: 'shortcuts.presentation' },
   { keys: ['A'], label: 'shortcuts.alerts' },
+  { keys: ['I'], label: 'shortcuts.profile' },
   { keys: ['K'], label: 'shortcuts.assistant' },
   { keys: ['Space'], label: 'shortcuts.play' },
   { keys: ['Esc'], label: 'shortcuts.esc' },
@@ -92,7 +100,17 @@ const SHORTCUTS: { keys: string[]; label: MessageKey }[] = [
   { keys: ['←', '→'], label: 'shortcuts.tour' },
 ]
 
+/** Mounts the crew profile dialog (opened from the crew cards, the stage header or the I key) next to the shortcuts sheet. */
 export function ShortcutsOverlay() {
+  return (
+    <>
+      <ShortcutsSheet />
+      <CrewProfileHost />
+    </>
+  )
+}
+
+function ShortcutsSheet() {
   const open = useUiStore((s) => s.shortcutsOpen)
   const setOpen = useUiStore((s) => s.setShortcutsOpen)
   const ref = useRef<HTMLDivElement>(null)
