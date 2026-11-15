@@ -142,6 +142,31 @@ const templates = {
     'Unusual combination: {parts} at the same time for {dur}. This mix is rare in your own recent days (score {score}, your threshold {threshold}). Signals that contributed most: {shares}.',
   'eng.mv.elevated': 'Unusual mix of signals right now ({shares}). Not flagged: it must last and agree with the slower trend rules first.',
 
+  // Space weather advisory (NASA DONKI, REAL_PUBLIC)
+  'eng.sw.event.flareClass': '{cls} solar flare',
+  'eng.sw.event.flare': 'Solar flare',
+  'eng.sw.event.sep': 'Solar energetic particle event',
+  'eng.sw.event.cme': 'Coronal mass ejection',
+  'eng.sw.event.stormKp': 'Geomagnetic storm (Kp {kp})',
+  'eng.sw.event.storm': 'Geomagnetic storm',
+  'eng.sw.two': '{a} and {b}',
+  'eng.sw.more': '{list} and {n} more',
+  'eng.sw.noData.title': 'Space weather not available yet',
+  'eng.sw.noData.body': 'No NASA DONKI data has been loaded. This is unknown, not "all clear": follow the space weather briefing from mission control.',
+  'eng.sw.quiet.title': 'No major solar event in the last {h} hours',
+  'eng.sw.quiet.body': 'No solar energetic particle event or X class flare in NASA DONKI in the {h} h before the data was retrieved.',
+  'eng.sw.shelter.title': 'Move to the radiation storm shelter',
+  'eng.sw.shelter.bodyMoon':
+    'NASA DONKI reports a recent {what}. On the Moon there is no Earth magnetic field to stop solar particles. Follow the shelter procedure now: move to the most shielded area, stop surface or extravehicular activity, and keep personal dosimeters on. Do not wait for Earth to confirm; report to mission control when you can.',
+  'eng.sw.shelter.bodyDeep':
+    'NASA DONKI reports a recent {what}. In deep space there is no Earth magnetic field to stop solar particles. Follow the shelter procedure now: move to the most shielded area, stop surface or extravehicular activity, and keep personal dosimeters on. Do not wait for Earth to confirm; report to mission control when you can.',
+  'eng.sw.launch.title': 'Pre launch space weather note',
+  'eng.sw.launch.body':
+    'NASA DONKI reports a recent {what}. The ascent dose is negligible, but the launch team should include space weather in the go or no go briefing and in the plan for the first days in orbit.',
+  'eng.sw.monitor.title': 'Monitor radiation: solar event reported',
+  'eng.sw.monitor.body':
+    'NASA DONKI reports a recent {what}. In low Earth orbit the magnetic field shields most of it. Keep monitoring the dosimeters and follow flight control guidance about shielded areas and spacewalks.',
+
   // Alerts and recommendations
   'eng.ruleTitle': '{title}',
   'eng.alert.titleFor': '{name}: {title}',

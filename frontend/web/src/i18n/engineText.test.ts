@@ -3,6 +3,8 @@ import type { EngineMsg, ScenarioId } from '../types/domain'
 import { HealthEngine } from '../engine/engine'
 import { MIN_MS } from '../engine/text'
 import { msgForEnglish } from '../engine/msg'
+import { assessSpaceWeather } from '../engine/missions/spaceWeather'
+import type { SpaceWeatherEvent, SpaceWeatherSnapshot } from '../types/nasa'
 import { alertDetail, alertTitle, engineText, recRationale, recTitle, renderEngineMsg } from './engineText'
 import { setLanguage, type Lang } from '.'
 import { en } from './locales/en'
@@ -54,6 +56,33 @@ function collect(): Sample[] {
       if (rec.rationaleMsg) out.push({ english: rec.rationale, msg: rec.rationaleMsg, where: `${r.scenarioId} rec rationale` })
     }
   }
+  // Space weather advisories for every branch.
+  const ev = (kind: SpaceWeatherEvent['kind'], extra: Partial<SpaceWeatherEvent> = {}): SpaceWeatherEvent =>
+    ({ id: kind, kind, startTime: '2026-11-10T04:00:00Z', peakTime: null, classType: null, kpIndex: null, link: '', ...extra }) as SpaceWeatherEvent
+  const snap = (events: SpaceWeatherEvent[]): SpaceWeatherSnapshot => ({
+    data_origin: 'REAL_PUBLIC',
+    source: 'NASA DONKI (CCMC)',
+    sourceUrl: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/',
+    retrievedAt: '2026-11-10T12:00:00Z',
+    window: { start: '2026-11-01T00:00:00Z', end: '2026-11-10T12:00:00Z' },
+    events,
+    mode: 'snapshot',
+  })
+  const storms = [ev('SEP'), ev('SOLAR_FLARE', { classType: 'X1.2' }), ev('SOLAR_FLARE', { classType: 'X2.0' })]
+  for (const [snapshot, profile] of [
+    [null, 'ISS'],
+    [snap([]), 'ISS'],
+    [snap(storms), 'MOON'],
+    [snap(storms.slice(0, 2)), 'MARS_TRANSIT'],
+    [snap([ev('SEP')]), 'LAUNCH'],
+    [snap([ev('SEP')]), 'ISS'],
+  ] as const) {
+    const adv = assessSpaceWeather(snapshot, profile)
+    for (const english of [adv.title, adv.body]) {
+      const m = msgForEnglish(english)
+      if (m) out.push({ english, msg: m, where: `space weather ${profile}` })
+    }
+  }
   // Keep one sample per distinct English sentence.
   const seen = new Set<string>()
   return out.filter((s) => (seen.has(s.english) ? false : (seen.add(s.english), true)))
@@ -65,7 +94,7 @@ describe('engine text', () => {
   it('collects a broad sample of engine sentences', () => {
     const ids = new Set(samples.map((s) => s.msg.id))
     expect(samples.length).toBeGreaterThan(40)
-    for (const id of ['head.normal', 'head.so', 'alert.titleFor', 'alert.detail', 'recTitle', 'rec.rationale', 'rec.onboardRationale', 'rec.rationaleCtx', 'limit.simulated', 'dataWindow', 'mv.typical']) {
+    for (const id of ['head.normal', 'head.so', 'alert.titleFor', 'alert.detail', 'recTitle', 'rec.rationale', 'rec.onboardRationale', 'rec.rationaleCtx', 'limit.simulated', 'dataWindow', 'mv.typical', 'sw.noData.title', 'sw.quiet.body', 'sw.shelter.bodyMoon', 'sw.shelter.bodyDeep', 'sw.launch.body', 'sw.monitor.body']) {
       expect(ids, id).toContain(id)
     }
   })
