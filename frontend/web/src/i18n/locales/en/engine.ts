@@ -142,6 +142,14 @@ const templates = {
     'Unusual combination: {parts} at the same time for {dur}. This mix is rare in your own recent days (score {score}, your threshold {threshold}). Signals that contributed most: {shares}.',
   'eng.mv.elevated': 'Unusual mix of signals right now ({shares}). Not flagged: it must last and agree with the slower trend rules first.',
 
+  // Periodic exams (eyes, ears) and noise (same text as src/engine/exams)
+  'eng.exam.eyePhrase': 'Your last eye exam changed from your pre-flight baseline',
+  'eng.exam.earPhrase': 'Your last hearing test changed from your pre-flight baseline',
+  'eng.exam.noisePhrase': 'Noise exposure was above its reference level yesterday',
+  'eng.rule.R-SANS-01': 'Eye exam changed from pre-flight baseline',
+  'eng.rule.R-HEAR-01': 'Hearing test changed from pre-flight baseline',
+  'eng.rule.R-NOISE-01': 'Noise exposure above the reference level',
+
   // Space weather advisory (NASA DONKI, REAL_PUBLIC)
   'eng.sw.event.flareClass': '{cls} solar flare',
   'eng.sw.event.flare': 'Solar flare',

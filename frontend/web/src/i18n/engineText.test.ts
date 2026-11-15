@@ -4,6 +4,7 @@ import { HealthEngine } from '../engine/engine'
 import { MIN_MS } from '../engine/text'
 import { msgForEnglish } from '../engine/msg'
 import { assessSpaceWeather } from '../engine/missions/spaceWeather'
+import { EXAM_RULE_TITLES } from '../engine/exams/assess'
 import type { SpaceWeatherEvent, SpaceWeatherSnapshot } from '../types/nasa'
 import { alertDetail, alertTitle, engineText, recRationale, recTitle, renderEngineMsg } from './engineText'
 import { setLanguage, type Lang } from '.'
@@ -23,6 +24,7 @@ function collect(): Sample[] {
   const out: Sample[] = []
   const runs: { scenarioId: ScenarioId; commProfileId?: 'MARS_FAR'; missionProfileId?: 'MARS_TRANSIT' | 'ISS'; minutes: number }[] = [
     { scenarioId: 'NOMINAL', minutes: 60 },
+    { scenarioId: 'SANS_PROGRESSION', minutes: 2 * 24 * 60 },
     { scenarioId: 'ACUTE_CARDIO', minutes: 120 },
     { scenarioId: 'PROGRESSIVE_FATIGUE', minutes: 3 * 24 * 60 },
     { scenarioId: 'SENSOR_FAILURE', minutes: 180 },
@@ -147,6 +149,10 @@ describe('engine text', () => {
       })
     })
   }
+
+  it('keeps the exam rule titles identical to the engine English', () => {
+    for (const [id, title] of Object.entries(EXAM_RULE_TITLES)) expect(en[`eng.rule.${id}` as keyof typeof en], id).toBe(title)
+  })
 
   it('every engine key exists in English', () => {
     expect(Object.keys(en).filter((k) => k.startsWith('eng.')).length).toBeGreaterThan(200)
