@@ -45,9 +45,11 @@ test('crew view side column', async ({ app: page }) => {
   await expect(page.getByRole('region', { name: 'What to do now' })).toHaveScreenshot('crew-view-actions.png')
 })
 
-test('mission context dialog', async ({ app: page }) => {
-  await page.getByRole('button', { name: /^Mission profile:/ }).click()
-  const dialog = page.getByRole('dialog', { name: 'Mission context' })
+test('mission and Earth link panel', async ({ app: page }) => {
+  await page.getByRole('button', { name: /^Mission and Earth link:/ }).click()
+  const dialog = page.getByRole('dialog', { name: 'Mission and Earth link' })
   await expect(dialog).toBeVisible()
-  await expect(dialog).toHaveScreenshot('mission-context-dialog.png', { mask: [page.locator('canvas')] })
+  await expect(dialog).toHaveScreenshot('mission-link-panel.png', { mask: [page.locator('canvas')] })
+  await dialog.getByRole('tab', { name: /^Earth link/ }).click()
+  await expect(dialog).toHaveScreenshot('mission-link-panel-earth-link.png', { mask: [page.locator('canvas')] })
 })

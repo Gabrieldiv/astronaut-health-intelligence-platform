@@ -11,7 +11,8 @@ import { StatusDot, StatusIcon } from '../../components/Status'
 import { Popover } from '../../components/ui'
 import { formatUtcDate, formatUtcTime, relTime } from '../../components/format'
 import { focusTarget } from '../shared/hooks'
-import { COMM_KIND_LABEL, useCommsUi } from '../comms/delay'
+import { COMM_KIND_LABEL } from '../comms/delay'
+import { useMissionPanelUi } from '../mission/panelUi'
 import { INTERVENTION_LABEL, INTERVENTION_REGION } from './labels'
 import { t as tr, tp, translatedRecord, useLang, useT } from '../../i18n'
 import { metricLabel, regionLabel } from '../../i18n/catalog'
@@ -608,7 +609,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
 
   const activate = (m: Marker | null, laneId: string | null) => {
     if (m) {
-      if (m.target === 'comms') useCommsUi.getState().setOpen(true)
+      if (m.target === 'comms') useMissionPanelUi.getState().openPanel('link')
       else focusTarget(m.target)
       return
     }

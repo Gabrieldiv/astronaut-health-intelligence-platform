@@ -12,9 +12,8 @@ import { ProvenanceBadge } from './ProvenancePopover'
 import { ScenarioControl } from './ScenarioControl'
 import { ToolsMenu } from './ToolsMenu'
 import { usePriorityCollapse } from './usePriorityCollapse'
-import { CommsIndicator } from '../comms'
 import { ConnectivityChip } from '../connectivity'
-import { MissionProfileControl } from '../mission/MissionContext'
+import { MissionLinkControl } from '../mission/MissionContext'
 import { MISSION_ACCENT } from '../mission/backdrops/facts'
 import { t, translatedRecord, useT } from '../../i18n'
 
@@ -34,7 +33,7 @@ const STEPS = [
   'viewLabels', // Ground / Crew text on the view toggle
   'missionName', // mission name block (MET stays)
   'restartToMenu', // restart button moves into the Tools menu
-  'commsLabel', // Earth link delay text (icon and in-transit count stay)
+  'commsLabel', // Earth link delay text in the mission control (Earth icon and in-transit count stay)
   'profileLabel', // mission profile name (icon, advisory dot and tooltip stay)
   'wordmark', // "AHI" text next to the logo
   'scenarioName', // scenario name (tooltip and accessible name keep it)
@@ -244,9 +243,9 @@ const Divider = () => <div className="h-6 w-px shrink-0 bg-white/[0.08]" aria-hi
 /**
  * Three zones on a `1fr auto 1fr` grid, so the scenario player sits at the true center whenever
  * the sides allow it:
- *  - left: logo, SIMULATED chip, mission name, mission profile selector, MET clock (UTC in its tooltip)
+ *  - left: logo, SIMULATED chip, mission name, mission and Earth link control, MET clock (UTC in its tooltip)
  *  - center: scenario player capsule
- *  - right: Earth link, Ground / Crew toggle, Tools menu, Start demo, alerts bell
+ *  - right: Ground / Crew toggle, Tools menu, Start demo, alerts bell
  * Every control is 36 px tall (h-9) with a 12 px radius.
  */
 /** Thin underline in the mission accent color (same color as the stage platform ring). */
@@ -274,7 +273,7 @@ export function TopBar() {
         <Divider />
         {!on('missionName') && <MissionName />}
         <MissionAccent>
-          <MissionProfileControl showLabel={!on('profileLabel')} />
+          <MissionLinkControl showProfile={!on('profileLabel')} showDelay={!on('commsLabel')} />
         </MissionAccent>
         <MissionClock />
       </div>
@@ -286,9 +285,6 @@ export function TopBar() {
       <div ref={zoneSetters[2]} className="flex w-max items-center gap-2 justify-self-end">
         {!on('crewDots') && <CrewDots />}
         <ConnectivityChip />
-        <div className={clsx('flex shrink-0 [&>button]:h-9 [&>button]:rounded-xl [&>button]:ring-white/[0.08]', on('commsLabel') && '[&>button]:px-2.5 [&>button>span:first-of-type]:hidden')}>
-          <CommsIndicator />
-        </div>
         {!on('viewToMenu') && <ViewToggle showLabels={!on('viewLabels')} />}
         <ToolsMenu showLabel={!on('toolsLabel')} withRestart={on('restartToMenu')} withView={on('viewToMenu')} />
         <Divider />

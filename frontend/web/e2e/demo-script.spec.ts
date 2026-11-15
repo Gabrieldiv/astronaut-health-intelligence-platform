@@ -144,15 +144,18 @@ test.describe('Forecast horizons', () => {
 
 test.describe('Mission profiles', () => {
   test('switching to Mars transit shows the communication delay guidance', async ({ app: page }) => {
-    await page.getByRole('button', { name: /^Mission profile: ISS/ }).click()
-    const dialog = page.getByRole('dialog', { name: 'Mission context' })
+    await page.getByRole('button', { name: /^Mission and Earth link: ISS/ }).click()
+    const dialog = page.getByRole('dialog', { name: 'Mission and Earth link' })
+    await dialog.getByRole('tab', { name: /^Earth link/ }).click()
     await expect(dialog).toContainText('Ground support in near real time')
+    await dialog.getByRole('tab', { name: /^Mission/ }).click()
     await dialog.getByRole('radio', { name: /^Mars transit/ }).click()
     await expect(dialog.getByRole('radio', { name: /^Mars transit/ })).toHaveAttribute('aria-checked', 'true')
+    await dialog.getByRole('tab', { name: /^Earth link/ }).click()
     await expect(dialog).toContainText('Crew acts first, Earth reviews later')
+    await expect(dialog.getByRole('radiogroup', { name: 'Communication profile' }).getByRole('radio', { checked: true })).toHaveAccessibleName(/^Mars \(farthest\)/)
     await dialog.getByRole('button', { name: 'Close' }).click()
-    await expect(page.getByRole('button', { name: /^Mission profile: Mars transit/ })).toBeVisible()
-    await expect(page.getByRole('button', { name: /^Earth link: Mars/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Mission and Earth link: Mars transit\. Earth link Mars far,/ })).toBeVisible()
   })
 })
 

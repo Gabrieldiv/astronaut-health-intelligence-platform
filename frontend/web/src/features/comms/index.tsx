@@ -1,16 +1,20 @@
+/**
+ * Earth link pieces of the Mission and Earth link panel (src/features/mission/MissionContext.tsx):
+ * the simulated link profile picker and the messages to Mission Control (send, in transit, delivered)
+ * (the top bar status hook lives in ./delay).
+ */
 import clsx from 'clsx'
-import { ArrowDownLeft, ArrowUpRight, Check, Earth, Inbox, Send, Stethoscope, Timer } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Check, Inbox, Send, Stethoscope, Timer } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import type { AppState, CommMessage, CommProfileId } from '../../types/domain'
 import { METRIC_CATALOG, VITAL_METRICS } from '../../engine/catalog'
 import { STATUS_META, statusLabelEn } from '../../lib/status'
-import { Badge, Button, Drawer, SectionLabel } from '../../components/ui'
+import { Badge, Button, SectionLabel } from '../../components/ui'
 import { fmtMetric, formatUtcTime, relTime } from '../../components/format'
-import { COMM_KIND_LABEL, PROFILE_SHORT, delayMeaning, formatCountdown, formatDelay, isInTransit, useCommsUi } from './delay'
-import { inEnglish, t, tp, useT } from '../../i18n'
+import { COMM_KIND_LABEL, formatCountdown, formatDelay, isInTransit } from './delay'
+import { inEnglish, useT } from '../../i18n'
 import { commProfileDescription, commProfileLabel } from '../../i18n/catalog'
 
 /** Plain text body of a health packet for one astronaut (current state snapshot). */
@@ -106,15 +110,48 @@ function MessageItem({ m, now, callsign }: { m: CommMessage; now: number; callsi
   )
 }
 
-function CommsDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { profiles, profileId, comms, crew, selectedId, setCommProfile } = useAppStore(
+/** Simulated link profile (ISS, Moon, Mars near, Mars far). Changing it is audited by the engine. */
+export function LinkProfilePicker() {
+  const { profiles, profileId, setCommProfile } = useAppStore(useShallow((s) => ({ profiles: s.commProfiles, profileId: s.commProfileId, setCommProfile: s.setCommProfile })))
+  const t = useT()
+  const profile = profiles.find((p) => p.id === profileId) ?? profiles[0]
+  return (
+    <div>
+      <div role="radiogroup" aria-label={t('comms.profileAria')} className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {profiles.map((p) => {
+          const on = p.id === profileId
+          return (
+            <button
+              key={p.id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => setCommProfile(p.id as CommProfileId)}
+              className={clsx(
+                'focus-ring rounded-xl px-3 py-2.5 text-left transition-colors',
+                on ? 'bg-accent/10 ring-1 ring-accent/40' : 'bg-white/[0.03] ring-1 ring-white/[0.06] hover:bg-white/[0.06]',
+              )}
+            >
+              <div className={clsx('text-[13px] font-semibold', on ? 'text-accent' : 'text-ink-100')}>{commProfileLabel(p)}</div>
+              <div className="tabular mt-0.5 text-[11px] text-ink-500">{t('comms.oneWayRoundTrip', { one: formatDelay(p.oneWayDelaySec), round: formatDelay(p.oneWayDelaySec * 2) })}</div>
+            </button>
+          )
+        })}
+      </div>
+      {profile && <p className="mt-2 text-[11px] leading-relaxed text-ink-500">{commProfileDescription(profile)}</p>}
+    </div>
+  )
+}
+
+/** Messages to Mission Control: send a health packet or a consult request, then follow them in transit. */
+export function EarthLinkMessages() {
+  const { profiles, profileId, comms, crew, selectedId } = useAppStore(
     useShallow((s) => ({
       profiles: s.commProfiles,
       profileId: s.commProfileId,
       comms: s.comms,
       crew: s.crew,
       selectedId: s.selectedAstronautId,
-      setCommProfile: s.setCommProfile,
     })),
   )
   const now = useAppStore((s) => Math.floor(s.clock.simNow / 1000) * 1000)
@@ -156,54 +193,9 @@ function CommsDrawer({ open, onClose }: { open: boolean; onClose: () => void }) 
   }
 
   return (
-    <Drawer
-      open={open}
-      onClose={() => {
-        setSent(null)
-        onClose()
-      }}
-      title={t('comms.title')}
-      icon={<Earth size={17} className="text-accent" aria-hidden />}
-      footer={<p className="text-[11px] leading-relaxed text-ink-500">{t('comms.footer')}</p>}
-    >
-      <SectionLabel>{t('comms.distance')}</SectionLabel>
-      <div role="radiogroup" aria-label={t('comms.profileAria')} className="mt-2 grid grid-cols-2 gap-2">
-        {profiles.map((p) => {
-          const on = p.id === profileId
-          return (
-            <button
-              key={p.id}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              onClick={() => setCommProfile(p.id as CommProfileId)}
-              className={clsx(
-                'focus-ring rounded-xl px-3 py-2.5 text-left transition-colors',
-                on ? 'bg-accent/10 ring-1 ring-accent/40' : 'bg-white/[0.03] ring-1 ring-white/[0.06] hover:bg-white/[0.06]',
-              )}
-            >
-              <div className={clsx('text-[13px] font-semibold', on ? 'text-accent' : 'text-ink-100')}>{commProfileLabel(p)}</div>
-              <div className="tabular mt-0.5 text-[11px] text-ink-500">
-                {t('comms.oneWayRoundTrip', { one: formatDelay(p.oneWayDelaySec), round: formatDelay(p.oneWayDelaySec * 2) })}
-              </div>
-            </button>
-          )
-        })}
-      </div>
-      {profile && (
-        <div className="mt-3 flex gap-2.5 rounded-xl bg-white/[0.035] p-3 ring-1 ring-white/[0.06]">
-          <Timer size={16} className="mt-0.5 shrink-0 text-accent" aria-hidden />
-          <div>
-            <p className="text-[13px] leading-snug font-semibold text-ink-100">{delayMeaning(profile)}</p>
-            <p className="mt-1 text-xs leading-relaxed text-ink-500">{commProfileDescription(profile)}</p>
-          </div>
-        </div>
-      )}
-
-      <SectionLabel className="mt-6" right={astronaut ? <span className="text-[11px] font-semibold tracking-wide text-ink-300">{astronaut.callsign}</span> : null}>
-        {t('comms.sendToGround')}
-      </SectionLabel>
-      <div className="mt-2 grid grid-cols-1 gap-2">
+    <div>
+      <SectionLabel right={astronaut ? <span className="text-[11px] font-semibold tracking-wide text-ink-300">{astronaut.callsign}</span> : null}>{t('comms.sendToGround')}</SectionLabel>
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Button variant="ghost" className="justify-start py-2.5" onClick={() => send('HEALTH_PACKET')} disabled={!astronaut}>
           <Send size={14} aria-hidden /> {t('comms.sendPacket')}
         </Button>
@@ -221,76 +213,32 @@ function CommsDrawer({ open, onClose }: { open: boolean; onClose: () => void }) 
         </div>
       )}
 
-      <SectionLabel className="mt-6" right={<span className="tabular text-[11px] text-ink-500">{transit.length}</span>}>
-        {t('comms.inTransit')}
-      </SectionLabel>
-      {transit.length === 0 ? (
-        <div className="mt-2 rounded-xl bg-white/[0.025] px-3 py-2.5 text-[13px] text-ink-500 ring-1 ring-white/[0.05]">{t('comms.nothingInTransit')}</div>
-      ) : (
-        <ul className="mt-2 flex flex-col gap-2">
-          {transit.map((m) => (
-            <MessageItem key={m.id} m={m} now={now} callsign={callsign} />
-          ))}
-        </ul>
-      )}
-
-      <SectionLabel className="mt-6" right={<span className="tabular text-[11px] text-ink-500">{delivered.length}</span>}>
-        {t('comms.delivered')}
-      </SectionLabel>
-      {delivered.length === 0 ? (
-        <div className="mt-2 rounded-xl bg-white/[0.025] px-3 py-2.5 text-[13px] text-ink-500 ring-1 ring-white/[0.05]">{t('comms.noMessages')}</div>
-      ) : (
-        <ul className="mt-2 flex flex-col gap-2">
-          {delivered.slice(0, 30).map((m) => (
-            <MessageItem key={m.id} m={m} now={now} callsign={callsign} />
-          ))}
-        </ul>
-      )}
-    </Drawer>
-  )
-}
-
-/** Top bar control: Earth link profile (ISS, Moon, Mars), delay and message queue. Opens its own drawer. */
-export function CommsIndicator() {
-  const open = useCommsUi((s) => s.open)
-  const setOpen = useCommsUi((s) => s.setOpen)
-  const { profileId, delaySec } = useAppStore(
-    useShallow((s) => ({ profileId: s.commProfileId, delaySec: s.commProfiles.find((p) => p.id === s.commProfileId)?.oneWayDelaySec ?? 0 })),
-  )
-  const inTransit = useAppStore((s) => {
-    let n = 0
-    for (const m of s.comms) if (isInTransit(m, s.clock.simNow)) n++
-    return n
-  })
-  const unreadReply = useAppStore((s) => s.comms.some((m) => m.kind === 'GROUND_REPLY' && !isInTransit(m, s.clock.simNow) && s.clock.simNow - m.arrivesAt < 30 * 60000))
-  const label = `${PROFILE_SHORT[profileId]} ${formatDelay(delaySec)}`
-  return (
-    <>
-      <button
-        type="button"
-        data-tour="comms"
-        onClick={() => setOpen(true)}
-        aria-haspopup="dialog"
-        aria-label={
-          inTransit
-            ? tp('comms.indicatorAriaTransit', inTransit, { profile: PROFILE_SHORT[profileId], delay: formatDelay(delaySec) })
-            : t('comms.indicatorAria', { profile: PROFILE_SHORT[profileId], delay: formatDelay(delaySec) })
-        }
-        title={t('comms.indicatorTitle')}
-        className="focus-ring relative flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-ink-300 ring-1 ring-white/[0.07] transition-colors hover:bg-white/[0.05] hover:text-ink-100"
-      >
-        <Earth size={14} className="text-accent" aria-hidden />
-        <span className="tabular whitespace-nowrap">{label}</span>
-        {inTransit > 0 && (
-          <span className="flex items-center gap-1 rounded-full bg-accent/10 py-px pr-1.5 pl-1 text-[10px] font-bold text-accent ring-1 ring-accent/25" aria-hidden>
-            <span className="animate-breathe h-1.5 w-1.5 rounded-full bg-accent" />
-            {inTransit}
-          </span>
-        )}
-        {unreadReply && inTransit === 0 && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-accent ring-2 ring-space-900" aria-hidden />}
-      </button>
-      {/* Portaled: the top bar uses backdrop-filter, which would trap a fixed drawer inside it. */}
-      {open && createPortal(<CommsDrawer open onClose={() => setOpen(false)} />, document.body)}
-    </>
+      <div className="mt-5 grid gap-x-4 gap-y-5 lg:grid-cols-2">
+        <div>
+          <SectionLabel right={<span className="tabular text-[11px] text-ink-500">{transit.length}</span>}>{t('comms.inTransit')}</SectionLabel>
+          {transit.length === 0 ? (
+            <div className="mt-2 rounded-xl bg-white/[0.025] px-3 py-2.5 text-[13px] text-ink-500 ring-1 ring-white/[0.05]">{t('comms.nothingInTransit')}</div>
+          ) : (
+            <ul className="mt-2 flex flex-col gap-2">
+              {transit.map((m) => (
+                <MessageItem key={m.id} m={m} now={now} callsign={callsign} />
+              ))}
+            </ul>
+          )}
+        </div>
+        <div>
+          <SectionLabel right={<span className="tabular text-[11px] text-ink-500">{delivered.length}</span>}>{t('comms.delivered')}</SectionLabel>
+          {delivered.length === 0 ? (
+            <div className="mt-2 rounded-xl bg-white/[0.025] px-3 py-2.5 text-[13px] text-ink-500 ring-1 ring-white/[0.05]">{t('comms.noMessages')}</div>
+          ) : (
+            <ul className="mt-2 flex flex-col gap-2">
+              {delivered.slice(0, 30).map((m) => (
+                <MessageItem key={m.id} m={m} now={now} callsign={callsign} />
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }

@@ -14,8 +14,6 @@ const m: Record<keyof typeof en, string> = {
   'comms.unit.min': '{n} min',
   'comms.unit.minS': '{m} min {s} s',
   'comms.unit.hMin': '{h} h {m} min',
-  'comms.meaning.near': 'Una pregunta a la Tierra y su respuesta tardan unos {delay}. Control de Misión puede apoyar las decisiones casi en tiempo real.',
-  'comms.meaning.far': 'Una pregunta a la Tierra y su respuesta tardan al menos {delay}. Primero van los pasos a bordo; usa Tierra para revisar, no para decisiones urgentes.',
   'comms.fromEarth': 'Desde la Tierra',
   'comms.toEarth': 'Hacia la Tierra',
   'comms.simulated': 'Simulado',
@@ -31,7 +29,6 @@ const m: Record<keyof typeof en, string> = {
   'comms.queued.failed': 'El enlace con la Tierra no aceptó el mensaje en esta versión. Inténtalo más tarde.',
   'comms.title': 'Enlace con la Tierra',
   'comms.footer': 'Enlace simulado. Los retrasos son el tiempo aproximado de la luz; las respuestas de Tierra son simuladas. Solo apoyo a la decisión.',
-  'comms.distance': 'Distancia a la Tierra',
   'comms.profileAria': 'Perfil de comunicación',
   'comms.oneWayRoundTrip': '{one} solo ida · {round} ida y vuelta',
   'comms.sendToGround': 'Enviar a Tierra',
@@ -41,9 +38,5 @@ const m: Record<keyof typeof en, string> = {
   'comms.nothingInTransit': 'Nada en camino ahora mismo.',
   'comms.delivered': 'Entregados',
   'comms.noMessages': 'Aún no hay mensajes. Aquí aparecen los paquetes de salud y las solicitudes de consulta que envíes.',
-  'comms.indicatorAria': 'Enlace con la Tierra: {profile}, retraso de {delay} solo ida',
-  'comms.indicatorAriaTransit_one': 'Enlace con la Tierra: {profile}, retraso de {delay} solo ida, {n} mensaje en camino',
-  'comms.indicatorAriaTransit_other': 'Enlace con la Tierra: {profile}, retraso de {delay} solo ida, {n} mensajes en camino',
-  'comms.indicatorTitle': 'Enlace con la Tierra: retraso y mensajes a Control de Misión',
 }
 export default m
