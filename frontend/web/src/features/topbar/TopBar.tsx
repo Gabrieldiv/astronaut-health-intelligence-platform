@@ -13,6 +13,7 @@ import { ScenarioControl } from './ScenarioControl'
 import { ToolsMenu } from './ToolsMenu'
 import { usePriorityCollapse } from './usePriorityCollapse'
 import { CommsIndicator } from '../comms'
+import { ConnectivityChip } from '../connectivity'
 import { MissionProfileControl } from '../mission/MissionContext'
 import { t, translatedRecord, useT } from '../../i18n'
 
@@ -271,6 +272,7 @@ export function TopBar() {
 
       <div ref={zoneSetters[2]} className="flex w-max items-center gap-2 justify-self-end">
         {!on('crewDots') && <CrewDots />}
+        <ConnectivityChip />
         <div className={clsx('flex shrink-0 [&>button]:h-9 [&>button]:rounded-xl [&>button]:ring-white/[0.08]', on('commsLabel') && '[&>button]:px-2.5 [&>button>span:first-of-type]:hidden')}>
           <CommsIndicator />
         </div>

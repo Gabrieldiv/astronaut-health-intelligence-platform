@@ -10,7 +10,7 @@ import { OriginsTab } from './OriginsTab'
 import { RealDatasetsTab } from './RealDatasetsTab'
 import { useT } from '../../i18n'
 
-type TabId = 'real' | 'nasa' | 'devices' | 'model' | 'origins'
+export type TabId = 'real' | 'nasa' | 'devices' | 'model' | 'origins'
 
 const TABS: Array<{ id: TabId; icon: LucideIcon; count?: number }> = [
   { id: 'real', icon: History, count: REAL_DATASET_ACCESSIONS.length },
@@ -20,8 +20,8 @@ const TABS: Array<{ id: TabId; icon: LucideIcon; count?: number }> = [
   { id: 'origins', icon: Tags },
 ]
 
-export default function DataModelDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [tab, setTab] = useState<TabId>('real')
+export default function DataModelDialog({ open, onClose, initialTab = 'real' }: { open: boolean; onClose: () => void; initialTab?: TabId }) {
+  const [tab, setTab] = useState<TabId>(initialTab)
   // Named `tr` here: the tab loop below uses `t` for the tab item.
   const tr = useT()
   const refs = useRef<Record<TabId, HTMLButtonElement | null>>({ real: null, nasa: null, devices: null, model: null, origins: null })

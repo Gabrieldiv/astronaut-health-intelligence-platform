@@ -5,6 +5,8 @@ import { fetchOsdrStudies, getBackendStatus, type ApiOsdrStudyList, type Backend
 import { loadSpaceWeather } from '../../lib/nasa/spaceWeather'
 import type { SpaceWeatherEvent, SpaceWeatherEventKind, SpaceWeatherSnapshot } from '../../types/nasa'
 import { ExtLink, OriginBadge, formatIsoUtc } from './shared'
+import { ConnectivityPanel } from '../connectivity'
+import { useConnectivityMode } from '../../lib/api/connectivity'
 
 const KIND_META: Record<SpaceWeatherEventKind, { label: string; plain: string; icon: LucideIcon }> = {
   SOLAR_FLARE: { label: 'Solar flare', plain: 'A sudden burst of X-ray light from the Sun.', icon: Sun },
@@ -21,6 +23,7 @@ export function NasaContextTab() {
   const [status, setStatus] = useState<BackendStatus | null>(null)
   const [weather, setWeather] = useState<Load<SpaceWeatherSnapshot>>({ kind: 'loading' })
   const [nonce, setNonce] = useState(0)
+  const mode = useConnectivityMode()
 
   useEffect(() => {
     let alive = true
@@ -31,7 +34,7 @@ export function NasaContextTab() {
     return () => {
       alive = false
     }
-  }, [nonce])
+  }, [nonce, mode])
 
   const retry = useCallback(() => {
     setStatus(null)
@@ -51,9 +54,10 @@ export function NasaContextTab() {
         </div>
       </div>
 
+      <ConnectivityPanel />
       <BackendCard status={status} onRetry={retry} />
       <SpaceWeatherSection state={weather} />
-      <OsdrSection status={status} />
+      {mode !== 'offline' && <OsdrSection status={status} />}
     </div>
   )
 }
