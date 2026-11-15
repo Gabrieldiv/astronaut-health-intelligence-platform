@@ -95,7 +95,7 @@ const m: Record<keyof typeof en, string> = {
   'eng.head.normal': 'すべての指標があなたの通常範囲内です。',
   'eng.head.missing': '一部の測定値が届いていないため、全体像は不完全です。',
   'eng.head.cabinNormal': '船内の空気と放射線は、いつもの範囲内です。',
-  'eng.head.so': '{phrase}ため、{tail}。',
+  'eng.head.so': '{phrase}。そのため、{tail}。',
   'eng.tail.sensor': 'センサーの確認をおすすめします',
   'eng.tail.talk': 'クルーの医療担当者と少し話すと役立つかもしれません',
   'eng.tail.airNow': '船内の空気について、今すぐの対応が求められています',

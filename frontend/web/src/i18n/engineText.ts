@@ -122,7 +122,12 @@ function renderMsg(m: EngineMsg, english: boolean): string {
   const base = `eng.${m.id}`
   const n = m.params?.n
   const k = typeof n === 'number' && isMessageKey(`${base}_other`) ? pluralKey(base, n, english) : base
-  return interpolate(key(k), m.params, english)
+  const out = interpolate(key(k), m.params, english)
+  if (english) return out
+  // Translations start sentences with a lower case metric name ("frequência cardíaca está ..."):
+  // capitalize every sentence of a summary.
+  if (m.id === 'sent1' || m.id === 'sent2') return out.replace(/(^|[.!?]\s+)(\p{Ll})/gu, (_, p: string, c: string) => p + c.toUpperCase())
+  return out
 }
 
 /**
@@ -143,7 +148,8 @@ function localize(english: string, m: EngineMsg | null | undefined): string {
   if (getLang() === 'en') return english
   const msg = m ?? msgForEnglish(english)
   if (!msg) return english
-  return renderEngineMsg(msg) ?? english
+  const out = renderEngineMsg(msg)
+  return out === null ? english : capFirst(out)
 }
 
 /**
