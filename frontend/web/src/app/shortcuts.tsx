@@ -108,7 +108,7 @@ export function ShortcutsOverlay() {
   const t = useT()
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-(--z-command) flex items-center justify-center p-4">
       <div className="animate-fade-in absolute inset-0 bg-space-950/60 backdrop-blur-[2px]" onClick={() => setOpen(false)} aria-hidden />
       <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t('shortcuts.title')} className="glass-strong animate-drop-in relative w-[min(440px,100%)] rounded-2xl p-5 outline-none">
         <div className="flex items-center justify-between">

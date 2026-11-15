@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { ChevronUp, Info } from 'lucide-react'
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
+import { useOverlayOpen } from './useOverlayOpen'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
@@ -777,14 +778,16 @@ function Tooltip({
   levels: Record<string, Status> | null
   lanes: Lane[]
 }) {
-  if (!anchor) return null
+  // Never float over a drawer or dialog: hide while one is open.
+  const overlayOpen = useOverlayOpen()
+  if (!anchor || overlayOpen) return null
   const rect = anchor.getBoundingClientRect()
   const above = rect.top > 220
   const left = Math.min(window.innerWidth - 150, Math.max(150, clientX))
   const style = above ? { left, top: rect.top - 8, transform: 'translate(-50%, -100%)' } : { left, top: rect.bottom + 8, transform: 'translate(-50%, 0)' }
   const timeText = `${formatUtcTime(t, false)} UTC · ${formatUtcDate(t).replace(/ \d{4}$/, '')} · ${relTime(t, now)}`
   return createPortal(
-    <div role="tooltip" className="glass-strong pointer-events-none fixed z-[80] w-[260px] rounded-xl px-3 py-2.5 text-xs" style={style}>
+    <div role="tooltip" className="glass-strong pointer-events-none fixed z-(--z-tooltip) w-[260px] rounded-xl px-3 py-2.5 text-xs" style={style}>
       {marker ? (
         <>
           <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-ink-500 uppercase">
