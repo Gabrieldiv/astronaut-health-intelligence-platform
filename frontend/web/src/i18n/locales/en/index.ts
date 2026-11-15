@@ -22,6 +22,7 @@ import stage from './stage'
 import connectivity from './connectivity'
 import backdrop from './backdrop'
 import visual from './visual'
+import engine from './engine'
 
 /** English, the default and source of truth. Flat keys, namespaced by feature. */
 export const en = {
@@ -49,6 +50,7 @@ export const en = {
   ...connectivity,
   ...backdrop,
   ...visual,
+  ...engine,
 }
 
 export type MessageKey = keyof typeof en

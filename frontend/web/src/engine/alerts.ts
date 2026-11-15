@@ -9,11 +9,23 @@
  *   the ESCALATION steps (config.ts, demo configuration) gets escalationLevel 1, then 2, and
  *   escalatedAt. Escalation stops as soon as the alert is acknowledged or resolved.
  */
-import type { Alert, RiskLevel } from '../types/domain'
+import type { Alert, EngineMsg, RiskLevel } from '../types/domain'
+import { msg, said } from './msg'
+import { ruleTitleMsg } from './risk'
 import { ALERTS, ESCALATION } from './config'
 import { levelRank } from './anomaly'
 import type { RuleHit } from './risk'
 import { MIN_MS } from './text'
+
+/** Alert title and detail with their structured forms (engine/msg.ts). */
+function alertText(hit: RuleHit, subjectName: (id: string | null) => string): { title: string; detail: string; titleMsg: EngineMsg; detailMsg: EngineMsg } {
+  const ruleTitle = hit.titleMsg ?? ruleTitleMsg(hit.ruleId)
+  const titleMsg = hit.subjectId ? msg('alert.titleFor', { name: subjectName(hit.subjectId), title: ruleTitle }) : ruleTitle
+  const detailMsg = msg('alert.detail', { label: hit.labelMsg ?? hit.label })
+  const title = hit.subjectId ? `${subjectName(hit.subjectId)}: ${hit.title}` : hit.title
+  const detail = `${hit.label}. Decision support only, not a diagnosis.`
+  return { title: said(title, titleMsg), detail: said(detail, detailMsg), titleMsg, detailMsg }
+}
 
 export interface AlertChange {
   kind: 'CREATED' | 'ESCALATED' | 'RESOLVED'
@@ -39,12 +51,15 @@ export class AlertManager {
       return next
     }
     const create = (hit: RuleHit, key: string): Alert => {
+      const text = alertText(hit, subjectName)
       const a: Alert = {
         id: `AL-${++this.seq}`,
         astronautId: hit.subjectId,
         severity: hit.level,
-        title: hit.subjectId ? `${subjectName(hit.subjectId)}: ${hit.title}` : hit.title,
-        detail: `${hit.label}. Decision support only, not a diagnosis.`,
+        title: text.title,
+        detail: text.detail,
+        titleMsg: text.titleMsg,
+        detailMsg: text.detailMsg,
         region: hit.region,
         metric: hit.metric,
         ruleId: hit.ruleId,
@@ -73,7 +88,8 @@ export class AlertManager {
       const current = alerts.find((a) => a.id === entry.id)
       if (!current || levelRank(hit.level) <= levelRank(current.severity)) continue
       if (current.acknowledgedAt === null) {
-        const updated = replace(current.id, (a) => ({ ...a, severity: hit.level, detail: `${hit.label}. Decision support only, not a diagnosis.` }))
+        const text = alertText(hit, subjectName)
+        const updated = replace(current.id, (a) => ({ ...a, severity: hit.level, detail: text.detail, detailMsg: text.detailMsg }))
         if (updated) changes.push({ kind: 'ESCALATED', alert: updated })
       } else {
         replace(current.id, (a) => ({ ...a, resolvedAt: now }))

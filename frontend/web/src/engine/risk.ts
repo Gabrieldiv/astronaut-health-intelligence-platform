@@ -24,12 +24,14 @@
  * 4. Confidence starts at 0.95 and is lowered by missing or questionable key data and
  *    by baselines that are not ready.
  */
-import type { BodyRegionId, ContributingFactor, MetricCode, MetricState, RegionState, RiskAssessment, RiskLevel, Status } from '../types/domain'
+import type { BodyRegionId, ContributingFactor, EngineMsg, EngineParam, MetricCode, MetricState, RegionState, RiskAssessment, RiskLevel, Status } from '../types/domain'
 import { worstStatus } from '../lib/status'
 import { METRIC_CATALOG, REGION_LABELS } from './catalog'
 import { RISK, RISK_MODEL_VERSION, SELF_REPORT_METRICS, SIM } from './config'
 import { levelRank, type AnomalyMethod, type MetricAssessment } from './anomaly'
 import { badZ } from './stats'
+import { msg, said } from './msg'
+import { RULE_TITLES } from './ruleTitles'
 
 export type HitKind = 'PHYSIO' | 'DATA_QUALITY' | 'COMBINED' | 'ENVIRONMENT' | 'SELF_REPORT'
 
@@ -48,6 +50,10 @@ export interface RuleHit {
   phrase: string
   /** Short alert title. */
   title: string
+  /** Additive: structured forms of `label`, `phrase` and `title` for translation (engine/msg.ts). */
+  labelMsg?: EngineMsg
+  phraseMsg?: EngineMsg
+  titleMsg?: EngineMsg
   /** Rule ids whose alerts/recommendations are grouped under this one. */
   suppresses?: string[]
   /** Rules with the same group share one weight in the score (the largest). Default: the rule id. */
@@ -64,37 +70,10 @@ export interface SelfReportSummary {
   symptoms: string[]
 }
 
-export const RULE_TITLES: Record<string, string> = {
-  'R-HR-01': 'Heart rate far from personal normal',
-  'R-HR-02': 'Resting heart rate drifting from personal normal',
-  'R-HR-03': 'Heart rate above demo resting ceiling',
-  'R-HRV-01': 'HRV below personal baseline',
-  'R-SPO2-01': 'Blood oxygen below personal normal',
-  'R-SPO2-02': 'Blood oxygen below demo floor',
-  'R-RR-01': 'Breathing rate outside personal range',
-  'R-BP-01': 'Blood pressure outside personal range',
-  'R-TEMP-01': 'Skin temperature outside personal range',
-  'R-ACT-01': 'Activity below personal normal',
-  'R-HYD-01': 'Hydration index below personal normal',
-  'R-SLEEP-01': 'Short sleep on consecutive nights',
-  'R-SLEEP-02': 'Sleep efficiency below personal normal',
-  'R-EX-01': 'Exercise performance declining',
-  'R-RT-01': 'Reaction time slower than personal normal',
-  'R-RAD-02': 'Accumulated dose above demo watch level',
-  'R-ENV-CO2-01': 'Cabin CO₂ elevated',
-  'R-ENV-CO2-02': 'Crew response while CO₂ is elevated',
-  'R-ENV-TEMP-01': 'Cabin temperature outside demo comfort band',
-  'R-ENV-RH-01': 'Cabin humidity outside demo comfort band',
-  'R-ENV-RAD-01': 'Radiation dose rate elevated',
-  'R-FAT-01': 'Fatigue pattern: sleep, HRV and resting heart rate',
-  'R-CARD-01': 'Heart rate and blood oxygen changed together',
-  'R-DQ-01': 'Device not sending data',
-  'R-DQ-02': 'Questionable signal quality',
-  'R-PSY-01': 'Lower mood than usual (self report)',
-  'R-PSY-02': 'More fatigue than usual (self report)',
-  'R-PSY-03': 'More stress than usual (self report)',
-  'R-PSY-04': 'Symptom reported in the daily check-in',
-}
+export { RULE_TITLES } from './ruleTitles'
+
+/** Structured rule title (key eng.rule.<id>, English fallback RULE_TITLES or the rule id). */
+export const ruleTitleMsg = (ruleId: string): EngineMsg => msg('ruleTitle', { title: { key: `eng.rule.${ruleId}`, en: RULE_TITLES[ruleId] ?? ruleId } })
 
 const isSelfReport = (m: MetricCode) => SELF_REPORT_METRICS.includes(m)
 
@@ -125,6 +104,9 @@ export function hitFromAssessment(subjectId: string | null, a: MetricAssessment)
     label: a.label,
     phrase: a.phrase,
     title: RULE_TITLES[a.ruleId] ?? a.ruleId,
+    labelMsg: a.labelMsg ?? undefined,
+    phraseMsg: a.phraseMsg ?? undefined,
+    titleMsg: ruleTitleMsg(a.ruleId),
     scoreGroup: self ? RISK.selfReportGroup : undefined,
   }
 }
@@ -155,6 +137,9 @@ export function combinedHits(astronautId: string, m: AssessMap, env: AssessMap, 
       label: `Heart rate ${hr!.value?.toFixed(0)} bpm and blood oxygen ${spo2!.value?.toFixed(0)}% changed together, far from your normal`,
       phrase: 'Your heart rate and blood oxygen changed quickly together',
       title: RULE_TITLES['R-CARD-01']!,
+      labelMsg: msg('card.label', { hr: { num: hr!.value ?? NaN, decimals: 0 }, spo2: { num: spo2!.value ?? NaN, decimals: 0 } }),
+      phraseMsg: msg('card.phrase'),
+      titleMsg: ruleTitleMsg('R-CARD-01'),
       suppresses: ['R-HR-01', 'R-HR-03', 'R-SPO2-01', 'R-SPO2-02', 'R-RR-01', 'R-BP-01'],
     })
   }
@@ -165,9 +150,10 @@ export function combinedHits(astronautId: string, m: AssessMap, env: AssessMap, 
   const hrvLow = !!hrv && !hrv.noData && hrv.driftZ !== null && (isAtLeast(hrv, 'MODERATE') || -hrv.driftZ >= 1.2)
   const hrUp = !!hr && !hr.noData && hr.driftZ !== null && hr.driftZ >= 1.0
   const parts: string[] = []
-  if (sleepLow) parts.push('shorter sleep')
-  if (hrvLow) parts.push('lower HRV')
-  if (hrUp) parts.push('higher resting heart rate')
+  const partMsgs: EngineParam[] = []
+  if (sleepLow) parts.push('shorter sleep'), partMsgs.push(msg('fat.part.sleep'))
+  if (hrvLow) parts.push('lower HRV'), partMsgs.push(msg('fat.part.hrv'))
+  if (hrUp) parts.push('higher resting heart rate'), partMsgs.push(msg('fat.part.hr'))
   if (parts.length >= 2) {
     const all = parts.length === 3
     const list = parts.length === 3 ? `${parts[0]}, ${parts[1]} and ${parts[2]}` : `${parts[0]} and ${parts[1]}`
@@ -184,6 +170,9 @@ export function combinedHits(astronautId: string, m: AssessMap, env: AssessMap, 
       label: `Combined recovery pattern: ${list} at the same time${corroborated ? ', matching what you reported in your check-ins' : ''}`,
       phrase: `${list.charAt(0).toUpperCase()}${list.slice(1)} are showing up together`,
       title: RULE_TITLES['R-FAT-01']!,
+      labelMsg: msg(corroborated ? 'fat.label.corroborated' : 'fat.label', { list: { list: partMsgs } }),
+      phraseMsg: msg('fat.phrase', { List: { list: partMsgs } }),
+      titleMsg: ruleTitleMsg('R-FAT-01'),
       suppresses: ['R-SLEEP-01', 'R-SLEEP-02', 'R-HRV-01', 'R-HR-02', 'R-PSY-02'],
     })
     if (corroborated) {
@@ -201,6 +190,9 @@ export function combinedHits(astronautId: string, m: AssessMap, env: AssessMap, 
         label,
         phrase: label,
         title: RULE_TITLES['R-PSY-02']!,
+        labelMsg: msg('psy.fatigueRun', { n: run }),
+        phraseMsg: msg('psy.fatigueRun', { n: run }),
+        titleMsg: ruleTitleMsg('R-PSY-02'),
         scoreGroup: RISK.selfReportGroup,
         weight: selfHigh ? undefined : RISK.symptomWeight,
       })
@@ -210,6 +202,7 @@ export function combinedHits(astronautId: string, m: AssessMap, env: AssessMap, 
   // R-PSY-04: symptoms from today's check-in. Informational factor, not a diagnosis.
   if (self && self.symptoms.length > 0) {
     const label = `You reported ${joinList(self.symptoms.map(withArticle))} today`
+    const symptomsMsg = msg('psy.symptoms', { list: { list: self.symptoms.map((tag): EngineParam => ({ key: `checkin.symptomInline.${tag}`, en: withArticle(tag) })) } })
     out.push({
       subjectId: astronautId,
       ruleId: 'R-PSY-04',
@@ -221,6 +214,9 @@ export function combinedHits(astronautId: string, m: AssessMap, env: AssessMap, 
       label,
       phrase: label,
       title: RULE_TITLES['R-PSY-04']!,
+      labelMsg: symptomsMsg,
+      phraseMsg: symptomsMsg,
+      titleMsg: ruleTitleMsg('R-PSY-04'),
       scoreGroup: RISK.selfReportGroup,
       weight: RISK.symptomWeight,
     })
@@ -235,6 +231,7 @@ export function combinedHits(astronautId: string, m: AssessMap, env: AssessMap, 
     const rtUp = isAtLeast(rt, 'MODERATE') || (!!rt && rt.z !== null && badZ(rt.z, 'up') >= 2)
     if (rrUp || rtUp) {
       const what = rrUp && rtUp ? 'breathing rate and reaction time are' : rrUp ? 'breathing rate is' : 'reaction time is'
+      const whatId = rrUp && rtUp ? 'both' : rrUp ? 'rr' : 'rt'
       out.push({
         subjectId: astronautId,
         ruleId: 'R-ENV-CO2-02',
@@ -246,6 +243,9 @@ export function combinedHits(astronautId: string, m: AssessMap, env: AssessMap, 
         label: `Your ${what} above your normal while cabin CO₂ is elevated (co-occurrence, not proof of cause)`,
         phrase: `Your ${what} up while cabin CO₂ is elevated`,
         title: RULE_TITLES['R-ENV-CO2-02']!,
+        labelMsg: msg(`co2.label.${whatId}`),
+        phraseMsg: msg(`co2.phrase.${whatId}`),
+        titleMsg: ruleTitleMsg('R-ENV-CO2-02'),
         suppresses: ['R-RR-01', 'R-RT-01'],
       })
     }
@@ -300,8 +300,25 @@ export function topHit(hits: RuleHit[]): RuleHit | null {
   return best
 }
 
+/** Structured twin of headlineFor (same branches), for translation. */
+export function headlineMsgFor(level: RiskLevel, top: RuleHit | null, noDataCount: number): EngineMsg {
+  if (!top) return msg(noDataCount > 0 ? 'head.missing' : 'head.normal')
+  let tail: string
+  if (top.kind === 'DATA_QUALITY') tail = 'sensor'
+  else if (top.kind === 'SELF_REPORT') tail = 'talk'
+  else if (top.kind === 'ENVIRONMENT') tail = level === 'CRITICAL' ? 'airNow' : 'air'
+  else if (level === 'CRITICAL') tail = 'medicalNow'
+  else if (level === 'HIGH') tail = 'surgeon'
+  else tail = 'watch'
+  return msg('head.so', { phrase: top.phraseMsg ?? top.phrase, tail: msg(`tail.${tail}`) })
+}
+
 /** One calm, plain-English sentence for the crew. */
 export function headlineFor(level: RiskLevel, top: RuleHit | null, noDataCount: number): string {
+  return said(headlineEnglish(level, top, noDataCount), headlineMsgFor(level, top, noDataCount))
+}
+
+function headlineEnglish(level: RiskLevel, top: RuleHit | null, noDataCount: number): string {
   if (!top) {
     return noDataCount > 0 ? 'Some readings are missing, so this picture is incomplete.' : 'All indicators are within your normal range.'
   }
@@ -337,7 +354,12 @@ export function assessRisk(input: RiskInput): RiskAssessment {
   const totalW = [...perRule.values()].reduce((s, e) => s + e.w, 0)
   const factors: ContributingFactor[] = [...perRule.values()]
     .sort((a, b) => b.w - a.w)
-    .map(({ hit, w }) => ({ metric: hit.metric, label: hit.label, weight: totalW > 0 ? Math.round((w / totalW) * 100) / 100 : 0 }))
+    .map(({ hit, w }) => ({
+      metric: hit.metric,
+      label: hit.labelMsg ? said(hit.label, hit.labelMsg) : hit.label,
+      weight: totalW > 0 ? Math.round((w / totalW) * 100) / 100 : 0,
+      ...(hit.labelMsg ? { msg: hit.labelMsg } : {}),
+    }))
 
   let confidence = 0.95
   const limitations = [...BASE_LIMITATIONS]
@@ -358,6 +380,7 @@ export function assessRisk(input: RiskInput): RiskAssessment {
 
   const ruleIds = [...perRule.values()].sort((a, b) => levelRank(b.hit.level) - levelRank(a.hit.level)).map((e) => e.hit.ruleId)
   const noDataCount = Object.values(input.assessments).filter((a) => a?.noData).length
+  const top = topHit(input.hits.filter((h) => h.level !== 'LOW'))
   return {
     astronautId: input.astronautId,
     risk_level: level,
@@ -369,7 +392,8 @@ export function assessRisk(input: RiskInput): RiskAssessment {
     evaluated_at: input.now,
     data_window: `Personal baseline: last ${SIM.historyDays} days (daily metrics: last ${SIM.dailyHistoryDays} days). Current values: last 3 readings.`,
     limitations,
-    headline: headlineFor(level, topHit(input.hits.filter((h) => h.level !== 'LOW')), noDataCount),
+    headline: headlineFor(level, top, noDataCount),
+    headlineMsg: headlineMsgFor(level, top, noDataCount),
   }
 }
 
@@ -384,23 +408,37 @@ export function buildRegions(metrics: Partial<Record<MetricCode, MetricState>>, 
     const combined = hits.filter((h) => h.kind === 'COMBINED' && h.region === region)
     for (const h of combined) statuses.push(h.level)
     if (codes.length === 0 && combined.length === 0) {
-      out[region] = { region, status: 'NO_DATA', metrics: [], summary: `Not directly monitored in this prototype. ${REGION_LABELS[region].description}` }
+      const summary = `Not directly monitored in this prototype. ${REGION_LABELS[region].description}`
+      const summaryMsg = msg('region.unmonitored', { desc: { key: `region.${region}.description`, en: REGION_LABELS[region].description } })
+      out[region] = { region, status: 'NO_DATA', metrics: [], summary: said(summary, summaryMsg), summaryMsg }
       continue
     }
     const status = worstStatus(statuses)
     const issues: string[] = []
-    for (const h of combined.sort((a, b) => levelRank(b.level) - levelRank(a.level))) issues.push(h.phrase)
+    const issueMsgs: EngineParam[] = []
+    for (const h of combined.sort((a, b) => levelRank(b.level) - levelRank(a.level))) issues.push(h.phrase), issueMsgs.push(h.phraseMsg ?? h.phrase)
     const flagged = codes
       .map((c) => assessments[c])
       .filter((a): a is MetricAssessment => !!a && !a.noData && a.level !== 'LOW' && !!a.phrase)
       .sort((a, b) => levelRank(b.level) - levelRank(a.level))
-    for (const a of flagged) issues.push(a.phrase!)
+    for (const a of flagged) issues.push(a.phrase!), issueMsgs.push(a.phraseMsg ?? a.phrase!)
     const noData = codes.filter((c) => metrics[c]!.status === 'NO_DATA')
     let summary: string
     if (status === 'NO_DATA') summary = `No data: ${noData.map((c) => METRIC_CATALOG[c].label.toLowerCase()).join(', ')} not being received.`
     else if (issues.length === 0) summary = noData.length ? `Within your normal range, but no data for ${noData.map((c) => METRIC_CATALOG[c].label.toLowerCase()).join(', ')}.` : 'Within your normal range.'
     else summary = issues.slice(0, 2).map((s) => `${s}.`).join(' ')
-    out[region] = { region, status, metrics: codes, summary }
+    const lower: EngineParam = { list: noData.map((c): EngineParam => ({ metric: c, form: 'lower' })), comma: true }
+    const summaryMsg: EngineMsg =
+      status === 'NO_DATA'
+        ? msg('region.noData', { list: lower })
+        : issues.length === 0
+          ? noData.length
+            ? msg('region.normalButNoData', { list: lower })
+            : msg('region.normal')
+          : issueMsgs.length >= 2
+            ? msg('sent2', { a: issueMsgs[0]!, b: issueMsgs[1]! })
+            : msg('sent1', { a: issueMsgs[0]! })
+    out[region] = { region, status, metrics: codes, summary: said(summary, summaryMsg), summaryMsg }
   }
   return out
 }
