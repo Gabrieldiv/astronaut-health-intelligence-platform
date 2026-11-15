@@ -15,6 +15,8 @@ import type { FrameInsets } from '../procedural/CameraRig'
 import type { Box, Focus } from './layers'
 import type { ViewPreset } from './atlasStore'
 import { wheelScale, zoomToward } from './zoom'
+import { AUTO_ROTATE_SPEED, shouldAutoRotate } from './autoRotate'
+import { setStageAzimuth } from '../../mission/backdrops/parallax'
 
 type Controls = React.ComponentRef<typeof OrbitControls>
 
@@ -31,7 +33,6 @@ interface Props {
   insets: FrameInsets
 }
 
-const IDLE_MS = 5000
 const ZOOM_SPEED = 0.8
 const MIN_DISTANCE = 0.18
 /** Fraction of the free height the full body occupies. */
@@ -134,7 +135,11 @@ export function AtlasCamera({ body, focus, resetNonce, view, hovering, autoRotat
 
   // fly to the selection (or back to the whole body)
   const focusKey = focus?.key ?? ''
+  const hadFocus = useRef(false)
   useEffect(() => {
+    // clearing a selection restarts the idle wait, so the body does not spin away at once
+    if (hadFocus.current && !focusRef.current) lastInteraction.current = performance.now()
+    hadFocus.current = !!focusRef.current
     if (!placed.current) return
     fly.current = goalFor(body, focusRef.current, viewRef.current)
   }, [focusKey, resetNonce, body])
@@ -182,6 +187,8 @@ export function AtlasCamera({ body, focus, resetNonce, view, hovering, autoRotat
       return a && b ? { d: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : null
     }
     const onDown = (e: PointerEvent) => {
+      // any press (mouse, pen or touch, also a plain click) stops auto rotate until release
+      lastInteraction.current = Infinity
       if (e.pointerType !== 'touch') return
       touches.set(e.pointerId, { x: e.clientX, y: e.clientY })
       pinch = spread()?.d ?? 0
@@ -195,6 +202,7 @@ export function AtlasCamera({ body, focus, resetNonce, view, hovering, autoRotat
       pinch = s.d
     }
     const onUp = (e: PointerEvent) => {
+      lastInteraction.current = performance.now()
       touches.delete(e.pointerId)
       pinch = spread()?.d ?? 0
     }
@@ -238,7 +246,11 @@ export function AtlasCamera({ body, focus, resetNonce, view, hovering, autoRotat
       // pan limit: the orbit target never leaves the body
       c.target.clamp(limits.min, limits.max)
     }
-    c.autoRotate = autoRotate && !g && !focusRef.current && !hovering && now - lastInteraction.current > IDLE_MS
+    c.autoRotate = shouldAutoRotate({ enabled: autoRotate, flying: !!g, selected: !!focusRef.current, hovering, now, lastInteraction: lastInteraction.current })
+    // the mission backdrop follows the orbit angle with a slight parallax (DOM only, no draw call)
+    const { off, sph } = tmp.current
+    sph.setFromVector3(off.copy(camera.position).sub(c.target))
+    setStageAzimuth(sph.theta)
   })
 
   return (
@@ -255,7 +267,7 @@ export function AtlasCamera({ body, focus, resetNonce, view, hovering, autoRotat
       maxDistance={maxDistance}
       minPolarAngle={0.12}
       maxPolarAngle={Math.PI * 0.78}
-      autoRotateSpeed={0.55}
+      autoRotateSpeed={AUTO_ROTATE_SPEED}
       onStart={() => {
         fly.current = null
         lastInteraction.current = Infinity

@@ -12,6 +12,7 @@ import { CrewView } from '../features/crewview/CrewView'
 import { Tour } from '../features/tour/Tour'
 import { Assistant } from '../features/assistant/AssistantPanel'
 import { ShortcutsOverlay, useGlobalShortcuts } from './shortcuts'
+import { useStatusFavicon } from './useStatusFavicon'
 import { useUiStore } from './uiStore'
 import { useLang, useT } from '../i18n'
 
@@ -56,6 +57,7 @@ function GroundView() {
 export default function App() {
   useEffect(() => startTicker(), [])
   useGlobalShortcuts()
+  useStatusFavicon()
   const viewMode = useUiStore((s) => s.viewMode)
   const presentation = useUiStore((s) => s.presentation)
   // Subscribing here re-renders the whole tree on a language change, so components that read

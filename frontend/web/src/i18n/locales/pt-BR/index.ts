@@ -22,6 +22,7 @@ import whatif from './whatif'
 import tour from './tour'
 import stage from './stage'
 import connectivity from './connectivity'
+import backdrop from './backdrop'
 
 const messages: Messages = {
   ...catalog,
@@ -46,5 +47,6 @@ const messages: Messages = {
   ...tour,
   ...stage,
   ...connectivity,
+  ...backdrop,
 }
 export default messages

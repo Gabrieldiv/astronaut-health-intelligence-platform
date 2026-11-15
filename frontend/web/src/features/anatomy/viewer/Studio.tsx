@@ -15,6 +15,8 @@ import type { DirectionalLight, Group, Vector3 } from 'three'
 import type { Box } from './layers'
 import type { AtlasRuntime } from './runtime'
 import { ACCENT } from './tissueMaterials'
+import { useAppStore } from '../../../state/store'
+import { MISSION_ACCENT } from '../../mission/backdrops/facts'
 
 function Floor({ y, radius }: { y: number; radius: number }) {
   const [geo, mat] = useMemo(() => {
@@ -60,6 +62,14 @@ function Floor({ y, radius }: { y: number; radius: number }) {
     },
     [geo, mat],
   )
+  // platform ring in the mission accent color, eased on a profile change (uniform only, no extra draw call)
+  const accent = MISSION_ACCENT[useAppStore((s) => s.missionProfileId)]
+  const goal = useMemo(() => new Color(accent), [accent])
+  useFrame(() => {
+    const c = mat.uniforms.uAccent!.value as Color
+    if (Math.abs(c.r - goal.r) + Math.abs(c.g - goal.g) + Math.abs(c.b - goal.b) < 0.003) c.copy(goal)
+    else c.lerp(goal, 0.08)
+  })
   return <mesh geometry={geo} material={mat} rotation-x={-Math.PI / 2} position-y={y} renderOrder={-1} />
 }
 

@@ -11,6 +11,7 @@ import { PANEL_HEADER, PANEL_TITLE } from '../../components/ui'
 import { signalLostHeadline, useAstronaut, useSelectedStructure, useSignalLost } from '../shared/hooks'
 import { regionStructureCount } from '../anatomy/atlas/health'
 import { CheckInButton } from '../checkin'
+import { MissionBackdrop, MissionHud } from '../mission/backdrops'
 import { wearablePausedHeadline, useWearablePaused } from '../vitals/deviceMeta'
 import { getLang, t, translatedRecord, useT } from '../../i18n'
 import { regionDescription, regionLabel, regionSystem, roleLabel } from '../../i18n/catalog'
@@ -204,6 +205,7 @@ export function CenterStage({ className }: { className?: string }) {
   const t = useT()
   return (
     <section aria-label={t('stage.bodyOverview')} className={clsx('@container/stage glass relative flex min-h-0 flex-col overflow-hidden rounded-2xl', className)}>
+      <MissionBackdrop />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_55%,rgba(94,234,212,0.08),transparent_70%)]" aria-hidden />
       {/* A critical alert floats over the headline instead of pushing the stage down, so the 3D body keeps its size. */}
       <div className="relative z-20 shrink-0">
@@ -216,6 +218,7 @@ export function CenterStage({ className }: { className?: string }) {
           <RegionColumn side="left" regions={LEFT_REGIONS} />
           <div data-tour="body" className="relative min-h-0 min-w-0 flex-1">
             <Stage3D />
+            <MissionHud className="top-1 left-1" />
           </div>
           <RegionColumn side="right" regions={RIGHT_REGIONS} />
         </div>
