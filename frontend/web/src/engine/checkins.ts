@@ -107,6 +107,6 @@ export function selfReportSummary(list: CheckIn[], now: number): SelfReportSumma
     else break
   }
   const latest = list.find((c) => c.at <= now)
-  const symptoms = latest && now - latest.at <= CHECKIN.symptomWindowHours * HOUR_MS ? latest.symptoms : []
+  const symptoms = latest && now - latest.at <= CHECKIN.symptomWindowHours * HOUR_MS ? latest.symptoms.filter((s) => s !== 'none') : []
   return { highFatigueRun: run, symptoms }
 }

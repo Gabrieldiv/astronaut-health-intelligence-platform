@@ -69,7 +69,7 @@ import { MultivariateDetector } from './ml/multivariate'
 import { AlertManager } from './alerts'
 import { checkInTime, checkInValues, sanitizeCheckIn, selfReportSummary, simulateCheckIn } from './checkins'
 import { CommManager, delayPhrase, type ReplyContext, type SendInput } from './comms'
-import { buildHorizonPredictions, buildPrediction, type ForecastInput } from './forecast'
+import { CONTEXT_NOTE, buildHorizonPredictions, buildPrediction, type ForecastInput } from './forecast'
 import { compareIntervention as projectIntervention, resolveMetric, type CompareInput } from './intervention'
 import { heuristicLevel, isoDate, sameDay, synthDay } from './missionDays'
 import { RecommendationManager, applySuppression, isActionable } from './recommendations'
@@ -574,11 +574,16 @@ export class HealthEngine implements SimWorld {
     const pause = this.pauseState(tr, now)
     if (pause) {
       const name = inlineLabel(ch.metric)
+      const paused = pause === 'PAUSED'
+      const labelMsg = msg(paused ? 'pause.label' : 'resume.label', { metric: { metric: ch.metric, form: 'inline' } })
+      const phraseMsg = msg(paused ? 'pause.phrase' : 'resume.phrase', { metric: { metric: ch.metric, form: 'sentence' } })
       const a: MetricAssessment = {
         ...tr.assess(now, true),
         ruleId: null,
-        label: pause === 'PAUSED' ? `Paused by operator: no ${name} data` : `Device resumed by operator: waiting for the first ${name} reading`,
-        phrase: pause === 'PAUSED' ? `${name[0]!.toUpperCase()}${name.slice(1)} is paused by an operator` : `${name[0]!.toUpperCase()}${name.slice(1)} is restarting`,
+        label: said(paused ? `Paused by operator: no ${name} data` : `Device resumed by operator: waiting for the first ${name} reading`, labelMsg),
+        phrase: said(paused ? `${name[0]!.toUpperCase()}${name.slice(1)} is paused by an operator` : `${name[0]!.toUpperCase()}${name.slice(1)} is restarting`, phraseMsg),
+        labelMsg,
+        phraseMsg,
       }
       this.pausedAssess.add(a)
       return a
@@ -736,7 +741,7 @@ export class HealthEngine implements SimWorld {
         band: ref ? { low: ref.low, high: ref.high } : null,
         physicalMin: cfg.physicalMin,
         physicalMax: cfg.physicalMax,
-        methodNote: cfg.bucketed ? 'context adjusted to resting values, exercise excluded' : undefined,
+        methodNote: cfg.bucketed ? CONTEXT_NOTE : undefined,
       }
       out[m] = { ...buildPrediction(input), byHorizon: buildHorizonPredictions(input) }
     }
@@ -875,7 +880,7 @@ export class HealthEngine implements SimWorld {
       for (const r of EXAM_REGIONS) {
         const ex = this.examBook.state(a.id, r, now)
         exams[r] = ex
-        regions[r] = { region: r, status: ex.status, metrics: r === 'eyes' ? EYE_METRICS : EAR_METRICS, summary: ex.summary }
+        regions[r] = { region: r, status: ex.status, metrics: r === 'eyes' ? EYE_METRICS : EAR_METRICS, summary: ex.summaryMsg ? said(ex.summary, ex.summaryMsg) : ex.summary, summaryMsg: ex.summaryMsg }
       }
       if (doForecast) this.predCache.set(a.id, this.forecastsFor(a.id, FORECAST_METRICS, now))
       health[a.id] = {

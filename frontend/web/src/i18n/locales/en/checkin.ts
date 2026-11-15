@@ -35,6 +35,7 @@ export default {
   'checkin.symptom.nausea': 'Nausea',
   'checkin.symptom.eye_discomfort': 'Eye discomfort',
   'checkin.symptom.trouble_sleeping': 'Trouble sleeping',
+  'checkin.symptom.muscle_soreness': 'Muscle soreness',
   'checkin.symptom.none': 'None',
   'checkin.symptomInline.headache': 'headache',
   'checkin.symptomInline.congestion': 'congestion',
@@ -42,6 +43,7 @@ export default {
   'checkin.symptomInline.nausea': 'nausea',
   'checkin.symptomInline.eye_discomfort': 'eye discomfort',
   'checkin.symptomInline.trouble_sleeping': 'trouble sleeping',
+  'checkin.symptomInline.muscle_soreness': 'muscle soreness',
 
   'checkin.badge.manualTitle': 'Answers typed in this app',
   'checkin.badge.manual': 'Typed by crew',

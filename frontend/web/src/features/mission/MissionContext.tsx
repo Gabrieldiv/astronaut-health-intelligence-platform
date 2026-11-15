@@ -4,13 +4,11 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { autonomyGuidance } from '../../engine/comms'
 import {
-  HAZARD_LABEL,
   MISSION_PROFILE_ORDER,
   MISSION_SOURCES,
   NASA_CAREER_EFFECTIVE_DOSE_LIMIT,
   eventLabel,
   missionDoseExposure,
-  missionProfile,
   referenceMissionDose,
   type HazardId,
   type HazardLevel,
@@ -27,7 +25,7 @@ import { Modal } from './Modal'
 import { Details } from '../../components/viz/Details'
 import { DelayClock } from '../../components/viz/DelayClock'
 import { limitFraction } from '../../components/viz/scale'
-import { engineText } from '../../i18n/engineText'
+import { engineText, LOCAL_HAZARD_LABEL as HAZARD_LABEL, localMissionProfile as missionProfile } from '../../i18n/engineText'
 import { useSpaceWeatherAdvisory, useSpaceWeatherUi } from './spaceWeather'
 import { formatFixed, getBcp47, getLang, t, useT } from '../../i18n'
 import { tx } from '../../i18n/rich'

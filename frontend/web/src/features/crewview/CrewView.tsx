@@ -136,7 +136,7 @@ function Hero() {
         </div>
       </div>
       <p aria-live="polite" className="mt-3 max-w-[680px] text-[22px] leading-snug short:mt-2 short:text-[18px] font-medium text-balance text-ink-100 [text-shadow:0_2px_12px_rgba(4,7,13,0.9)]">
-        {signalLost && (status === 'NO_DATA' || status === 'LOW') ? (wearablePaused ? wearablePausedHeadline() : signalLostHeadline()) : (headline ?? t('crewview.waiting'))}
+        {signalLost && (status === 'NO_DATA' || status === 'LOW') ? (wearablePaused ? wearablePausedHeadline() : signalLostHeadline()) : (headline ? engineText('headline', headline) : t('crewview.waiting'))}
       </p>
     </div>
   )
@@ -189,7 +189,7 @@ function RegionCard() {
         <>
           {partOfRegion && <div className="mt-2.5 text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">{t('crewview.trackedWith', { region: regionLabel(region) })}</div>}
           <p className={clsx('text-[14px] leading-snug text-ink-100', partOfRegion ? 'mt-1' : 'mt-2.5')}>
-            {summary || (status === 'NO_DATA' ? t('crewview.noRecentData') : regionDescription(region))}
+            {(summary && engineText('regionSummary', summary)) || (status === 'NO_DATA' ? t('crewview.noRecentData') : regionDescription(region))}
           </p>
           {(region === 'eyes' || region === 'ears') && <ExamCardNote astronautId={id} region={region} />}
         </>
