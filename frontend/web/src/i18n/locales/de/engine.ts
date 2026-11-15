@@ -141,6 +141,7 @@ const m: Record<keyof typeof en, string> = {
   'eng.forecast.disclaimer': "Statistische Projektion aus aktuellen simulierten Daten. Keine klinische Vorhersage: Die Unsicherheit wächst mit dem Zeithorizont, und die Projektion setzt voraus, dass die jüngsten Bedingungen anhalten.",
   'eng.mv.noData': "Nicht ausgewertet: keine aktuellen Daten für {list}. Fehlende Daten gelten nie als typisch.",
   'eng.mv.typical': "Die Kombination deiner Signale ähnelt deinen eigenen letzten Tagen.",
+  'eng.mv.notReady': "Lernt noch deine übliche Kombination von Signalen (braucht etwa einen Tag vollständiger Daten).",
   'eng.mv.share': "{metric} {pct}%",
   'eng.mv.part': "{metric} {dev}",
   'eng.mv.unusual': "Ungewöhnliche Kombination: {parts} gleichzeitig über {dur}. Diese Mischung ist in deinen eigenen letzten Tagen selten (Wert {score}, deine Schwelle {threshold}). Am stärksten beteiligte Signale: {shares}.",

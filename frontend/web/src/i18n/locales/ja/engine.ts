@@ -141,6 +141,7 @@ const m: Record<keyof typeof en, string> = {
   'eng.forecast.disclaimer': "最近のシミュレーションデータからの統計的な見通しです。臨床的な予測ではありません。期間が長いほど不確かさが増し、最近の状況が続くと仮定しています。",
   'eng.mv.noData': "評価していません: {list} の現在のデータがありません。欠測データは典型的とは見なしません。",
   'eng.mv.typical': "あなたの信号の組み合わせは、最近のあなた自身の日々と似ています。",
+  'eng.mv.notReady': "あなたのいつもの信号の組み合わせをまだ学習中です (完全なデータが約 1 日分必要です)。",
   'eng.mv.share': "{metric} {pct}%",
   'eng.mv.part': "{metric} ({dev})",
   'eng.mv.unusual': "珍しい組み合わせ: {parts} が {dur} 同時に続いています。この組み合わせは最近のあなた自身の日々ではまれです (スコア {score}、あなたのしきい値 {threshold})。最も寄与した信号: {shares}。",

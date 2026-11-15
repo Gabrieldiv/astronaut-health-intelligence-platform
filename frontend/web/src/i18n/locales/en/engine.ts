@@ -136,6 +136,7 @@ const templates = {
     'Statistical projection from recent simulated data. Not a clinical prediction: uncertainty grows with the horizon and the projection assumes recent conditions continue.',
   'eng.mv.noData': 'Not evaluated: no current data for {list}. Missing data is never treated as typical.',
   'eng.mv.typical': 'The combination of your signals looks like your own recent days.',
+  'eng.mv.notReady': "Still learning your usual combination of signals (needs about one day of complete data).",
   'eng.mv.share': '{metric} {pct}%',
   'eng.mv.part': '{metric} {dev}',
   'eng.mv.unusual':

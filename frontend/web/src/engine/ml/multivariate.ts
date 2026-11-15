@@ -187,7 +187,7 @@ export class MultivariateDetector {
   assess(now: number, z: ArrayLike<number | null>, drift: ArrayLike<number | null>): MultivariateAssessment {
     if (!this.forest) {
       this.aboveSince = null
-      return this.result('NOT_READY', 'Still learning your usual combination of signals (needs about one day of complete data).', null, [])
+      return this.result('NOT_READY', said('Still learning your usual combination of signals (needs about one day of complete data).', msg('mv.notReady')), null, [])
     }
     const missing: MetricCode[] = []
     for (let i = 0; i < this.dims; i++) {
