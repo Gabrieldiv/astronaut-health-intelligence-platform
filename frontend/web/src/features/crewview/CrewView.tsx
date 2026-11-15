@@ -27,6 +27,8 @@ import {
 } from '../shared/hooks'
 import { CONTEXT_ONLY_TEXT, CONTEXT_ONLY_TITLE, SYSTEM_INFO, sideLabel } from '../anatomy/atlas/health'
 import { CheckInButton } from '../checkin'
+import { examValueText } from '../anatomy/regions'
+import { ExamCardNote } from '../attention/ExamHistory'
 import { WEARABLE_PAUSED_HEADLINE, useMetricPaused, useWearablePaused } from '../vitals/deviceMeta'
 import { WhatIfButton } from '../whatif'
 
@@ -181,6 +183,7 @@ function RegionCard() {
           <p className={clsx('text-[14px] leading-snug text-ink-100', partOfRegion ? 'mt-1' : 'mt-2.5')}>
             {summary || (status === 'NO_DATA' ? 'No recent data. Missing data is never treated as normal.' : label!.description)}
           </p>
+          {(region === 'eyes' || region === 'ears') && <ExamCardNote astronautId={id} region={region} />}
         </>
       ) : (
         <p className="mt-2.5 text-[14px] leading-snug text-ink-300">
@@ -342,6 +345,9 @@ function CrewVitals() {
 /** Body systems in head to toe order, with the reading that best sums each one up for the crew. */
 const CREW_REGIONS: { region: BodyRegionId; key: MetricCode }[] = [
   { region: 'brain', key: 'SLEEP_DURATION' },
+  // periodic exams: the key reading is the change of the last exam from the pre-flight baseline
+  { region: 'eyes', key: 'RETINAL_THICKNESS' },
+  { region: 'ears', key: 'HEARING_THRESHOLD_HIGH' },
   { region: 'heart', key: 'HEART_RATE' },
   { region: 'lungs', key: 'SPO2' },
   { region: 'kidneys', key: 'HYDRATION' },
@@ -362,6 +368,10 @@ function BodySystemCard({ astronautId, region, keyMetric }: { astronautId: strin
     }),
   )
   const ms = useAppStore((s) => s.health[astronautId]?.metrics[keyMetric])
+  const examText = useAppStore((s) => {
+    const ex = region === 'eyes' || region === 'ears' ? s.health[astronautId]?.exams?.[region] : undefined
+    return ex ? examValueText(ex) : null
+  })
   const selected = useAppStore((s) => s.selectedRegion === region)
   const paused = useMetricPaused(astronautId, keyMetric)
   const { selectRegion, selectMetric } = useActions()
@@ -372,6 +382,7 @@ function BodySystemCard({ astronautId, region, keyMetric }: { astronautId: strin
   const noData = status === 'NO_DATA'
   const word = !monitored ? 'Not monitored' : noData ? (paused ? 'Paused' : 'No data') : meta.crewLabel
   const value = ms && ms.current != null ? `${fmtMetric(keyMetric, ms.current)} ${def.unit}` : null
+  const reading = examText ?? (value ? `${def.shortLabel} ${value}` : null)
   const tinted = !noData && status !== 'LOW' && !selected
   return (
     <li>
@@ -382,7 +393,7 @@ function BodySystemCard({ astronautId, region, keyMetric }: { astronautId: strin
           selectRegion(selected ? null : region)
           selectMetric(null)
         }}
-        aria-label={`${label.label}: ${word}.${value ? ` ${def.shortLabel} ${value}.` : ''} ${summary} ${selected ? 'Shown on the body. Press to clear.' : 'Press to show it on the body.'}`}
+        aria-label={`${label.label}: ${word}.${reading ? ` ${reading}.` : ''} ${summary} ${selected ? 'Shown on the body. Press to clear.' : 'Press to show it on the body.'}`}
         className={clsx(
           'focus-ring flex min-h-[64px] w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left transition-colors',
           selected
@@ -397,8 +408,8 @@ function BodySystemCard({ astronautId, region, keyMetric }: { astronautId: strin
           <Icon size={19} className={selected ? 'text-accent' : 'text-ink-300'} aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] leading-tight font-semibold text-ink-100">{label.label}</span>
-          <span className="tabular block truncate text-[12px] text-ink-500">{value ? `${def.shortLabel} ${value}` : label.system}</span>
+          <span className="block text-[15px] leading-tight font-semibold [overflow-wrap:anywhere] text-ink-100">{label.label}</span>
+          <span className="tabular mt-0.5 block text-[12px] leading-snug [overflow-wrap:anywhere] text-ink-500">{reading ?? label.system}</span>
         </span>
         <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold" style={{ color: noData ? undefined : meta.color }}>
           {paused && noData ? <CirclePause size={15} className="text-nodata" aria-hidden /> : <StatusIcon status={status} size={15} />}
@@ -417,7 +428,8 @@ function CrewBodySystems() {
         Your body systems
         <span className="tracking-normal normal-case">Tap one to see it on the body</span>
       </h2>
-      <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+      {/* One card per row in the side column: the full name, the key reading and the status word always fit. */}
+      <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
         {CREW_REGIONS.map((r) => (
           <BodySystemCard key={r.region} astronautId={id} region={r.region} keyMetric={r.key} />
         ))}

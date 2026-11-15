@@ -58,6 +58,7 @@ import {
   FORECAST_METRICS,
   MISSION_DAYS,
   MULTIVARIATE,
+  MISSION_PLAN,
   SELF_REPORT_METRICS,
   SIM,
   TIMELINE,
@@ -94,6 +95,7 @@ import { buildProfile } from './sim/profiles'
 import { ScenarioModel } from './sim/scenarios'
 import { SCHEDULE, dayIndex } from './sim/schedule'
 import { DEFAULT_MISSION_PROFILE, doseScaleVsOrbitalModel, missionDoseRate, missionProfile } from './missions'
+import { EAR_METRICS, EXAM_REGIONS, EYE_METRICS, ExamBook } from './exams'
 
 export interface EngineOptions {
   scenarioId: ScenarioId
@@ -231,6 +233,8 @@ export class HealthEngine implements SimWorld {
   private readonly mvDetectors = new Map<string, MultivariateDetector>()
   private readonly mvFlagged = new Map<string, boolean>()
   private mvTrainBudget = 1
+  /** v5: periodic exam follow up (eyes, ears), simulated up front, visible as the clock reaches each session. */
+  readonly examBook: ExamBook
 
   // Published slices (replaced, never mutated, when they change)
   crew: Astronaut[]
@@ -306,6 +310,15 @@ export class HealthEngine implements SimWorld {
       this.manualDays.set(a.id, new Set())
     })
     this.cabinModel = new CabinModel(this.seed)
+    // v5: periodic exams (eyes, ears). The SANS_PROGRESSION scenario gives its target a SANS like change.
+    this.examBook = new ExamBook({
+      seed: this.seed,
+      crew: this.crewBase,
+      missionId: MISSION.id,
+      missionStart: MISSION_START,
+      plannedDays: MISSION_PLAN.plannedDurationDays,
+      sansAstronautIds: opts.scenarioId === 'SANS_PROGRESSION' && def?.targetAstronautId ? [def.targetAstronautId] : [],
+    })
 
     for (const a of this.crewBase) {
       this.addAdapter(new BioMonitorAdapter(this, a.id, histStart))
@@ -838,7 +851,15 @@ export class HealthEngine implements SimWorld {
       const truth = this.physio(a.id).truth
       if (this.scenario.targetId === a.id && this.scenario.id !== 'NOMINAL') extra.push('A demo scenario is active for this crew member.')
       const risk = assessRisk({ astronautId: a.id, now, hits: riskHits, assessments: assess, extraLimitations: extra })
+      // v5: periodic exams (eyes, ears): latest exam value per measure and the region follow up
+      Object.assign(metrics, this.examBook.metricStates(a.id, now))
       const regions = buildRegions(metrics, assess, riskHits)
+      const exams: NonNullable<AstronautHealth['exams']> = {}
+      for (const r of EXAM_REGIONS) {
+        const ex = this.examBook.state(a.id, r, now)
+        exams[r] = ex
+        regions[r] = { region: r, status: ex.status, metrics: r === 'eyes' ? EYE_METRICS : EAR_METRICS, summary: ex.summary }
+      }
       if (doForecast) this.predCache.set(a.id, this.forecastsFor(a.id, FORECAST_METRICS, now))
       health[a.id] = {
         astronautId: a.id,
@@ -848,6 +869,7 @@ export class HealthEngine implements SimWorld {
         risk,
         predictions: this.predCache.get(a.id) ?? {},
         multivariate: this.multivariateFor(a.id, assess, now),
+        exams,
       }
       allHits.push(...hits, ...dq, ...combined)
     }
@@ -935,6 +957,8 @@ export class HealthEngine implements SimWorld {
       const h = hitFromAssessment(id, as)
       if (h) hits.push(h)
     }
+    // v5: periodic exam findings (change from the pre-flight baseline) and noise above its reference
+    hits.push(...this.examBook.hits(id, now))
     const dq = this.dataQualityHits(id, chans, assess, now)
     const combined = combinedHits(id, assess, envAssess, selfReportSummary(this.checkInsBy.get(id) ?? [], now))
     // A combined self report factor replaces the plain per metric hit of the same rule.

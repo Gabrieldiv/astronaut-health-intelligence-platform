@@ -65,6 +65,9 @@ export function StatusLegend({ labelScale = 1, defaultOpen, bottom, registry }: 
             <li className="mt-1 border-t border-white/5 text-slate-500" style={{ paddingTop: 4 * ls, fontSize: 9.5 * ls }}>
               Vs personal baseline. Simulated data.
             </li>
+            <li className="text-slate-500" style={{ fontSize: 9.5 * ls }}>
+              Eyes, ears: last periodic exam.
+            </li>
           </ul>
         )}
       </div>

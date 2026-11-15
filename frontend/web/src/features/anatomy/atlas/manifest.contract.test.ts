@@ -34,7 +34,7 @@ const manifest: AtlasManifest | null = hasAtlas ? (JSON.parse(new TextDecoder().
 
 const SYSTEMS: AnatomySystemId[] = ['integumentary', 'skeletal', 'muscular', 'cardiovascular', 'respiratory', 'nervous', 'digestive', 'urinary', 'other']
 const TISSUES: TissueClass[] = ['skin', 'bone', 'cartilage', 'tooth', 'muscle', 'tendon', 'heart', 'artery', 'vein', 'lung', 'airway', 'brain', 'nerve', 'liver', 'kidney', 'gut', 'gland', 'eye', 'organ']
-const REGIONS: BodyRegionId[] = ['brain', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin']
+const REGIONS: BodyRegionId[] = ['brain', 'eyes', 'ears', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin']
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/
 /** Em dash and en dash, built from char codes so this file itself stays free of them. */
 const DASHES = new RegExp('[' + String.fromCharCode(0x2013, 0x2014) + ']')
@@ -178,7 +178,8 @@ describe.skipIf(!hasAtlas)('atlas manifest contract (public/anatomy)', () => {
     for (const s of m.structures) {
       const region = regionOfStructure(s)
       for (const code of relatedMetrics(s)) expect(METRIC_CATALOG[code].region, `${s.id} ${code}`).toBe(region)
-      if (s.system === 'digestive' || s.system === 'other') expect(region, s.id).toBeNull()
+      if (s.system === 'digestive') expect(region, s.id).toBeNull()
+      if (s.system === 'other') expect(region, s.id).toBe(s.tissue === 'eye' ? 'eyes' : null)
       if (s.system === 'urinary') expect(region, s.id).toBe(s.tissue === 'kidney' ? 'kidneys' : null)
       if (s.system === 'nervous') {
         expect(region, s.id).toBe(isBrainStructure(s) ? 'brain' : null)
@@ -189,7 +190,14 @@ describe.skipIf(!hasAtlas)('atlas manifest contract (public/anatomy)', () => {
       if (region === 'kidneys') expect(s.tissue, s.id).toBe('kidney')
     }
     // Every monitored region can be reached from the atlas, and the single organ regions have a primary structure.
-    for (const r of REGIONS) expect(structuresOfRegion(m, r).length, r).toBeGreaterThan(0)
+    // The ears have no structure on purpose (the inner ear is excluded for license reasons).
+    for (const r of REGIONS) {
+      if (r === 'ears') expect(structuresOfRegion(m, r), r).toEqual([])
+      else expect(structuresOfRegion(m, r).length, r).toBeGreaterThan(0)
+    }
+    expect(structuresOfRegion(m, 'eyes').map((s) => s.id).sort()).toEqual(['eye-left', 'eye-right'])
+    expect(primaryStructureOfRegion(m, 'eyes')?.id).toBe('eye-left')
+    expect(primaryStructureOfRegion(m, 'ears')).toBeNull()
     expect(primaryStructureOfRegion(m, 'heart')?.id).toBe('heart')
     expect(primaryStructureOfRegion(m, 'brain')?.id).toBe('brain')
     expect(primaryStructureOfRegion(m, 'skin')?.id).toBe('skin')

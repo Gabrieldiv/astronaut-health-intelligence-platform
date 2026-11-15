@@ -67,7 +67,7 @@ export const TISSUE: Record<TissueClass, TissueSpec> = {
 }
 
 export type RegionKey = BodyRegionId | 'none'
-export const REGION_KEYS: RegionKey[] = ['brain', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin', 'none']
+export const REGION_KEYS: RegionKey[] = ['brain', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin', 'eyes', 'ears', 'none']
 
 export interface GlobalUniforms {
   uTime: IUniform<number>

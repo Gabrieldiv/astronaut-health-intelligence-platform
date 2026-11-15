@@ -12,7 +12,7 @@ const at = (region: BodyRegionId) => order.indexOf(region)
 
 describe('buildNavModel', () => {
   it('lists the monitored regions in dashboard order', () => {
-    expect(order).toEqual(['brain', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin'])
+    expect(order).toEqual(['brain', 'eyes', 'ears', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin'])
   })
 
   it('holds monitored structures only, the representative organ first', () => {

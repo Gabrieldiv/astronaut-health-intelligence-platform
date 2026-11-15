@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Bone, Brain, Droplets, Dumbbell, Heart, Thermometer, Wind, type LucideIcon } from 'lucide-react'
+import { Bone, Brain, Droplets, Dumbbell, Ear, Eye, Heart, Thermometer, Wind, type LucideIcon } from 'lucide-react'
 import { lazy, memo, Suspense, useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
@@ -34,6 +34,8 @@ export const REGION_ICON: Record<BodyRegionId, LucideIcon> = {
   muscles: Dumbbell,
   bones: Bone,
   skin: Thermometer,
+  eyes: Eye,
+  ears: Ear,
 }
 
 export const ACTIVITY_LABEL: Record<ActivityContext, string> = { SLEEP: 'Sleeping', REST: 'Resting', WORK: 'Working', EXERCISE: 'Exercising', EVA: 'On spacewalk (EVA)' }
@@ -169,8 +171,9 @@ function RegionChip({
 }
 
 /** Left column reads head to torso, right column holds the whole-body systems. */
-const LEFT_REGIONS: BodyRegionId[] = ['brain', 'lungs', 'heart', 'kidneys']
-const RIGHT_REGIONS: BodyRegionId[] = ['muscles', 'bones', 'skin']
+const LEFT_REGIONS: BodyRegionId[] = ['brain', 'eyes', 'lungs', 'heart', 'kidneys']
+/** Ears sit on top of the right column: hearing is followed with periodic tests, like the eyes. */
+const RIGHT_REGIONS: BodyRegionId[] = ['ears', 'muscles', 'bones', 'skin']
 
 function RegionColumn({ side, regions }: { side: 'left' | 'right'; regions: BodyRegionId[] }) {
   const id = useAppStore((s) => s.selectedAstronautId)
@@ -180,7 +183,7 @@ function RegionColumn({ side, regions }: { side: 'left' | 'right'; regions: Body
   return (
     <div
       role="group"
-      aria-label={side === 'left' ? 'Body systems: brain, lungs, heart, kidneys' : 'Body systems: muscles, skeleton, skin'}
+      aria-label={`Body systems: ${regions.map((r) => REGION_LABELS[r].label.toLowerCase()).join(', ')}`}
       className="relative z-10 flex w-10 shrink-0 flex-col justify-center gap-2 @min-[560px]/stage:w-[108px] @min-[880px]/stage:w-[150px] roomy:gap-3 @min-[1100px]/stage:roomy:w-[168px]"
     >
       {regions.map((r) => (
