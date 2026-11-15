@@ -1,0 +1,42 @@
+/** Guided demo (src/features/tour). Step texts mirror src/features/tour/steps.ts. */
+export default {
+  'tour.dialogAria': 'Guided demo, step {n} of {total}: {title}',
+  'tour.heading': 'Guided demo',
+  'tour.autoPause': 'Pause auto-play',
+  'tour.autoStart': 'Auto-play: advance every few seconds',
+  'tour.auto': 'Auto',
+  'tour.exit': 'Exit demo (Esc)',
+  'tour.stepsAria': 'Demo steps',
+  'tour.stepAria': 'Step {n}: {title}',
+  'tour.back': 'Back',
+  'tour.finish': 'Finish',
+  'tour.next': 'Next',
+  'tour.keysHint': '{left}{right} to move, {esc} to exit. Exiting resets to a nominal day.',
+
+  'tour.step.crew.title': 'Meet the crew',
+  'tour.step.crew.caption': 'Four astronauts, each compared with their own normal. Every card says in plain words how that person is doing: All good, Keep an eye, Act soon or Act now.',
+  'tour.step.body.title': 'The body at a glance',
+  'tour.step.body.caption':
+    'The 3D anatomy is linked to the live data. Organs that need attention light up in the color of their status. The heart beats at the live heart rate and the lungs breathe at the live breathing rate.',
+  'tour.step.body.hint': 'Click any structure: the panel shows its data, or says it is shown for reference only.',
+  'tour.step.acute.title': 'Acute cardio event',
+  'tour.step.acute.caption': "ORION's heart rate jumps while his blood oxygen drops. Within simulated minutes a CRITICAL banner appears, and it escalates if nobody acknowledges it.",
+  'tour.step.actions.title': 'What to do, and who can do it',
+  'tour.step.actions.caption':
+    'Each action says why, and whether the crew can act on board now or needs the flight surgeon. Mark done logs it in the audit trail and the simulation shows a hypothetical recovery.',
+  'tour.step.actions.hint': 'Try Mark done on the rest protocol.',
+  'tour.step.comms.title': 'Far from Earth',
+  'tour.step.comms.caption': 'Now picture the same crew near Mars, 22 minutes away each way. Any answer from Earth takes at least 44 minutes, so AHI puts on-board steps first and shows the wait.',
+  'tour.step.fatigue.title': 'Slow drift: progressive fatigue',
+  'tour.step.fatigue.caption': 'Fast forward at 1 hour per second. LYRA sleeps less and her heart variability falls below her own normal. The timeline shows the status drifting over days.',
+  'tour.step.normal.title': 'Her normal, not an average',
+  'tour.step.normal.caption': "The shaded band is LYRA's personal normal. Markers on the chart show alerts, logged actions and check-ins, and the dashed cone is the forecast.",
+  'tour.step.normal.hint': 'The (i) next to "Your normal" explains how it was learned.',
+  'tour.step.whatif.title': 'What if she follows the advice?',
+  'tour.step.whatif.caption': 'Compare the next hours with and without the action, side by side. It is a hypothetical projection, never a promise of clinical effect.',
+  'tour.step.crewview.title': 'Crew view: for the astronaut',
+  'tour.step.crewview.caption': 'The same data for the person it is about: plain words, the top two things to do, big vitals against their own normal, and a 30 second daily check-in.',
+  'tour.step.tools.title': 'Mission tools',
+  'tour.step.tools.caption':
+    'The Tools menu holds the long-term mission overview (radiation budget, exercise, sleep), a handover report for the next shift, and where every number comes from. All data here is simulated and labeled.',
+}

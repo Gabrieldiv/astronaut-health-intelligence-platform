@@ -1,4 +1,5 @@
 import type { MouseEvent } from 'react'
+import { useT } from '../../i18n'
 
 const LINK =
   'sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-lg focus:bg-accent focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-space-950 focus:outline-2 focus:outline-offset-2 focus:outline-white'
@@ -18,13 +19,14 @@ function jump(e: MouseEvent<HTMLAnchorElement>, selector: string) {
  * is #attention in both (the attention panel in Ground view, the actions card in Crew view).
  */
 export function SkipLinks() {
+  const t = useT()
   return (
-    <nav aria-label="Skip links" className="contents">
+    <nav aria-label={t('skip.label')} className="contents">
       <a href="#main-content" className={LINK} onClick={(e) => jump(e, 'main')}>
-        Skip to main content
+        {t('skip.main')}
       </a>
       <a href="#attention" className={LINK} onClick={(e) => jump(e, '#attention')}>
-        Skip to what needs attention
+        {t('skip.attention')}
       </a>
     </nav>
   )
