@@ -333,10 +333,10 @@ function headlineEnglish(level: RiskLevel, top: RuleHit | null, noDataCount: num
 }
 
 export const BASE_LIMITATIONS = [
-  'Simulated data only (data_origin SIMULATED); no real astronaut data.',
-  'Decision support for review, not a diagnosis or a medical device.',
-  'Fixed thresholds are demo configuration, not official NASA limits.',
-  'Correlation between signals does not prove cause.',
+  said('Simulated data only (data_origin SIMULATED); no real astronaut data.', msg('limit.simulated')),
+  said('Decision support for review, not a diagnosis or a medical device.', msg('limit.support')),
+  said('Fixed thresholds are demo configuration, not official NASA limits.', msg('limit.thresholds')),
+  said('Correlation between signals does not prove cause.', msg('limit.correlation')),
 ]
 
 export interface RiskInput {
@@ -364,17 +364,25 @@ export function assessRisk(input: RiskInput): RiskAssessment {
   let confidence = 0.95
   const limitations = [...BASE_LIMITATIONS]
   const missing: string[] = []
+  const missingCodes: MetricCode[] = []
   for (const m of KEY_METRICS) {
     const a = input.assessments[m]
     if (!a || a.noData) {
       confidence -= 0.15
       missing.push(METRIC_CATALOG[m].label.toLowerCase())
+      missingCodes.push(m)
     } else {
       if (a.questionable) confidence -= 0.07
       if (!a.baseline || a.baseline.status !== 'READY') confidence -= 0.05
     }
   }
-  if (missing.length) limitations.push(`No current data for ${missing.join(', ')}; status for those signals is unknown, not normal.`)
+  if (missing.length)
+    limitations.push(
+      said(
+        `No current data for ${missing.join(', ')}; status for those signals is unknown, not normal.`,
+        msg('limit.missing', { list: { list: missingCodes.map((m): EngineParam => ({ metric: m, form: 'lower' })), comma: true } }),
+      ),
+    )
   if (input.extraLimitations) limitations.push(...input.extraLimitations)
   confidence = Math.round(Math.min(0.95, Math.max(0.15, confidence)) * 100) / 100
 
@@ -390,7 +398,10 @@ export function assessRisk(input: RiskInput): RiskAssessment {
     confidence,
     model_version: RISK_MODEL_VERSION,
     evaluated_at: input.now,
-    data_window: `Personal baseline: last ${SIM.historyDays} days (daily metrics: last ${SIM.dailyHistoryDays} days). Current values: last 3 readings.`,
+    data_window: said(
+      `Personal baseline: last ${SIM.historyDays} days (daily metrics: last ${SIM.dailyHistoryDays} days). Current values: last 3 readings.`,
+      msg('dataWindow', { days: SIM.historyDays, dailyDays: SIM.dailyHistoryDays }),
+    ),
     limitations,
     headline: headlineFor(level, top, noDataCount),
     headlineMsg: headlineMsgFor(level, top, noDataCount),

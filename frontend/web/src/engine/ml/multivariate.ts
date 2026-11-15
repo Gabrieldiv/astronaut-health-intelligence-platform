@@ -23,7 +23,8 @@
  * Cost: training (trees x psi x height) runs only when a feature baseline changed and at least
  * MULTIVARIATE.retrainMinHours passed; scoring is trees x height comparisons, no allocation.
  */
-import type { MetricCode, MultivariateAssessment, MultivariateContribution } from '../../types/domain'
+import type { EngineParam, MetricCode, MultivariateAssessment, MultivariateContribution } from '../../types/domain'
+import { msg, said } from '../msg'
 import { MULTIVARIATE, MULTIVARIATE_MODEL_VERSION } from '../config'
 import { hashSeed } from '../random'
 import { quantileSorted } from '../stats'
@@ -196,13 +197,21 @@ export class MultivariateDetector {
     }
     if (missing.length) {
       this.aboveSince = null
-      return this.result('NO_DATA', `Not evaluated: no current data for ${joinWords(missing.map(inlineLabel))}. Missing data is never treated as typical.`, null, [])
+      return this.result(
+        'NO_DATA',
+        said(
+          `Not evaluated: no current data for ${joinWords(missing.map(inlineLabel))}. Missing data is never treated as typical.`,
+          msg('mv.noData', { list: { list: missing.map((m): EngineParam => ({ metric: m, form: 'inline' })) } }),
+        ),
+        null,
+        [],
+      )
     }
     const score = this.score(this.row)!
     const contributions = deviationContributions(this.cfg.features, this.row)
     if (score < this.threshold!) {
       this.aboveSince = null
-      return this.result('TYPICAL', 'The combination of your signals looks like your own recent days.', score, contributions)
+      return this.result('TYPICAL', said('The combination of your signals looks like your own recent days.', msg('mv.typical')), score, contributions)
     }
     if (this.aboveSince === null) this.aboveSince = now
     const top = contributions.slice(0, this.cfg.topContributors).filter((c) => c.share > 0)
@@ -213,18 +222,28 @@ export class MultivariateDetector {
     })
     const lasted = now - this.aboveSince
     const shares = top.map((c) => `${inlineLabel(c.metric)} ${Math.round(c.share * 100)}%`).join(', ')
+    const sharesMsg: EngineParam = { list: top.map((c) => msg('mv.share', { metric: { metric: c.metric, form: 'inline' }, pct: Math.round(c.share * 100) })), comma: true }
     if (lasted >= this.cfg.persistMin * MIN_MS && agreeing.length >= this.cfg.minAgreeing) {
       const parts = agreeing.map((c) => `${inlineLabel(c.metric)} ${c.z > 0 ? 'above' : 'below'} your normal`)
       return this.result(
         'UNUSUAL',
-        `Unusual combination: ${joinWords(parts)} at the same time for ${fmtDuration(Math.max(lasted, MIN_MS))}. This mix is rare in your own recent days (score ${score.toFixed(2)}, your threshold ${this.threshold!.toFixed(2)}). Signals that contributed most: ${shares}.`,
+        said(
+          `Unusual combination: ${joinWords(parts)} at the same time for ${fmtDuration(Math.max(lasted, MIN_MS))}. This mix is rare in your own recent days (score ${score.toFixed(2)}, your threshold ${this.threshold!.toFixed(2)}). Signals that contributed most: ${shares}.`,
+          msg('mv.unusual', {
+            parts: { list: agreeing.map((c) => msg('mv.part', { metric: { metric: c.metric, form: 'inline' }, dev: msg(`dev.plain.${c.z > 0 ? 'above' : 'below'}`) })) },
+            dur: { durationMs: Math.max(lasted, MIN_MS) },
+            score: { num: score, decimals: 2 },
+            threshold: { num: this.threshold!, decimals: 2 },
+            shares: sharesMsg,
+          }),
+        ),
         score,
         contributions,
       )
     }
     return this.result(
       'ELEVATED',
-      `Unusual mix of signals right now (${shares}). Not flagged: it must last and agree with the slower trend rules first.`,
+      said(`Unusual mix of signals right now (${shares}). Not flagged: it must last and agree with the slower trend rules first.`, msg('mv.elevated', { shares: sharesMsg })),
       score,
       contributions,
     )

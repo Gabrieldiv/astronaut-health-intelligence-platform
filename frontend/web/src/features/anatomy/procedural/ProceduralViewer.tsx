@@ -22,6 +22,7 @@ import { LabelOverlay, RegionTooltip, createLabelRegistry } from '../Labels'
 import { StatusLegend } from '../Legend'
 import type { AnatomyViewerProps } from '../AnatomyViewer'
 import { usePresentationMode, useWidth } from '../hooks'
+import { useT } from '../../../i18n'
 
 /** Female variant is rendered slightly smaller (population average height ratio). */
 const SCALE: Record<Sex, number> = { M: 1, F: 0.94 }
@@ -51,6 +52,7 @@ function ResetIcon({ size }: { size: number }) {
 }
 
 function ControlsPill({ store, compact, ls }: { store: ViewerStore; compact: boolean; ls: number }) {
+  const t = useT()
   const layersRaw = store((s) => s.layers)
   const toggle = store((s) => s.toggleLayer)
   const resetView = store((s) => s.resetView)
@@ -62,8 +64,8 @@ function ControlsPill({ store, compact, ls }: { store: ViewerStore; compact: boo
   const reset = (
     <button
       type="button"
-      title="Reset view"
-      aria-label="Reset view"
+      title={t('anatomy.reset.aria')}
+      aria-label={t('anatomy.reset.aria')}
       onClick={() => {
         selectRegion(null)
         resetView()
@@ -106,7 +108,7 @@ function ControlsPill({ store, compact, ls }: { store: ViewerStore; compact: boo
             className="rounded-full font-medium tracking-wide text-slate-300 transition-colors hover:bg-white/5 hover:text-white"
             style={{ fontSize: 11 * ls, padding: `${3 * ls}px ${9 * ls}px` }}
           >
-            Layers
+            {t('anatomy.layers.button')}
           </button>
           <span className="mx-0.5 h-4 w-px shrink-0 bg-white/10" />
           {reset}

@@ -125,6 +125,23 @@ const templates = {
   'eng.region.normalButNoData': 'Within your normal range, but no data for {list}.',
   'eng.region.normal': 'Within your normal range.',
 
+  // Limitations, data window, forecast and the experimental multivariate detector
+  'eng.limit.simulated': 'Simulated data only (data_origin SIMULATED); no real astronaut data.',
+  'eng.limit.support': 'Decision support for review, not a diagnosis or a medical device.',
+  'eng.limit.thresholds': 'Fixed thresholds are demo configuration, not official NASA limits.',
+  'eng.limit.correlation': 'Correlation between signals does not prove cause.',
+  'eng.limit.missing': 'No current data for {list}; status for those signals is unknown, not normal.',
+  'eng.dataWindow': 'Personal baseline: last {days} days (daily metrics: last {dailyDays} days). Current values: last 3 readings.',
+  'eng.forecast.disclaimer':
+    'Statistical projection from recent simulated data. Not a clinical prediction: uncertainty grows with the horizon and the projection assumes recent conditions continue.',
+  'eng.mv.noData': 'Not evaluated: no current data for {list}. Missing data is never treated as typical.',
+  'eng.mv.typical': 'The combination of your signals looks like your own recent days.',
+  'eng.mv.share': '{metric} {pct}%',
+  'eng.mv.part': '{metric} {dev}',
+  'eng.mv.unusual':
+    'Unusual combination: {parts} at the same time for {dur}. This mix is rare in your own recent days (score {score}, your threshold {threshold}). Signals that contributed most: {shares}.',
+  'eng.mv.elevated': 'Unusual mix of signals right now ({shares}). Not flagged: it must last and agree with the slower trend rules first.',
+
   // Alerts and recommendations
   'eng.ruleTitle': '{title}',
   'eng.alert.titleFor': '{name}: {title}',

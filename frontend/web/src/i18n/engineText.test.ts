@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { EngineMsg, ScenarioId } from '../types/domain'
 import { HealthEngine } from '../engine/engine'
 import { MIN_MS } from '../engine/text'
+import { msgForEnglish } from '../engine/msg'
 import { alertDetail, alertTitle, engineText, recRationale, recTitle, renderEngineMsg } from './engineText'
 import { setLanguage, type Lang } from '.'
 import { en } from './locales/en'
@@ -37,6 +38,11 @@ function collect(): Sample[] {
         if (h.risk.headlineMsg) out.push({ english: h.risk.headline, msg: h.risk.headlineMsg, where: `${r.scenarioId} headline` })
         for (const f of h.risk.contributing_factors) if (f.msg) out.push({ english: f.label, msg: f.msg, where: `${r.scenarioId} factor` })
         for (const reg of Object.values(h.regions)) if (reg.summaryMsg) out.push({ english: reg.summary, msg: reg.summaryMsg, where: `${r.scenarioId} region` })
+        // Sentences localized through the registry only (no field on the type).
+        for (const english of [...h.risk.limitations, h.risk.data_window, h.multivariate?.explanation ?? '']) {
+          const m = msgForEnglish(english)
+          if (m) out.push({ english, msg: m, where: `${r.scenarioId} registry` })
+        }
       }
     }
     for (const a of e.alerts) {
@@ -59,7 +65,7 @@ describe('engine text', () => {
   it('collects a broad sample of engine sentences', () => {
     const ids = new Set(samples.map((s) => s.msg.id))
     expect(samples.length).toBeGreaterThan(40)
-    for (const id of ['head.normal', 'head.so', 'alert.titleFor', 'alert.detail', 'recTitle', 'rec.rationale', 'rec.onboardRationale', 'rec.rationaleCtx']) {
+    for (const id of ['head.normal', 'head.so', 'alert.titleFor', 'alert.detail', 'recTitle', 'rec.rationale', 'rec.onboardRationale', 'rec.rationaleCtx', 'limit.simulated', 'dataWindow', 'mv.typical']) {
       expect(ids, id).toContain(id)
     }
   })
