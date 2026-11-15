@@ -87,4 +87,7 @@ export default {
   'report.menuHint': 'Report for the next shift: print, FHIR export, send to ground',
   'report.buttonTitle': 'Shift handover report: print, export FHIR, send to ground',
   'report.button': 'Handover',
+  'report.noLiveReadings': "No live readings from the wearable. Missing data is never treated as normal.",
+  'report.noHealthData': "No health data available.",
+  'report.cabinNoSummary': "Cabin environment summary not available.",
 }

@@ -14,6 +14,7 @@ import { useA11yStore } from '../a11y/settings'
 import { playEarcon, primeAudio } from '../a11y/earcons'
 import { t, translatedRecord, useT } from '../../i18n'
 import { metricLabel, regionLabel, regionSystem } from '../../i18n/catalog'
+import { alertDetail, alertTitle } from '../../i18n/engineText'
 
 function useCallsign() {
   const crew = useAppStore((s) => s.crew)
@@ -96,8 +97,8 @@ function AlertItem({ alert, now, callsign, showWho = true }: { alert: Alert; now
           )}
         </div>
       )}
-      <div className={clsx('mt-0.5 text-[14px] leading-snug font-semibold', acked ? 'text-ink-300' : 'text-ink-100')}>{alert.title}</div>
-      {!acked && <p className="mt-1 text-xs leading-relaxed text-ink-300">{alert.detail}</p>}
+      <div className={clsx('mt-0.5 text-[14px] leading-snug font-semibold', acked ? 'text-ink-300' : 'text-ink-100')}>{alertTitle(alert)}</div>
+      {!acked && <p className="mt-1 text-xs leading-relaxed text-ink-300">{alertDetail(alert)}</p>}
       {esc && <p className={clsx('mt-1 text-xs font-semibold', level > 0 ? 'text-rose-200' : 'text-watch')}>{esc}</p>}
       {acked ? (
         <div className="mt-1.5 flex items-center gap-1 text-[11px] text-ink-500">
@@ -462,8 +463,8 @@ export function CriticalBanner({ className, overlay = false }: { className?: str
           {escalated && <EscalatedBadge level={level} />}
           {count > 1 && <span className="rounded bg-white/10 px-1.5 font-semibold tracking-normal text-white normal-case">{t('alerts.more', { n: count - 1 })}</span>}
         </div>
-        <div className="truncate text-[15px] font-semibold text-white">{top.title}</div>
-        <div className={clsx('truncate text-xs', esc ? 'font-semibold text-rose-100' : 'text-rose-100/80')}>{esc ?? top.detail}</div>
+        <div className="truncate text-[15px] font-semibold text-white">{alertTitle(top)}</div>
+        <div className={clsx('truncate text-xs', esc ? 'font-semibold text-rose-100' : 'text-rose-100/80')}>{esc ?? alertDetail(top)}</div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Button variant="ghost" className="text-white ring-white/25" onClick={() => focusTarget({ astronautId: top.astronautId, region: top.region, metric: top.metric })}>

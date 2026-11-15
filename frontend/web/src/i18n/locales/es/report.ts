@@ -85,5 +85,8 @@ const m: Record<keyof typeof en, string> = {
   'report.menuHint': 'Informe para el siguiente turno: imprimir, exportar FHIR, enviar a Tierra',
   'report.buttonTitle': 'Informe de relevo de turno: imprimir, exportar FHIR, enviar a Tierra',
   'report.button': 'Relevo',
+  'report.noLiveReadings': "Sin lecturas en vivo del dispositivo vestible. Los datos que faltan nunca se tratan como normales.",
+  'report.noHealthData': "No hay datos de salud disponibles.",
+  'report.cabinNoSummary': "Resumen del ambiente de la cabina no disponible.",
 }
 export default m

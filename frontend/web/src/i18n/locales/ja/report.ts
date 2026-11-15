@@ -85,5 +85,8 @@ const m: Record<keyof typeof en, string> = {
   'report.menuHint': '次のシフト向けレポート: 印刷、FHIR 書き出し、地上へ送信',
   'report.buttonTitle': 'シフト引き継ぎレポート: 印刷、FHIR 書き出し、地上へ送信',
   'report.button': '引き継ぎ',
+  'report.noLiveReadings': "ウェアラブルからのライブ測定値がありません。欠測データは正常とは見なしません。",
+  'report.noHealthData': "利用できる健康データがありません。",
+  'report.cabinNoSummary': "船内環境の概要は利用できません。",
 }
 export default m
