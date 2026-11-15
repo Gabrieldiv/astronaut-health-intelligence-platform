@@ -40,7 +40,7 @@ export function IndicatorStrip({ astronautId, sentence, className }: { astronaut
     <div className={clsx('flex min-w-0 flex-1 items-center gap-2', className)} title={sentence}>
  {/* segments share the bar: it shrinks with the header instead of pushing the buttons out */}
       <IndicatorBreakdownTrigger astronautId={astronautId} className="shrink-0">
-      <div role="img" aria-label={aria} className="flex h-3.5 max-w-[150px] min-w-[40px] flex-1 items-stretch gap-[2px]">
+        <div role="img" aria-label={aria} className="flex h-3.5 max-w-[150px] min-w-[40px] flex-1 items-stretch gap-[2px]">
         {sum.items.map((i) => {
           const meta = STATUS_META[i.status]
           return (

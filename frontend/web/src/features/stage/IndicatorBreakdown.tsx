@@ -3,32 +3,12 @@ import { Info } from 'lucide-react'
 import { useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { FloatingPopover } from '../../components/ui'
-import { METRIC_CATALOG } from '../../engine/catalog'
 import { useT } from '../../i18n'
 import { metricLabel, regionLabel } from '../../i18n/catalog'
 import { STATUS_META } from '../../lib/status'
 import { useAppStore } from '../../state/store'
-import type { BodyRegionId, MetricCode, MetricState, Status } from '../../types/domain'
-import { summarizeIndicators } from './indicators'
-
-type Group = { key: BodyRegionId | 'environment'; items: { metric: MetricCode; status: Status }[] }
-
-/**
- * Groups the tracked indicators by the body system they belong to, worst group first, so the
- * count on screen ("25/25") can be traced back to what it is made of. Pure and tested.
- */
-export function groupIndicators(metrics: Partial<Record<MetricCode, MetricState>> | undefined): Group[] {
-  const summary = summarizeIndicators(metrics)
-  const groups = new Map<Group['key'], Group>()
-  for (const item of summary.items) {
-    const key = METRIC_CATALOG[item.metric]?.region ?? 'environment'
-    const g = groups.get(key) ?? { key, items: [] }
-    g.items.push(item)
-    groups.set(key, g)
-  }
-  const rank = (g: Group) => Math.min(...g.items.map((i) => ['CRITICAL', 'HIGH', 'MODERATE', 'NO_DATA', 'LOW'].indexOf(i.status)))
-  return [...groups.values()].sort((a, b) => rank(a) - rank(b))
-}
+import type { BodyRegionId } from '../../types/domain'
+import { groupIndicators, summarizeIndicators } from './indicators'
 
 function useIndicatorMetrics(astronautId: string) {
   return useAppStore(useShallow((s) => s.health[astronautId]?.metrics))
@@ -57,7 +37,8 @@ export function IndicatorBreakdownTrigger({ astronautId, className, children }: 
         {children}
         <Info size={13} className="shrink-0 text-ink-500 transition-colors group-hover:text-ink-200" aria-hidden />
       </button>
-      <IndicatorBreakdown open={open} onClose={() => setOpen(false)} anchorRef={ref} astronautId={astronautId} />
+      {/* mounted only while open: a closed breakdown must not subscribe to every simulation tick */}
+      {open && <IndicatorBreakdown open onClose={() => setOpen(false)} anchorRef={ref} astronautId={astronautId} />}
     </>
   )
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MetricCode, MetricState, Status } from '../../types/domain'
-import { groupIndicators } from './IndicatorBreakdown'
+import { groupIndicators } from './indicators'
 
 const state = (metric: MetricCode, status: Status, current: number | null = 1) => ({ metric, status, current }) as MetricState
 

@@ -62,7 +62,10 @@ export function useGlobalShortcuts() {
           break
         case 'k':
         case 'K':
-          if (!ui.tour.active) ui.setAssistantOpen(!ui.assistantOpen)
+          // Never stacks a second drawer or modal on top of one that is already open.
+          if (ui.tour.active) break
+          if (!ui.assistantOpen && document.querySelector('[role="dialog"], [aria-modal="true"]')) break
+          ui.setAssistantOpen(!ui.assistantOpen)
           break
         case '?':
           ui.setShortcutsOpen(!ui.shortcutsOpen)

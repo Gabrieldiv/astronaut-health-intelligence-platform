@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { t } from '../i18n'
+import { trapTab } from '../lib/focusTrap'
 
 /**
  * Shared panel header row: same height, padding and type for every top level panel
@@ -224,15 +225,22 @@ export function Drawer({
   footer?: ReactNode
 }) {
   const panelRef = useRef<HTMLDivElement>(null)
+  // Callers pass inline handlers: keep the latest one in a ref so a re-render never re-runs the
+  // effect below (which would pull the focus back to the panel while the user types).
+  const closeRef = useRef(onClose)
+  useEffect(() => {
+    closeRef.current = onClose
+  }, [onClose])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') closeRef.current()
+      trapTab(e, panelRef.current)
     }
     window.addEventListener('keydown', onKey)
     panelRef.current?.focus()
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [open])
   if (!open) return null
   return (
     <div className="fixed inset-0 z-(--z-drawer)">
