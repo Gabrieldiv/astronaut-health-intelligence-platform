@@ -65,7 +65,7 @@ const alert = (p: Partial<Alert> & { id: string }): Alert => ({
   ...p,
 })
 
-const noDashes = (t: string) => expect(t).not.toMatch(/[–—]/)
+const noDashes = (t: string) => expect(t).not.toMatch(new RegExp(`[${String.fromCharCode(0x2013)}${String.fromCharCode(0x2014)}]`))
 
 describe('spoken text', () => {
   it('reads a value with spoken units and where it sits against the personal range', () => {
