@@ -19,7 +19,8 @@
  * (depth + 1). In the original algorithm such a value just follows the most extreme training
  * point, so all far away points saturate at the score of the training extremes; with the range
  * check a point far outside the person's usual pattern scores clearly higher than the usual
- * extremes. Inside the training range the two are identical.
+ * extremes. A query that stays inside the range of every node it visits gets exactly the
+ * original path length; the personal threshold is calibrated on scores computed the same way.
  *
  * Deterministic: all randomness comes from one seeded mulberry32 stream, so the same data and
  * seed always give the same forest and the same scores. All trees live in one set of flat typed

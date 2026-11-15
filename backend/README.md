@@ -41,7 +41,25 @@ python -m pytest
 | `ingestion` | `POST /observations` (202) | Canonical HealthObservation (PROJECT_MASTER 6.3). Idempotent by `observation_id`. |
 | `observations` | `GET /observations?subject_id=&metric_code=&data_origin=&start=&end=` | Ordered by `measured_at`, UTC. |
 | `nasa` | `GET /space-weather?days=30`, `GET /nasa/osdr/studies?q=` | Real public NASA data (REAL_PUBLIC), cached 15 min. |
+| `analytics` | `POST /analytics/multivariate` | Experimental, machine learning: seeded scikit-learn Isolation Forest on standardized feature windows (see below). Stateless. |
 | `engine` | none yet | Seam for porting the TypeScript engine (see below). |
+
+### Multivariate analytics (experimental, machine learning)
+
+`POST /api/v1/analytics/multivariate` takes `features` (metric codes), a `training` window (the
+person's own baseline window of robust z scores, one vector per row) and the vectors to `score`.
+It fits PCA whitening and a seeded `sklearn.ensemble.IsolationForest` on the window and returns,
+per vector, the anomaly score (0 to 1, about 0.5 or less is typical), `above_threshold` (personal
+threshold: the larger of a demo floor and the 99.5th percentile of the training scores) and the
+per feature deviation contributions (share of the squared z). Scoring uses range aware isolation,
+the same rule as the browser forest, so points far outside the usual pattern do not saturate at
+the score of the usual extremes (`options.range_aware=false` gives plain sklearn scores).
+
+The browser detector (`frontend/web/src/engine/ml`) is the offline path and the one the app uses
+today; this endpoint is the future scalable path (batch scoring, larger windows, model comparison).
+Both are decision support only: `above_threshold` is not a flag, the caller applies persistence
+rules first, and nothing here diagnoses or sets a status. Defaults mirror `MULTIVARIATE` in
+`src/engine/config.ts` (demo configuration, not official limits).
 
 ### Ingestion rules
 

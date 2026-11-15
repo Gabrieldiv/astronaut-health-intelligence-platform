@@ -13,6 +13,7 @@ from app.core.config import APP_VERSION, Settings, get_settings
 from app.core.logging import RequestLogMiddleware, configure_logging
 from app.db.migrate import upgrade_head
 from app.db.session import Database
+from app.modules.analytics.router import router as analytics_router
 from app.modules.health.router import router as health_router
 from app.modules.ingestion.router import router as ingestion_router
 from app.modules.nasa.donki import DonkiClient
@@ -59,6 +60,6 @@ def create_app(settings: Settings | None = None, *, migrate: bool | None = None)
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*"],
     )
-    for r in (health_router, registry_router, ingestion_router, observations_router, nasa_router):
+    for r in (health_router, registry_router, ingestion_router, observations_router, nasa_router, analytics_router):
         app.include_router(r, prefix=API_PREFIX)
     return app
