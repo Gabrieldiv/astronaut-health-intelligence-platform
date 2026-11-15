@@ -1,3 +1,4 @@
+import { t, translatedRecord } from '../../i18n'
 import type { Earcon } from './alarmSchedule'
 
 /**
@@ -36,11 +37,7 @@ export const EARCONS: Record<Earcon, Tone[]> = {
   CRITICAL_ESCALATED: [...burst(0, 0.18, 'square'), ...burst(1.6, 0.18, 'square')],
 }
 
-export const EARCON_LABEL: Record<Earcon, string> = {
-  HIGH: 'Warning sound',
-  CRITICAL: 'Critical sound',
-  CRITICAL_ESCALATED: 'Escalated critical sound',
-}
+export const EARCON_LABEL: Record<Earcon, string> = translatedRecord(['HIGH', 'CRITICAL', 'CRITICAL_ESCALATED'] as const, (e) => t(`a11y.earcon.${e}`))
 
 export type PlayResult = 'played' | 'blocked' | 'unsupported'
 

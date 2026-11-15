@@ -5,6 +5,7 @@
  * not for a spacecraft (see docs/assistant-architecture.md).
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getBcp47, t, type MessageKey } from '../../i18n'
 
 interface RecognitionResult {
   isFinal: boolean
@@ -36,12 +37,12 @@ function recognitionCtor(): RecognitionCtor | null {
 export const speechInputSupported = (): boolean => recognitionCtor() !== null
 export const speechOutputSupported = (): boolean => typeof window !== 'undefined' && 'speechSynthesis' in window
 
-const MIC_ERRORS: Record<string, string> = {
-  'not-allowed': 'Microphone permission was denied.',
-  'service-not-allowed': 'Speech recognition is blocked in this browser.',
-  'no-speech': 'No speech heard. Try again.',
-  network: 'Speech recognition needs a network connection in this browser.',
-  'audio-capture': 'No microphone found.',
+const MIC_ERRORS: Record<string, MessageKey> = {
+  'not-allowed': 'assistant.mic.notAllowed',
+  'service-not-allowed': 'assistant.mic.serviceNotAllowed',
+  'no-speech': 'assistant.mic.noSpeech',
+  network: 'assistant.mic.network',
+  'audio-capture': 'assistant.mic.audioCapture',
 }
 
 /** Push to talk: start() listens once; onInterim shows live text; onFinal gets the final sentence. */
@@ -61,7 +62,8 @@ export function useSpeechInput(onInterim: (text: string) => void, onFinal: (text
     if (!Ctor || rec.current) return
     setError(null)
     const r = new Ctor()
-    r.lang = 'en-US'
+    // Listen in the selected language (English by default).
+    r.lang = getBcp47()
     r.continuous = false
     r.interimResults = true
     let finalText = ''
@@ -74,7 +76,7 @@ export function useSpeechInput(onInterim: (text: string) => void, onFinal: (text
       }
       cb.current.onInterim((finalText + interim).trim())
     }
-    r.onerror = (e) => setError(MIC_ERRORS[e.error] ?? (e.error === 'aborted' ? null : 'Voice input stopped.'))
+    r.onerror = (e) => setError(MIC_ERRORS[e.error] ? t(MIC_ERRORS[e.error]!) : e.error === 'aborted' ? null : t('assistant.mic.stopped'))
     r.onend = () => {
       rec.current = null
       setListening(false)
@@ -86,7 +88,7 @@ export function useSpeechInput(onInterim: (text: string) => void, onFinal: (text
       setListening(true)
     } catch {
       rec.current = null
-      setError('Voice input could not start.')
+      setError(t('assistant.mic.couldNotStart'))
     }
   }, [])
 
@@ -99,7 +101,7 @@ export function speak(text: string): void {
   const synth = window.speechSynthesis
   synth.cancel()
   const u = new SpeechSynthesisUtterance(text)
-  u.lang = 'en-US'
+  u.lang = getBcp47()
   u.rate = 1
   synth.speak(u)
 }

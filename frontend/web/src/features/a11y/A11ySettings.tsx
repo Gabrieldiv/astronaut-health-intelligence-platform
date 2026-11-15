@@ -9,6 +9,7 @@ import { audioSupported, EARCON_LABEL, playEarcon, primeAudio } from './earcons'
 import { describeNow, screenDescription } from './hooks'
 import { MAX_RATE, MIN_RATE, useA11yStore } from './settings'
 import { speak, speechSupported, stopSpeaking } from './speech'
+import { formatFixed, t, useT, type MessageKey } from '../../i18n'
 
 /** Accessible on/off switch row (role="switch"), label and hint are part of its name and description. */
 export function SwitchRow({ on, onChange, label, hint, icon, disabled }: { on: boolean; onChange: (on: boolean) => void; label: string; hint?: string; icon?: ReactNode; disabled?: boolean }) {
@@ -43,14 +44,14 @@ export function SwitchRow({ on, onChange, label, hint, icon, disabled }: { on: b
         <span className={clsx('absolute top-[2px] h-[14px] w-[14px] rounded-full bg-white shadow transition-all', on ? 'left-[16px]' : 'left-[2px]')} />
       </span>
       <span className="w-6 shrink-0 text-[11px] font-semibold text-ink-300" aria-hidden>
-        {on ? 'On' : 'Off'}
+        {on ? t('a11y.on') : t('a11y.off')}
       </span>
     </button>
   )
 }
 
-const sec = (ms: number) => `${Math.round(ms / 1000)} s`
-const minutes = (ms: number) => `${Math.round(ms / 60000)} min`
+const sec = (ms: number) => t('a11y.seconds', { n: Math.round(ms / 1000) })
+const minutes = (ms: number) => t('a11y.minutes', { n: Math.round(ms / 60000) })
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   const id = useId()
@@ -77,14 +78,15 @@ export function A11ySettingsDialog() {
   const canSpeak = speechSupported()
   const canPlay = audioSupported()
   const p = DEFAULT_ALARM_POLICY
+  const t = useT()
   return (
-    <Modal open={open} onClose={() => setOpen(false)} title="Accessibility and sound" icon={<Accessibility size={17} className="text-accent" aria-hidden />} subtitle="Saved in this browser." size="sm">
-      <Section title="Alert sounds">
+    <Modal open={open} onClose={() => setOpen(false)} title={t('a11y.title')} icon={<Accessibility size={17} className="text-accent" aria-hidden />} subtitle={t('a11y.saved')} size="sm">
+      <Section title={t('a11y.alertSounds')}>
         <SwitchRow
           on={soundOn}
           icon={<Volume2 size={16} />}
-          label="Sound for critical alerts"
-          hint={canPlay ? 'Plays when a critical alert appears.' : 'This browser cannot play generated sounds.'}
+          label={t('a11y.soundCritical')}
+          hint={canPlay ? t('a11y.soundCriticalHint') : t('a11y.noAudio')}
           disabled={!canPlay}
           onChange={(on) => {
             setPrefs({ soundOn: on })
@@ -93,8 +95,8 @@ export function A11ySettingsDialog() {
         />
         <SwitchRow
           on={soundHigh}
-          label="Also for warnings"
-          hint="A softer sound for new warning (high) alerts."
+          label={t('a11y.alsoWarnings')}
+          hint={t('a11y.alsoWarningsHint')}
           disabled={!canPlay || !soundOn}
           onChange={(on) => {
             setPrefs({ soundHigh: on })
@@ -102,12 +104,10 @@ export function A11ySettingsDialog() {
           }}
         />
         <p className="text-[11px] leading-relaxed text-ink-500">
-          The sound repeats every {sec(p.repeatCriticalMs)} until you acknowledge the alert, then it stops. If a critical alert stays unacknowledged for {minutes(p.escalateAfterMs)}, or the
-          system escalates it, the sound becomes more urgent and repeats every {sec(p.repeatEscalatedMs)}. Alerts from before the page loaded never ring. Demo configuration, not an official
-          limit.
+          {t('a11y.repeatNote', { repeat: sec(p.repeatCriticalMs), escalate: minutes(p.escalateAfterMs), escalated: sec(p.repeatEscalatedMs) })}
         </p>
-        {blocked && <p className="text-[11px] font-semibold text-watch">The browser is blocking sound. Use Test below once to allow it.</p>}
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Test the sounds">
+        {blocked && <p className="text-[11px] font-semibold text-watch">{t('a11y.blocked')}</p>}
+        <div className="flex flex-wrap gap-2" role="group" aria-label={t('a11y.testGroup')}>
           {(['HIGH', 'CRITICAL', 'CRITICAL_ESCALATED'] as const).map((e) => (
             <Button key={e} variant="ghost" disabled={!canPlay} onClick={() => void primeAudio().then(() => playEarcon(e)).then(() => useA11yStore.getState().setAudioBlocked(false))}>
               <Play size={12} aria-hidden /> {EARCON_LABEL[e]}
@@ -116,22 +116,22 @@ export function A11ySettingsDialog() {
         </div>
       </Section>
 
-      <Section title="Audio description">
+      <Section title={t('a11y.audioDescription')}>
         <SwitchRow
           on={speechOn}
           icon={<AudioLines size={16} />}
-          label="Spoken explanations"
-          hint={canSpeak ? 'Reads out new alerts, status changes and what you select. Shift+D' : 'This browser has no speech synthesis.'}
+          label={t('a11y.spoken')}
+          hint={canSpeak ? t('a11y.spokenHint') : t('a11y.noSpeech')}
           disabled={!canSpeak}
           onChange={(on) => {
             setPrefs({ speechOn: on })
-            if (on) speak('Audio description on. Press D to describe the screen.', { rate, interrupt: true })
+            if (on) speak(t('a11y.speechOnSaid'), { rate, interrupt: true })
             else stopSpeaking()
           }}
         />
         <div className="flex items-center gap-3 rounded-xl bg-white/[0.03] px-3 py-2.5 ring-1 ring-white/[0.07]">
           <label htmlFor={rateId} className="shrink-0 text-[13px] font-semibold text-ink-100">
-            Voice speed
+            {t('a11y.voiceSpeed')}
           </label>
           <input
             id={rateId}
@@ -141,41 +141,41 @@ export function A11ySettingsDialog() {
             step={0.1}
             value={rate}
             disabled={!canSpeak}
-            aria-valuetext={`${rate.toFixed(1)} times normal`}
+            aria-valuetext={t('a11y.rateText', { r: formatFixed(rate, 1) })}
             onChange={(e) => setPrefs({ speechRate: Number(e.target.value) })}
             className="focus-ring min-w-0 flex-1 accent-[var(--color-accent)]"
           />
           <span className="tabular w-10 shrink-0 text-right text-xs text-ink-300" aria-hidden>
-            {rate.toFixed(1)}x
+            {formatFixed(rate, 1)}x
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" onClick={describeNow}>
-            <AudioLines size={13} aria-hidden /> Describe the screen
+            <AudioLines size={13} aria-hidden /> {t('a11y.describe')}
           </Button>
           <Button variant="ghost" disabled={!canSpeak} onClick={() => speak(screenDescription(), { rate, interrupt: true })}>
-            <Play size={12} aria-hidden /> Read it aloud once
+            <Play size={12} aria-hidden /> {t('a11y.readOnce')}
           </Button>
           <Button variant="subtle" disabled={!canSpeak} onClick={stopSpeaking}>
-            Stop speaking
+            {t('a11y.stopSpeaking')}
           </Button>
         </div>
         <p className="text-[11px] leading-relaxed text-ink-500">
-          Uses the voice built into your browser, nothing is sent anywhere. If you use a screen reader you may not need this: alerts and status changes are already announced to it.
+          {t('a11y.voiceNote')}
         </p>
       </Section>
 
-      <Section title="Keyboard">
+      <Section title={t('a11y.keyboard')}>
         <ul className="flex flex-col gap-1 text-[13px] text-ink-300">
-          {[
-            { keys: ['D'], label: 'Describe the screen (press again to stop)' },
-            { keys: ['Shift', 'D'], label: 'Audio description on or off' },
-            { keys: ['Esc'], label: 'Stop speaking' },
-            { keys: ['A'], label: 'Open alerts, then Tab to Acknowledge' },
-            { keys: ['?'], label: 'All keyboard shortcuts' },
-          ].map((s) => (
+          {([
+            { keys: ['D'], label: 'a11y.key.describe' },
+            { keys: ['Shift', 'D'], label: 'a11y.key.toggle' },
+            { keys: ['Esc'], label: 'a11y.key.stop' },
+            { keys: ['A'], label: 'a11y.key.alerts' },
+            { keys: ['?'], label: 'a11y.key.all' },
+          ] as { keys: string[]; label: MessageKey }[]).map((s) => (
             <li key={s.label} className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 odd:bg-white/[0.025]">
-              <span>{s.label}</span>
+              <span>{t(s.label)}</span>
               <span className="flex shrink-0 gap-1">
                 {s.keys.map((k) => (
                   <Kbd key={k}>{k}</Kbd>
@@ -184,7 +184,7 @@ export function A11ySettingsDialog() {
             </li>
           ))}
         </ul>
-        <p className="text-[11px] text-ink-500">The first Tab on the page shows links to skip straight to the main content or to what needs attention.</p>
+        <p className="text-[11px] text-ink-500">{t('a11y.skipNote')}</p>
       </Section>
     </Modal>
   )
@@ -195,10 +195,11 @@ export function AccessibilityMenuItem() {
   const setOpen = useA11yStore((s) => s.setSettingsOpen)
   const soundOn = useA11yStore((s) => s.soundOn)
   const speechOn = useA11yStore((s) => s.speechOn)
-  const hint = `Alert sound ${soundOn ? 'on' : 'off'}, audio description ${speechOn ? 'on' : 'off'}`
+  const t = useT()
+  const hint = t('a11y.menuHint', { sound: soundOn ? t('a11y.onLower') : t('a11y.offLower'), speech: speechOn ? t('a11y.onLower') : t('a11y.offLower') })
   return (
     <button type="button" role="menuitem" tabIndex={-1} aria-haspopup="dialog" onClick={() => setOpen(true)} className={MENU_ITEM}>
-      <MenuRow icon={<Accessibility size={15} />} label="Accessibility and sound" hint={hint} />
+      <MenuRow icon={<Accessibility size={15} />} label={t('a11y.title')} hint={hint} />
     </button>
   )
 }

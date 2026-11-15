@@ -8,6 +8,7 @@ import { primeAudio, playEarcon } from './earcons'
 import { crewStatusOf, describeAstronaut, describeNewAlerts, describeRegion, describeScreen, describeStatusChange, describeStructure } from './describe'
 import { isSpeaking, speak, speechSupported, stopSpeaking } from './speech'
 import { useA11yStore } from './settings'
+import { t } from '../../i18n'
 
 /** Scenario identity: alerts of a new or restarted scenario start a fresh history. */
 function epochOf(): string {
@@ -182,7 +183,7 @@ export function useSpokenSelection() {
     if (structure) text = describeStructure(structure.name, a.callsign, region, health)
     else if (region) text = describeRegion(a.callsign, region, health)
     else if (prevAstronaut !== astronautId) text = describeAstronaut(a, health)
-    else text = `Back to the body overview for ${a.callsign}.`
+    else text = t('a11y.say.backOverview', { callsign: a.callsign })
     say(text, true)
   }, [astronautId, region, structureId, structure, speechOn])
 }
@@ -216,10 +217,10 @@ export function toggleAudioDescription() {
   const s = useA11yStore.getState()
   const next = !s.speechOn
   s.setPrefs({ speechOn: next })
-  if (next) speak('Audio description on. Press D to describe the screen.', { rate: s.speechRate, interrupt: true })
+  if (next) speak(t('a11y.speechOnSaid'), { rate: s.speechRate, interrupt: true })
   else {
     stopSpeaking()
-    s.announce('Audio description off.', 'polite')
+    s.announce(t('a11y.speechOffSaid'), 'polite')
   }
 }
 
