@@ -36,7 +36,7 @@ Long missions expose crews to five hazards (radiation, isolation, distance from 
 
 ## 5. Mission profiles and space weather (40 s)
 
-1. Switch the mission profile in the top bar to **Mars transit** and open its info button.
+1. Click the mission control in the top bar (it opens the Mission and Earth link panel), pick **Mars transit** in the Mission tab.
 2. Show the hazards, the cited reference values (MSL RAD cruise dose, 4 to 24 min delay) and the **mission dose bar** against the NASA career limit of 600 mSv (NASA-STD-3001).
 3. Show the **space weather** card: real NASA DONKI events. If a recent X class flare or a solar particle event is in the window, it says "Move to the radiation storm shelter"; otherwise it is calm. It says whether the data is live or the bundled snapshot. Missing data reads "unknown", never all clear.
 4. Message: far from Earth, the crew acts first; the ground reviews later.
@@ -58,13 +58,13 @@ Press `V`. The astronaut's own screen: a big status word, at most two things to 
 
 ## 9. Ask AHI (20 s, only if a key is set)
 
-Open **Ask AHI** (bottom right) and click "How is ORION doing?". The answer streams, explains what the engine already shows and ends with "Based on:". It never diagnoses. Say that a real mission needs an onboard offline model; the cloud model is a demo only.
+Open **Ask AHI** (top bar, or press `K`) and click "How is ORION doing?". The answer streams, explains what the engine already shows and ends with "Based on:". It never diagnoses. Say that a real mission needs an onboard offline model; the cloud model is a demo only.
 
 ## 10. Impact (15 s)
 
 > We turn physiological and environmental signals into one integrated, explainable view of each astronaut's health, spotting trends before they become operational problems.
 
-Next steps: port the engine to the Python backend, a clinical review flow, access profiles, real ISS cabin data from NASA EDA, textures and a female reference model for the 3D body.
+Next steps: port the engine to the Python backend, a clinical review flow, authentication and role based access control, real ISS cabin data from NASA EDA, textures and a female reference model for the 3D body.
 
 ## Backup beats
 

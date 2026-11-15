@@ -2,6 +2,7 @@
 export default {
   'assistant.launcher': 'Ask AHI',
   'assistant.title': 'Ask AHI',
+  'assistant.launcherTitle': 'Ask AHI about the crew (K)',
   'assistant.theCrew': 'the crew',
   'assistant.emptyAnswer': 'The assistant returned an empty answer.',
   'assistant.stopped': 'Stopped.',

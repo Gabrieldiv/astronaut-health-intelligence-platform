@@ -9,7 +9,7 @@ import type { Recommendation } from '../../types/domain'
 import { startTicker, useAppStore } from '../../state/store'
 import { Button, Panel } from '../../components/ui'
 import { TimelineStrip } from '../timeline'
-import { CommsIndicator } from '../comms'
+import { MissionLinkControl } from '../mission/MissionContext'
 import { CheckInButton } from '../checkin'
 import { MissionOverviewButton } from '../mission'
 import { HandoverReportButton } from '../report'
@@ -58,7 +58,7 @@ function Lab() {
         <span className="text-sm font-bold tracking-[0.08em]">AHI features lab</span>
         <span className="text-[11px] text-ink-500">dev only, fake v2 data</span>
         <div className="flex-1" />
-        <CommsIndicator />
+        <MissionLinkControl />
         <MissionOverviewButton />
         <HandoverReportButton />
         <CheckInButton astronautId={selected} />

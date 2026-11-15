@@ -1,5 +1,6 @@
-import { create } from 'zustand'
-import type { CommMessage, CommProfile, CommProfileId } from '../../types/domain'
+import { useShallow } from 'zustand/react/shallow'
+import { useAppStore } from '../../state/store'
+import type { CommMessage, CommProfileId } from '../../types/domain'
 import { formatFixed, t, translatedRecord } from '../../i18n'
 
 export const PROFILE_SHORT: Record<CommProfileId, string> = translatedRecord(['ISS', 'MOON', 'MARS_NEAR', 'MARS_FAR'] as const, (k) => t(`comms.profileShort.${k}`))
@@ -30,13 +31,6 @@ export function formatCountdown(ms: number): string {
   return r && m < 10 ? t('comms.unit.minS', { m, s: r }) : t('comms.unit.min', { n: m })
 }
 
-/** Plain explanation of what the delay means for decisions. */
-export function delayMeaning(p: CommProfile): string {
-  const rt = p.oneWayDelaySec * 2
-  if (rt < 5) return t('comms.meaning.near', { delay: formatDelay(Math.max(1, rt)) })
-  return t('comms.meaning.far', { delay: formatDelay(rt) })
-}
-
 export function isInTransit(m: CommMessage, simNow: number): boolean {
   return m.status === 'IN_TRANSIT' && simNow < m.arrivesAt
 }
@@ -46,8 +40,16 @@ export const COMM_KIND_LABEL: Record<CommMessage['kind'], string> = translatedRe
   (k) => t(`comms.kind.${k}`),
 )
 
-/** UI-only state so other features (timeline markers) can open the comms drawer. */
-export const useCommsUi = create<{ open: boolean; setOpen: (open: boolean) => void }>()((set) => ({
-  open: false,
-  setOpen: (open) => set({ open }),
-}))
+/** Earth link status for the top bar: active link, messages in transit, a ground reply in the last 30 sim minutes. */
+export function useEarthLinkStatus(): { profileId: CommProfileId; delaySec: number; inTransit: number; recentReply: boolean } {
+  const { profileId, delaySec } = useAppStore(
+    useShallow((s) => ({ profileId: s.commProfileId, delaySec: s.commProfiles.find((p) => p.id === s.commProfileId)?.oneWayDelaySec ?? 0 })),
+  )
+  const inTransit = useAppStore((s) => {
+    let n = 0
+    for (const m of s.comms) if (isInTransit(m, s.clock.simNow)) n++
+    return n
+  })
+  const recentReply = useAppStore((s) => s.comms.some((m) => m.kind === 'GROUND_REPLY' && !isInTransit(m, s.clock.simNow) && s.clock.simNow - m.arrivesAt < 30 * 60000))
+  return { profileId, delaySec, inTransit, recentReply }
+}

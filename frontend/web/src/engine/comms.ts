@@ -14,8 +14,9 @@
  *
  * Pure TypeScript: the engine calls process(now) and reads `messages` (newest first, bounded).
  */
-import type { CommMessage, CommProfile, DataOrigin, RiskLevel } from '../types/domain'
+import type { CommMessage, CommProfile, DataOrigin, EngineParam, RiskLevel } from '../types/domain'
 import { AUTONOMY, COMMS } from './config'
+import { msg, said } from './msg'
 import { hash01 } from './random'
 import { fmtClock, fmtDuration } from './text'
 
@@ -204,29 +205,36 @@ export function autonomyGuidance(oneWayDelaySec: number, reviewMinMin: number = 
   const earliestReplyMs = Math.round((2 * oneWay + reviewMinMin * 60) * 1000)
   const rtSec = 2 * oneWay
   const rt = rtSec < 60 ? `${rtSec < 10 ? rtSec.toFixed(1) : Math.round(rtSec)} s` : fmtDuration(rtSec * 1000)
+  // Structured forms (engine/msg.ts) so the UI can show the guidance in the selected language.
+  const rtMsg: EngineParam = rtSec < 60 ? msg('autonomy.sec', { n: rtSec < 10 ? { num: rtSec, decimals: 1 } : Math.round(rtSec) }) : { durationMs: rtSec * 1000 }
   if (oneWay < AUTONOMY.nearRealTimeMaxSec) {
     return {
       mode: 'NEAR_REAL_TIME',
       earliestReplyMs,
-      title: 'Ground support in near real time',
-      body: 'The crew can ask Mission Control and the flight surgeon before acting; the answer is limited by review time, not by distance.',
+      title: said('Ground support in near real time', msg('autonomy.near.title')),
+      body: said('The crew can ask Mission Control and the flight surgeon before acting; the answer is limited by review time, not by distance.', msg('autonomy.near.body')),
     }
   }
   if (oneWay < AUTONOMY.crewFirstMinSec) {
     return {
       mode: 'DELAYED',
       earliestReplyMs,
-      title: 'Short delay, help is far',
-      body: `A question and its answer take about ${rt} of light time. The ground can still support decisions, but the crew handles the first minutes on board.`,
+      title: said('Short delay, help is far', msg('autonomy.delayed.title')),
+      body: said(
+        `A question and its answer take about ${rt} of light time. The ground can still support decisions, but the crew handles the first minutes on board.`,
+        msg('autonomy.delayed.body', { rt: rtMsg }),
+      ),
     }
   }
   return {
     mode: 'CREW_FIRST',
     earliestReplyMs,
-    title: 'Crew acts first, Earth reviews later',
-    body:
+    title: said('Crew acts first, Earth reviews later', msg('autonomy.crew.title')),
+    body: said(
       `Every question to Earth costs at least ${rt} of light time plus review time (earliest answer about ${fmtDuration(earliestReplyMs)}). ` +
-      'For anything urgent the crew follows on board procedures without waiting; the crew medical officer leads and the ground reviews when the reply arrives.',
+        'For anything urgent the crew follows on board procedures without waiting; the crew medical officer leads and the ground reviews when the reply arrives.',
+      msg('autonomy.crew.body', { rt: rtMsg, earliest: { durationMs: earliestReplyMs } }),
+    ),
   }
 }
 

@@ -202,7 +202,7 @@ export function combinedHits(astronautId: string, m: AssessMap, env: AssessMap, 
   // R-PSY-04: symptoms from today's check-in. Informational factor, not a diagnosis.
   if (self && self.symptoms.length > 0) {
     const label = `You reported ${joinList(self.symptoms.map(withArticle))} today`
-    const symptomsMsg = msg('psy.symptoms', { list: { list: self.symptoms.map((tag): EngineParam => ({ key: `checkin.symptomInline.${tag}`, en: withArticle(tag) })) } })
+    const symptomsMsg = msg('psy.symptoms', { list: { list: self.symptoms.map((tag): EngineParam => ({ key: `checkin.symptomInline.${tag.replace(/ /g, '_')}`, en: withArticle(tag) })) } })
     out.push({
       subjectId: astronautId,
       ruleId: 'R-PSY-04',

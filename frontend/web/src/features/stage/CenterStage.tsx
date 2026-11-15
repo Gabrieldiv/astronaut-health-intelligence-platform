@@ -7,11 +7,13 @@ import { STATUS_META } from '../../lib/status'
 import type { ActivityContext, BodyRegionId, Status } from '../../types/domain'
 import { StatusDot, StatusPill } from '../../components/Status'
 import { CriticalBanner } from '../alerts/Alerts'
-import { PANEL_HEADER, PANEL_TITLE } from '../../components/ui'
+import { PANEL_TITLE } from '../../components/ui'
 import { signalLostHeadline, useAstronaut, useSelectedStructure, useSignalLost } from '../shared/hooks'
 import { regionStructureCount } from '../anatomy/atlas/health'
 import { CheckInButton } from '../checkin'
 import { MissionBackdrop, MissionHud } from '../mission/backdrops'
+import { IndicatorStrip } from './IndicatorStrip'
+import { ProfileButton } from '../profile/ProfileButton'
 import { wearablePausedHeadline, useWearablePaused } from '../vitals/deviceMeta'
 import { getLang, t, translatedRecord, useT } from '../../i18n'
 import { regionDescription, regionLabel, regionSystem, roleLabel } from '../../i18n/catalog'
@@ -53,7 +55,13 @@ export const Stage3D = memo(function Stage3D() {
   )
 })
 
-/** Headline: shared panel header row (identity, activity, check-in) plus the plain-language status sentence. */
+/**
+ * Headline: one row with the identity (callsign, role, mission day, activity), the status pill and
+ * a compact visual of the tracked indicators, plus the check-in button. The plain-language status
+ * sentence is not repeated on screen (the visual and the attention panel carry it): it stays as
+ * live text for screen readers and audio description, and as the tooltip of the visual.
+ * A single row keeps the most height for the 3D body below.
+ */
 function Headline() {
   const id = useAppStore((s) => s.selectedAstronautId)
   const astronaut = useAstronaut(id)
@@ -66,31 +74,32 @@ function Headline() {
   const status: Status = override ? 'NO_DATA' : (level ?? 'NO_DATA')
   const t = useT()
   if (!astronaut) return null
+  const sentence = override ? (wearablePaused ? wearablePausedHeadline() : signalLostHeadline()) : headline ? engineText('headline', headline) : t('stage.waiting')
   return (
     <div data-tour="headline" className="relative z-10 shrink-0">
-      <header className={PANEL_HEADER}>
-        <h2 className={clsx(PANEL_TITLE, 'flex-1 overflow-hidden')}>
+      <header className="flex min-h-12 shrink-0 items-center gap-x-3 px-4 pt-1.5 pb-1">
+        <h2 className={clsx(PANEL_TITLE, 'min-w-0 shrink overflow-hidden')}>
           <span className="text-ink-100">{astronaut.callsign}</span>
           <span className="truncate font-normal tracking-normal normal-case">
-            <span className="hidden @min-[520px]/stage:inline">{roleLabel(astronaut.role)} · </span>{t('stage.missionDay', { n: astronaut.missionDay })}
+            <span className="hidden @min-[860px]/stage:inline">{roleLabel(astronaut.role)} · </span>
+            {t('stage.missionDay', { n: astronaut.missionDay })}
           </span>
           {activity && (
-            <span className="shrink-0 rounded-md bg-white/[0.05] px-1.5 py-1 font-medium tracking-normal text-ink-300 normal-case ring-1 ring-white/[0.06]">
+            <span className="hidden shrink-0 rounded-md bg-white/[0.05] px-1.5 py-1 font-medium tracking-normal text-ink-300 normal-case ring-1 ring-white/[0.06] @min-[720px]/stage:inline">
               {ACTIVITY_LABEL[activity]}
             </span>
           )}
         </h2>
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <StatusPill status={status} size="lg" />
+          <IndicatorStrip astronautId={id} sentence={sentence} className="hidden @min-[480px]/stage:flex" />
+        </div>
+        <ProfileButton astronautId={id} callsign={astronaut.callsign} />
         <CheckInButton astronautId={id} variant="compact" />
       </header>
-      <div className="flex items-start gap-3 px-4 pt-1 pb-2">
-        <StatusPill status={status} size="lg" className="mt-px" />
-        <p
-          aria-live="polite"
-          className="line-clamp-2 max-w-[720px] text-[19px] leading-snug font-medium text-balance text-ink-100 [text-shadow:0_2px_12px_rgba(4,7,13,0.9)] short:text-[17px]"
-        >
-          {override ? (wearablePaused ? wearablePausedHeadline() : signalLostHeadline()) : (headline ? engineText('headline', headline) : t('stage.waiting'))}
-        </p>
-      </div>
+      <p aria-live="polite" className="sr-only">
+        {sentence}
+      </p>
     </div>
   )
 }
@@ -141,7 +150,7 @@ function RegionChip({
       type="button"
       aria-pressed={selected}
       aria-label={`${label.label}, ${label.system}. ${monitored ? meta.crewLabel : t('stage.notMonitored')}. ${summary ? engineText('regionSummary', summary) : ''}${structureName ? t('stage.selectedStructure', { name: structureName }) : ''}`}
-      title={`${label.label}: ${summary || label.description}${atlasCount ? t('stage.atlasCount', { n: atlasCount }) : ''}`}
+      title={`${label.label}: ${summary ? engineText('regionSummary', summary) : label.description}${atlasCount ? t('stage.atlasCount', { n: atlasCount }) : ''}`}
       onClick={() => {
         // With a structure selected inside this region the click widens the selection to the
         // whole region (selectRegion clears the structure) instead of toggling the region off.
@@ -214,15 +223,18 @@ export function CenterStage({ className }: { className?: string }) {
         <CriticalBanner overlay />
       </div>
       {/* Size container: on very wide stages the row is capped relative to its height so the chips stay close to the body. */}
-      <div className="relative min-h-0 flex-1 px-3 pb-3 [container-type:size]">
+      <div className="relative min-h-0 flex-1 px-3 pb-2 [container-type:size]">
         <div className="mx-auto flex h-full w-full max-w-[calc(105cqh+360px)] gap-2">
           <RegionColumn side="left" regions={LEFT_REGIONS} />
           <div data-tour="body" className="relative min-h-0 min-w-0 flex-1">
             <Stage3D />
-            <MissionHud className="top-1 left-1" />
           </div>
           <RegionColumn side="right" regions={RIGHT_REGIONS} />
         </div>
+        {/* Mission facts sit in the top right corner of the stage, beside the head and above the
+            right chip column: its width is capped by the space the body leaves free (the body is
+            about 0.4 times as wide as it is tall, centered), so it never covers the model. */}
+        <MissionHud className="top-0 right-3 hidden @min-[560px]/stage:block" style={{ maxWidth: 'min(260px, calc(50cqw - 24cqh - 8px))' }} />
       </div>
     </section>
   )

@@ -1,5 +1,6 @@
 /** Mission backdrops of the 3D stage (src/features/mission/backdrops). */
 export default {
+  'backdrop.hudOpen': 'Mission context: open what this profile changes',
   'backdrop.name.LAUNCH': 'Launch and ascent',
   'backdrop.name.ISS': 'ISS, low Earth orbit',
   'backdrop.name.MOON': 'Moon, Artemis class',

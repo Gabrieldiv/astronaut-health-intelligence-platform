@@ -47,7 +47,7 @@ features:
     details: "Dois datasets públicos do NASA OSDR (hemograma e painel metabólico da Inspiration4), com arquivo, SHA-256 e data de download, e o clima espacial do NASA DONKI como contexto de missão. Só contexto, nunca medidas da tripulação."
     link: /pt/data/dataset-catalog
   - title: Validação transparente
-    details: "375 testes web, 44 testes de backend e uma avaliação reproduzível do motor em 5 sementes sobre dados simulados. Cada número publicado aponta para o código, um arquivo gerado ou uma fonte citada."
+    details: "430 testes web, 44 testes de backend e uma avaliação reproduzível do motor em 5 sementes sobre dados simulados. Cada número publicado aponta para o código, um arquivo gerado ou uma fonte citada."
     link: /pt/validation/results
 ---
 

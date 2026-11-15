@@ -19,7 +19,7 @@ verified: 2026-11-14
 | --- | --- | --- |
 | Portal de documentação (este site) | GitHub Pages: https://lucaspalharesbarbosa.github.io/astronaut-health-intelligence-platform/ | <StatusBadge status="IMPLEMENTED" /> |
 | App da Astronaut Health Intelligence Platform | Só local (`npm run dev` ou `npm run preview`) | <StatusBadge status="NOT_IMPLEMENTED" /> como implantação pública |
-| Backend, API, banco | Não existem | <StatusBadge status="PLANNED" /> ([Arquitetura alvo](/pt/architecture/target-architecture)) |
+| Backend opcional (FastAPI) e banco | Só local (`uvicorn` ou `docker compose up --build`); sem implantação pública | <StatusBadge status="NOT_IMPLEMENTED" /> como implantação pública ([Backend e API](/pt/architecture/backend)) |
 
 O app gera um build estático (`npx vite build` em `frontend/web/dist`) que poderia ser servido por qualquer hospedagem estática, mas nenhuma implantação pública do app está configurada neste repositório.
 
@@ -94,12 +94,15 @@ O workflow `docs-deploy.yml`:
 
 Configuração necessária uma vez no repositório: **Settings > Pages > Build and deployment > Source = "GitHub Actions"**.
 
-Os workflows só rodam quando mudam os arquivos que eles verificam (filtros de caminho), com limite de 10 minutos e cancelamento de execuções superadas:
+Os workflows só rodam quando mudam os arquivos que eles verificam (filtros de caminho), com limite de tempo (10 minutos, 20 para os jobs ponta a ponta e de imagens de referência) e cancelamento de execuções superadas:
 
 | Workflow | Quando roda | O que faz |
 | --- | --- | --- |
-| `ci.yml` (app) | Push e pull request para `master` que alteram `frontend/web/**` | `npm ci`, `npm run lint` (oxlint: erro reprova, aviso só é reportado), `npx tsc -b`, `npm test`, `npx vite build` |
-| `docs-check.yml` (portal) | Pull request para `master` que altera `docs-site/**` | `npm ci`, `npm run docs:build` (falha com link interno quebrado) |
+| `ci.yml` (app) | Push para `master` e pull request para `master` ou `develop` que alteram `frontend/web/**` | `npm ci`, `npm run lint` (oxlint: erro reprova, aviso só é reportado), `npx tsc -b`, `npm test`, `npx vite build` |
+| `ci.yml` (ponta a ponta) | Os mesmos gatilhos | `npm ci`, instala o Chromium, `npm run e2e` (testes funcionais; os visuais são pulados no Linux) |
+| `backend.yml` (API) | Push para `master` e pull request para `master` ou `develop` que alteram `backend/**` | Instala os requisitos, `python -m pytest` |
+| `visual-baselines.yml` | Push em branch chamado `visual/**` (uso manual) | Roda os testes visuais com `E2E_VISUAL=1` e publica as capturas de Linux como artefato para commitar ([Testes](/pt/engineering/testing#end-to-end-and-visual-tests)) |
+| `docs-check.yml` (portal) | Pull request para `master` ou `develop` que altera `docs-site/**` | `npm ci`, `npm run docs:build` (falha com link interno quebrado) |
 | `docs-deploy.yml` | Push para `master` que altera `docs-site/**` | O mesmo build e, em seguida, a publicação; em `master` esse build é o portão, então o portal não é compilado duas vezes no mesmo push |
 
 Um push que muda só o README, a especificação, `docs/` ou outros arquivos que não são código não dispara nenhum workflow.

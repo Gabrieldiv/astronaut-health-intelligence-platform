@@ -37,4 +37,5 @@ export default {
   'crewview.systemsTitle': 'Your body systems',
   'crewview.systemsHint': 'Tap one to see it on the body',
   'crewview.statusAria': 'Your status',
+  'crewview.inRangeCount': '{n} of {total} health indicators normal',
 }

@@ -39,6 +39,8 @@ O repositório da Astronaut Health Intelligence Platform (AHI) tem quatro partes
     ├── index.html            página do app
     ├── anatomy-lab.html      página de desenvolvimento do corpo 3D
     ├── features-lab.html     página de desenvolvimento das telas v2
+    ├── playwright.config.ts  configuração do Playwright (npm run e2e)
+    ├── e2e/                  testes ponta a ponta do Playwright (demo-script.spec.ts) e visuais (visual.spec.ts)
     ├── public/
     │   └── anatomy/          atlas 3D: nove *.glb (um por sistema anatômico), manifest.json e
     │                         LICENSE.md (CC BY-SA 4.0). Gerado, nunca editado à mão
@@ -110,7 +112,7 @@ backend/
 
 ## Testes
 
-Os 38 arquivos de teste do app ficam ao lado do código que testam (`*.test.ts` em `src/`). O backend tem 6 arquivos pytest em `backend/tests/`. Lista e cobertura em [Estratégia de testes](/pt/engineering/testing).
+Os 48 arquivos de teste do app ficam ao lado do código que testam (`*.test.ts` em `src/`). O backend tem 6 arquivos pytest em `backend/tests/`. Lista e cobertura em [Estratégia de testes](/pt/engineering/testing).
 
 ## Portal de documentação
 

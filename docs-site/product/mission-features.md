@@ -23,9 +23,9 @@ Beyond the live dashboard, the Astronaut Health Intelligence Platform (AHI) has 
 
 ## Earth link and Mars delay
 
-Hazard addressed: **distance from Earth**. Click the Earth link control in the top bar (it shows the profile and the one way delay, for example "ISS 0.5 s") to open the Earth link drawer.
+Hazard addressed: **distance from Earth**. Click the Mission and Earth link control in the top bar (it shows the profile and the one way delay, for example "ISS 0.5 s") to open the Mission and Earth link panel, then choose its **Earth link** tab.
 
-![Earth link drawer with the Mars far profile, messages in transit and the on board first step](/screenshots/mars-comms.png)
+![Earth link with the Mars far profile, messages in transit and the on board first step](/screenshots/mars-comms.png)
 
 ### Profiles
 

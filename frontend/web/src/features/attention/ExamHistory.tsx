@@ -23,6 +23,7 @@ import { examChangeText } from '../anatomy/regions'
 import { formatFixed, t, useT } from '../../i18n'
 import { tx } from '../../i18n/rich'
 import { metricLabel } from '../../i18n/catalog'
+import { engineText } from '../../i18n/engineText'
 
 /** The ear is not part of the 3D atlas: said plainly wherever the ears region is shown. */
 export const EAR_NOT_MODELED_NOTE =
@@ -58,7 +59,7 @@ export function NextDue({ ex, className }: { ex: ExamRegionState; className?: st
       {nd ? (
         <span>
           {tx('attention.exam.nextDue', {
-            label: <span className="font-semibold text-ink-100">{nd.label}</span>,
+            label: <span className="font-semibold text-ink-100">{engineText('other', nd.label, nd.labelMsg)}</span>,
             date: fmtDate(nd.at),
             when: nd.at > now ? t('attention.exam.in', { duration: fmtDuration(nd.at - now) }) : t('attention.exam.now'),
           })}
@@ -87,7 +88,7 @@ function ResultCell({ r }: { r: ExamMeasureResult | undefined }) {
   const meta = STATUS_META[r.status]
   const color = r.status === 'LOW' ? '#5eead4' : meta.color
   return (
-    <td className="px-1.5 py-1 align-top" title={r.note}>
+    <td className="px-1.5 py-1 align-top" title={engineText('other', r.note, r.noteMsg)}>
       <span className="flex items-center gap-1.5">
         <StatusDot status={r.status} size={7} />
         <span className="tabular text-ink-100">{fmtValue(r.metric, r.value)}</span>
@@ -110,15 +111,16 @@ function SessionCard({ s, region }: { s: ExamSession; region: ExamRegionId }) {
   const findObs = (m: MetricCode, side: 'RIGHT' | 'LEFT') => s.observations.find((o) => o.metric_code === m && o.exam?.laterality === side)
   const eyes = region === 'eyes'
   const t = useT()
+  const label = engineText('other', s.label, s.labelMsg)
   const caption = s.isBaseline
-    ? t(eyes ? 'attention.exam.captionEye' : 'attention.exam.captionEar', { label: s.label })
-    : t(eyes ? 'attention.exam.captionEyeChange' : 'attention.exam.captionEarChange', { label: s.label })
+    ? t(eyes ? 'attention.exam.captionEye' : 'attention.exam.captionEar', { label })
+    : t(eyes ? 'attention.exam.captionEyeChange' : 'attention.exam.captionEarChange', { label })
   const devices = [...new Set(s.kinds.map((k) => EXAM_DEVICE[k].name))].join(', ')
   return (
     <li className={clsx('rounded-xl px-3 py-2.5 ring-1', s.isBaseline ? 'bg-white/[0.02] ring-white/[0.05]' : 'bg-white/[0.035] ring-white/[0.07]')}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-[13px] leading-tight font-semibold text-ink-100">{s.label}</div>
+          <div className="text-[13px] leading-tight font-semibold text-ink-100">{label}</div>
           <div className="tabular text-[11px] text-ink-500">
             {fmtDate(s.at)} · {dayLabel(s.flightDay)}
           </div>
@@ -250,7 +252,7 @@ export function ExamHistory({ astronautId, region }: { astronautId: string; regi
       <p className="flex items-start gap-1.5 text-[11px] leading-snug text-ink-500">
         <Info size={12} className="mt-px shrink-0" aria-hidden />
         <span>
-          {ex.method} {t('attention.exam.decisionSupport')}{region === 'ears' ? ` ${t('attention.exam.earNote')}` : ''}
+          {engineText('other', ex.method, ex.methodMsg)} {t('attention.exam.decisionSupport')}{region === 'ears' ? ` ${t('attention.exam.earNote')}` : ''}
         </span>
       </p>
     </section>

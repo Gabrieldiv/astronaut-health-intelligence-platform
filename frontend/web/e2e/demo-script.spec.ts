@@ -144,15 +144,18 @@ test.describe('Forecast horizons', () => {
 
 test.describe('Mission profiles', () => {
   test('switching to Mars transit shows the communication delay guidance', async ({ app: page }) => {
-    await page.getByRole('button', { name: /^Mission profile: ISS/ }).click()
-    const dialog = page.getByRole('dialog', { name: 'Mission context' })
+    await page.getByRole('button', { name: /^Mission and Earth link: ISS/ }).click()
+    const dialog = page.getByRole('dialog', { name: 'Mission and Earth link' })
+    await dialog.getByRole('tab', { name: /^Earth link/ }).click()
     await expect(dialog).toContainText('Ground support in near real time')
+    await dialog.getByRole('tab', { name: /^Mission/ }).click()
     await dialog.getByRole('radio', { name: /^Mars transit/ }).click()
     await expect(dialog.getByRole('radio', { name: /^Mars transit/ })).toHaveAttribute('aria-checked', 'true')
+    await dialog.getByRole('tab', { name: /^Earth link/ }).click()
     await expect(dialog).toContainText('Crew acts first, Earth reviews later')
+    await expect(dialog.getByRole('radiogroup', { name: 'Communication profile' }).getByRole('radio', { checked: true })).toHaveAccessibleName(/^Mars \(farthest\)/)
     await dialog.getByRole('button', { name: 'Close' }).click()
-    await expect(page.getByRole('button', { name: /^Mission profile: Mars transit/ })).toBeVisible()
-    await expect(page.getByRole('button', { name: /^Earth link: Mars/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Mission and Earth link: Mars transit\. Earth link Mars far,/ })).toBeVisible()
   })
 })
 
@@ -204,12 +207,30 @@ test.describe('Keyboard navigation of the 3D body', () => {
 })
 
 test.describe('Ask AHI', () => {
-  test('opens and shows the offline state when there is no backend', async ({ app: page }) => {
-    await page.getByRole('button', { name: 'Ask AHI' }).click()
+  test('opens from the top bar and shows the offline state when there is no backend', async ({ app: page }) => {
+    // The launcher lives in the top bar (it never floats over the dashboard).
+    const launcher = page.locator('header[data-collapse-level]').getByRole('button', { name: 'Ask AHI' })
+    await launcher.click()
     const offline = page.getByRole('status').filter({ hasText: 'Assistant offline' })
     await expect(offline).toBeVisible()
     await expect(offline).toContainText('The rest of AHI keeps working')
     await expect(offline.getByRole('button', { name: 'Retry' })).toBeVisible()
+  })
+
+  test('is a drawer the user opens and closes: Esc closes it and focus returns to the launcher', async ({ app: page }) => {
+    const launcher = page.locator('header[data-collapse-level]').getByRole('button', { name: 'Ask AHI' })
+    const drawer = page.getByRole('dialog', { name: 'Ask AHI' })
+    await expect(drawer).toHaveCount(0)
+    await launcher.click()
+    await expect(drawer).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(drawer).toHaveCount(0)
+    await expect(launcher).toBeFocused()
+    // Keyboard shortcut.
+    await page.keyboard.press('k')
+    await expect(drawer).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(drawer).toHaveCount(0)
   })
 })
 
@@ -241,5 +262,40 @@ test.describe('Language', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
     await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeAttached()
     await expect(page.getByRole('button', { name: 'Scenario: Nominal day. Choose a demo scenario' })).toBeVisible()
+  })
+})
+
+test.describe('Crew profile', () => {
+  test('opens the profile of ORION from the crew card, shows every section, switches to LYRA and closes with Esc', async ({ app: page }) => {
+    const opener = page.getByRole('navigation', { name: 'Crew' }).getByRole('button', { name: 'Open profile of ORION' })
+    await opener.click()
+
+    const orion = page.getByRole('dialog', { name: 'Crew profile: ORION' })
+    await expect(orion).toBeVisible()
+    for (const heading of ['Identity', 'Today', 'Personal baselines', 'Wearables and devices', 'Latest check-in', 'Eye and hearing exams', 'Radiation', 'Recent events']) {
+      await expect(orion.getByRole('heading', { name: heading, exact: true })).toBeVisible()
+    }
+    // Pseudonymized identity, the simulated note and the overall status (nominal day).
+    await expect(orion).toContainText('AST-01')
+    await expect(orion).toContainText('Simulated data, pseudonymized')
+    await expect(orion).toContainText('All good')
+
+    // The switcher moves to another astronaut without closing the dialog.
+    await orion.getByRole('button', { name: 'LYRA' }).click()
+    const lyra = page.getByRole('dialog', { name: 'Crew profile: LYRA' })
+    await expect(lyra).toBeVisible()
+    await expect(lyra).toContainText('AST-02')
+    await expect(lyra.getByRole('button', { name: 'LYRA' })).toHaveAttribute('aria-pressed', 'true')
+
+    // Esc closes it and focus goes back to the button that opened it.
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(opener).toBeFocused()
+
+    // Keyboard shortcut I toggles the profile of the selected astronaut (P is presentation mode).
+    await page.keyboard.press('i')
+    await expect(page.getByRole('dialog', { name: 'Crew profile: ORION' })).toBeVisible()
+    await page.keyboard.press('i')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 })

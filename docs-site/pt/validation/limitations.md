@@ -71,9 +71,10 @@ Esta página reúne o que a Astronaut Health Intelligence Platform (AHI) **não 
 | Limitação | Consequência | Status do caminho |
 | --- | --- | --- |
 | O motor roda no navegador; o backend guarda observações mas ainda não roda o motor | O estado do app some ao recarregar | <StatusBadge status="PLANNED" /> porte do motor para Python ([Roadmap](/pt/resources/roadmap)) |
-| Sem autenticação nem perfis de acesso | Qualquer pessoa com a página ou a API vê tudo | <StatusBadge status="PLANNED" /> |
+| **Sem autenticação e sem controle de acesso por papel (RBAC).** A demo não tem login e a API aceita qualquer requisição | Qualquer pessoa com a página ou a API vê todos os astronautas. Uma implantação real precisa de SSO (OIDC) e de RBAC aplicado no servidor, no backend FastAPI, com auditoria de acesso | <StatusBadge status="PLANNED" /> ([Roadmap](/pt/resources/roadmap#access-profiles)) |
 | Auditoria só em memória | Some ao recarregar | <StatusBadge status="PLANNED" /> |
-| Sem testes de componente nem de pixels da renderização 3D (a camada de dados e a lógica do visualizador são testadas) | Regressões visuais dependem de checagem manual ou de testes no navegador | <StatusBadge status="PLANNED" /> |
+| Sem testes de componente React nem de pixels da renderização 3D (o canvas é mascarado nos testes visuais; a camada de dados e a lógica do visualizador são testadas). Testes ponta a ponta do Playwright cobrem o roteiro da demo e testes visuais cobrem os painéis | Regressões visuais do corpo 3D dependem de checagem manual | <StatusBadge status="PLANNED" /> |
+| Os testes visuais do Playwright ainda não têm imagens de referência commitadas (nem Windows, nem Linux), então são pulados no CI; os testes funcionais ponta a ponta rodam no CI | Regressões visuais dos painéis não são checadas automaticamente até as referências serem geradas e commitadas | <StatusBadge status="PLANNED" /> ([Testes](/pt/engineering/testing#end-to-end-and-visual-tests)) |
 | Desempenho observado em um único notebook | Não é benchmark; outras máquinas, navegadores e telas não foram medidos | [Resultados](/pt/validation/results#desempenho-observado) |
 | App sem implantação pública | Avaliadores precisam rodar localmente | Não planejado no repositório |
 

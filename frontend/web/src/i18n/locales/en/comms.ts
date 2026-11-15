@@ -1,4 +1,4 @@
-/** Earth link: top bar indicator, drawer, delay wording (src/features/comms). */
+/** Earth link section of the Mission and Earth link panel, delay wording (src/features/comms). */
 export default {
   'comms.profileShort.ISS': 'ISS',
   'comms.profileShort.MOON': 'Moon',
@@ -12,8 +12,6 @@ export default {
   'comms.unit.min': '{n} min',
   'comms.unit.minS': '{m} min {s} s',
   'comms.unit.hMin': '{h} h {m} min',
-  'comms.meaning.near': 'A question to Earth and its answer take about {delay}. Mission Control can support decisions in near real time.',
-  'comms.meaning.far': 'A question to Earth and its answer take at least {delay}. On-board steps come first; use the ground for review, not for urgent decisions.',
 
   'comms.fromEarth': 'From Earth',
   'comms.toEarth': 'To Earth',
@@ -30,7 +28,6 @@ export default {
   'comms.queued.failed': 'The Earth link did not accept the message in this build. Try again later.',
   'comms.title': 'Earth link',
   'comms.footer': 'Simulated link. Delays are approximate light time; ground replies are simulated. Decision support only.',
-  'comms.distance': 'Distance from Earth',
   'comms.profileAria': 'Communication profile',
   'comms.oneWayRoundTrip': '{one} one way · {round} round trip',
   'comms.sendToGround': 'Send to ground',
@@ -40,8 +37,4 @@ export default {
   'comms.nothingInTransit': 'Nothing on the way right now.',
   'comms.delivered': 'Delivered',
   'comms.noMessages': 'No messages yet. Health packets and consult requests you send appear here.',
-  'comms.indicatorAria': 'Earth link: {profile}, {delay} one way delay',
-  'comms.indicatorAriaTransit_one': 'Earth link: {profile}, {delay} one way delay, {n} message in transit',
-  'comms.indicatorAriaTransit_other': 'Earth link: {profile}, {delay} one way delay, {n} messages in transit',
-  'comms.indicatorTitle': 'Earth link: delay and messages to Mission Control',
 }

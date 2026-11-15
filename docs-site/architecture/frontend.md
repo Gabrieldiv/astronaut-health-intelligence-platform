@@ -42,7 +42,7 @@ The reading order of the Ground view is deliberate: who (crew) > what (body and 
 | `features/timeline` | Status lanes and event markers |
 | `features/vitals` | Live vitals, cabin, devices indicator |
 | `features/alerts` | Alerts drawer, banner support, optional chime |
-| `features/comms` | Earth link drawer and delay phrases |
+| `features/comms` | Earth link messages and delay phrases (shown in the Earth link tab of the Mission and Earth link panel) |
 | `features/checkin` | Daily check-in dialog |
 | `features/crewview` | Crew view |
 | `features/mission` | Mission overview |

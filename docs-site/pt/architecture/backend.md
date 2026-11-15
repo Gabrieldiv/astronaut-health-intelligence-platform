@@ -9,11 +9,14 @@ code:
   - backend/app/modules
   - backend/openapi.json
   - frontend/web/src/lib/api/client.ts
+  - frontend/web/src/lib/api/connectivity.ts
+  - frontend/web/src/features/connectivity/index.tsx
   - frontend/web/src/types/api.gen.ts
   - docker-compose.yml
 tests:
   - backend/tests
   - frontend/web/src/lib/api/client.test.ts
+  - frontend/web/src/lib/api/connectivity.test.ts
 verified: 2026-11-15
 ---
 
@@ -99,6 +102,25 @@ Os dois são contexto de missão `REAL_PUBLIC`, não medidas de astronautas ([Fo
 | `VITE_API_URL=off` | Nunca chama uma API: para hospedagem estática (por exemplo GitHub Pages) |
 
 Offline, o motor, a simulação e o visualizador 3D funcionam exatamente como online. O clima espacial usa o snapshot embutido; a busca no OSDR e o assistente aparecem como indisponíveis.
+
+### Chave online e offline {#online-and-offline-switch}
+
+A pessoa escolhe como o app usa a API. A chave é um controle segmentado em **"Data and model"**, aba de contexto da NASA; um pequeno chip na barra superior mostra o resultado e abre essa aba.
+
+| Modo | Comportamento |
+| --- | --- |
+| **"Automatic"** (padrão) | Consulta a API uma vez; usa a API se ela responder, senão volta para a demo offline |
+| **"Online"** | Sempre usa a API. Se ela não responde, o painel diz "The AHI API is unreachable", mostra o comando que a inicia (`uvicorn app.main:create_app --factory --port 8000`, dentro de `backend/`) com um botão de copiar, e verifica de novo a cada 30 s. Todo chamador mantém seu caminho offline, então o app continua utilizável |
+| **"Offline"** | Nunca abre uma conexão de rede: snapshot DONKI embutido, assistente desligado, lista de estudos do OSDR escondida |
+
+| Chip | Quando |
+| --- | --- |
+| "Offline demo" | Modo Offline, ou Automatic sem resposta da API |
+| "Live NASA data" | A API respondeu |
+| "API unreachable" | Modo Online e a API não responde |
+| "Checking connection" | Uma consulta está em andamento |
+
+`VITE_API_URL=off` vence a escolha guardada: esse build fica sempre offline e o painel diz isso. A escolha fica guardada no navegador (`ahi.connectivity.v1`); se o armazenamento não estiver disponível (por exemplo numa janela anônima) ela vale só para a sessão. As regras (`parseMode`, `resolveMode`, `chipState`) são funções puras cobertas por `connectivity.test.ts`.
 
 ## Tipos gerados {#generated-types}
 

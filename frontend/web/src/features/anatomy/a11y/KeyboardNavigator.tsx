@@ -25,12 +25,14 @@ export interface KeyboardNavigatorProps {
   ls: number
   /** Space kept free at the bottom for the controls (px). */
   bottom: number
+  /** Told when the keyboard focus enters or leaves (the viewer keeps the body clear of the hint band). */
+  onFocusChange?: (focused: boolean) => void
 }
 
 /** Region targets carry the English catalog label (keyboardNav.ts); show them in the current language. */
 const targetLabel = (tg: NavTarget) => (tg.kind === 'region' ? regionLabel(tg.region) : tg.label)
 
-export function KeyboardNavigator({ manifest, store, statuses, ls, bottom }: KeyboardNavigatorProps) {
+export function KeyboardNavigator({ manifest, store, statuses, ls, bottom, onFocusChange }: KeyboardNavigatorProps) {
   const t = useT()
   const HINT = t('anatomy.nav.hint')
   const model = useMemo(() => buildNavModel(manifest), [manifest])
@@ -75,10 +77,12 @@ export function KeyboardNavigator({ manifest, store, statuses, ls, bottom }: Key
 
   const onFocus = () => {
     setFocused(true)
+    onFocusChange?.(true)
     go(cursor ?? cursorOf(model, selectedRegion, selectedStructureId) ?? NAV_START)
   }
   const onBlur = () => {
     setFocused(false)
+    onFocusChange?.(false)
     highlight(null)
   }
 

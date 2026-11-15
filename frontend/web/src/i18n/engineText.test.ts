@@ -1,12 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import type { EngineMsg, ScenarioId } from '../types/domain'
+import type { EngineMsg, MetricCode, ScenarioId } from '../types/domain'
 import { HealthEngine } from '../engine/engine'
 import { MIN_MS } from '../engine/text'
 import { msgForEnglish } from '../engine/msg'
 import { assessSpaceWeather } from '../engine/missions/spaceWeather'
-import { EXAM_RULE_TITLES } from '../engine/exams/assess'
+import { EXAM_RULE_TITLES, assessMeasure } from '../engine/exams/assess'
 import type { SpaceWeatherEvent, SpaceWeatherSnapshot } from '../types/nasa'
-import { alertDetail, alertTitle, engineText, recRationale, recTitle, renderEngineMsg } from './engineText'
+import { HAZARD_LABEL, MISSION_PROFILE_ORDER, missionProfile } from '../engine/missions/profiles'
+import { LOCAL_HAZARD_LABEL, alertDetail, alertTitle, engineText, localMissionProfile, recRationale, recTitle, renderEngineMsg } from './engineText'
 import { setLanguage, type Lang } from '.'
 import { en } from './locales/en'
 
@@ -42,6 +43,23 @@ function collect(): Sample[] {
         if (h.risk.headlineMsg) out.push({ english: h.risk.headline, msg: h.risk.headlineMsg, where: `${r.scenarioId} headline` })
         for (const f of h.risk.contributing_factors) if (f.msg) out.push({ english: f.label, msg: f.msg, where: `${r.scenarioId} factor` })
         for (const reg of Object.values(h.regions)) if (reg.summaryMsg) out.push({ english: reg.summary, msg: reg.summaryMsg, where: `${r.scenarioId} region` })
+        // Exams (notes, session labels, summaries, method) and forecast notes.
+        for (const ex of Object.values(h.exams ?? {})) {
+          if (ex.summaryMsg) out.push({ english: ex.summary, msg: ex.summaryMsg, where: `${r.scenarioId} exam summary` })
+          if (ex.methodMsg) out.push({ english: ex.method, msg: ex.methodMsg, where: `${r.scenarioId} exam method` })
+          if (ex.nextDue?.labelMsg) out.push({ english: ex.nextDue.label, msg: ex.nextDue.labelMsg, where: `${r.scenarioId} exam next` })
+          for (const s of [...ex.baselineSessions, ...ex.sessions]) {
+            if (s.labelMsg) out.push({ english: s.label, msg: s.labelMsg, where: `${r.scenarioId} exam label` })
+            for (const res of s.results) if (res.noteMsg) out.push({ english: res.note, msg: res.noteMsg, where: `${r.scenarioId} exam note` })
+          }
+        }
+        for (const p0 of Object.values(h.predictions)) {
+          for (const p of [p0, ...Object.values(p0.byHorizon ?? {})]) {
+            if (p.methodMsg) out.push({ english: p.method, msg: p.methodMsg, where: `${r.scenarioId} forecast method` })
+            if (p.intervalLabelMsg) out.push({ english: p.intervalLabel, msg: p.intervalLabelMsg, where: `${r.scenarioId} forecast interval` })
+            if (p.disclaimerMsg) out.push({ english: p.disclaimer, msg: p.disclaimerMsg, where: `${r.scenarioId} forecast note` })
+          }
+        }
         // Sentences localized through the registry only (no field on the type).
         for (const english of [...h.risk.limitations, h.risk.data_window, h.multivariate?.explanation ?? '']) {
           const m = msgForEnglish(english)
@@ -57,6 +75,40 @@ function collect(): Sample[] {
       if (rec.titleMsg) out.push({ english: rec.title, msg: rec.titleMsg, where: `${r.scenarioId} rec title` })
       if (rec.rationaleMsg) out.push({ english: rec.rationale, msg: rec.rationaleMsg, where: `${r.scenarioId} rec rationale` })
     }
+  }
+  // Every exam measure branch (eyes and ears, both sides, missing values and baselines).
+  const cases: [MetricCode, number | null, number | null][] = [
+    ['RETINAL_THICKNESS', 330, 300], ['RETINAL_THICKNESS', 302, 300], ['CHOROIDAL_FOLDS', 1, 0], ['CHOROIDAL_FOLDS', 1, 1], ['CHOROIDAL_FOLDS', 0, 0],
+    ['OPTIC_NERVE_SHEATH_DIAMETER', 5.9, 5.2], ['OPTIC_NERVE_SHEATH_DIAMETER', 5.3, 5.2], ['VISUAL_ACUITY', 0.2, 0], ['VISUAL_ACUITY', 0.05, 0],
+    ['HEARING_THRESHOLD_HIGH', 45, 10], ['HEARING_THRESHOLD_HIGH', 25, 10], ['HEARING_THRESHOLD_HIGH', 12, 10],
+    ['HEARING_THRESHOLD_LOW', 45, 10], ['HEARING_THRESHOLD_LOW', 25, 10], ['HEARING_THRESHOLD_LOW', 8, 10],
+    ['RETINAL_THICKNESS', null, 300], ['HEARING_THRESHOLD_LOW', 20, null],
+  ]
+  for (const side of ['RIGHT', 'LEFT'] as const)
+    for (const [metric, value, baseline] of cases) {
+      const r = assessMeasure(metric, side, value, baseline)
+      if (r.noteMsg) out.push({ english: r.note, msg: r.noteMsg, where: `exam measure ${metric}` })
+    }
+  // Device paused, then resumed, by an operator.
+  {
+    const e = new HealthEngine({ scenarioId: 'NOMINAL' })
+    const step = (min: number) => {
+      const end = e.simTime + min * MIN_MS
+      while (e.simTime < end) {
+        e.advanceTo(Math.min(end, e.simTime + MIN_MS))
+        e.evaluate()
+        for (const h of Object.values(e.health))
+          for (const m of Object.values(h.metrics)) {
+            const english = m?.explanation
+            const found = english ? msgForEnglish(english) : undefined
+            if (english && found && /^(pause|resume)\./.test(found.id)) out.push({ english, msg: found, where: 'device pause' })
+          }
+      }
+    }
+    e.setDevicePaused('DEV-BIO-AST-01', true)
+    step(5)
+    e.setDevicePaused('DEV-BIO-AST-01', false)
+    step(1)
   }
   // Space weather advisories for every branch.
   const ev = (kind: SpaceWeatherEvent['kind'], extra: Partial<SpaceWeatherEvent> = {}): SpaceWeatherEvent =>
@@ -96,6 +148,9 @@ describe('engine text', () => {
   it('collects a broad sample of engine sentences', () => {
     const ids = new Set(samples.map((s) => s.msg.id))
     expect(samples.length).toBeGreaterThan(40)
+    for (const id of ['exam.method.eyes', 'exam.method.ears', 'exam.note.retina.over', 'exam.note.retina.within', 'exam.label.eyeWeek', 'exam.label.pre.eyes.0', 'exam.sum.flagged.eyes', 'exam.sum.withNoise', 'exam.hit.eyes', 'forecast.methodWith', 'forecast.disclaimer', 'forecast.disclaimerLong', 'forecast.historyShort', 'forecast.interval', 'pause.label', 'resume.label']) {
+      expect(ids, id).toContain(id)
+    }
     for (const id of ['head.normal', 'head.so', 'alert.titleFor', 'alert.detail', 'recTitle', 'rec.rationale', 'rec.onboardRationale', 'rec.rationaleCtx', 'limit.simulated', 'dataWindow', 'mv.typical', 'sw.noData.title', 'sw.quiet.body', 'sw.shelter.bodyMoon', 'sw.shelter.bodyDeep', 'sw.launch.body', 'sw.monitor.body']) {
       expect(ids, id).toContain(id)
     }
@@ -149,6 +204,27 @@ describe('engine text', () => {
       })
     })
   }
+
+  it('localizes the mission profiles and hazard names, and keeps English as the engine object', async () => {
+    for (const id of MISSION_PROFILE_ORDER) expect(localMissionProfile(id)).toBe(missionProfile(id))
+    expect(LOCAL_HAZARD_LABEL.RADIATION.label).toBe(HAZARD_LABEL.RADIATION.label)
+    await setLanguage('pt-BR', { persist: false })
+    try {
+      for (const id of MISSION_PROFILE_ORDER) {
+        const en = missionProfile(id)
+        const p = localMissionProfile(id)
+        expect(p.id).toBe(en.id)
+        expect(p.radiation.doseEquivalentMSvPerDay).toEqual(en.radiation.doseEquivalentMSvPerDay)
+        expect(p.summary).not.toBe(en.summary)
+        expect(p.bodyEffects.length).toBe(en.bodyEffects.length)
+        for (const [i, h] of p.hazards.entries()) expect(h.why, `${id} ${h.id}`).not.toBe(en.hazards[i]!.why)
+        for (const s of [p.label, p.summary, p.autonomy, ...p.bodyEffects, ...p.countermeasures]) expect(DASHES.test(s)).toBe(false)
+      }
+      expect(LOCAL_HAZARD_LABEL.RADIATION.label).toBe('Radiação espacial')
+    } finally {
+      await setLanguage('en', { persist: false })
+    }
+  })
 
   it('keeps the exam rule titles identical to the engine English', () => {
     for (const [id, title] of Object.entries(EXAM_RULE_TITLES)) expect(en[`eng.rule.${id}` as keyof typeof en], id).toBe(title)

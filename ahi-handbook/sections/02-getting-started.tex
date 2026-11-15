@@ -1,0 +1,15 @@
+\section{Getting Started}
+\label{sec:getting-started}
+
+Everything runs in the browser, so after installation the demo works offline. You need Node.js 20+ and a desktop browser with WebGL; the best screen is 1440$\times$900 or larger.
+
+{\footnotesize
+\begin{verbatim}
+git clone https://github.com/lucaspalharesbarbosa/astronaut-health-intelligence-platform.git
+cd astronaut-health-intelligence-platform/frontend/web
+npm install
+npm run dev          # then open http://localhost:5173
+\end{verbatim}
+}
+
+\textbf{Optional backend:} inside \texttt{backend}, install \texttt{requirements-dev.txt} (Python 3.12), copy \texttt{.env.example} to \texttt{.env} and run \verb|uvicorn app.main:create_app --factory --port 8000|. It adds live NASA DONKI space weather \cite{nasa_donki} and, with a Claude API key \cite{anthropic_claude_api}, the Ask AHI assistant.

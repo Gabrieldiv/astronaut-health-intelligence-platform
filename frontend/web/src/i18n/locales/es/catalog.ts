@@ -120,8 +120,8 @@ const m: Record<keyof typeof en, string> = {
 
   'scenario.NOMINAL.name': 'Día nominal',
   'scenario.NOMINAL.description': 'Línea base estable. Toda la tripulación dentro de sus rangos normales personales.',
-  'scenario.PROGRESSIVE_FATIGUE.name': 'Cansancio progresivo',
-  'scenario.PROGRESSIVE_FATIGUE.description': 'El sueño baja durante varios días, la VFC cae y la frecuencia cardíaca en reposo sube poco a poco.',
+  'scenario.PROGRESSIVE_FATIGUE.name': 'Fatiga progresiva',
+  'scenario.PROGRESSIVE_FATIGUE.description': 'El sueño baja durante varios días, la variabilidad cardíaca cae y la frecuencia cardíaca en reposo sube poco a poco.',
   'scenario.ENVIRONMENTAL_CO2.name': 'Aumento de CO₂ en la cabina',
   'scenario.ENVIRONMENTAL_CO2.description': 'El deterioro del depurador de CO₂ eleva el CO₂ de la cabina. La frecuencia respiratoria y el tiempo de reacción de la tripulación cambian.',
   'scenario.PERFORMANCE_DECLINE.name': 'Caída del rendimiento en el ejercicio',
@@ -134,7 +134,7 @@ const m: Record<keyof typeof en, string> = {
   'scenario.SANS_PROGRESSION.description': 'Los exámenes de ojos simulados muestran un cambio gradual frente a la línea base antes del vuelo: retina más gruesa, vaina del nervio óptico más ancha y después pliegues nuevos.',
 
   'commProfile.ISS.label': 'ISS (órbita terrestre baja)',
-  'commProfile.ISS.description': 'Enlace casi en tiempo real con Control de Misión.',
+  'commProfile.ISS.description': 'Enlace casi en tiempo real con el Control de Misión.',
   'commProfile.MOON.label': 'Luna',
   'commProfile.MOON.description': 'Unos 1,3 s en cada sentido. El apoyo desde tierra sigue siendo práctico.',
   'commProfile.MARS_NEAR.label': 'Marte (más cerca)',

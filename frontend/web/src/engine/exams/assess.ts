@@ -16,9 +16,10 @@
  * Missing data is never normal: no baseline, or no value, gives NO_DATA with a plain reason.
  * Nothing here is a diagnosis: a flag means "review with the flight surgeon".
  */
-import type { ExamMeasureResult, HealthObservation, Laterality, MetricCode, Status } from '../../types/domain'
+import type { EngineParam, ExamMeasureResult, HealthObservation, Laterality, MetricCode, Status } from '../../types/domain'
 import { worstStatus } from '../../lib/status'
 import { EXAMS } from '../config'
+import { msg, said } from '../msg'
 
 const EPS = 1e-9
 
@@ -30,41 +31,53 @@ export const EXAM_RULE_TITLES: Record<string, string> = {
 
 const sideWord = (l: Laterality) => (l === 'RIGHT' ? 'right' : l === 'LEFT' ? 'left' : 'both')
 const signed = (v: number, decimals: number) => `${v > 0 ? '+' : v < 0 ? '-' : ''}${Math.abs(v).toFixed(decimals)}`
+const signedP = (v: number, decimals: number): EngineParam => ({ num: v, decimals, sign: true })
 
 /** Status and plain note of one measure versus its baseline. */
 export function assessMeasure(metric: MetricCode, laterality: Laterality, value: number | null, baseline: number | null): ExamMeasureResult {
   const base = { metric, laterality, value, baseline, change: null as number | null }
-  const eye = `${sideWord(laterality)} ${metric === 'HEARING_THRESHOLD_HIGH' || metric === 'HEARING_THRESHOLD_LOW' ? 'ear' : 'eye'}`
-  if (value === null) return { ...base, status: 'NO_DATA', note: `No value recorded for the ${eye}. Missing data is never treated as normal.`, ruleId: null }
-  if (baseline === null) return { ...base, status: 'NO_DATA', note: `No pre-flight baseline on file for the ${eye}, so the change cannot be judged.`, ruleId: null }
+  const organ = metric === 'HEARING_THRESHOLD_HIGH' || metric === 'HEARING_THRESHOLD_LOW' ? 'ear' : 'eye'
+  const eye = `${sideWord(laterality)} ${organ}`
+  // Structured note (engine/msg.ts): `{eye}` is the side and organ ("right eye", "left ear").
+  const eyeMsg = msg(`exam.where.${laterality}.${organ}`)
+  const note = (english: string, id: string, params: Record<string, EngineParam> = {}) => {
+    const m = msg(`exam.note.${id}`, { eye: eyeMsg, ...params })
+    return { note: said(english, m), noteMsg: m }
+  }
+  if (value === null) return { ...base, status: 'NO_DATA', ...note(`No value recorded for the ${eye}. Missing data is never treated as normal.`, 'noValue'), ruleId: null }
+  if (baseline === null) return { ...base, status: 'NO_DATA', ...note(`No pre-flight baseline on file for the ${eye}, so the change cannot be judged.`, 'noBaseline'), ruleId: null }
   const change = Math.round((value - baseline) * 1000) / 1000
   const r = { ...base, change }
   switch (metric) {
     case 'RETINAL_THICKNESS': {
       const lim = EXAMS.eyes.retinalThicknessChangeUm
-      if (change > lim + EPS) return { ...r, status: 'MODERATE', note: `${signed(change, 0)} µm versus before flight (${eye}): more than the usual test to test variation of ${lim} µm`, ruleId: 'R-SANS-01' }
-      return { ...r, status: 'LOW', note: `${signed(change, 0)} µm versus before flight (${eye}): within the usual test to test variation`, ruleId: null }
+      if (change > lim + EPS) return { ...r, status: 'MODERATE', ...note(`${signed(change, 0)} µm versus before flight (${eye}): more than the usual test to test variation of ${lim} µm`, 'retina.over', { change: signedP(change, 0), lim }), ruleId: 'R-SANS-01' }
+      return { ...r, status: 'LOW', ...note(`${signed(change, 0)} µm versus before flight (${eye}): within the usual test to test variation`, 'retina.within', { change: signedP(change, 0) }), ruleId: null }
     }
     case 'CHOROIDAL_FOLDS':
-      if (value >= 1 && baseline < 1) return { ...r, status: 'MODERATE', note: `New folds at the back of the ${eye} since before flight`, ruleId: 'R-SANS-01' }
-      if (value >= 1) return { ...r, status: 'LOW', note: `Folds already present before flight in the ${eye}, unchanged`, ruleId: null }
-      return { ...r, status: 'LOW', note: `No folds seen in the ${eye}`, ruleId: null }
+      if (value >= 1 && baseline < 1) return { ...r, status: 'MODERATE', ...note(`New folds at the back of the ${eye} since before flight`, 'folds.new'), ruleId: 'R-SANS-01' }
+      if (value >= 1) return { ...r, status: 'LOW', ...note(`Folds already present before flight in the ${eye}, unchanged`, 'folds.same'), ruleId: null }
+      return { ...r, status: 'LOW', ...note(`No folds seen in the ${eye}`, 'folds.none'), ruleId: null }
     case 'OPTIC_NERVE_SHEATH_DIAMETER': {
       const lim = EXAMS.eyes.onsdChangeMm
-      if (change >= lim - EPS) return { ...r, status: 'MODERATE', note: `${signed(change, 2)} mm versus before flight (${eye}): wider than the demo change level of ${lim} mm`, ruleId: 'R-SANS-01' }
-      return { ...r, status: 'LOW', note: `${signed(change, 2)} mm versus before flight (${eye})`, ruleId: null }
+      if (change >= lim - EPS) return { ...r, status: 'MODERATE', ...note(`${signed(change, 2)} mm versus before flight (${eye}): wider than the demo change level of ${lim} mm`, 'onsd.over', { change: signedP(change, 2), lim }), ruleId: 'R-SANS-01' }
+      return { ...r, status: 'LOW', ...note(`${signed(change, 2)} mm versus before flight (${eye})`, 'onsd', { change: signedP(change, 2) }), ruleId: null }
     }
     case 'VISUAL_ACUITY': {
       const lim = EXAMS.eyes.acuityChangeLogMar
-      if (change >= lim - EPS) return { ...r, status: 'MODERATE', note: `${signed(change, 2)} logMAR versus before flight (${eye}): about ${Math.round(change / 0.1)} chart line(s) less sharp`, ruleId: 'R-SANS-01' }
-      return { ...r, status: 'LOW', note: `${signed(change, 2)} logMAR versus before flight (${eye})`, ruleId: null }
+      const lines = Math.round(change / 0.1)
+      if (change >= lim - EPS) return { ...r, status: 'MODERATE', ...note(`${signed(change, 2)} logMAR versus before flight (${eye}): about ${lines} chart line(s) less sharp`, 'acuity.over', { change: signedP(change, 2), n: lines }), ruleId: 'R-SANS-01' }
+      return { ...r, status: 'LOW', ...note(`${signed(change, 2)} logMAR versus before flight (${eye})`, 'acuity', { change: signedP(change, 2) }), ruleId: null }
     }
     case 'HEARING_THRESHOLD_HIGH':
     case 'HEARING_THRESHOLD_LOW': {
-      const pitch = metric === 'HEARING_THRESHOLD_HIGH' ? 'high pitch' : 'low pitch'
-      if (change >= EXAMS.ears.largeShiftDb - EPS) return { ...r, status: 'HIGH', note: `${pitch} hearing ${signed(change, 0)} dB versus before flight (${eye}): a large shift`, ruleId: 'R-HEAR-01' }
-      if (change > EXAMS.ears.shiftDb + EPS) return { ...r, status: 'MODERATE', note: `${pitch} hearing ${signed(change, 0)} dB versus before flight (${eye}): more than the ${EXAMS.ears.shiftDb} dB shift criterion`, ruleId: 'R-HEAR-01' }
-      return { ...r, status: 'LOW', note: `${pitch} hearing ${signed(change, 0)} dB versus before flight (${eye})`, ruleId: null }
+      const high = metric === 'HEARING_THRESHOLD_HIGH'
+      const pitch = high ? 'high pitch' : 'low pitch'
+      const p = high ? 'high' : 'low'
+      const ch = { change: signedP(change, 0) }
+      if (change >= EXAMS.ears.largeShiftDb - EPS) return { ...r, status: 'HIGH', ...note(`${pitch} hearing ${signed(change, 0)} dB versus before flight (${eye}): a large shift`, `hear.${p}.large`, ch), ruleId: 'R-HEAR-01' }
+      if (change > EXAMS.ears.shiftDb + EPS) return { ...r, status: 'MODERATE', ...note(`${pitch} hearing ${signed(change, 0)} dB versus before flight (${eye}): more than the ${EXAMS.ears.shiftDb} dB shift criterion`, `hear.${p}.over`, { ...ch, lim: EXAMS.ears.shiftDb }), ruleId: 'R-HEAR-01' }
+      return { ...r, status: 'LOW', ...note(`${pitch} hearing ${signed(change, 0)} dB versus before flight (${eye})`, `hear.${p}`, ch), ruleId: null }
     }
     default:
       return { ...r, status: 'LOW', note: '', ruleId: null }

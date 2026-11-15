@@ -202,6 +202,8 @@ export interface ExamMeasureResult {
   status: Status
   /** Plain language, e.g. "12 µm thicker than before flight (within the usual test to test variation)". */
   note: string
+  /** Additive: structured form of `note` for translation (engine/msg.ts). */
+  noteMsg?: EngineMsg
   /** Rule that set the status, if any (e.g. "R-SANS-01"). */
   ruleId: string | null
 }
@@ -213,6 +215,8 @@ export interface ExamSession {
   region: ExamRegionId
   kinds: ExamKind[]
   label: string
+  /** Additive: structured form of `label` for translation. */
+  labelMsg?: EngineMsg
   phase: MissionPhase
   /** Sim epoch ms. */
   at: number
@@ -248,16 +252,20 @@ export interface ExamRegionState {
   status: Status
   /** Plain language summary. "No exam yet" is never "normal". */
   summary: string
+  /** Additive: structured form of `summary` for translation. */
+  summaryMsg?: EngineMsg
   /** Pre-flight sessions (personal baseline), ascending. */
   baselineSessions: ExamSession[]
   /** In-flight sessions done so far, ascending. */
   sessions: ExamSession[]
   latest: ExamSession | null
-  nextDue: { at: number; flightDay: number; label: string } | null
+  nextDue: { at: number; flightDay: number; label: string; labelMsg?: EngineMsg } | null
   /** Ears only: recent daily noise exposure, ascending (last EXAMS.noise.keepDays days). */
   noise?: NoiseDay[]
   /** Short provenance and method note shown under the history. */
   method: string
+  /** Additive: structured form of `method` for translation. */
+  methodMsg?: EngineMsg
 }
 
 export interface Device {
@@ -388,6 +396,10 @@ export interface Prediction {
   historyHours?: number
   /** Additive (v4): the same projection for each horizon the user can pick (see FORECAST_HORIZONS). */
   byHorizon?: Partial<Record<ForecastHorizonHours, Prediction>>
+  /** Additive: structured forms of `method`, `intervalLabel` and `disclaimer` for translation. */
+  methodMsg?: EngineMsg
+  intervalLabelMsg?: EngineMsg
+  disclaimerMsg?: EngineMsg
 }
 
 /** Additive (v4): forecast horizons the user can pick, in hours (24 h, 36 h, 72 h, 7 days, 15 days). */

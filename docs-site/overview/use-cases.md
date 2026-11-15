@@ -15,7 +15,7 @@ This page lists the people the Astronaut Health Intelligence Platform (AHI) is d
 | Stakeholder | Need | Where in AHI | Status |
 | --- | --- | --- | --- |
 | **Crew member** | Understand their own state and habits | Crew view, daily check-in, top two actions | <StatusBadge status="IMPLEMENTED" /> |
-| **Crew medical officer** | Act on board first when Earth is far | On board first steps, autonomy badges, Earth link drawer | <StatusBadge status="IMPLEMENTED" /> |
+| **Crew medical officer** | Act on board first when Earth is far | On board first steps, autonomy badges, Earth link tab | <StatusBadge status="IMPLEMENTED" /> |
 | **Flight surgeon** | Follow signals and investigate changes | Ground view, body system detail with trend chart, alerts, handover report | <StatusBadge status="IMPLEMENTED" /> |
 | **Mission Control** | Understand operational risk | Alerts drawer, cabin environment, device status, mission overview | <StatusBadge status="IMPLEMENTED" /> |
 | **Researcher** | Explore historical data and provenance | Data and model dialog, OSDR panels, model card | <StatusBadge status="IMPLEMENTED" /> |

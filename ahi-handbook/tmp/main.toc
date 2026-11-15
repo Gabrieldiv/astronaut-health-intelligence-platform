@@ -1,0 +1,18 @@
+\babel@toc {english}{}\relax 
+\contentsline {section}{\numberline {1}What AHI Does}{1}{section.1}%
+\contentsline {section}{\numberline {2}Getting Started}{1}{section.2}%
+\contentsline {section}{\numberline {3}The Screen at a Glance}{1}{section.3}%
+\contentsline {section}{\numberline {4}Tutorial: A Mission in Seven Steps}{2}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Step 1: Let the guided demo drive}{2}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Step 2: Read one astronaut's status}{3}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Step 3: Explore the 3D body}{3}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Step 4: Respond to a critical alert}{4}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Step 5: Spot a slow drift}{4}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}Step 6: Compare ``what if''}{4}{subsection.4.6}%
+\contentsline {subsection}{\numberline {4.7}Step 7: Switch to the Crew view and check in}{5}{subsection.4.7}%
+\contentsline {section}{\numberline {5}Mission Tools}{5}{section.5}%
+\contentsline {section}{\numberline {6}Scenario Reference}{6}{section.6}%
+\contentsline {section}{\numberline {7}Accessibility, Languages and the Assistant}{7}{section.7}%
+\contentsline {section}{\numberline {8}Troubleshooting and Responsible Use}{7}{section.8}%
+\contentsline {section}{References}{7}{section*.7}%
+\contentsfinish 

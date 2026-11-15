@@ -1,0 +1,30 @@
+\section{Scenario Reference}
+\label{sec:scenarios}
+
+Pick a scenario in the scenario player, set the suggested speed (simulated time per real second) and press play. Any scenario runs under any mission profile.
+
+\begin{table}[H]
+\centering
+\vspace{0.4em}
+\caption{The seven scripted scenarios, what to look for and the suggested speed. All simulated.}
+\label{tab:scenarios}
+\footnotesize
+\begin{tabular}{p{2.8cm}p{1.6cm}p{7.6cm}p{1.4cm}}
+\hline
+\textbf{Scenario} & \textbf{Who} & \textbf{What to look for} & \textbf{Speed} \\
+\hline
+Nominal day & Everyone & Everything stays green and the risk score is 0. No false alerts. & any \\
+Acute cardio event & ORION & Heart rate up at rest, blood oxygen down; critical banner in about 7 s, sound, escalation & 1 min/s \\
+Sensor failure & VEGA & The Bio-Monitor shirt goes degraded, stale and offline; organs turn grey and still, the card says \textit{Signal lost} & 1 min/s \\
+Cabin CO\textsubscript{2} rise & Cabin & CO\textsubscript{2} climbs; breathing and reaction time shift for everyone; the platform reports co-occurrence, not cause & 10 min/s \\
+Progressive fatigue & LYRA & Shorter sleep, lower HRV, higher resting heart rate over days; \textit{Keep an eye}, then \textit{Act soon} & 1 h/s \\
+Exercise decline & ATLAS & Workout output falls day after day; the muscles layer appears & 1 h/s \\
+Eye changes (SANS like) & ORION & Click the Eyes chip: eye exam history against the preflight baseline, per eye & any \\
+\hline
+\end{tabular}
+\vspace{0.6em}
+\end{table}
+
+\sidefig{0.70}{Slow scenarios stop at \textit{Act soon}: they call for review, not an emergency. Only the acute cardio event reaches \textit{Act now}.
+
+The sensor failure is a data quality case: the organs fed by the failed device turn grey and still and are labeled no data, so a lost signal never looks normal (\ref{fig:atlas-states}).}{images/anatomy/atlas-states.jpg}{Status on the body: (a) acute cardiac event; (b) sensor failure, every region grey and labeled no data.}{fig:atlas-states}

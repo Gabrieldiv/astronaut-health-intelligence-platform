@@ -35,6 +35,7 @@ import { buildLayers, effectiveLayers, regionAnchors, regionFocus, structureFocu
 import type { LayerModel } from './layers'
 import { SystemControls } from './SystemControls'
 import { KeyboardNavigator } from '../a11y/KeyboardNavigator'
+import type { SurfaceProbe } from './zoom'
 
 export interface AtlasViewerProps extends AnatomyViewerProps {
   manifest: AtlasManifest
@@ -138,6 +139,9 @@ export function AtlasViewer({ manifest, onFatal, className, showControls = true,
   const rootRef = useRef<HTMLDivElement>(null)
   const width = useWidth(rootRef)
   const [labels] = useState(createLabelRegistry)
+  // the scene fills it with a body surface raycast; the camera uses it to never pass through geometry
+  const [probe] = useState<SurfaceProbe>(() => ({ cast: null }))
+  const [navFocused, setNavFocused] = useState(false)
   const present = usePresentationMode()
   const ls = labelScale ?? (present ? 1.3 : 1)
   // the full control pill needs about 400 px at scale 1: narrower containers get the compact controls
@@ -189,10 +193,12 @@ export function AtlasViewer({ manifest, onFatal, className, showControls = true,
     }
   }, [store, manifest, model])
 
-  // screen space kept clear of the body: source caption, bottom controls and legend chip, small top margin
+  // screen space kept clear of the body: source caption and bottom controls, a small top margin, and
+  // while the keyboard navigator has focus its hint band at the top
   const captionBand = Math.round(17 * ls)
-  const pillBand = showControls || legend ? Math.round((compact ? 28 : 36) * ls) + 8 : 6
-  const insets = useMemo<FrameInsets>(() => ({ top: 10, bottom: captionBand + pillBand }), [captionBand, pillBand])
+  const pillBand = showControls || legend ? Math.round((compact ? 28 : 36) * ls) + 6 : 6
+  const navBand = navFocused ? Math.round(56 * ls) : 6
+  const insets = useMemo<FrameInsets>(() => ({ top: navBand, bottom: captionBand + pillBand }), [navBand, captionBand, pillBand])
   labels.insets = insets
   labels.labelScale = ls
 
@@ -213,7 +219,7 @@ export function AtlasViewer({ manifest, onFatal, className, showControls = true,
         shadows="percentage"
         dpr={overrides.dpr ?? (quality === 'high' ? [1, 1.75] : 1)}
         gl={{ alpha: true, antialias: !bloom, powerPreference: 'high-performance', stencil: false }}
-        camera={{ fov: 30, near: 0.03, far: 40, position: [0, 1.05, 4.2] }}
+        camera={{ fov: 30, near: 0.02, far: 40, position: [0, 1.05, 4.2] }}
         onCreated={({ gl }) => {
           gl.setClearColor(0x000000, 0)
           gl.toneMapping = ACESFilmicToneMapping
@@ -234,9 +240,10 @@ export function AtlasViewer({ manifest, onFatal, className, showControls = true,
             shadows={shadows}
             onFatal={onFatal}
             onReady={onReady}
+            probe={probe}
           />
         </Suspense>
-        <AtlasCamera body={manifest.bounds} focus={focus} resetNonce={resetNonce} view={view} hovering={hovering} autoRotate={autoRotate} insets={insets} />
+        <AtlasCamera body={manifest.bounds} focus={focus} resetNonce={resetNonce} view={view} hovering={hovering} autoRotate={autoRotate} insets={insets} probe={probe} />
         {post && (
           <EffectComposer multisampling={msaa} enableNormalPass={false} frameBufferType={HalfFloatType}>
             <Bloom mipmapBlur intensity={0.42} luminanceThreshold={1.0} luminanceSmoothing={0.18} radius={0.62} />
@@ -244,7 +251,7 @@ export function AtlasViewer({ manifest, onFatal, className, showControls = true,
           </EffectComposer>
         )}
       </Canvas>
-      {ready && <KeyboardNavigator manifest={manifest} store={store} statuses={statuses} ls={ls} bottom={captionBand + pillBand} />}
+      {ready && <KeyboardNavigator manifest={manifest} store={store} statuses={statuses} ls={ls} bottom={captionBand + pillBand} onFocusChange={setNavFocused} />}
       <LabelOverlay
         registry={labels}
         statuses={statuses}
