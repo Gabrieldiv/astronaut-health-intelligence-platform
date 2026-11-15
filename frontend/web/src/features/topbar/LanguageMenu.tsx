@@ -50,7 +50,11 @@ export function LanguageMenuItems() {
                 lang={l.id}
                 title={tip}
                 aria-description={l.pendingReview ? t('tools.languagePending') : undefined}
-                onClick={() => void setLanguage(l.id)}
+                onClick={() => {
+                  // The Tools menu stays mounted: collapse the list so the next open starts closed.
+                  setExpanded(false)
+                  void setLanguage(l.id)
+                }}
                 className={clsx(MENU_ITEM, 'py-1.5')}
               >
                 <span className={clsx('h-2 w-2 shrink-0 rounded-full', sel ? 'bg-accent' : 'ring-1 ring-white/25')} aria-hidden />

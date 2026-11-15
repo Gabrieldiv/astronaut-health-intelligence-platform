@@ -21,11 +21,13 @@ type StoreHandle = {
   }
 }
 
-export const test = base.extend<{ app: Page }>({
-  app: async ({ page }, provide) => {
+export const test = base.extend<{ app: Page; fullAnatomy: boolean }>({
+  /** Load the real 3D atlas (slow without a GPU). Off by default; the keyboard navigator needs it. */
+  fullAnatomy: [false, { option: true }],
+  app: async ({ page, fullAnatomy }, provide) => {
     // No backend, ever: the suite always exercises the offline demo mode.
     await page.route(`${API_URL}/**`, (route) => route.abort('connectionrefused'))
-    if (!process.env.E2E_FULL_3D) await page.route('**/anatomy/*.glb', (route) => route.abort('blockedbyclient'))
+    if (!process.env.E2E_FULL_3D && !fullAnatomy) await page.route('**/anatomy/*.glb', (route) => route.abort('blockedbyclient'))
     // The engine builds days of simulated history at startup: wait for the UI, not for "load".
     await page.goto('/', { waitUntil: 'domcontentloaded' })
     await expect(page.getByRole('button', { name: /^Simulated data/ })).toBeVisible({ timeout: 60_000 })

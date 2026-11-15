@@ -178,8 +178,16 @@ test.describe('Keyboard', () => {
     await expect(page.getByRole('main', { name: 'Crew health overview' })).toBeFocused()
   })
 
+})
+
+test.describe('Keyboard navigation of the 3D body', () => {
+  // The body navigator belongs to the atlas viewer, so this test loads the real 3D files.
+  test.use({ fullAnatomy: true })
+
   test('the body navigator selects the Heart with Enter', async ({ app: page }) => {
+    test.setTimeout(120_000)
     const navigator = page.getByRole('application', { name: /^3D body\./ })
+    await expect(navigator).toBeAttached({ timeout: 90_000 })
     await navigator.focus()
     const announcer = page.getByRole('status').filter({ hasText: / region\. / })
     await expect(announcer).toContainText(/^Brain region/)
