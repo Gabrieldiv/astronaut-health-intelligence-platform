@@ -60,7 +60,7 @@ features:
     linkText: Dataset catalog
   - icon: ✅
     title: Measured, not claimed
-    details: 315 web tests, 44 backend tests and a headless evaluation of the scenarios on simulated data. Every number on these pages links back to code, a generated file or a cited source.
+    details: 375 web tests, 44 backend tests and a headless evaluation of the scenarios on simulated data. Every number on these pages links back to code, a generated file or a cited source.
     link: /validation/results
     linkText: Results and evidence
 ---

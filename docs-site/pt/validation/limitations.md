@@ -59,7 +59,7 @@ Esta página reúne o que a Astronaut Health Intelligence Platform (AHI) **não 
 
 | Limitação | Consequência |
 | --- | --- |
-| Interface em inglês | Decisão de projeto (júri internacional); a documentação também existe em português ([Idiomas](/pt/product/accessibility#languages)) |
+| Idiomas da interface além do inglês são feitos com apoio de máquina e aguardam revisão nativa | Apresente em inglês para o júri; trate os outros idiomas como prévia ([Idiomas](/pt/product/accessibility#languages)) |
 | Pensado para telas de desktop (melhor em 1440x900 ou maior) | Em telas pequenas o layout fica apertado |
 | Respostas do médico de voo são simuladas e fixas | Não há fluxo real de revisão |
 | Sem notificação fora do app | Alertas só são vistos com o app aberto |

@@ -1,6 +1,6 @@
 ---
 title: Testing Strategy
-description: How the Astronaut Health Intelligence Platform is tested, the 37 vitest files with 315 tests and the backend pytest suite, what each covers, plus what is not tested yet.
+description: How the Astronaut Health Intelligence Platform is tested, the 37 vitest files with 375 tests and the backend pytest suite, what each covers, plus what is not tested yet.
 status: IMPLEMENTED
 code:
   - frontend/web/package.json
@@ -22,8 +22,8 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 
 | Fact | Value (2026-11-15) |
 | --- | --- |
-| Web test files | 37 |
-| Web tests | 315, all passing |
+| Web test files | 38 |
+| Web tests | 375, all passing |
 | Backend tests | 44 in 6 files (`python -m pytest` in `backend`) |
 | Typecheck | `npx tsc -b` clean |
 | Production build | `npx vite build` ok |
@@ -88,6 +88,7 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | <CodeLink path="frontend/web/src/features/anatomy/viewer/interaction.test.ts" /> | 5 | Monitor and Explore: which structures are interactive; persisted mode with safe fallback |
 | <CodeLink path="frontend/web/src/features/anatomy/viewer/retry.test.ts" /> | 8 | Backoff 0.6, 1.8, 5.4 s; 4 tries; error keeps the last cause; non retryable errors |
 | <CodeLink path="frontend/web/src/features/anatomy/viewer/scan.test.ts" /> | 6 | Scan timing; one pass per cycle; reduced motion is slow and dim |
+| <CodeLink path="frontend/web/src/i18n/i18n.test.ts" /> | 60 | Five languages, English first and the only reviewed one; every locale has exactly the English keys, no empty strings, the same placeholders, no dash characters and the protected tokens untranslated; status words and catalog labels follow the language |
 
 ## Principles
 

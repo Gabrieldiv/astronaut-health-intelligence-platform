@@ -62,7 +62,7 @@ The canonical list of what the Astronaut Health Intelligence Platform (AHI) cann
 | The assistant demo uses a cloud model | Not acceptable on a real mission (delay, privacy, certification) | [Ask AHI](../product/assistant#the-onboard-target) |
 | No flight surgeon review workflow | Ground replies are templates | [Roadmap](../resources/roadmap) |
 | Earth link is a delay model only | No bandwidth, blackout or loss modeling | [Earth link](../intelligence/self-report-and-earth-link#earth-link) |
-| App UI in English | The documentation is also in Portuguese | [Languages](../product/accessibility#languages) |
+| Interface languages other than English are machine assisted and pending native review | Present in English for judging; treat other languages as a preview | [Languages](../product/accessibility#languages) |
 | Desktop first | Best at 1440x900 or larger; phones are not a target | [Setup](../engineering/quick-start) |
 | Requires WebGL and a capable GPU for the 3D body | Weak machines run slower | [Setup](../engineering/quick-start) |
 | The web app is not hosted publicly yet | Judges must run it locally | [Roadmap](../resources/roadmap) |

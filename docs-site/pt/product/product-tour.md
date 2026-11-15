@@ -22,7 +22,7 @@ verified: 2026-11-15
 
 # Tour do produto
 
-Esta página descreve cada área da tela da Astronaut Health Intelligence Platform (AHI). A interface é **somente em inglês** (o projeto é avaliado por um júri internacional), então os nomes de botões e painéis aparecem aqui em inglês, entre aspas ou em formatação de código, com a explicação em português.
+Esta página descreve cada área da tela da Astronaut Health Intelligence Platform (AHI). A interface é em **inglês por padrão** (o projeto é avaliado por um júri internacional; outros idiomas são opcionais, veja [Idiomas](/pt/product/accessibility#languages)), então os nomes de botões e painéis aparecem aqui em inglês, entre aspas ou em formatação de código, com a explicação em português.
 
 ::: info
 Tudo o que aparece na tela usa dados **simulados**. O selo `SIMULATED` fica sempre visível ao lado do logo.
@@ -93,6 +93,7 @@ Veja o que acontece em cada cenário em [Cenários e demo guiada](/pt/product/de
 | "Data and model" | Datasets reais da NASA, dispositivos simulados, model card e origens dos dados |
 | "Presentation mode" | Letras maiores e menos detalhes (tecla `P`) |
 | "Accessibility and sound" | Sons de alerta, audiodescrição e velocidade da voz ([Acessibilidade](/pt/product/accessibility)) |
+| "Language" | Idioma da interface: inglês (padrão) ou um idioma opcional ainda em revisão nativa ([Idiomas](/pt/product/accessibility#languages)) |
 | "Keyboard shortcuts" | Lista de atalhos (tecla `?`) |
 
 Esses recursos estão descritos em [Recursos da missão](/pt/product/mission-features).

@@ -68,7 +68,7 @@ npm run evaluate
 
 | Measure | Value (2026-11-15) |
 | --- | --- |
-| vitest tests (web) | **315 in 37 files, all passing** |
+| vitest tests (web) | **375 in 38 files, all passing** |
 | pytest tests (backend) | 44 in 6 files, external HTTP mocked |
 | Anatomy atlas validation (`npm run anatomy:validate`) | passes on the published files: 250 structures in 9 GLB files, 880,356 triangles, 4.64 MB |
 | Typecheck (`npx tsc -b`) | clean |

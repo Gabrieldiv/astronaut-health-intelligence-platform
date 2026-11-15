@@ -9,9 +9,12 @@ code:
   - frontend/web/src/features/a11y/A11ySettings.tsx
   - frontend/web/src/features/a11y/SkipLinks.tsx
   - frontend/web/src/features/anatomy/a11y
+  - frontend/web/src/i18n/index.ts
+  - frontend/web/src/features/topbar/LanguageMenu.tsx
 tests:
   - frontend/web/src/features/a11y/alarmSchedule.test.ts
   - frontend/web/src/features/a11y/describe.test.ts
+  - frontend/web/src/i18n/i18n.test.ts
 verified: 2026-11-15
 ---
 
@@ -73,7 +76,20 @@ Global shortcuts (`1` to `4`, `V`, `P`, `A`, `Space`, `?` and others) are listed
 
 ## Languages
 
-The interface is written in **English**, the default and the reference language for the international judging. Plain language comes first and the technical term second (for example "Breathing rate" before "respiratory rate").
+**English is the default** and the reference language for the international judging; it is identical with or without the language layer. Plain language comes first and the technical term second (for example "Breathing rate" before "respiratory rate").
+
+Four other languages are **optional**: Português (Brasil), Español, 日本語 and Deutsch. Pick one in **Tools > Language**.
+
+| Rule | Behavior |
+| --- | --- |
+| Status of the translations | **Machine assisted, pending native review.** Each non English entry in the picker says so in its tooltip; only English is reviewed |
+| Default | English. The browser language is never applied automatically; the choice is remembered on the device |
+| Loading | English ships in the main bundle; the other languages are separate chunks downloaded only when picked. Japanese loads a Japanese font on demand |
+| Way back | Outside English the menu item reads "Language" in both languages, so anyone can switch back |
+| What stays untranslated | `SIMULATED`, `REAL_PUBLIC`, metric codes, rule ids and units; messages and reports sent to the ground stay in English |
+| Speech | Audio description uses a voice of the selected language when the system has one |
+
+A unit test checks that every language has exactly the English keys, no empty strings, the same placeholders, no dash characters and the protected tokens untranslated. <StatusBadge status="EXPERIMENTAL" /> until the native review is done.
 
 ## Limitations
 

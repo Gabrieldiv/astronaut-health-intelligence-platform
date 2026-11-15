@@ -61,6 +61,7 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
 | **Forecasts** | Projections from 24 h to 15 days with an 80% band that widens with the horizon, only when there is enough history. |
 | **Devices** | "Measured by" lists the devices behind every reading; an operator can pause a device (its readings read "Paused by operator", never normal). |
 | **Accessibility** | Alert sounds per severity that repeat and escalate until acknowledged, audio description (`D`), skip links, live regions and full keyboard use. |
+| **Languages** | English by default. Português (Brasil), Español, 日本語 and Deutsch are optional in Tools > Language: machine assisted, pending native review. |
 | **Ask AHI** | A plain language assistant that explains what the engine shows, with a "Based on:" line. Demo with the Claude API through the backend; a real mission needs the onboard offline design in [docs/assistant-architecture.md](docs/assistant-architecture.md). |
 | **Two views** | Ground view for flight surgeons and mission control, Crew view for the astronaut (with "Your body systems" cards). Presentation mode and a 10 step guided demo. |
 | **Backend (optional)** | FastAPI modular monolith: ingestion, observations, NASA DONKI and OSDR connectors, assistant, experimental analytics. The app runs fully without it (offline demo mode). |
@@ -125,7 +126,7 @@ From the repository root, `docker compose up --build` starts PostgreSQL 17 and t
 | Command | Where | What it does |
 | --- | --- | --- |
 | `npm run dev` | `frontend/web` | Development server on port 5173 |
-| `npm test` | `frontend/web` | 315 unit and scenario tests (vitest) |
+| `npm test` | `frontend/web` | 375 unit and scenario tests (vitest) |
 | `npx tsc -b` | `frontend/web` | Type check |
 | `npx vite build` | `frontend/web` | Production build into `dist/` |
 | `npm run evaluate` | `frontend/web` | Re-runs the engine evaluation and regenerates `docs/model-card.md` |

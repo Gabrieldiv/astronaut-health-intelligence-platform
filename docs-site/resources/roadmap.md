@@ -20,7 +20,7 @@ The Astronaut Health Intelligence Platform (AHI) is a prototype with simulated d
 | Eyes and ears | Periodic SANS eye exams and hearing and noise monitoring against the pre-flight baseline ([Eye health and hearing](../intelligence/eye-and-hearing)) |
 | Interface | Ground and Crew views (with body system cards), guided demo, Measured by, Earth link, check-in, mission overview, handover report with FHIR R4 export, what-if |
 | 3D anatomy | Z-Anatomy atlas with 250 structures, zoom to pointer, Monitor and Explore modes, retrying downloads, keyboard body navigator, body scan, procedural fallback |
-| Accessibility | Alert sounds with escalation, audio description, skip links, live regions ([Accessibility](../product/accessibility)) |
+| Accessibility and languages | Alert sounds with escalation, audio description, skip links, live regions; optional interface languages (pt-BR, es, ja, de) with English as default ([Accessibility](../product/accessibility)) |
 | Backend | FastAPI modular monolith: registry, idempotent ingestion, observations, NASA DONKI and OSDR connectors, assistant, experimental analytics; SQLite or PostgreSQL; offline demo mode in the app ([Backend and API](../architecture/backend)) |
 | Assistant | Ask AHI demo with the Claude API, onboard offline architecture documented ([Ask AHI](../product/assistant)) |
 | Real NASA data | OSDR OSD-569 and OSD-575 panels as reference, DONKI events as mission context |

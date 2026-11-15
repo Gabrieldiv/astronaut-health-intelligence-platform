@@ -1,6 +1,6 @@
 ---
 title: Estratégia de testes
-description: Os 37 arquivos vitest com 315 testes e a suíte pytest do backend da Astronaut Health Intelligence Platform, o que cada um cobre, a avaliação do motor, o CI e as lacunas conhecidas.
+description: Os 38 arquivos vitest com 375 testes e a suíte pytest do backend da Astronaut Health Intelligence Platform, o que cada um cobre, a avaliação do motor, o CI e as lacunas conhecidas.
 status: IMPLEMENTED
 origin: SIMULATED
 code:
@@ -23,7 +23,7 @@ verified: 2026-11-15
 A Astronaut Health Intelligence Platform (AHI) é testada em três camadas: **testes unitários e de cenário** (vitest), **avaliação reproduzível do motor** (`npm run evaluate`) e **checagens de build** (tipos, build do app e do portal) no CI.
 
 ::: info Estado em 15/11/2026
-**315 testes web em 37 arquivos, todos passando.** Checagem de tipos limpa e build de produção ok. Rode com `npm test` dentro de `frontend/web`. O backend tem **44 testes pytest em 6 arquivos** (`python -m pytest` em `backend`), com o HTTP externo simulado (respx): as fontes da NASA e a Claude API nunca são chamadas.
+**375 testes web em 38 arquivos, todos passando.** Checagem de tipos limpa e build de produção ok. Rode com `npm test` dentro de `frontend/web`. O backend tem **44 testes pytest em 6 arquivos** (`python -m pytest` em `backend`), com o HTTP externo simulado (respx): as fontes da NASA e a Claude API nunca são chamadas.
 :::
 
 ## Pirâmide atual
@@ -84,7 +84,8 @@ A Astronaut Health Intelligence Platform (AHI) é testada em três camadas: **te
 | <CodeLink path="frontend/web/src/features/anatomy/viewer/interaction.test.ts" /> | 5 | Monitor e Explore: quais estruturas são interativas; modo guardado com fallback seguro |
 | <CodeLink path="frontend/web/src/features/anatomy/viewer/retry.test.ts" /> | 8 | Espera de 0,6, 1,8 e 5,4 s; 4 tentativas; o erro guarda a última causa; erros que não valem nova tentativa |
 | <CodeLink path="frontend/web/src/features/anatomy/viewer/scan.test.ts" /> | 6 | Tempo da varredura; uma passada por ciclo; movimento reduzido fica lento e fraco |
-| **Total** | **315** | |
+| <CodeLink path="frontend/web/src/i18n/i18n.test.ts" /> | 60 | Cinco idiomas, inglês primeiro e único revisado; cada idioma tem exatamente as chaves do inglês, sem textos vazios, com os mesmos marcadores, sem travessões e com os termos protegidos sem tradução; palavras de status e rótulos do catálogo seguem o idioma |
+| **Total** | **375** | |
 
 ## Avaliação do motor
 

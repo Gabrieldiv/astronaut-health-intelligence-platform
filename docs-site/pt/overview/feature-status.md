@@ -111,14 +111,14 @@ Definições completas em [Origens e proveniência dos dados](/pt/data/data-orig
 | Diálogo "Data and model" | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="REAL_PUBLIC, DERIVED" /> | <CodeLink path="frontend/web/src/features/datasources/DataModelDialog.tsx" /> | [Recursos da missão](/pt/product/mission-features) |
 | Demo guiada de 10 passos | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="SIMULATED" /> | <CodeLink path="frontend/web/src/features/tour/steps.ts" /> | [Cenários e demo](/pt/product/demo-scenarios) |
 | Modo apresentação, atalhos de teclado, modo compacto | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path="frontend/web/src/app/shortcuts.tsx" /> | [Design system](/pt/product/design-system) |
-| Interface em português | <StatusBadge status="NOT_IMPLEMENTED" /> | | | A interface é só em inglês, por decisão (júri internacional) |
+| Idiomas opcionais da interface (pt-BR, es, ja, de; inglês padrão) | <StatusBadge status="EXPERIMENTAL" /> | | <CodeLink path="frontend/web/src/i18n/index.ts" /> | Tradução com apoio de máquina, aguardando revisão nativa ([Idiomas](/pt/product/accessibility#languages)) |
 | Fluxo real de revisão do médico de voo | <StatusBadge status="PLANNED" /> | | | [Roadmap](/pt/resources/roadmap) |
 
 ## Plataforma e engenharia
 
 | Capacidade | Status | Origem | Código | Documentação |
 | --- | --- | --- | --- | --- |
-| Testes unitários e de cenário (web: 315 testes em 37 arquivos; backend: 44 testes pytest em 6 arquivos) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> | [Estratégia de testes](/pt/engineering/testing) |
+| Testes unitários e de cenário (web: 375 testes em 38 arquivos; backend: 44 testes pytest em 6 arquivos) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> | [Estratégia de testes](/pt/engineering/testing) |
 | CI no GitHub Actions (lint, tipos, testes e build do app; build do portal em pull requests) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path=".github/workflows/ci.yml" /> | [Documentação e deploy](/pt/engineering/deployment) |
 | Portal de documentação bilíngue no GitHub Pages | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path=".github/workflows/docs-deploy.yml" /> | [Documentação e deploy](/pt/engineering/deployment) |
 | Modo demo offline: o app roda inteiro no navegador, `VITE_API_URL=off` para hospedagem estática | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/lib/api/client.ts" /> | [Backend e API](/pt/architecture/backend#offline-demo-mode) |

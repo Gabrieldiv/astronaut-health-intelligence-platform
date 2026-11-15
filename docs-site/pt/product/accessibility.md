@@ -9,6 +9,8 @@ code:
   - frontend/web/src/features/a11y/A11ySettings.tsx
   - frontend/web/src/features/a11y/SkipLinks.tsx
   - frontend/web/src/features/anatomy/a11y
+  - frontend/web/src/i18n/index.ts
+  - frontend/web/src/features/topbar/LanguageMenu.tsx
 tests:
   - frontend/web/src/features/a11y/alarmSchedule.test.ts
   - frontend/web/src/features/a11y/describe.test.ts
@@ -73,7 +75,20 @@ Os atalhos globais (`1` a `4`, `V`, `P`, `A`, `Space`, `?` e outros) estão list
 
 ## Idiomas {#languages}
 
-A interface é escrita em **inglês**, o idioma padrão e de referência para a avaliação internacional. A linguagem simples vem primeiro e o termo técnico depois (por exemplo "Breathing rate" antes de "respiratory rate").
+**O inglês é o padrão** e o idioma de referência para o júri internacional; ele é idêntico com ou sem a camada de idiomas. A linguagem simples vem primeiro e o termo técnico depois (por exemplo "Breathing rate" antes de "respiratory rate").
+
+Quatro outros idiomas são **opcionais**: Português (Brasil), Español, 日本語 e Deutsch. Escolha um em **Tools > Language**.
+
+| Regra | Comportamento |
+| --- | --- |
+| Situação das traduções | **Feitas com apoio de máquina, aguardando revisão nativa.** Cada idioma além do inglês diz isso na dica do seletor; só o inglês está revisado |
+| Padrão | Inglês. O idioma do navegador nunca é aplicado sozinho; a escolha fica guardada no dispositivo |
+| Carregamento | O inglês vem no pacote principal; os outros idiomas são arquivos separados, baixados só quando escolhidos. O japonês carrega uma fonte japonesa sob demanda |
+| Caminho de volta | Fora do inglês o item do menu mostra "Language" nos dois idiomas, para qualquer pessoa conseguir voltar |
+| O que não é traduzido | `SIMULATED`, `REAL_PUBLIC`, códigos de métrica, ids de regra e unidades; mensagens e relatórios enviados à Terra ficam em inglês |
+| Fala | A descrição em áudio usa uma voz do idioma escolhido quando o sistema tem uma |
+
+Um teste unitário verifica que cada idioma tem exatamente as chaves do inglês, nenhum texto vazio, os mesmos marcadores, nenhum travessão e os termos protegidos sem tradução. <StatusBadge status="EXPERIMENTAL" /> até a revisão nativa.
 
 ## Limitações {#limitations}
 

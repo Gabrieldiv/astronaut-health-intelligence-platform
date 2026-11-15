@@ -80,7 +80,7 @@ Todos rodam dentro de `frontend/web`.
 | Comando | O que faz |
 | --- | --- |
 | `npm run dev` | Servidor de desenvolvimento Vite (porta 5173) |
-| `npm test` | Testes unitários e de cenário (vitest): 315 testes em 37 arquivos |
+| `npm test` | Testes unitários e de cenário (vitest): 375 testes em 38 arquivos |
 | `npx tsc -b` | Checagem de tipos (também `npm run typecheck`) |
 | `npx vite build` | Build de produção em `dist/` (`npm run build` roda `tsc -b` e depois o build) |
 | `npm run evaluate` | Roda o motor sem interface sobre os cenários e regenera `src/engine/evaluation.json` e `docs/model-card.md` |

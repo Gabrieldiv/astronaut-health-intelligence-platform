@@ -110,7 +110,7 @@ backend/
 
 ## Testes
 
-Os 37 arquivos de teste do app ficam ao lado do código que testam (`*.test.ts` em `src/`). O backend tem 6 arquivos pytest em `backend/tests/`. Lista e cobertura em [Estratégia de testes](/pt/engineering/testing).
+Os 38 arquivos de teste do app ficam ao lado do código que testam (`*.test.ts` em `src/`). O backend tem 6 arquivos pytest em `backend/tests/`. Lista e cobertura em [Estratégia de testes](/pt/engineering/testing).
 
 ## Portal de documentação
 

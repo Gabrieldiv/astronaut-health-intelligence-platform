@@ -66,7 +66,7 @@ The top bar has three zones: identity on the left, the scenario player in the ce
 | **Scenario player** | Scenario picker, play and pause, speed (Real time, 1 min/s, 10 min/s, 1 h/s) and restart |
 | **Earth link** | Current profile (ISS, Moon, Mars near, Mars far), one way delay and messages in transit. Opens the Earth link drawer. See [Mission features](./mission-features#earth-link-and-mars-delay) |
 | **Ground / Crew** | View toggle |
-| **Tools** menu | Mission overview, Shift handover, Data and model, Presentation mode, Accessibility and sound, Keyboard shortcuts |
+| **Tools** menu | Mission overview, Shift handover, Data and model, Presentation mode, Accessibility and sound, Language, Keyboard shortcuts |
 | **Start demo** | Starts the 10 step [guided demo](./demo-scenarios#guided-demo) |
 | **Alerts bell** | Count of alerts not yet acknowledged. Pulses red when one is CRITICAL. Opens the alerts drawer (`A`) |
 

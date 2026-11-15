@@ -106,6 +106,7 @@ Data origins: <OriginBadge origin="SIMULATED" /> simulator output, <OriginBadge 
 | Data and model dialog (real datasets, devices, model card, origins) | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="REAL_PUBLIC, DERIVED" /> | [Mission features](../product/mission-features#data-and-model) | <CodeLink path="frontend/web/src/features/datasources/DataModelDialog.tsx" /> |
 | 10 step guided demo | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="SIMULATED" /> | [Demo scenarios](../product/demo-scenarios#guided-demo) | <CodeLink path="frontend/web/src/features/tour/steps.ts" /> |
 | Presentation mode and keyboard shortcuts | <StatusBadge status="IMPLEMENTED" /> | | [Design system](../product/design-system) | <CodeLink path="frontend/web/src/app/shortcuts.tsx" /> |
+| Optional interface languages (pt-BR, es, ja, de; English default) | <StatusBadge status="EXPERIMENTAL" /> | | [Languages](../product/accessibility#languages) | <CodeLink path="frontend/web/src/i18n/index.ts" /> |
 | Flight surgeon review queue | <StatusBadge status="PLANNED" /> | | [Roadmap](../resources/roadmap) | none |
 | Hosted web app for judges | <StatusBadge status="PLANNED" /> | | [Roadmap](../resources/roadmap) | none |
 
@@ -120,7 +121,7 @@ Data origins: <OriginBadge origin="SIMULATED" /> simulator output, <OriginBadge 
 | Health engine in Python (port of the TypeScript engine) | <StatusBadge status="PLANNED" /> | [Roadmap](../resources/roadmap) | <CodeLink path="backend/app/modules/engine/__init__.py" label="seam only" /> |
 | Authentication and access profiles | <StatusBadge status="PLANNED" /> | [Roadmap](../resources/roadmap) | none |
 | Persistent audit trail | <StatusBadge status="PLANNED" /> | [Governance](../data/governance-and-privacy) | none (in memory today) |
-| Unit and scenario tests (web: 315 tests in 37 files; backend: 44 pytest tests in 6 files) | <StatusBadge status="IMPLEMENTED" /> | [Testing](../engineering/testing) | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> |
+| Unit and scenario tests (web: 375 tests in 38 files; backend: 44 pytest tests in 6 files) | <StatusBadge status="IMPLEMENTED" /> | [Testing](../engineering/testing) | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> |
 | Headless evaluation of the engine | <StatusBadge status="IMPLEMENTED" /> | [Results](../validation/results) | <CodeLink path="frontend/web/scripts/evaluate.ts" /> |
 | End to end browser tests | <StatusBadge status="PLANNED" /> | [Testing](../engineering/testing) | none |
 | CI and documentation deployment (GitHub Actions, GitHub Pages) | <StatusBadge status="IMPLEMENTED" /> | [Deployment](../engineering/deployment) | <CodeLink path=".github/workflows/docs-deploy.yml" /> |
