@@ -2,6 +2,7 @@
 import type en from '../en/backdrop'
 
 const m: Record<keyof typeof en, string> = {
+  'backdrop.hudOpen': 'Contexto de la misión: abrir qué cambia este perfil',
   'backdrop.name.LAUNCH': 'Lanzamiento y ascenso',
   'backdrop.name.ISS': 'ISS, órbita terrestre baja',
   'backdrop.name.MOON': 'Luna, clase Artemis',

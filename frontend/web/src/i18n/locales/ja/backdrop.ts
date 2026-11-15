@@ -2,6 +2,7 @@
 import type en from '../en/backdrop'
 
 const m: Record<keyof typeof en, string> = {
+  'backdrop.hudOpen': 'ミッション状況: このプロファイルで変わることを開く',
   'backdrop.name.LAUNCH': '打ち上げと上昇',
   'backdrop.name.ISS': 'ISS、地球低軌道',
   'backdrop.name.MOON': '月、アルテミス級',

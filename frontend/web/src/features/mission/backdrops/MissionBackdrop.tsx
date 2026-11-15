@@ -11,6 +11,7 @@ import { useAppStore } from '../../../state/store'
 import type { MissionProfileId } from '../../../types/domain'
 import { useT } from '../../../i18n'
 import { useAstronaut } from '../../shared/hooks'
+import { useMissionPanelUi } from '../panelUi'
 import { MISSION_ACCENT, issOrbitMinutes, launchPeakG, marsTransitDays, missionFacts } from './facts'
 import { registerParallax } from './parallax'
 import { Scene } from './scenes'
@@ -121,8 +122,13 @@ export function MissionHud({ className, style }: { className?: string; style?: C
   const accent = MISSION_ACCENT[id]
   const facts = missionFacts(id)
   return (
-    <div
-      className={clsx('pointer-events-none absolute z-10 max-w-[min(260px,calc(100%-16px))] rounded-xl px-3 py-2 backdrop-blur-sm', className)}
+    <button
+      type="button"
+      aria-haspopup="dialog"
+      title={t('backdrop.hudOpen')}
+      aria-label={`${t(`backdrop.name.${id}`)}. ${t('backdrop.hudOpen')}`}
+      onClick={() => useMissionPanelUi.getState().openPanel()}
+      className={clsx('focus-ring pointer-events-auto absolute z-10 max-w-[min(260px,calc(100%-16px))] cursor-pointer rounded-xl px-3 py-2 text-left backdrop-blur-sm transition-colors hover:bg-white/[0.06]', className)}
       style={{ background: 'rgba(6,10,20,0.62)', boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${accent} 45%, transparent)`, ...style }}
     >
       <div className="text-[11px] font-semibold tracking-[0.12em] uppercase" style={{ color: accent }}>
@@ -138,6 +144,6 @@ export function MissionHud({ className, style }: { className?: string; style?: C
       {id === 'LAUNCH' && <GGauge accent={accent} />}
       {id === 'ISS' && <OrbitProgress accent={accent} />}
       {id === 'MARS_TRANSIT' && <TransitProgress accent={accent} />}
-    </div>
+    </button>
   )
 }

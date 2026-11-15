@@ -32,6 +32,7 @@ import { ExamCardNote } from '../attention/ExamHistory'
 import { wearablePausedHeadline, useMetricPaused, useWearablePaused } from '../vitals/deviceMeta'
 import { WhatIfButton } from '../whatif'
 import { MissionBackdrop, MissionHud } from '../mission/backdrops'
+import { IndicatorBreakdownTrigger } from '../stage/IndicatorBreakdown'
 import { t, useT, type MessageKey } from '../../i18n'
 import { metricShort, regionDescription, regionLabel, regionSystem, roleLabel } from '../../i18n/catalog'
 import { engineText, recRationale, recTitle } from '../../i18n/engineText'
@@ -166,7 +167,7 @@ function IndicatorsInRange({ astronautId }: { astronautId: string }) {
   if (statuses.length === 0) return null
   const inRange = statuses.filter((st) => st === 'LOW').length
   return (
-    <div className="flex items-center gap-3" aria-hidden>
+    <IndicatorBreakdownTrigger astronautId={astronautId} className="gap-3">
       <div className="flex h-2 w-[min(260px,45vw)] gap-[2px]">
         {statuses.map((st, i) => (
           <span
@@ -177,7 +178,7 @@ function IndicatorsInRange({ astronautId }: { astronautId: string }) {
         ))}
       </div>
       <span className="tabular text-[15px] font-medium text-ink-300 short:text-[14px]">{t('crewview.inRangeCount', { n: inRange, total: statuses.length })}</span>
-    </div>
+    </IndicatorBreakdownTrigger>
   )
 }
 

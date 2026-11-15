@@ -39,6 +39,6 @@ const m: Record<keyof typeof en, string> = {
   'crewview.systemsTitle': 'Deine Körpersysteme',
   'crewview.systemsHint': 'Tippe auf eines, um es am Körper zu sehen',
   'crewview.statusAria': 'Dein Status',
-  'crewview.inRangeCount': '{n} von {total} in deinem Normalbereich',
+  'crewview.inRangeCount': '{n} von {total} Gesundheitsindikatoren normal',
 }
 export default m

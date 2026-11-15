@@ -611,6 +611,17 @@ export function MissionPanel({ onClose }: { onClose: () => void }) {
               </button>
             )}
 
+            <Section title={t('mission.changes.title')} icon={<Orbit size={12} />}>
+              <ul className="grid gap-1.5 sm:grid-cols-2">
+                {(['radiation', 'link', 'recs', 'weather', 'scene'] as const).map((k) => (
+                  <li key={k} className="rounded-lg bg-white/[0.025] px-2.5 py-1.5 text-[11.5px] leading-snug text-ink-200">
+                    {t(`mission.changes.${k}`)}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[11px] leading-snug text-ink-400">{t('mission.changes.same')}</p>
+            </Section>
+
             <Section title={t('mission.ctx.bodyEffects')} icon={<Weight size={12} />}>
               <div className="grid gap-2 sm:grid-cols-2">
                 <Fact label={t('mission.ctx.gravity')} value={p.gravity.value.label} sub={<Cite ids={p.gravity.sources} />} />

@@ -6,6 +6,7 @@ import { STATUS_META } from '../../lib/status'
 import type { MetricCode, MetricState, Status } from '../../types/domain'
 import { useT } from '../../i18n'
 import { metricLabel, metricShort } from '../../i18n/catalog'
+import { IndicatorBreakdownTrigger } from './IndicatorBreakdown'
 import { summarizeIndicators } from './indicators'
 
 /** How many flagged indicators are named next to the bar (the rest is a "+n"). */
@@ -37,7 +38,8 @@ export function IndicatorStrip({ astronautId, sentence, className }: { astronaut
   const aria = t('stage.ind.aria', { ok: sum.ok, total: sum.total, flagged: sum.flagged, missing: sum.missing })
   return (
     <div className={clsx('flex min-w-0 flex-1 items-center gap-2', className)} title={sentence}>
-      {/* segments share the bar: it shrinks with the header instead of pushing the buttons out */}
+ {/* segments share the bar: it shrinks with the header instead of pushing the buttons out */}
+      <IndicatorBreakdownTrigger astronautId={astronautId} className="shrink-0">
       <div role="img" aria-label={aria} className="flex h-3.5 max-w-[150px] min-w-[40px] flex-1 items-stretch gap-[2px]">
         {sum.items.map((i) => {
           const meta = STATUS_META[i.status]
@@ -54,6 +56,7 @@ export function IndicatorStrip({ astronautId, sentence, className }: { astronaut
       <span aria-hidden className="shrink-0 font-mono text-[12px] font-medium whitespace-nowrap text-ink-300 tabular-nums">
         {t('stage.ind.inRange', { ok: sum.ok, total: sum.total })}
       </span>
+      </IndicatorBreakdownTrigger>
       {flagged.length > 0 && (
         <span aria-hidden className="hidden min-w-0 items-center gap-1 overflow-hidden @min-[640px]/stage:flex">
           {flagged.slice(0, NAMED).map((i) => (
