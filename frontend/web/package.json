@@ -8,6 +8,7 @@
     "evaluate": "tsx scripts/evaluate.ts",
     "anatomy:build": "node scripts/anatomy/build.mjs",
     "anatomy:validate": "node scripts/anatomy/validate.mjs",
+    "api:types": "npx --yes openapi-typescript@7.13.0 ../../backend/openapi.json -o src/types/api.gen.ts",
     "typecheck": "tsc -b",
     "dev": "vite",
     "build": "tsc -b && vite build",
