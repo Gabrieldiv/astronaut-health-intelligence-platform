@@ -5,7 +5,10 @@ import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
 import type { BodyRegionId, MetricCode, Status } from '../../types/domain'
-import { METRIC_CATALOG, REGION_LABELS } from '../../engine/catalog'
+import { METRIC_CATALOG } from '../../engine/catalog'
+import { useT } from '../../i18n'
+import { tx } from '../../i18n/rich'
+import { metricLabel, metricPlain, regionDescription, regionLabel, regionSystem } from '../../i18n/catalog'
 import { MetricValue } from '../../components/MetricValue'
 import { StatusDot, StatusIcon, StatusPill } from '../../components/Status'
 import { EventLegend, TrendChart } from '../../components/TrendChart'
@@ -37,7 +40,8 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
   const noData = status === 'NO_DATA'
   const delta = deltaVsNormal(ms, status)
   const b = ms?.baseline
-  const bandText = b && b.status === 'READY' ? `${fmtMetric(metric, b.low)} to ${fmtMetric(metric, b.high)} ${def.unit}` : 'Still learning your normal'
+  const t = useT()
+  const bandText = b && b.status === 'READY' ? t('attention.range', { low: fmtMetric(metric, b.low), high: fmtMetric(metric, b.high), unit: def.unit }) : t('attention.stillLearningNormal')
   const id = `metric-${metric}`
   return (
     <li
@@ -49,10 +53,10 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-[13px] font-semibold text-ink-100">{def.label}</span>
+            <span className="truncate text-[13px] font-semibold text-ink-100">{metricLabel(metric)}</span>
             <span className="flex shrink-0 items-baseline gap-1">
               {noData ? (
-                <span className="text-sm font-semibold text-nodata">Signal lost</span>
+                <span className="text-sm font-semibold text-nodata">{t('attention.signalLost')}</span>
               ) : (
                 <>
                   <MetricValue value={ms?.current} decimals={def.decimals} className="text-[20px] leading-none font-semibold text-ink-100" />
@@ -73,24 +77,24 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
       </button>
       <div className="flex items-center gap-1 pr-3 pb-2.5 pl-[33px] text-[11px] text-ink-500">
         <span>
-          Your normal: <span className="tabular text-ink-300">{bandText}</span>
+          {tx('attention.yourNormal', { band: <span className="tabular text-ink-300">{bandText}</span> })}
           {ms?.zScore != null && !noData && <span className="tabular present:hidden"> · z {ms.zScore.toFixed(1)}</span>}
         </span>
         <BaselineInfo metric={metric} baseline={b} />
       </div>
       {expanded && (
         <div id={id} className="px-3 pb-3">
-          <p className="mb-2 text-xs leading-relaxed text-ink-300">{def.plainLanguage}</p>
+          <p className="mb-2 text-xs leading-relaxed text-ink-300">{metricPlain(metric)}</p>
           <div className="mb-1 flex items-center justify-between gap-2">
             <div className="flex flex-wrap gap-1 present:invisible">
-              <Badge tone={ms?.quality === 'VALID' ? 'neutral' : 'warn'} icon={<Signal size={10} aria-hidden />} title="Data quality">
+              <Badge tone={ms?.quality === 'VALID' ? 'neutral' : 'warn'} icon={<Signal size={10} aria-hidden />} title={t('attention.dataQuality')}>
                 {QUALITY_LABEL[ms?.quality ?? 'MISSING']}
               </Badge>
-              <Badge tone="sim" icon={<FlaskConical size={10} aria-hidden />} title="Data origin">
+              <Badge tone="sim" icon={<FlaskConical size={10} aria-hidden />} title={t('attention.dataOrigin')}>
                 {ORIGIN_LABEL[ms?.data_origin ?? 'SIMULATED']}
               </Badge>
             </div>
-            <div className="flex rounded-lg bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]" role="group" aria-label="Chart window">
+            <div className="flex rounded-lg bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]" role="group" aria-label={t('attention.chartWindow')}>
               {WINDOWS.map((w) => (
                 <button
                   key={w}
@@ -99,7 +103,7 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
                   onClick={() => setWin(w)}
                   className={clsx('focus-ring tabular rounded-md px-2 py-0.5 text-[10px] font-semibold', win === w ? 'bg-white/10 text-ink-100' : 'text-ink-500 hover:text-ink-300')}
                 >
-                  {w} h
+                  {t('attention.hours', { n: w })}
                 </button>
               ))}
             </div>
@@ -107,28 +111,28 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
           <TrendChart metric={metric} history={history ?? []} baseline={b ?? null} prediction={prediction ?? null} color={noData ? '#94a3b8' : meta.color === STATUS_META.LOW.color ? '#5eead4' : meta.color} windowHours={win} height={170} events={events} />
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-ink-500 present:hidden">
             <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-3 rounded-sm bg-accent/20 ring-1 ring-accent/40" aria-hidden /> Your normal band
+              <span className="inline-block h-2 w-3 rounded-sm bg-accent/20 ring-1 ring-accent/40" aria-hidden /> {t('attention.legend.band')}
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-0.5 w-3 rounded" style={{ background: '#5eead4' }} aria-hidden /> Measured
+              <span className="inline-block h-0.5 w-3 rounded" style={{ background: '#5eead4' }} aria-hidden /> {t('attention.legend.measured')}
             </span>
             {prediction?.eligible && (
               <span className="flex items-center gap-1">
-                <span className="inline-block h-2 w-3 rounded-sm bg-white/15" aria-hidden /> Forecast ({prediction.intervalLabel})
+                <span className="inline-block h-2 w-3 rounded-sm bg-white/15" aria-hidden /> {t('attention.legend.forecast', { interval: prediction.intervalLabel })}
               </span>
             )}
             <EventLegend events={events} />
-            <span>Gaps mean no data</span>
+            <span>{t('attention.legend.gaps')}</span>
           </div>
           {basePrediction && (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[10px] font-semibold tracking-[0.14em] text-ink-500 uppercase">Forecast</span>
+              <span className="text-[10px] font-semibold tracking-[0.14em] text-ink-500 uppercase">{t('attention.forecast')}</span>
               <HorizonPicker size="xs" />
             </div>
           )}
           {prediction && !prediction.eligible && (
             <p className="mt-1 text-[11px] text-ink-300" role="status">
-              {prediction.ineligibleReason === 'HISTORY_TOO_SHORT' ? `Not enough history for this horizon. ${historyNote(prediction)}` : 'Not enough data to forecast yet.'}
+              {prediction.ineligibleReason === 'HISTORY_TOO_SHORT' ? t('attention.historyShortNote', { note: historyNote(prediction) }) : t('attention.notEnoughData')}
             </p>
           )}
           {prediction?.eligible && <p className="mt-1 text-[10px] text-ink-500 present:hidden">{prediction.method}. {prediction.disclaimer}</p>}
@@ -153,7 +157,8 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
   )
   const selectedMetric = useAppStore((s) => s.selectedMetric)
   const { selectRegion, selectMetric } = useActions()
-  const label = REGION_LABELS[region]
+  const t = useT()
+  const label = { label: regionLabel(region), system: regionSystem(region), description: regionDescription(region) }
   const Icon = REGION_ICON[region]
   const fromState = metricsKey ? (metricsKey.split(',') as MetricCode[]) : []
   const metrics = fromState.length ? fromState : regionMetricsFromCatalog(region)
@@ -165,7 +170,7 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
       {!embedded && (
         <div className="flex items-center gap-2">
           <IconButton
-            label="Back to overview"
+            label={t('attention.backToOverview')}
             size="sm"
             onClick={() => {
               selectRegion(null)
@@ -174,7 +179,7 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
           >
             <ChevronLeft size={16} />
           </IconButton>
-          <span className="text-xs text-ink-500">Overview</span>
+          <span className="text-xs text-ink-500">{t('attention.overview')}</span>
         </div>
       )}
       {!embedded && (
@@ -200,9 +205,9 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
         // periodic exams: a session history instead of live trend charts
         <ExamHistory astronautId={astronautId} region={region} />
       ) : metrics.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-white/15 px-3 py-4 text-center text-xs text-ink-500">No live sensor for this system in the MVP. Shown for context only.</div>
+        <div className="rounded-xl border border-dashed border-white/15 px-3 py-4 text-center text-xs text-ink-500">{t('attention.noSensor')}</div>
       ) : (
-        <ul className="flex flex-col gap-2" aria-label={`${label.label} metrics`}>
+        <ul className="flex flex-col gap-2" aria-label={t('attention.regionMetrics', { region: label.label })}>
           {metrics.map((m) => (
             <MetricRow key={m} astronautId={astronautId} metric={m} expanded={m === open} onToggle={() => {
                 setCollapsed(m === open)
