@@ -376,8 +376,9 @@ function ForecastRow({ p, astronautId, className }: { p: Prediction; astronautId
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : MoveRight
   const color = !p.eligible ? STATUS_META.NO_DATA.color : exits ? STATUS_META.MODERATE.color : STATUS_META.LOW.color
   const range = p.eligible && last ? t('visual.forecastRange', { lo: fmtMetric(p.metric, last.lo), hi: fmtMetric(p.metric, last.hi), unit: def.unit }) : null
+  const noProjection = p.ineligibleReason === 'HISTORY_TOO_SHORT' ? t('attention.forecast.historyShort') : t('visual.forecastNoData')
   const chip = !p.eligible
-    ? t('visual.forecastNoData')
+    ? noProjection
     : exits
       ? t('visual.forecastExit', { h: p.hoursToBandExit! >= 48 ? t('attention.span.aboutDays', { n: Math.round(p.hoursToBandExit! / 24) }) : formatHours(p.hoursToBandExit!) })
       : t('visual.forecastStays')
@@ -386,7 +387,7 @@ function ForecastRow({ p, astronautId, className }: { p: Prediction; astronautId
       <button
         type="button"
         onClick={() => focusTarget({ astronautId, metric: p.metric })}
-        aria-label={t('visual.forecastAria', { metric: metricLabel(p.metric), trend: t(`visual.trend.${trend}`), range: range ?? t('visual.forecastNoData'), message })}
+        aria-label={t('visual.forecastAria', { metric: metricLabel(p.metric), trend: t(`visual.trend.${trend}`), range: range ?? noProjection, message })}
         className="focus-ring flex w-full items-center gap-2.5 rounded-xl px-3 py-1.5 text-left transition-colors hover:bg-white/[0.04]"
       >
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, color }} aria-hidden>
