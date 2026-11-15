@@ -10,7 +10,8 @@ import { Button, Drawer } from '../../components/ui'
 import { formatUtcTime, relTime } from '../../components/format'
 import { useUiStore } from '../../app/uiStore'
 import { focusTarget } from '../shared/hooks'
-import { playAlertTone, primeAlertAudio } from './sound'
+import { useA11yStore } from '../a11y/settings'
+import { playEarcon, primeAudio } from '../a11y/earcons'
 
 function useCallsign() {
   const crew = useAppStore((s) => s.crew)
@@ -174,34 +175,38 @@ function AlertGroup({ group, now, callsign }: { group: Group; now: number; calls
   )
 }
 
+/** Shortcut to the alert sound preference (the full settings live in Tools, Accessibility and sound). */
 function SoundToggle() {
-  const soundOn = useUiStore((s) => s.soundOn)
-  const setSoundOn = useUiStore((s) => s.setSoundOn)
+  const soundOn = useA11yStore((s) => s.soundOn)
+  const setPrefs = useA11yStore((s) => s.setPrefs)
+  const setSettingsOpen = useA11yStore((s) => s.setSettingsOpen)
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={soundOn}
-      onClick={() => {
-        const next = !soundOn
-        setSoundOn(next)
-        if (next) {
-          primeAlertAudio()
-          playAlertTone()
-        }
-      }}
-      className={clsx(
-        'focus-ring flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs ring-1 transition-colors',
-        soundOn ? 'bg-accent/[0.07] text-ink-100 ring-accent/30' : 'bg-white/[0.03] text-ink-300 ring-white/[0.06] hover:bg-white/[0.05]',
-      )}
-    >
-      {soundOn ? <Volume2 size={15} className="text-accent" aria-hidden /> : <VolumeX size={15} className="text-ink-500" aria-hidden />}
-      <span className="flex-1">Sound for new critical alerts</span>
-      <span className={clsx('relative h-[18px] w-8 rounded-full transition-colors', soundOn ? 'bg-accent' : 'bg-white/15')} aria-hidden>
-        <span className={clsx('absolute top-[2px] h-[14px] w-[14px] rounded-full bg-white shadow transition-all', soundOn ? 'left-[16px]' : 'left-[2px]')} />
-      </span>
-      <span className="sr-only">{soundOn ? 'On' : 'Off'}</span>
-    </button>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={soundOn}
+        onClick={() => {
+          const next = !soundOn
+          setPrefs({ soundOn: next })
+          if (next) void primeAudio().then(() => playEarcon('CRITICAL'))
+        }}
+        className={clsx(
+          'focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs ring-1 transition-colors',
+          soundOn ? 'bg-accent/[0.07] text-ink-100 ring-accent/30' : 'bg-white/[0.03] text-ink-300 ring-white/[0.06] hover:bg-white/[0.05]',
+        )}
+      >
+        {soundOn ? <Volume2 size={15} className="text-accent" aria-hidden /> : <VolumeX size={15} className="text-ink-500" aria-hidden />}
+        <span className="flex-1">Sound for critical alerts (repeats until acknowledged)</span>
+        <span className={clsx('relative h-[18px] w-8 shrink-0 rounded-full transition-colors', soundOn ? 'bg-accent' : 'bg-white/15')} aria-hidden>
+          <span className={clsx('absolute top-[2px] h-[14px] w-[14px] rounded-full bg-white shadow transition-all', soundOn ? 'left-[16px]' : 'left-[2px]')} />
+        </span>
+        <span className="sr-only">{soundOn ? 'On' : 'Off'}</span>
+      </button>
+      <Button variant="subtle" onClick={() => setSettingsOpen(true)} aria-haspopup="dialog">
+        Settings
+      </Button>
+    </div>
   )
 }
 
