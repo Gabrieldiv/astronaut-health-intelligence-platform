@@ -1,17 +1,19 @@
 import clsx from 'clsx'
-import { BookOpenCheck, Cpu, Database, History, Tags, type LucideIcon } from 'lucide-react'
+import { BookOpenCheck, Cpu, Database, Globe2, History, Tags, type LucideIcon } from 'lucide-react'
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { Modal } from '../mission/Modal'
 import { REAL_DATASET_ACCESSIONS } from '../../data/osdr'
 import { DevicesTab } from './DevicesTab'
 import { ModelCardTab } from './ModelCardTab'
+import { NasaContextTab } from './NasaContextTab'
 import { OriginsTab } from './OriginsTab'
 import { RealDatasetsTab } from './RealDatasetsTab'
 
-type TabId = 'real' | 'devices' | 'model' | 'origins'
+type TabId = 'real' | 'nasa' | 'devices' | 'model' | 'origins'
 
 const TABS: Array<{ id: TabId; label: string; icon: LucideIcon; count?: number }> = [
   { id: 'real', label: 'Real datasets', icon: History, count: REAL_DATASET_ACCESSIONS.length },
+  { id: 'nasa', label: 'NASA context', icon: Globe2 },
   { id: 'devices', label: 'Simulated devices', icon: Cpu },
   { id: 'model', label: 'Model card', icon: BookOpenCheck },
   { id: 'origins', label: 'Data origins', icon: Tags },
@@ -19,7 +21,7 @@ const TABS: Array<{ id: TabId; label: string; icon: LucideIcon; count?: number }
 
 export default function DataModelDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [tab, setTab] = useState<TabId>('real')
-  const refs = useRef<Record<TabId, HTMLButtonElement | null>>({ real: null, devices: null, model: null, origins: null })
+  const refs = useRef<Record<TabId, HTMLButtonElement | null>>({ real: null, nasa: null, devices: null, model: null, origins: null })
 
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
     const i = TABS.findIndex((t) => t.id === tab)
@@ -78,6 +80,7 @@ export default function DataModelDialog({ open, onClose }: { open: boolean; onCl
       </div>
       <div role="tabpanel" id={`dm-panel-${tab}`} aria-labelledby={`dm-tab-${tab}`} tabIndex={0} className="min-h-[min(620px,calc(100vh-200px))] outline-none">
         {tab === 'real' && <RealDatasetsTab />}
+        {tab === 'nasa' && <NasaContextTab />}
         {tab === 'devices' && <DevicesTab />}
         {tab === 'model' && <ModelCardTab />}
         {tab === 'origins' && <OriginsTab />}
