@@ -1,6 +1,7 @@
 /**
- * Camera of the atlas viewer: damped orbit controls (rotate, zoom, bounded pan), smooth fly-to
- * for the selection, preset views and idle auto rotate.
+ * Camera of the atlas viewer: damped orbit controls (rotate, bounded pan), zoom toward the pointer
+ * (wheel, trackpad and two finger pinch), smooth fly-to for the selection, preset views and idle
+ * auto rotate.
  *
  * Whole body shots are fitted to the viewport: the body fills about 88 percent of the free
  * height (between the top reserve and the bottom controls) and is fitted again whenever the
@@ -13,6 +14,7 @@ import { PerspectiveCamera, Spherical, Vector3 } from 'three'
 import type { FrameInsets } from '../procedural/CameraRig'
 import type { Box, Focus } from './layers'
 import type { ViewPreset } from './atlasStore'
+import { wheelScale, zoomToward } from './zoom'
 
 type Controls = React.ComponentRef<typeof OrbitControls>
 
@@ -30,6 +32,8 @@ interface Props {
 }
 
 const IDLE_MS = 5000
+const ZOOM_SPEED = 0.8
+const MIN_DISTANCE = 0.18
 /** Fraction of the free height the full body occupies. */
 const FILL = 0.92
 const DEFAULT_DIR = new Vector3(0, 0.06, 1)
@@ -91,6 +95,7 @@ export function AtlasCamera({ body, focus, resetNonce, view, hovering, autoRotat
   const controls = useRef<Controls>(null)
   const camera = useThree((s) => s.camera)
   const size = useThree((s) => s.size)
+  const gl = useThree((s) => s.gl)
   const fly = useRef<Goal | null>(null)
   const lastInteraction = useRef(-Infinity)
   const tmp = useRef({ off: new Vector3(), sph: new Spherical() })
@@ -146,6 +151,67 @@ export function AtlasCamera({ body, focus, resetNonce, view, hovering, autoRotat
     lastInteraction.current = performance.now()
   }, [viewNonce])
 
+  // zoom toward the pointer: the orbit controls' own dolly zooms toward the orbit center, and its
+  // zoom-to-cursor mode ignores the pinch center, so wheel and pinch are handled here
+  const maxDistance = Math.max(5.5, fitDist * 1.4)
+  const maxRef = useRef(maxDistance)
+  useEffect(() => {
+    maxRef.current = maxDistance
+  }, [maxDistance])
+  useEffect(() => {
+    const el = gl.domElement
+    const touches = new Map<number, { x: number; y: number }>()
+    let pinch = 0
+    const zoomAt = (clientX: number, clientY: number, scale: number) => {
+      const c = controls.current
+      if (!c || !(camera instanceof PerspectiveCamera)) return
+      const rect = el.getBoundingClientRect()
+      const x = ((clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1
+      const y = -((clientY - rect.top) / Math.max(1, rect.height)) * 2 + 1
+      // a manual zoom ends any fly-to and pauses auto rotate, like any other interaction
+      fly.current = null
+      lastInteraction.current = performance.now()
+      if (zoomToward(camera, c.target, x, y, scale, MIN_DISTANCE, maxRef.current)) c.update()
+    }
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      zoomAt(e.clientX, e.clientY, wheelScale(e, ZOOM_SPEED))
+    }
+    const spread = () => {
+      const [a, b] = [...touches.values()]
+      return a && b ? { d: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : null
+    }
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') return
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      pinch = spread()?.d ?? 0
+    }
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch' || !touches.has(e.pointerId)) return
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const s = touches.size === 2 ? spread() : null
+      if (!s || s.d < 1) return
+      if (pinch > 0) zoomAt(s.x, s.y, Math.min(2, Math.max(0.5, (pinch / s.d) ** ZOOM_SPEED)))
+      pinch = s.d
+    }
+    const onUp = (e: PointerEvent) => {
+      touches.delete(e.pointerId)
+      pinch = spread()?.d ?? 0
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    el.addEventListener('pointerdown', onDown)
+    el.addEventListener('pointermove', onMove)
+    el.addEventListener('pointerup', onUp)
+    el.addEventListener('pointercancel', onUp)
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('pointerdown', onDown)
+      el.removeEventListener('pointermove', onMove)
+      el.removeEventListener('pointerup', onUp)
+      el.removeEventListener('pointercancel', onUp)
+    }
+  }, [gl, camera])
+
   useFrame((_, dt) => {
     const c = controls.current
     if (!c) return
@@ -180,13 +246,13 @@ export function AtlasCamera({ body, focus, resetNonce, view, hovering, autoRotat
       ref={controls}
       makeDefault
       enablePan
+      enableZoom={false}
       enableDamping
       dampingFactor={0.08}
       rotateSpeed={0.7}
-      zoomSpeed={0.8}
       panSpeed={0.7}
-      minDistance={0.18}
-      maxDistance={Math.max(5.5, fitDist * 1.4)}
+      minDistance={MIN_DISTANCE}
+      maxDistance={maxDistance}
       minPolarAngle={0.12}
       maxPolarAngle={Math.PI * 0.78}
       autoRotateSpeed={0.55}
