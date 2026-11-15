@@ -54,8 +54,6 @@ The Crew view keeps the language simple: "Do this now", "Do this soon" or "When 
 
 **Your body systems** lists one card per body system, one per row: a plain label (for example "Heart"), its status in words and color, and its key reading. Tap a card to highlight that system on the 3D body.
 
-![Crew view with the "Your body systems" cards, one per body system with status and key reading](/screenshots/crew-body-systems.png)
-
 ## Top bar
 
 The top bar has three zones: identity on the left, the scenario player in the center, and tools on the right.
@@ -113,8 +111,6 @@ Drag to rotate and pan. The mouse wheel, a trackpad or a pinch **zoom toward the
 
 **Keyboard**: `Tab` to the body, then `Up` / `Down` for body systems, `Left` / `Right` for structures, `Enter` to select and `Esc` to clear. Each step is announced ([Accessibility](./accessibility)).
 
-![Monitor mode with zoom toward the heart: monitored structures stand out, context only anatomy is quieter](/screenshots/monitor-zoom.png)
-
 ### Selecting a structure {#selecting-a-structure}
 
 Hover a part of the body to see its name, its anatomical system and its status, or "Not monitored" (in Explore mode). Click to select it: the camera moves to the structure, the rest of the body fades to a see-through outline and the right panel becomes **Anatomy detail**.
@@ -137,8 +133,6 @@ Click the selected structure again, click empty space, press `Esc` or use **Over
 ::: info Eyes and ears
 The eyes and ears are monitored from periodic simulated exams (SANS eye exams, hearing tests, daily noise). Their detail shows the exam history against the pre-flight baseline; "No exam yet" is never shown as normal. The ears have no 3D geometry: two small status rings on the sides of the head mark them. See [Eye health and hearing](../intelligence/eye-and-hearing).
 :::
-
-![Eyes region detail with the exam history against the pre-flight baseline](/screenshots/eyes-exams.png)
 
 ## What needs attention
 

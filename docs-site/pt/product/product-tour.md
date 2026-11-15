@@ -59,8 +59,6 @@ A "Crew view" mostra uma pessoa por vez:
 
 **"Your body systems"** lista um cartão por sistema do corpo, um por linha: um rótulo simples (por exemplo "Heart"), o status em palavras e cor, e a leitura-chave. Toque em um cartão para destacar aquele sistema no corpo 3D.
 
-![Crew view com os cartões "Your body systems", um por sistema do corpo, com status e leitura-chave](/screenshots/crew-body-systems.png)
-
 ## Barra superior
 
 Da esquerda para a direita:
@@ -157,8 +155,6 @@ Arraste para girar e deslocar a vista. A roda do mouse, o trackpad ou a pinça *
 
 **Teclado**: `Tab` até o corpo, depois `Up` / `Down` para os sistemas, `Left` / `Right` para as estruturas, `Enter` para selecionar e `Esc` para limpar. Cada passo é anunciado ([Acessibilidade](/pt/product/accessibility)).
 
-![Modo Monitor com zoom em direção ao coração: as estruturas monitoradas se destacam, a anatomia só de contexto fica mais discreta](/screenshots/monitor-zoom.png)
-
 ### Selecionar uma estrutura {#selecting-a-structure}
 
 Passe o ponteiro sobre uma parte do corpo para ver o nome, o sistema anatômico e o status, ou "Not monitored" (no modo Explore). Clique para selecionar: a câmera vai até a estrutura, o resto do corpo esmaece em um contorno translúcido e o painel da direita vira "Anatomy detail".
@@ -181,8 +177,6 @@ Clique de novo na estrutura selecionada, clique no espaço vazio, aperte `Esc` o
 ::: info Olhos e ouvidos
 Os olhos e os ouvidos são monitorados por exames periódicos simulados (exames oculares da SANS, testes de audição, ruído diário). O detalhe deles mostra o histórico de exames contra a linha de base pré-voo; "No exam yet" nunca aparece como normal. Os ouvidos não têm geometria 3D: dois pequenos anéis de status dos lados da cabeça os marcam. Veja [Saúde ocular e audição](/pt/intelligence/eye-and-hearing).
 :::
-
-![Detalhe da região dos olhos com o histórico de exames contra a linha de base pré-voo](/screenshots/eyes-exams.png)
 
 ## Painel "What needs attention"
 

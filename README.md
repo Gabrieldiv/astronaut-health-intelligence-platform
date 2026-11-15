@@ -75,8 +75,8 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
     <td width="50%"><img src="docs-site/public/screenshots/whatif.png" alt="What-if comparison with and without action" /><br/><sub><b>What if:</b> hypothetical trajectories with and without an action.</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs-site/public/screenshots/mission-context.png" alt="Mission context dialog for Mars transit with cited values, mission dose and space weather" /><br/><sub><b>Mission profiles:</b> cited values, mission dose vs the NASA career limit, DONKI space weather.</sub></td>
-    <td width="50%"><img src="docs-site/public/screenshots/eyes-exams.png" alt="Eyes region detail with exam history against the pre-flight baseline" /><br/><sub><b>Eyes (SANS):</b> periodic exams against the pre-flight baseline.</sub></td>
+    <td width="50%"><img src="docs-site/public/screenshots/mission-overview.png" alt="Mission overview" /><br/><sub><b>Mission overview:</b> radiation, exercise, sleep, HR and HRV over the mission.</sub></td>
+    <td width="50%"><img src="docs-site/public/screenshots/data-model.png" alt="Real NASA OSDR data with provenance" /><br/><sub><b>Real NASA data:</b> Inspiration4 blood count with provenance.</sub></td>
   </tr>
 </table>
 
