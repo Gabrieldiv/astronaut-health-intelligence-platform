@@ -1,6 +1,6 @@
 ---
 title: Visão geral da arquitetura
-description: Contexto e contêineres da Astronaut Health Intelligence Platform em estilo C4: um app no navegador com um backend FastAPI opcional e um modo demo offline, com stack e decisões.
+description: "Contexto e contêineres da Astronaut Health Intelligence Platform em estilo C4: um app no navegador com um backend FastAPI opcional e um modo demo offline, com stack e decisões."
 status: IMPLEMENTED
 origin: SIMULATED, DERIVED, REAL_PUBLIC
 code:

@@ -1,6 +1,6 @@
 ---
 title: Visão geral e status dos métodos
-description: O pipeline de inteligência de saúde da Astronaut Health Intelligence Platform e a auditoria dos métodos: o que está implementado, experimental, planejado ou fora de escopo.
+description: "O pipeline de inteligência de saúde da Astronaut Health Intelligence Platform e a auditoria dos métodos: o que está implementado, experimental, planejado ou fora de escopo."
 status: IMPLEMENTED
 origin: SIMULATED, DERIVED
 code:
