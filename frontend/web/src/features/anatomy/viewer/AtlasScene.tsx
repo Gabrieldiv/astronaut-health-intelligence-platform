@@ -23,6 +23,7 @@ import { viewerStats } from './atlasStore'
 import type { LayerModel } from './layers'
 import { AtlasRuntime } from './runtime'
 import { Studio } from './Studio'
+import { EarMarkers } from './EarMarkers'
 
 export interface AtlasSceneProps {
   manifest: AtlasManifest
@@ -297,6 +298,8 @@ function SceneBody({ manifest, model, store, labels, visible, statuses, anchors,
           </Bvh>
         ) : null
       })}
+      {/* v5: the ears are not in the atlas: a status marker on the sides of the head locates them */}
+      {visible.integumentary !== false && <EarMarkers manifest={manifest} status={statuses.ears ?? 'NO_DATA'} selected={selectedRegion === 'ears'} />}
       <LabelProjector registry={labels} anchor={anchor} hoverPoint={hoverPoint} />
     </>
   )

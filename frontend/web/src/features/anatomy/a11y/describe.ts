@@ -20,6 +20,7 @@ export function statusPhrase(status: Status | null | undefined): string {
 export function describeRegion(region: BodyRegionId, status: Status | null | undefined, structureCount?: number): string {
   const parts = [`${REGION_LABELS[region].label} region`, statusPhrase(status)]
   if (structureCount) parts.push(`${structureCount} ${structureCount === 1 ? 'structure' : 'structures'}`)
+  else if (region === 'ears') parts.push('Not modeled in the 3D body, marked on the sides of the head')
   return `${parts.join('. ')}.`
 }
 

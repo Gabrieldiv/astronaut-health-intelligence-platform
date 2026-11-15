@@ -12,6 +12,7 @@ import { Badge, Button, PANEL_HEADER, PANEL_TITLE, SectionLabel } from '../../co
 import { WhatIfButton } from '../whatif'
 import { AutonomyBadge } from './AutonomyBadge'
 import { formatHours, formatUtcTime, relTime } from '../../components/format'
+import { EXAM_REGION_IDS } from '../anatomy/regions'
 import { BODY_REGIONS, focusTarget, useActions, useEscapeClearsStructure, usePendingActions, useSelectedStructure, useSignalLost } from '../shared/hooks'
 import { RegionDetail } from './RegionDetail'
 import { forHorizon, forecastMessage, historyNote, useForecastHorizon } from './forecastHorizon'
@@ -79,6 +80,8 @@ interface Issue {
   region: BodyRegionId | null
 }
 
+const isExamRegion = (r: string) => r === 'eyes' || r === 'ears'
+
 function Issues({ astronautId }: { astronautId: string }) {
   const { factors, regions, metrics } = useAppStore(
     useShallow((s) => ({ factors: s.health[astronautId]?.risk.contributing_factors, regions: s.health[astronautId]?.regions, metrics: s.health[astronautId]?.metrics })),
@@ -100,7 +103,8 @@ function Issues({ astronautId }: { astronautId: string }) {
       })
     }
     const missing = (Object.values(metrics ?? {}) as { metric: MetricCode; current: number | null; status: Status }[])
-      .filter((m) => m && (m.current == null || m.status === 'NO_DATA'))
+      // exam measures (eyes, ears) are periodic: 'no exam yet' is said by their region, not as a sensor problem
+      .filter((m) => m && (m.current == null || m.status === 'NO_DATA') && !isExamRegion(METRIC_CATALOG[m.metric].region))
       .map((m) => m.metric)
     if (missing.length) {
       const names = missing.map((m) => METRIC_CATALOG[m].label.toLowerCase())
@@ -120,12 +124,12 @@ function Issues({ astronautId }: { astronautId: string }) {
       }
     }
     if (regions) {
-      for (const r of BODY_REGIONS) {
+      for (const r of [...BODY_REGIONS, ...EXAM_REGION_IDS]) {
         const rs = regions[r]
         if (!rs || rs.status === 'LOW' || rs.metrics.length === 0 || covered.has(r)) continue
         out.push({
           key: `r-${r}`,
-          label: `${REGION_LABELS[r].label}: ${rs.status === 'NO_DATA' ? 'no recent data. Missing data is not treated as normal.' : rs.summary}`,
+          label: `${REGION_LABELS[r].label}: ${rs.status === 'NO_DATA' && !isExamRegion(r) ? 'no recent data. Missing data is not treated as normal.' : rs.summary}`,
           status: rs.status,
           weight: null,
           metric: null,

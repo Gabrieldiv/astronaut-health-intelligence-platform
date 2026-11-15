@@ -18,6 +18,7 @@ import { RegionAlertsJump, RegionEvents } from './RegionEvents'
 import { MeasuredBy } from './MeasuredBy'
 import { forHorizon, historyNote, useForecastHorizon } from './forecastHorizon'
 import { HorizonPicker } from './HorizonPicker'
+import { ExamHistory } from './ExamHistory'
 
 const WINDOWS = [6, 24, 72] as const
 
@@ -195,7 +196,10 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
         </div>
       )}
       <RegionAlertsJump astronautId={astronautId} region={region} />
-      {metrics.length === 0 ? (
+      {region === 'eyes' || region === 'ears' ? (
+        // periodic exams: a session history instead of live trend charts
+        <ExamHistory astronautId={astronautId} region={region} />
+      ) : metrics.length === 0 ? (
         <div className="rounded-xl border border-dashed border-white/15 px-3 py-4 text-center text-xs text-ink-500">No live sensor for this system in the MVP. Shown for context only.</div>
       ) : (
         <ul className="flex flex-col gap-2" aria-label={`${label.label} metrics`}>
@@ -207,7 +211,7 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
           ))}
         </ul>
       )}
-      <MeasuredBy astronautId={astronautId} metrics={metrics} />
+      {region !== 'eyes' && region !== 'ears' && <MeasuredBy astronautId={astronautId} metrics={metrics} />}
       <RegionEvents astronautId={astronautId} region={region} />
     </div>
   )

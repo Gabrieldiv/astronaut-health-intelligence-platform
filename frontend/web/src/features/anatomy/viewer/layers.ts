@@ -205,7 +205,9 @@ export function unionBox(list: AtlasStructure[]): Box | null {
 
 /** The organs the application monitors directly (required ids), per body region. Skin is whole body. */
 export function primaryStructures(manifest: AtlasManifest, region: BodyRegionId): AtlasStructure[] {
-  if (region === 'skin') return []
+  if (region === 'skin' || region === 'ears') return []
+  // the eyes are optional in the atlas (not required ids): every eye structure stands for the region
+  if (region === 'eyes') return manifest.structures.filter((s) => regionOfStructure(s) === 'eyes')
   const ids = new Set<string>(REQUIRED_STRUCTURE_IDS)
   return manifest.structures.filter((s) => ids.has(s.id) && regionOfStructure(s) === region)
 }
@@ -230,12 +232,23 @@ const REGION_DIR: Record<BodyRegionId, Vec3> = {
   muscles: [0.5, 0.08, 1],
   bones: [-0.45, 0.08, 1],
   skin: [0.22, 0.05, 1],
+  eyes: [0.3, 0.08, 1],
+  ears: [1, 0.12, 0.3],
 }
 
 const height = (b: Box) => b.max[1] - b.min[1]
 
 /** Camera focus for a region: its monitored organs when it has them, else the whole body. */
 export function regionFocus(manifest: AtlasManifest, region: BodyRegionId): Focus {
+  if (region === 'ears') {
+    // no ear geometry: frame the head around the two ear markers
+    const ears = earAnchors(manifest)
+    if (ears) {
+      const r = 0.06
+      const box: Box = { min: [ears.right[0] - r, ears.right[1] - r, ears.right[2] - r], max: [ears.left[0] + r, ears.left[1] + r, ears.left[2] + r] }
+      return { key: 'region:ears', box, dir: REGION_DIR.ears, full: false, pad: 1.6 }
+    }
+  }
   const box = unionBox(primaryStructures(manifest, region))
   if (!box) return { key: `region:${region}`, box: manifest.bounds, dir: REGION_DIR[region], full: true }
   return { key: `region:${region}`, box, dir: REGION_DIR[region], full: false, pad: 2.1 }
@@ -285,5 +298,23 @@ export function regionAnchors(manifest: AtlasManifest): Record<BodyRegionId, Vec
   out.muscles = nearest('muscles', [0.11, b.min[1] + 0.4 * h, 0.04])
   out.bones = nearest('bones', [-0.09, b.min[1] + 0.25 * h, 0.03])
   if (manifest.structures.some((s) => regionOfStructure(s) === 'skin')) out.skin = [b.min[0] * 0.5, b.min[1] + 0.52 * h, 0.03]
+  out.ears = earAnchors(manifest)?.left ?? null
   return out
+}
+
+/**
+ * Where the ears are on the reference body: the sides of the head, at eye height, a little behind
+ * the eyes. The atlas has no ear structure (the inner ear model is excluded for license reasons),
+ * so the points come from the eyes (or, without them, from the body bounds). No geometry is added.
+ */
+export function earAnchors(manifest: AtlasManifest): { left: Vec3; right: Vec3 } | null {
+  if (!manifest.structures.some((s) => regionOfStructure(s) === 'skin')) return null
+  const eyes = manifest.structures.filter((s) => regionOfStructure(s) === 'eyes')
+  const b = manifest.bounds
+  const h = height(b)
+  // head half width at ear level is about 0.22 of the body half width (shoulder span) in the atlas frame
+  const x = Math.max(b.max[0], -b.min[0]) * 0.225
+  const y = eyes.length ? eyes.reduce((n, s) => n + s.center[1], 0) / eyes.length - 0.012 : b.min[1] + 0.925 * h
+  const z = eyes.length ? eyes.reduce((n, s) => n + s.center[2], 0) / eyes.length - 0.075 : 0
+  return { left: [x, y, z], right: [-x, y, z] }
 }

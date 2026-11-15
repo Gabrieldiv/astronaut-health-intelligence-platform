@@ -3,7 +3,7 @@
  * screen reader users). Pure TypeScript: the model and the key handling are unit tested in node.
  *
  * Model: the monitored body regions in dashboard order, each with the atlas structures that report
- * under it. The cursor is on a region (structure = -1) or on one structure of that region.
+ * under it. The ears have no structure (the ear is not in the atlas) and are a region stop only. The cursor is on a region (structure = -1) or on one structure of that region.
  *
  * Keys: Up and Down move between regions, Left and Right move between the structures of the
  * current region (wrapping back to the region itself), Home and End jump to the first and last
@@ -43,7 +43,8 @@ export function buildNavModel(manifest: AtlasManifest): NavModel {
   for (const region of REGIONS) {
     const primary = primaryStructureOfRegion(manifest, region)
     const list = manifest.structures.filter((s) => regionOfStructure(s) === region)
-    if (!list.length) continue
+    // the ears have no atlas structure (excluded for license reasons) but stay a reachable region
+    if (!list.length && region !== 'ears') continue
     list.sort((a, b) => (a === primary ? -1 : b === primary ? 1 : a.name.localeCompare(b.name)))
     regions.push({ region, label: REGION_LABELS[region].label, structures: list, primary })
   }

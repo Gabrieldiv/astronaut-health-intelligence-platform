@@ -27,7 +27,12 @@
  * | urinary: kidneys only                        | kidneys | Hydration index, estimated from fluid intake logs. A        |
  * |                                              |         | related indicator, not a kidney function measurement.       |
  * | urinary: ureters, bladder, urethra           | none    | Context only.                                               |
- * | digestive, other (glands, lymphoid, senses)  | none    | Context only.                                               |
+ * | other: eyes (tissue 'eye')                   | eyes    | Periodic eye exams (OCT, ocular ultrasound, visual acuity)  |
+ * |                                              |         | for SANS, compared with the pre-flight baseline.            |
+ * | digestive, other (glands, lymphoid)          | none    | Context only.                                               |
+ * | (no structure)                               | ears    | Hearing tests and noise exposure. The ear is not in the     |
+ * |                                              |         | atlas (excluded for license reasons): the viewer shows a    |
+ * |                                              |         | marker on the sides of the head, never ear geometry.        |
  *
  * Everything here is pure TypeScript (no React, no three.js), so it is unit tested in node.
  */
@@ -70,6 +75,8 @@ export function regionOfStructure(s: AtlasStructure): BodyRegionId | null {
       return isBrainStructure(s) ? 'brain' : null
     case 'urinary':
       return s.tissue === 'kidney' ? 'kidneys' : null
+    case 'other':
+      return s.tissue === 'eye' ? 'eyes' : null
     default:
       return null
   }
@@ -115,6 +122,9 @@ const PRIMARY_IDS: Record<BodyRegionId, string[]> = {
   skin: ['skin'],
   muscles: [],
   bones: [],
+  eyes: ['eyes', 'eye-left', 'eye-right'],
+  // the ear is not in the atlas (excluded for license reasons): no structure stands for it
+  ears: [],
 }
 
 /**
@@ -199,8 +209,8 @@ export const SYSTEM_INFO: Record<AnatomySystemId, SystemInfo> = {
   other: {
     label: 'Other organs',
     description: 'Endocrine glands, lymphoid organs and sense organs.',
-    coverage: 'context',
-    monitoring: 'No device or metric of this prototype relates to these organs.',
+    coverage: 'partial',
+    monitoring: 'Only the eyes have related indicators (periodic eye exams for SANS). Glands and lymphoid organs are shown for reference only.',
   },
 }
 
@@ -261,6 +271,14 @@ export const REGION_RELATION: Record<BodyRegionId, { basis: string; caveat: stri
   skin: {
     basis: 'Skin temperature is one surface reading from the smart shirt.',
     caveat: 'It is not a map of the whole skin.',
+  },
+  eyes: {
+    basis: 'Periodic eye exams (retina scan, eye ultrasound, visual acuity) are compared with your own pre-flight baseline, as in NASA SANS monitoring.',
+    caveat: 'Exam results are simulated and are not a diagnosis. Between exams the status shows the last exam.',
+  },
+  ears: {
+    basis: 'Periodic hearing tests are compared with your own pre-flight baseline; noise exposure comes from a crew worn dosimeter.',
+    caveat: 'The ear is not modeled in the 3D body (the inner ear model is excluded for license reasons). The marker on the head only locates it.',
   },
 }
 
