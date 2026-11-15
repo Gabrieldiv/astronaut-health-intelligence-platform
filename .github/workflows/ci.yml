@@ -9,7 +9,7 @@ on:
       - 'frontend/web/**'
       - '.github/workflows/ci.yml'
   pull_request:
-    branches: [master]
+    branches: [master, develop]
     paths:
       - 'frontend/web/**'
       - '.github/workflows/ci.yml'
