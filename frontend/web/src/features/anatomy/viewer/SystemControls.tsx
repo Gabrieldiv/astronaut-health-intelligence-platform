@@ -4,11 +4,11 @@
  * labelScale so it stays usable in presentation mode and in small containers.
  */
 import { useCallback, useRef, useState } from 'react'
-import { Layers, RotateCcw } from 'lucide-react'
+import { Layers, RefreshCw, RotateCcw } from 'lucide-react'
 import clsx from 'clsx'
 import { useAppStore } from '../../../state/store'
 import { useDismiss } from '../hooks'
-import { useAtlasProgress } from './atlasLoader'
+import { retryAtlasFile, useAtlasProgress } from './atlasLoader'
 import type { AtlasStore, ViewPreset } from './atlasStore'
 import type { LayerModel } from './layers'
 import { PRESETS, presetChoice } from './layers'
@@ -101,33 +101,51 @@ export function SystemControls({ store, model, visible, compact, ls, bottom }: S
           const on = !!visible[l.id]
           const file = files[l.system]
           const loading = on && file?.status === 'loading'
+          const retrying = loading && (file.attempt ?? 1) > 1
           const failed = file?.status === 'error'
           const auto = l.defaultOn === null && typeof choice[l.id] !== 'boolean'
+          const title = failed
+            ? `${l.label} could not be loaded${file.reason ? ` (${file.reason})` : ''} after ${file.attempt ?? 1} ${(file.attempt ?? 1) === 1 ? 'try' : 'tries'}. Click to try again.`
+            : retrying
+              ? `Loading ${l.label.toLowerCase()} again (try ${file.attempt}${file.reason ? `, last try: ${file.reason}` : ''})`
+              : `${on ? 'Hide' : 'Show'} ${l.label.toLowerCase()} (${l.structures.length} structures)`
           return (
             <li key={l.id}>
               <button
                 type="button"
                 role="switch"
-                aria-checked={on}
-                disabled={failed}
-                title={failed ? `${l.label}: not available` : `${on ? 'Hide' : 'Show'} ${l.label.toLowerCase()} (${l.structures.length} structures)`}
-                onClick={() => setLayer(l.id, !on)}
+                aria-checked={on && !failed}
+                aria-label={failed ? `${l.label}: failed to load, activate to try again` : undefined}
+                title={title}
+                onClick={() => {
+                  if (failed) {
+                    // a failed layer is never disabled: pressing it loads the file again
+                    retryAtlasFile(l.system)
+                    if (!on) setLayer(l.id, true)
+                    return
+                  }
+                  setLayer(l.id, !on)
+                }}
                 className={clsx(
                   'flex w-full items-center rounded-lg text-left transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-cyan-300/60',
-                  on ? 'bg-cyan-300/10 text-slate-50 ring-1 ring-cyan-300/25' : 'text-slate-400 ring-1 ring-white/5 hover:bg-white/5 hover:text-slate-200',
-                  failed && 'cursor-not-allowed opacity-50',
+                  failed
+                    ? 'text-amber-100/90 ring-1 ring-amber-300/30 hover:bg-amber-300/10'
+                    : on
+                      ? 'bg-cyan-300/10 text-slate-50 ring-1 ring-cyan-300/25'
+                      : 'text-slate-400 ring-1 ring-white/5 hover:bg-white/5 hover:text-slate-200',
                 )}
                 style={{ gap: 6 * ls, padding: `${5 * ls}px ${7 * ls}px` }}
               >
-                <span className="shrink-0 rounded-full ring-1 ring-black/30" style={{ width: 9 * ls, height: 9 * ls, background: l.swatch, opacity: on ? 1 : 0.45 }} aria-hidden />
+                <span className="shrink-0 rounded-full ring-1 ring-black/30" style={{ width: 9 * ls, height: 9 * ls, background: l.swatch, opacity: on && !failed ? 1 : 0.45 }} aria-hidden />
                 <span className="min-w-0 flex-1 truncate font-medium">{l.label}</span>
                 {loading ? (
                   <span className="font-mono tabular text-cyan-200/80" style={{ fontSize: 9 * ls }}>
-                    {Math.round((100 * file.loaded) / Math.max(1, file.total))}%
+                    {retrying ? `try ${file.attempt}` : `${Math.round((100 * file.loaded) / Math.max(1, file.total))}%`}
                   </span>
                 ) : failed ? (
-                  <span className="text-slate-500" style={{ fontSize: 9 * ls }}>
-                    n/a
+                  <span className="flex items-center gap-0.5 font-medium uppercase tracking-wider text-amber-200/90" style={{ fontSize: 8.5 * ls }}>
+                    <RefreshCw size={Math.round(9 * ls)} aria-hidden />
+                    retry
                   </span>
                 ) : auto ? (
                   <span className="uppercase tracking-wider text-slate-500" style={{ fontSize: 8.5 * ls }} title="Shown automatically when selected or in alert">
