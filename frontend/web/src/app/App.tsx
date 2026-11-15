@@ -10,6 +10,7 @@ import { useCriticalSound } from '../features/alerts/sound'
 import { TimelineStrip } from '../features/timeline'
 import { CrewView } from '../features/crewview/CrewView'
 import { Tour } from '../features/tour/Tour'
+import { Assistant } from '../features/assistant/AssistantPanel'
 import { ShortcutsOverlay, useGlobalShortcuts } from './shortcuts'
 import { useUiStore } from './uiStore'
 
@@ -70,6 +71,7 @@ export default function App() {
       <AlertsDrawer />
       <ShortcutsOverlay />
       <Tour />
+      <Assistant />
     </div>
   )
 }
