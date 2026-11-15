@@ -14,6 +14,7 @@ import { AutonomyBadge } from './AutonomyBadge'
 import { formatHours, formatUtcTime, relTime } from '../../components/format'
 import { BODY_REGIONS, focusTarget, useActions, useEscapeClearsStructure, usePendingActions, useSelectedStructure, useSignalLost } from '../shared/hooks'
 import { RegionDetail } from './RegionDetail'
+import { MultivariateNote } from './MultivariateNote'
 import { forHorizon, forecastMessage, historyNote, useForecastHorizon } from './forecastHorizon'
 import { HorizonPicker } from './HorizonPicker'
 import { horizonLabel } from '../../engine/forecast'
@@ -179,6 +180,7 @@ function Issues({ astronautId }: { astronautId: string }) {
           {showAllIssues ? 'Show less' : 'Show ' + (issues.length - 3) + ' more'}
         </button>
       )}
+      <MultivariateNote astronautId={astronautId} />
     </section>
   )
 }
