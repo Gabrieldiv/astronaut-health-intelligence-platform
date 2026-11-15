@@ -21,6 +21,7 @@ The Astronaut Health Intelligence Platform (AHI) is a prototype with simulated d
 | Interface | Ground and Crew views (with body system cards), guided demo, Measured by, Earth link, check-in, mission overview, handover report with FHIR R4 export, what-if |
 | 3D anatomy | Z-Anatomy atlas with 250 structures, zoom to pointer, Monitor and Explore modes, retrying downloads, keyboard body navigator, body scan, procedural fallback |
 | Accessibility and languages | Alert sounds with escalation, audio description, skip links, live regions; optional interface languages (pt-BR, es, ja, de) with English as default ([Accessibility](../product/accessibility)) |
+| Final delivery polish | Mission backdrops with cited profile facts, visual first panels (gauges, change bars, delay clock, sentences behind Details), Paused by operator, Waiting for data and Signal lost states with an inline Resume, a red dot on the browser tab for an open critical alert, idle rotation rule, one z-index scale, speech stop on a language change, Online and Offline switch, structured engine messages for translation, pseudo locale and i18n sweep script |
 | Backend | FastAPI modular monolith: registry, idempotent ingestion, observations, NASA DONKI and OSDR connectors, assistant, experimental analytics; SQLite or PostgreSQL; offline demo mode in the app ([Backend and API](../architecture/backend)) |
 | Assistant | Ask AHI demo with the Claude API, onboard offline architecture documented ([Ask AHI](../product/assistant)) |
 | Real NASA data | OSDR OSD-569 and OSD-575 panels as reference, DONKI events as mission context |
@@ -49,6 +50,7 @@ Replace the cabin simulator with a `REAL_PUBLIC` replay of a real ISS period (CO
 - Ground each remaining demo threshold in a citable source, or keep the demo label.
 - Calibrate the simulators with published ranges and document them in the model card.
 - Have native speakers review any interface language other than English before it is presented.
+- Finish the engine text translations: some exam notes, forecast notes, data quality notes and mission profile texts are still English in the other languages ([Engine text](../product/accessibility#engine-text)).
 
 ### 6. 3D anatomy next steps {#anatomy-next-steps}
 

@@ -13,6 +13,9 @@ code:
   - frontend/web/src/features/anatomy/atlas/types.ts
   - frontend/web/src/features/anatomy/atlas/health.ts
   - frontend/web/src/features/anatomy/procedural/ProceduralViewer.tsx
+  - frontend/web/src/features/anatomy/viewer/autoRotate.ts
+  - frontend/web/src/features/mission/backdrops/MissionBackdrop.tsx
+  - frontend/web/src/features/mission/backdrops/parallax.ts
 tests:
   - frontend/web/src/features/anatomy/atlas/health.test.ts
   - frontend/web/src/features/anatomy/atlas/manifest.contract.test.ts
@@ -22,6 +25,7 @@ tests:
   - frontend/web/src/features/anatomy/viewer/retry.test.ts
   - frontend/web/src/features/anatomy/viewer/scan.test.ts
   - frontend/web/src/features/anatomy/a11y/keyboardNav.test.ts
+  - frontend/web/src/features/anatomy/viewer/autoRotate.test.ts
 verified: 2026-11-15
 ---
 
@@ -153,7 +157,8 @@ Tudo fica em `frontend/web/src/features/anatomy/`. A API pública não mudou com
 | `viewer/runtime.ts` | Lado imperativo em three.js: uma malha por estrutura, estados, movimento do coração e dos pulmões |
 | `viewer/tissueMaterials.ts` | Um material por classe de tecido, mais o trecho de shader dos estados do visualizador |
 | `viewer/Studio.tsx` | Iluminação, ambiente, piso e sombra de contato |
-| `viewer/AtlasCamera.tsx` | Controles de órbita, voo até a seleção, vistas predefinidas, rotação em repouso |
+| `viewer/AtlasCamera.tsx` | Controles de órbita, voo até a seleção, vistas predefinidas, rotação em repouso; informa o azimute para a paralaxe do cenário |
+| `viewer/autoRotate.ts` | Regra pura que decide quando a rotação em repouso roda (com teste unitário) |
 | `viewer/SystemControls.tsx` | Popover de camadas, opacidade da pele, presets, botões de vista, reset |
 | `viewer/Attribution.tsx` | Legenda de fonte permanente e o popover "About the reference anatomy" |
 | `viewer/layers.ts` | Camadas derivadas do manifesto, presets, foco da câmera, âncoras dos rótulos |
@@ -163,7 +168,7 @@ Tudo fica em `frontend/web/src/features/anatomy/`. A API pública não mudou com
 | `Labels.tsx`, `Legend.tsx`, `regions.ts`, `hooks.ts` | Compartilhados pelos dois visualizadores: rótulos flutuantes, legenda de status, configuração das regiões |
 | `lab.tsx` (com `anatomy-lab.html`) | Página de laboratório para desenvolvimento |
 
-O painel que descreve uma estrutura selecionada fica fora desta pasta: `src/features/attention/StructureDetail.tsx` e `RegionEvents.tsx` ([Tour do produto](/pt/product/product-tour#selecting-a-structure)).
+O painel que descreve uma estrutura selecionada fica fora desta pasta: `src/features/attention/StructureDetail.tsx` e `RegionEvents.tsx` ([Tour do produto](/pt/product/product-tour#selecting-a-structure)). O cenário da missão atrás do canvas fica em `src/features/mission/backdrops/` ([Cenário da missão](#mission-backdrop)).
 
 ## Estratégia de carga e restrição offline {#loading}
 
@@ -214,7 +219,7 @@ As cores dos tecidos são aparência de anatomia de referência, não codificaç
 - **Zoom no ponteiro**: a roda do mouse, o trackpad e a pinça com dois dedos aproximam em direção ao ponto sob o ponteiro (ou entre os dedos), então o que você mira continua sob o cursor enquanto cresce; girar depois disso gira em torno da área aproximada. Os limites de distância são mantidos. Código próprio em `viewer/zoom.ts` substitui o dolly padrão da órbita; o zoom arrastando com o botão do meio não existe mais.
 - **Vistas predefinidas**: "Front", "Back", "Left" e "Right" (esquerda e direita do próprio corpo), com transição animada.
 - **Reset**: enquadra o corpo inteiro de novo e limpa a seleção.
-- **Rotação em repouso**: o corpo gira devagar depois de 5 segundos sem interação, e para enquanto algo está selecionado ou sob o ponteiro.
+- **Rotação em repouso** (`viewer/autoRotate.ts`): o corpo gira devagar enquanto ninguém mexe nele. Qualquer clique, arraste, roda do mouse ou toque o para, e ele volta a girar 3 segundos depois da última interação. Ele também fica parado enquanto uma estrutura ou região está selecionada (o órgão selecionado não pode girar para longe), enquanto uma estrutura está sob o ponteiro e durante um voo da câmera, e volta a girar 3 segundos depois que a seleção é limpa. Incorporações podem desligá-la com a prop `autoRotate`.
 - O corpo inteiro é ajustado à altura livre entre a margem superior e os controles, e ajustado de novo quando o contêiner muda de tamanho.
 
 ### Modos Monitor e Explore {#monitor-and-explore}
@@ -282,6 +287,12 @@ Os olhos são duas estruturas do atlas (`eye-left`, `eye-right`) e pertencem à 
 Uma faixa de luz clara percorre o corpo da cabeça aos pés a cada 6,5 s (a passada em si leva 2,4 s) e depois descansa. Ela é desenhada pelo shader de tecido compartilhado com dois uniforms, então **não acrescenta draw call nem passada extra**. Cada ponto do corpo é cruzado uma vez por ciclo, muito abaixo de três flashes por segundo, e a faixa aparece e some suavemente. Com `prefers-reduced-motion` a passada é lenta e fraca.
 
 Medido pela equipe na mesma GPU integrada abaixo (AMD Radeon Vega 8): nenhuma perda de quadros e os mesmos 119 draw calls com a varredura ligada. É uma observação em uma máquina, não um benchmark.
+
+### Cenário da missão {#mission-backdrop}
+
+O palco 3D (Ground view e Crew view) mostra uma cena do perfil de missão ativo atrás do corpo: um SVG por perfil, colocado atrás do canvas WebGL transparente, então **não custa nenhum draw call**. A paisagem fica nas bordas, no horizonte e no céu; uma camada escura atrás do corpo e uma vinheta mantêm a anatomia e as cores de status legíveis. Uma troca de perfil faz uma transição suave de 0,6 s.
+
+A câmera informa seu ângulo de órbita a cada quadro; `parallax.ts` grava esse valor como uma variável CSS (`--stage-az`) no cenário, que se desloca no máximo 18 px. Não há render do React nem trabalho WebGL envolvido. Com `prefers-reduced-motion` o cenário fica estático. Os fatos do chip vêm da tabela citada dos perfis ([Cenários da missão](/pt/intelligence/mission-profiles#mission-backdrops)).
 
 ## Fisiologia ao vivo {#live-physiology}
 

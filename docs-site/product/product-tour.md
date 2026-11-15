@@ -14,6 +14,11 @@ code:
   - frontend/web/src/features/attention/MeasuredBy.tsx
   - frontend/web/src/features/attention/HorizonPicker.tsx
   - frontend/web/src/features/vitals/DevicesIndicator.tsx
+  - frontend/web/src/features/attention/FeedStatus.tsx
+  - frontend/web/src/components/viz/BandGauge.tsx
+  - frontend/web/src/features/mission/backdrops/MissionBackdrop.tsx
+  - frontend/web/src/features/connectivity/index.tsx
+  - frontend/web/src/app/useStatusFavicon.ts
 verified: 2026-11-15
 ---
 
@@ -66,6 +71,7 @@ The top bar has three zones: identity on the left, the scenario player in the ce
 | **Scenario player** | Scenario picker, play and pause, speed (Real time, 1 min/s, 10 min/s, 1 h/s) and restart |
 | **Earth link** | Current profile (ISS, Moon, Mars near, Mars far), one way delay and messages in transit. Opens the Earth link drawer. See [Mission features](./mission-features#earth-link-and-mars-delay) |
 | **Ground / Crew** | View toggle |
+| **Connection chip** | "Offline demo", "Live NASA data", "API unreachable" or "Checking connection". Opens Data and model, where the [Online and offline switch](../architecture/backend#online-and-offline-switch) lives |
 | **Tools** menu | Mission overview, Shift handover, Data and model, Presentation mode, Accessibility and sound, Language, Keyboard shortcuts |
 | **Start demo** | Starts the 10 step [guided demo](./demo-scenarios#guided-demo) |
 | **Alerts bell** | Count of alerts not yet acknowledged. Pulses red when one is CRITICAL. Opens the alerts drawer (`A`) |
@@ -95,6 +101,7 @@ The center stage shows the selected astronaut:
 - **Control pill** under the body: **Layers**, the **Monitor / Explore** mode button, the preset views **Front**, **Back**, **Left** and **Right**, and a reset button.
 - **Status legend** in the corner, with the five levels and the note "Vs personal baseline. Simulated data."
 - **Reference anatomy caption** under the body: "Reference anatomy: Z-Anatomy atlas (CC BY-SA 4.0)". Its info button explains that this is one adult reference model shown for every crew member, not the astronaut's own scan, and lists the credits.
+- **Mission backdrop** behind the body: a dimmed scene of the active mission profile (launch pad, Earth from low orbit, lunar surface, Earth to Mars transfer) and a small chip with the profile name and two or three cited facts. It is decoration and context, never a health status ([Mission backdrops](../intelligence/mission-profiles#mission-backdrops)).
 
 ### Layers, views and skin opacity
 
@@ -107,7 +114,7 @@ The center stage shows the selected astronaut:
 | **Monitor / Explore** | Monitor (default): only monitored body systems respond to hover and click; the rest is quieter and click-through. Explore: every structure can be selected, for anatomical reference. Remembered on this device |
 | **Reset** | Shows the whole body again and clears the selection |
 
-Drag to rotate and pan. The mouse wheel, a trackpad or a pinch **zoom toward the point under the pointer**, so what you aim at stays in place. The body turns slowly on its own when nothing is selected. A system that is still downloading shows its progress, and "try 2" or "try 3" while it retries; if it still fails it shows **retry** and stays clickable. The rest of the body stays usable.
+Drag to rotate and pan. The mouse wheel, a trackpad or a pinch **zoom toward the point under the pointer**, so what you aim at stays in place. The body turns slowly on its own while nobody touches it: any pointer down, drag, wheel or touch stops it, it stays still while a structure is hovered or selected, and it resumes 3 seconds after the last interaction ([3D anatomy](../architecture/anatomy-3d#navigation-and-preset-views)). A system that is still downloading shows its progress, and "try 2" or "try 3" while it retries; if it still fails it shows **retry** and stays clickable. The rest of the body stays usable.
 
 **Keyboard**: `Tab` to the body, then `Up` / `Down` for body systems, `Left` / `Right` for structures, `Enter` to select and `Esc` to clear. Each step is announced ([Accessibility](./accessibility)).
 
@@ -147,6 +154,10 @@ The right panel answers three questions for the selected astronaut: how are they
 | **Why** | Contributing factors in plain language with a weight bar, for example "HRV 28% below personal baseline for 3 days". Missing signals are listed as such. When the experimental detector sees an unusual mix of signals, a neutral note "Unusual combination" lists the signals that contributed most, the model version and "Experimental, machine learning"; it does not change the status |
 | **Forecast** | Per metric: "Stable over next 6 h", "Projected to leave your normal range in ~5 h" or "Not enough data to forecast yet" |
 
+::: info Visual first
+The panel shows a picture first and keeps the full sentence behind a **Details** toggle. Each **Why** item is a chip with the signal icon, the metric, the direction and size of the change, a mini gauge of the value against the personal normal and the weight bar. Each action card has an icon and a time hint: **Now** (critical), **Within 1 h** (high) or **Today** (everything else); the hint is a UI convention of the demo, not a clinical rule. Forecast rows show the trend (Rising, Falling, Steady), the expected range and "Leaves normal in N h" or "Stays normal". Text behind a closed **Details** toggle is still read by screen readers and audio description ([Design system](./design-system#visual-first-panels)).
+:::
+
 ### Autonomy badges
 
 Every recommendation says who can close the loop:
@@ -163,7 +174,7 @@ Click a body system chip to switch the right panel to **Body system detail**. Cl
 
 ![Body system detail: the 3D body with one body system selected, and its metric rows, personal normal and trend chart in the right panel](/screenshots/body-detail.png)
 
-Each metric row shows the current value, the deviation from the personal normal ("11% above your normal"), the normal range ("Your normal: 66 to 80 bpm") and the robust z score. Expand a row to see:
+Each metric row shows the current value, the deviation from the personal normal ("11% above your normal"), the normal range ("Your normal: 66 to 80 bpm") and the robust z score. A **band gauge** draws the personal normal as a soft stripe and the current value as a marker in the status color; without a value it draws the band only, never a marker. A metric without a reading says why: **Paused by operator**, **Waiting for data** or **Signal lost** ([Live vitals, cabin and devices](#live-vitals-cabin-and-devices)). Expand a row to see:
 
 - **Trend chart** with a window of 6 h, 24 h or 72 h:
   - shaded **personal normal band** labeled "Your normal",
@@ -200,6 +211,16 @@ The bottom strip has three parts:
 - **Cabin**: CO2, cabin temperature, relative humidity and radiation dose rate, with the cabin status.
 - **Devices**: how many simulated devices are online, the worst device state (Online, Degraded, Data stale, Offline, Paused by operator) and battery. Click to open the device list, where each device can be **paused** (with a confirmation) and resumed. A paused device's readings show "Paused by operator" and no data, never normal values ([Pausing a device](../intelligence/scenario-simulation#pausing-a-device)).
 
+Panels say why a metric has no reading, in a neutral color:
+
+| State | Meaning |
+| --- | --- |
+| **Paused by operator** | An operator paused the device that feeds it: a decision, not a fault. An inline **Resume** button sits right there |
+| **Waiting for data** | The device is back online (for example just resumed), the first reading is on its way |
+| **Signal lost** | No reading and no healthy device behind it (the usual missing data case) |
+
+Only a live reading carries a value; none of these states is shown as normal. A body system shows Paused or Waiting only when every metric without data is in that state.
+
 ## Alerts drawer
 
 Open with the bell or `A`.
@@ -210,6 +231,8 @@ Open with the bell or `A`.
 - **Sounds**: critical alerts ring by default and repeat until acknowledged, with a more urgent sound after 2 minutes; warnings can ring too. Settings in Tools > Accessibility and sound ([Accessibility](./accessibility#alert-sounds)).
 
 A prominent **critical banner** also appears over the stage for the newest unacknowledged CRITICAL alert. It floats over the headline so the 3D body keeps its full size. You can hide the banner without acknowledging the alert.
+
+**Browser tab.** While a CRITICAL alert is open (not acknowledged, not resolved), the tab icon gets a red dot, so a hidden tab still shows that someone must look. The normal icon comes back as soon as the alert is acknowledged or resolved.
 
 ![Critical banner during the acute cardio event](/screenshots/critical-alert.png)
 

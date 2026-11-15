@@ -17,6 +17,11 @@ code:
   - frontend/web/src/features/attention/MeasuredBy.tsx
   - frontend/web/src/features/attention/HorizonPicker.tsx
   - frontend/web/src/features/vitals/DevicesIndicator.tsx
+  - frontend/web/src/features/attention/FeedStatus.tsx
+  - frontend/web/src/components/viz/BandGauge.tsx
+  - frontend/web/src/features/mission/backdrops/MissionBackdrop.tsx
+  - frontend/web/src/features/connectivity/index.tsx
+  - frontend/web/src/app/useStatusFavicon.ts
 verified: 2026-11-15
 ---
 
@@ -71,6 +76,7 @@ Da esquerda para a direita:
 | Player de cenário | Escolha do cenário, play/pause, velocidade e reinício (detalhes abaixo) |
 | "Earth link" | Perfil de comunicação (ISS, Moon, Mars near, Mars far), atraso só de ida e mensagens em trânsito. Abre a gaveta de comunicação |
 | "Ground" / "Crew" | Alterna a visão |
+| Chip de conexão | "Offline demo", "Live NASA data", "API unreachable" ou "Checking connection". Abre "Data and model", onde fica a [chave online e offline](/pt/architecture/backend#online-and-offline-switch) |
 | "Tools" | Menu de ferramentas da missão (detalhes abaixo) |
 | "Start demo" | Inicia a demo guiada de 10 passos |
 | Sino de alertas | Abre a gaveta de alertas. O contador mostra alertas não reconhecidos; fica vermelho e pulsando quando há CRITICAL |
@@ -131,6 +137,8 @@ Uma **varredura** suave de luz percorre o corpo da cabeça aos pés a cada pouco
 
 Sob o corpo ficam a pílula de controles ("Layers", o botão de modo "Monitor" / "Explore", as vistas "Front", "Back", "Left" e "Right" e o botão de reset), a legenda de status e a **legenda de anatomia de referência**: "Reference anatomy: Z-Anatomy atlas (CC BY-SA 4.0)". O botão de informação dela explica que este é um único modelo adulto de referência, mostrado para todos os tripulantes, não um exame do astronauta, e lista os créditos.
 
+Atrás do corpo fica o **cenário da missão**: uma cena escurecida do perfil de missão ativo (plataforma de lançamento, a Terra vista da órbita baixa, a superfície lunar, a transferência da Terra a Marte) e um pequeno chip com o nome do perfil e dois ou três fatos citados. É decoração e contexto, nunca um status de saúde ([Cenários da missão](/pt/intelligence/mission-profiles#mission-backdrops)).
+
 Ao lado do corpo ficam os **chips dos sistemas**, como rótulos anatômicos. Um chip sempre significa o sistema inteiro:
 
 | Coluna esquerda | Coluna direita |
@@ -152,7 +160,7 @@ Ao lado do corpo ficam os **chips dos sistemas**, como rótulos anatômicos. Um 
 | "Monitor" / "Explore" | Monitor (padrão): só os sistemas monitorados reagem ao ponteiro e ao clique; o resto fica mais discreto e o clique passa através dele. Explore: qualquer estrutura pode ser selecionada, como referência anatômica. Fica guardado neste dispositivo |
 | Reset | Mostra o corpo inteiro de novo e limpa a seleção |
 
-Arraste para girar e deslocar a vista. A roda do mouse, o trackpad ou a pinça **aproximam em direção ao ponto sob o ponteiro**, então o que você mira fica no lugar. O corpo gira devagar sozinho quando nada está selecionado. Um sistema que ainda está baixando mostra o progresso, e "try 2" ou "try 3" enquanto tenta de novo; se ainda falhar, mostra **retry** e continua clicável. O resto do corpo continua utilizável.
+Arraste para girar e deslocar a vista. A roda do mouse, o trackpad ou a pinça **aproximam em direção ao ponto sob o ponteiro**, então o que você mira fica no lugar. O corpo gira devagar sozinho enquanto ninguém mexe nele: qualquer clique, arraste, roda do mouse ou toque o para, ele fica parado enquanto uma estrutura está sob o ponteiro ou selecionada, e volta a girar 3 segundos depois da última interação ([Anatomia 3D](/pt/architecture/anatomy-3d#navigation-and-preset-views)). Um sistema que ainda está baixando mostra o progresso, e "try 2" ou "try 3" enquanto tenta de novo; se ainda falhar, mostra **retry** e continua clicável. O resto do corpo continua utilizável.
 
 **Teclado**: `Tab` até o corpo, depois `Up` / `Down` para os sistemas, `Left` / `Right` para as estruturas, `Enter` para selecionar e `Esc` para limpar. Cada passo é anunciado ([Acessibilidade](/pt/product/accessibility)).
 
@@ -184,6 +192,10 @@ Os olhos e os ouvidos são monitorados por exames periódicos simulados (exames 
 ![Ações recomendadas](/screenshots/attention-actions.png)
 
 O painel da direita explica o estado da pessoa selecionada.
+
+::: info Primeiro a imagem
+O painel mostra primeiro uma imagem e guarda a frase completa atrás do botão **"Details"**. Cada item de "Why" é um chip com o ícone do sinal, a métrica, a direção e o tamanho da mudança, um mini medidor do valor contra o normal pessoal e a barra de peso. Cada cartão de ação tem um ícone e uma indicação de prazo: **"Now"** (crítico), **"Within 1 h"** (alto) ou **"Today"** (o resto); a indicação é uma convenção de interface da demo, não uma regra clínica. As linhas de previsão mostram a tendência ("Rising", "Falling", "Steady"), a faixa esperada e "Leaves normal in N h" ou "Stays normal". O texto atrás de um "Details" fechado continua sendo lido por leitores de tela e pela audiodescrição ([Design system](/pt/product/design-system#visual-first-panels)).
+:::
 
 ### Status geral
 
@@ -234,7 +246,9 @@ Ao clicar em um chip de sistema, o painel vira "Body system detail" com o botão
 - valor atual e diferença em relação ao normal;
 - **"Your normal"**: a faixa pessoal (ou "Still learning your normal" enquanto não há dados suficientes);
 - selos de **qualidade** e de **origem** (`SIMULATED`);
-- um **gráfico** com janela de 6 h, 24 h ou 72 h.
+- um **gráfico** com janela de 6 h, 24 h ou 72 h;
+- um **medidor de faixa**: o normal pessoal como uma faixa suave e o valor atual como um marcador na cor do status; sem valor, só a faixa, nunca um marcador;
+- quando falta leitura, o motivo: "Paused by operator", "Waiting for data" ou "Signal lost" ([Vitais, cabine e dispositivos](#live-vitals-cabin-and-devices)).
 
 Abaixo das métricas, "Alerts and flags" lista os alertas abertos daquele sistema (gravidade, hora, a métrica que disparou, o valor observado no momento do alerta contra o normal pessoal, a origem do dado e o identificador da regra) e as sinalizações estatísticas das últimas 24 horas. Uma linha acima das métricas diz quantos alertas estão abertos e leva até eles. O texto continua não diagnóstico: alertas e sinalizações pedem uma revisão.
 
@@ -265,7 +279,7 @@ Faixa fina com **uma raia por astronauta e uma para a cabine**, colorida pelo st
 
 Escolha o intervalo "24 h", "72 h" ou "All". Clique em um marcador para ir à pessoa e ao sistema relacionados. Com a linha do tempo em foco, as setas percorrem os marcadores e Enter abre um deles. A legenda explica: "Lane color = status at that time".
 
-## Vitais, cabine e dispositivos
+## Vitais, cabine e dispositivos {#live-vitals-cabin-and-devices}
 
 Na base da "Ground view":
 
@@ -275,7 +289,17 @@ Na base da "Ground view":
 | "Cabin" | CO₂, temperatura, umidade e taxa de dose de radiação da cabine |
 | "Devices" | Quantos dispositivos estão online ("All online" ou a contagem), menor bateria e acesso à lista. Estados: "Online", "Degraded", "Data stale", "Offline", "Paused by operator". Na lista, cada aparelho pode ser **pausado** (com confirmação) e retomado. As leituras de um aparelho pausado mostram "Paused by operator" e sem dados, nunca valores normais ([Pausar um aparelho](/pt/intelligence/scenario-simulation#pausing-a-device)) |
 
-## Gaveta de alertas
+Os painéis dizem por que uma métrica está sem leitura, numa cor neutra:
+
+| Estado | Significado |
+| --- | --- |
+| "Paused by operator" | Um operador pausou o aparelho que alimenta a métrica: uma decisão, não uma falha. Um botão **"Resume"** fica ali mesmo |
+| "Waiting for data" | O aparelho voltou a ficar online (por exemplo, acabou de ser retomado) e a primeira leitura está a caminho |
+| "Signal lost" | Sem leitura e sem nenhum aparelho saudável por trás (o caso comum de dado ausente) |
+
+Só uma leitura ao vivo traz valor; nenhum desses estados aparece como normal. Um sistema do corpo mostra "Paused" ou "Waiting" só quando toda métrica sem dado está nesse estado.
+
+## Gaveta de alertas {#alerts-drawer}
 
 ![Alerta crítico](/screenshots/critical-alert.png)
 
@@ -289,6 +313,8 @@ Aberta pelo sino ou pela tecla `A`.
 - **"Activity log"**: registro de auditoria, do mais novo para o mais antigo (alertas reconhecidos, ações, check-ins, mensagens com a Terra, mudanças de cenário).
 
 Um alerta CRITICAL também aparece como **faixa sobre o cabeçalho** do corpo, sem encolher o 3D. Ela tem "View", "Acknowledge" e um botão para esconder a faixa ("Hide banner (alert stays open)"): o alerta continua aberto.
+
+**Aba do navegador.** Enquanto um alerta CRITICAL está aberto (não reconhecido, não resolvido), o ícone da aba ganha um ponto vermelho, então mesmo uma aba escondida mostra que alguém precisa olhar. O ícone normal volta assim que o alerta é reconhecido ou resolvido.
 
 ## Modo apresentação
 

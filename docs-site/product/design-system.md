@@ -8,7 +8,15 @@ code:
   - frontend/web/src/index.css
   - frontend/web/src/app/shortcuts.tsx
   - frontend/web/src/components/MetricValue.tsx
-verified: 2026-11-14
+  - frontend/web/src/components/viz/BandGauge.tsx
+  - frontend/web/src/components/viz/ChangeBar.tsx
+  - frontend/web/src/components/viz/DelayClock.tsx
+  - frontend/web/src/components/viz/Details.tsx
+  - frontend/web/src/features/attention/feedState.ts
+tests:
+  - frontend/web/src/components/viz/scale.test.ts
+  - frontend/web/src/features/attention/feedState.test.ts
+verified: 2026-11-15
 ---
 
 # Design System & Accessibility
@@ -91,6 +99,40 @@ Data origin badges reuse a consistent scheme (for example a violet `SIMULATED` c
 | Structure detail | `features/attention/StructureDetail.tsx` | Selected structure card, "Reference anatomy" badge, "Monitored with" block or "Context only" card |
 | Alerts and flags | `features/attention/RegionEvents.tsx` | Open alerts with the triggering metric, observed value against the personal normal, origin badge and rule id |
 | Anatomy controls and caption | `features/anatomy/viewer/SystemControls.tsx`, `Attribution.tsx` | Layers, skin opacity, presets, views, reset; source caption |
+| Feed label | `features/attention/FeedStatus.tsx` | "Paused by operator", "Waiting for data" or "Signal lost" with its icon, in a neutral color; inline **Resume** for a paused device |
+
+## Visual first panels {#visual-first-panels}
+
+The attention panel, the body system and structure details, the exam history and the mission context show a picture first and keep the full sentence behind a **Details** toggle. The visuals live in `components/viz/`; their scaling is pure and unit tested (`scale.test.ts`).
+
+| Visual | Component | What it draws |
+| --- | --- | --- |
+| Band gauge | `BandGauge.tsx` | The personal normal band as a soft stripe and the current value as a marker in the status color. The band sits in the middle of the track; a value far outside widens the track so the marker stays on it. No value: the band only, never a marker |
+| Change bar | `ChangeBar.tsx` | A change from baseline as a bar that grows right (higher) or left (lower) from a center tick, used in the exam history |
+| Delay clock | `DelayClock.tsx` | A one way message delay as an arc that fills the dial over one hour: a light second is a sliver, Mars most of the dial |
+| Details | `Details.tsx` | A disclosure for the sentence. Closed, the text is only visually hidden (`sr-only`), so screen readers and audio description still read it |
+| Icons and time hints | `features/attention/visual.ts` | One icon per signal (its body system) and per action kind; action time hint Now, Within 1 h or Today from the priority (a UI convention of the demo, not a clinical rule) |
+
+Decorative visuals are `aria-hidden` and the words stay next to them; a gauge with meaning carries an accessible label with the value, the band and the status in words.
+
+**Feed states** (`features/attention/feedState.ts`): a metric is LIVE (a current reading), PAUSED (an operator paused the device that feeds it), WAITING (the device is online, for example just resumed, but no reading arrived yet) or LOST (no reading and no healthy device). Only LIVE carries a value. A body system is PAUSED or WAITING only when every metric without data is in that state.
+
+## Layers (z-index scale) {#z-index-scale}
+
+Every fixed or portaled layer uses one scale, defined as CSS variables in `src/index.css` and used through Tailwind as `z-(--z-dialog)`. A raw `z-[NN]` is not allowed for an overlay.
+
+| Token | Value | Used by |
+| --- | --- | --- |
+| `--z-page` | 0 | Normal content |
+| `--z-sticky` | 40 | Top bar and the expanded timeline ribbon |
+| `--z-tooltip`, `--z-popover` | 50 | Hover tooltips and page popovers, always below an open drawer or dialog |
+| `--z-drawer` | 60 | Side drawers (alerts, comms, assistant) |
+| `--z-dialog` | 70 | Centered modal dialogs (Data and model, report, settings) |
+| `--z-raised` | 75 | A popover opened from inside a drawer or dialog |
+| `--z-toast` | 80 | Small notices that must stay visible (sound blocked, screen description) |
+| `--z-tour` | 90 | Guided demo overlay |
+| `--z-command` | 95 | Keyboard shortcuts sheet |
+| `--z-skip` | 100 | Skip links, when focused |
 
 ## UX decisions
 
@@ -108,6 +150,9 @@ Data origin badges reuse a consistent scheme (for example a violet `SIMULATED` c
 | Top bar priority collapse | Labels go first on narrow widths; Start demo and the alerts bell are never clipped |
 | Alert sound on by default for critical alerts | A health monitor must be heard; one sound at a time, repeat until acknowledged, escalate after 2 min, warnings opt in ([Accessibility](./accessibility#alert-sounds)) |
 | Monitor mode by default in the 3D viewer | What is measured reacts; context only anatomy steps back. Explore mode is one click away |
+| Picture first, sentence behind Details | A glance must be enough; the sentence stays one click away and is always read by assistive technology |
+| A paused device is not a lost signal | An operator decision gets its own neutral words and a Resume button; neither state is ever shown as normal |
+| Red dot on the browser tab for an open critical alert | A hidden tab still shows that someone must look |
 
 ## Accessibility measures in the code
 
