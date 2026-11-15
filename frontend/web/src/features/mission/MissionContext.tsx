@@ -618,7 +618,7 @@ export function MissionProfileControl({ showLabel = true }: { showLabel?: boolea
   const flagged = advisory.kind === 'SHELTER' || advisory.kind === 'MONITOR' || advisory.kind === 'PRE_LAUNCH'
   const flagColor = flagged ? STATUS_META[advisory.level].color : null
   const t = useT()
-  const label = t('mission.ctx.controlAria', { label: p.label, weather: flagged ? t('mission.ctx.controlWeather', { title: advisory.title }) : '' })
+  const label = t('mission.ctx.controlAria', { label: p.label, weather: flagged ? t('mission.ctx.controlWeather', { title: engineText('mission', advisory.title) }) : '' })
   return (
     <>
       <button

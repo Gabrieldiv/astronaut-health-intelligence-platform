@@ -43,14 +43,17 @@ export function StatusPill({
   variant = 'crew',
   size = 'md',
   className,
+  label,
 }: {
   status: Status
+  /** Overrides the status word, for example "Paused" when an operator paused the device. */
+  label?: string
   variant?: 'crew' | 'technical' | 'both'
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }) {
   const meta = STATUS_META[status]
-  const text = variant === 'crew' ? meta.crewLabel : variant === 'technical' ? meta.label : `${meta.crewLabel} · ${meta.label}`
+  const text = label ?? (variant === 'crew' ? meta.crewLabel : variant === 'technical' ? meta.label : `${meta.crewLabel} · ${meta.label}`)
   const noData = status === 'NO_DATA'
   return (
     <span

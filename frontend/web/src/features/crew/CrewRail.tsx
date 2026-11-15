@@ -7,6 +7,7 @@ import { METRIC_CATALOG } from '../../engine/catalog'
 import { MetricValue } from '../../components/MetricValue'
 import { Sparkline } from '../../components/Sparkline'
 import { StatusPill, isUrgent } from '../../components/Status'
+import { useWearablePaused } from '../vitals/deviceMeta'
 import { Panel } from '../../components/ui'
 import { lastHours } from '../../components/format'
 import { useHistory, useMetric, useSignalLost } from '../shared/hooks'
@@ -83,6 +84,7 @@ function Avatar({ astronaut, status, className }: { astronaut: Astronaut; status
 function CrewCard({ astronaut, selected, index }: { astronaut: Astronaut; selected: boolean; index: number }) {
   const level = useAppStore((s) => s.health[astronaut.id]?.risk.risk_level)
   const signalLost = useSignalLost(astronaut.id)
+  const paused = useWearablePaused(astronaut.id)
   const status: Status = level == null ? 'NO_DATA' : signalLost && level === 'LOW' ? 'NO_DATA' : level
   const selectAstronaut = useAppStore((s) => s.selectAstronaut)
   const meta = STATUS_META[status]
@@ -93,7 +95,7 @@ function CrewCard({ astronaut, selected, index }: { astronaut: Astronaut; select
     <button
       type="button"
       aria-pressed={selected}
-      aria-label={t(signalLost ? 'crew.cardAriaLost' : 'crew.cardAria', { callsign: astronaut.callsign, role, status: meta.crewLabel })}
+      aria-label={t(signalLost ? (paused ? 'crew.cardAriaPaused' : 'crew.cardAriaLost') : 'crew.cardAria', { callsign: astronaut.callsign, role, status: meta.crewLabel })}
       onClick={() => selectAstronaut(astronaut.id)}
       aria-keyshortcuts={String(index + 1)}
       title={t('crew.cardTitle', { callsign: astronaut.callsign, role, key: index + 1 })}
@@ -112,7 +114,7 @@ function CrewCard({ astronaut, selected, index }: { astronaut: Astronaut; select
             <span className="truncate text-sm font-bold tracking-wide text-ink-100">{astronaut.callsign}</span>
             {/* compact rows: the pill moves up next to the callsign */}
             <span className="hidden shrink-0 short:flex">
-              <StatusPill status={status} size="sm" />
+              <StatusPill status={status} size="sm" label={paused && status === 'NO_DATA' ? t('devices.paused') : undefined} />
             </span>
           </span>
           <span className="block truncate text-[11px] text-ink-500 short:hidden" title={role}>
@@ -124,7 +126,7 @@ function CrewCard({ astronaut, selected, index }: { astronaut: Astronaut; select
           </span>
         </div>
         <span className="flex shrink-0 short:hidden">
-          <StatusPill status={status} size="sm" />
+          <StatusPill status={status} size="sm" label={paused && status === 'NO_DATA' ? t('devices.paused') : undefined} />
         </span>
       </div>
       <div className="relative mt-2 grid grid-cols-[auto_auto_1fr] items-end gap-3 short:hidden roomy:grid-cols-[auto_auto_auto_1fr]">

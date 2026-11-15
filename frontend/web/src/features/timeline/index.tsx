@@ -15,6 +15,7 @@ import { COMM_KIND_LABEL, useCommsUi } from '../comms/delay'
 import { INTERVENTION_LABEL, INTERVENTION_REGION } from './labels'
 import { t as tr, tp, translatedRecord, useLang, useT } from '../../i18n'
 import { metricLabel, regionLabel } from '../../i18n/catalog'
+import { alertTitle } from '../../i18n/engineText'
 
 export interface TimelineStripProps {
   className?: string
@@ -205,7 +206,7 @@ function buildMarkers(
       kind: 'alert',
       t: a.createdAt,
       laneId: lane(a.astronautId),
-      title: a.title,
+      title: alertTitle(a),
       meta: `${callsign(a.astronautId)}${where ? ` · ${where}` : ''}${acked ? tr('timeline.meta.acknowledgedBy', { who: a.acknowledgedBy ?? tr('timeline.meta.crew') }) : a.resolvedAt != null ? tr('timeline.meta.resolved') : tr('timeline.meta.open')}`,
       status: a.severity,
       acked: acked || a.resolvedAt != null,

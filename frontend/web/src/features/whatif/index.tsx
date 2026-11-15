@@ -10,6 +10,7 @@ import { Modal } from '../mission/Modal'
 import { INTERVENTION_LABEL } from '../timeline/labels'
 import { getLang, t as tr, useT } from '../../i18n'
 import { metricLabel } from '../../i18n/catalog'
+import { recTitle } from '../../i18n/engineText'
 
 export interface WhatIfButtonProps {
   recommendation: Recommendation
@@ -201,7 +202,7 @@ function WhatIfModal({ rec, onClose }: { rec: Recommendation; onClose: () => voi
       icon={<GitCompareArrows size={17} className="text-accent" aria-hidden />}
       subtitle={
         <span>
-          {callsign} · {rec.title}
+          {callsign} · {recTitle(rec)}
           {cmp && def ? tr('whatif.subtitleMetric', { metric: metricLabel(cmp.metric), n: cmp.horizonHours }) : ''}
         </span>
       }
@@ -297,7 +298,7 @@ export function WhatIfButton({ recommendation }: WhatIfButtonProps) {
         data-tour="whatif"
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}
-        aria-label={tr('whatif.compareAria', { title: recommendation.title })}
+        aria-label={tr('whatif.compareAria', { title: recTitle(recommendation) })}
         title={tr('whatif.compareTitle')}
       >
         <GitCompareArrows size={13} aria-hidden /> {tr('whatif.compare')}

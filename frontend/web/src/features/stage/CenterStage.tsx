@@ -15,6 +15,7 @@ import { MissionBackdrop, MissionHud } from '../mission/backdrops'
 import { wearablePausedHeadline, useWearablePaused } from '../vitals/deviceMeta'
 import { getLang, t, translatedRecord, useT } from '../../i18n'
 import { regionDescription, regionLabel, regionSystem, roleLabel } from '../../i18n/catalog'
+import { engineText } from '../../i18n/engineText'
 
 // three.js and the anatomy scene load as a separate chunk so the dashboard paints first.
 const AnatomyViewer = lazy(() => import('../anatomy').then((m) => ({ default: m.AnatomyViewer })))
@@ -87,7 +88,7 @@ function Headline() {
           aria-live="polite"
           className="line-clamp-2 max-w-[720px] text-[19px] leading-snug font-medium text-balance text-ink-100 [text-shadow:0_2px_12px_rgba(4,7,13,0.9)] short:text-[17px]"
         >
-          {override ? (wearablePaused ? wearablePausedHeadline() : signalLostHeadline()) : (headline ?? t('stage.waiting'))}
+          {override ? (wearablePaused ? wearablePausedHeadline() : signalLostHeadline()) : (headline ? engineText('headline', headline) : t('stage.waiting'))}
         </p>
       </div>
     </div>
@@ -139,7 +140,7 @@ function RegionChip({
     <button
       type="button"
       aria-pressed={selected}
-      aria-label={`${label.label}, ${label.system}. ${monitored ? meta.crewLabel : t('stage.notMonitored')}. ${summary}${structureName ? t('stage.selectedStructure', { name: structureName }) : ''}`}
+      aria-label={`${label.label}, ${label.system}. ${monitored ? meta.crewLabel : t('stage.notMonitored')}. ${summary ? engineText('regionSummary', summary) : ''}${structureName ? t('stage.selectedStructure', { name: structureName }) : ''}`}
       title={`${label.label}: ${summary || label.description}${atlasCount ? t('stage.atlasCount', { n: atlasCount }) : ''}`}
       onClick={() => {
         // With a structure selected inside this region the click widens the selection to the
