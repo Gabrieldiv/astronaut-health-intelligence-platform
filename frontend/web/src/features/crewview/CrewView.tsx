@@ -103,11 +103,14 @@ function PersonButton({ astronaut, selected, index, onSelect }: { astronaut: Ast
 function Hero() {
   const id = useAppStore((s) => s.selectedAstronautId)
   const astronaut = useAppStore((s) => s.crew.find((c) => c.id === id))
-  const { headline, activity } = useAppStore(useShallow((s) => ({ headline: s.health[id]?.risk.headline, activity: s.health[id]?.activity })))
+  const { headline, headlineMsg, activity } = useAppStore(
+    useShallow((s) => ({ headline: s.health[id]?.risk.headline, headlineMsg: s.health[id]?.risk.headlineMsg, activity: s.health[id]?.activity })),
+  )
   const status = useCrewStatus(id)
   const signalLost = useSignalLost(id)
   const wearablePaused = useWearablePaused(id)
   const meta = STATUS_META[status]
+  const showLost = signalLost && (status === 'NO_DATA' || status === 'LOW')
   const t = useT()
   if (!astronaut) return null
   return (
@@ -121,7 +124,7 @@ function Hero() {
           {activity && <span className="rounded-md bg-white/[0.05] px-1.5 py-0.5 text-ink-300 ring-1 ring-white/[0.06]">{ACTIVITY_LABEL[activity]}</span>}
         </div>
       </div>
-      <div className="mt-5 flex items-center gap-3.5 short:mt-3">
+      <div className="mt-5 flex flex-wrap items-center gap-3.5 short:mt-3">
         <span
           className={clsx('flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl short:h-11 short:w-11', status === 'NO_DATA' && 'border border-dashed border-nodata/50')}
           style={{ background: `color-mix(in srgb, ${meta.color} 14%, transparent)`, boxShadow: status === 'NO_DATA' ? undefined : `inset 0 0 0 1px color-mix(in srgb, ${meta.color} 35%, transparent), 0 0 36px -8px ${meta.glow}` }}
@@ -134,16 +137,52 @@ function Hero() {
             {meta.crewLabel}
           </div>
         </div>
+        {/* Mission facts sit in the layout flow next to the status, never over the 3D body or its legend. */}
+        <MissionHud className="static! ml-auto self-end" />
       </div>
-      <p aria-live="polite" className="mt-3 max-w-[680px] text-[22px] leading-snug short:mt-2 short:text-[18px] font-medium text-balance text-ink-100 [text-shadow:0_2px_12px_rgba(4,7,13,0.9)]">
-        {signalLost && (status === 'NO_DATA' || status === 'LOW') ? (wearablePaused ? wearablePausedHeadline() : signalLostHeadline()) : (headline ?? t('crewview.waiting'))}
-      </p>
+      {!showLost && headline && headlineMsg?.id === 'head.normal' ? (
+        // "All good" already says it: the sentence stays for screen readers, the eye gets a compact meter.
+        <div aria-live="polite" className="mt-3 short:mt-2">
+          <span className="sr-only">{engineText('headline', headline, headlineMsg)}</span>
+          <IndicatorsInRange astronautId={id} />
+        </div>
+      ) : (
+        <p aria-live="polite" className="mt-3 max-w-[680px] text-[22px] leading-snug short:mt-2 short:text-[18px] font-medium text-balance text-ink-100 [text-shadow:0_2px_12px_rgba(4,7,13,0.9)]">
+          {showLost ? (wearablePaused ? wearablePausedHeadline() : signalLostHeadline()) : (headline ?? t('crewview.waiting'))}
+        </p>
+      )}
     </div>
   )
 }
 
 /**
- * Small card over the body when an organ or an anatomical structure is selected: plain-language
+ * Compact "everything in range" meter: one segment per tracked indicator, colored by its status
+ * against the personal baseline, plus a short count. Visual only (aria-hidden); the full sentence
+ * is read by screen readers.
+ */
+function IndicatorsInRange({ astronautId }: { astronautId: string }) {
+  const statuses = useAppStore(useShallow((s) => Object.values(s.health[astronautId]?.metrics ?? {}).map((m): Status => (m && m.current != null ? m.status : 'NO_DATA'))))
+  const t = useT()
+  if (statuses.length === 0) return null
+  const inRange = statuses.filter((st) => st === 'LOW').length
+  return (
+    <div className="flex items-center gap-3" aria-hidden>
+      <div className="flex h-2 w-[min(260px,45vw)] gap-[2px]">
+        {statuses.map((st, i) => (
+          <span
+            key={i}
+            className={clsx('h-full flex-1 rounded-[2px]', st === 'NO_DATA' && 'border border-dashed border-nodata/60')}
+            style={st === 'NO_DATA' ? undefined : { background: STATUS_META[st].color, opacity: st === 'LOW' ? 0.85 : 1 }}
+          />
+        ))}
+      </div>
+      <span className="tabular text-[15px] font-medium text-ink-300 short:text-[14px]">{t('crewview.inRangeCount', { n: inRange, total: statuses.length })}</span>
+    </div>
+  )
+}
+
+/**
+ * Small card under the body when an organ or an anatomical structure is selected: plain-language
  * summary only. A structure nothing monitors gets a calm "context only" note and never a status.
  */
 function RegionCard() {
@@ -169,9 +208,9 @@ function RegionCard() {
   // (Compared with the English label: atlas structure names are English.)
   const partOfRegion = !!structure && !!label && structure.name.toLowerCase() !== label.label.toLowerCase()
   return (
-    // Lower right of the body area, above the viewer controls: clear of the status legend (bottom left),
-    // the controls (bottom center) and the floating organ labels around the chest.
-    <div className="glass-strong animate-fade-in absolute right-4 bottom-16 z-20 w-[min(360px,calc(100%-32px))] rounded-2xl p-4">
+    // Docked in the footer row under the body (in the layout flow, not over the 3D view): it can never
+    // cover the body, the organ labels, the status legend, the viewer controls or the Earth link.
+    <div role="region" aria-label={title} className="glass-strong animate-fade-in relative ml-auto w-[min(440px,100%)] rounded-2xl p-4">
       <div className="flex items-center gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] ring-1 ring-white/10">
           <Icon size={18} className={region ? 'text-accent' : 'text-ink-300'} aria-hidden />
@@ -206,7 +245,7 @@ function EarthLink() {
   const delay = useCommDelaySec()
   const { text, far } = earthLinkSentence(delay)
   return (
-    <div className="relative z-10 mx-4 mb-4 flex shrink-0 items-center gap-2.5 self-start rounded-xl bg-space-900/70 px-3.5 py-2.5 text-[14px] text-ink-300 ring-1 ring-white/[0.07] backdrop-blur-md">
+    <div className="flex shrink-0 items-center gap-2.5 rounded-xl bg-space-900/70 px-3.5 py-2.5 text-[14px] text-ink-300 ring-1 ring-white/[0.07] backdrop-blur-md">
       <Earth size={17} className={clsx('shrink-0', far ? 'text-sky-300' : 'text-accent')} aria-hidden />
       <span className={clsx(far && 'text-ink-100')}>{text}</span>
     </div>
@@ -464,10 +503,12 @@ export function CrewView() {
           <Hero />
           <div data-tour="body" className="relative min-h-0 flex-1">
             <Stage3D />
-            <MissionHud className="top-2 left-3" />
+          </div>
+          {/* Footer row in the layout flow: the Earth link and, when something is selected, its card. */}
+          <div className="relative z-10 mx-4 mb-4 flex shrink-0 flex-wrap items-end gap-3">
+            <EarthLink />
             <RegionCard />
           </div>
-          <EarthLink />
         </section>
         <div className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto [&>*]:shrink-0">
           <CrewActions />

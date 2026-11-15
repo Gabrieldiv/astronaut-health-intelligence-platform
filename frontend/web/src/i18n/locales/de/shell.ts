@@ -91,6 +91,7 @@ const m: Record<keyof typeof en, string> = {
   'shortcuts.switchView': 'Zwischen Boden- und Crew-Ansicht wechseln',
   'shortcuts.presentation': 'Präsentationsmodus (auch unter Werkzeuge)',
   'shortcuts.alerts': 'Warnungen öffnen oder schließen',
+  'shortcuts.assistant': 'AHI fragen öffnen oder schließen',
   'shortcuts.play': 'Simulation abspielen oder pausieren',
   'shortcuts.esc': 'Ein Panel schließen oder aus dem Körperdetail zurück',
   'shortcuts.help': 'Diese Hilfe anzeigen',

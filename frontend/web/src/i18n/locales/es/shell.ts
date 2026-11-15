@@ -91,6 +91,7 @@ const m: Record<keyof typeof en, string> = {
   'shortcuts.switchView': 'Cambiar vista Tierra / Tripulación',
   'shortcuts.presentation': 'Modo presentación (también en Herramientas)',
   'shortcuts.alerts': 'Abrir o cerrar alertas',
+  'shortcuts.assistant': 'Abrir o cerrar Pregunta a AHI',
   'shortcuts.play': 'Reproducir o pausar la simulación',
   'shortcuts.esc': 'Cerrar un panel, o volver del detalle del cuerpo',
   'shortcuts.help': 'Mostrar esta ayuda',

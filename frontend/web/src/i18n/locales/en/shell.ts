@@ -89,6 +89,7 @@ export default {
   'shortcuts.switchView': 'Switch Ground / Crew view',
   'shortcuts.presentation': 'Presentation mode (also in Tools)',
   'shortcuts.alerts': 'Open or close alerts',
+  'shortcuts.assistant': 'Open or close Ask AHI',
   'shortcuts.play': 'Play or pause the simulation',
   'shortcuts.esc': 'Close a panel, or back from body detail',
   'shortcuts.help': 'Show this help',

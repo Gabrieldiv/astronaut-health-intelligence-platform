@@ -204,12 +204,30 @@ test.describe('Keyboard navigation of the 3D body', () => {
 })
 
 test.describe('Ask AHI', () => {
-  test('opens and shows the offline state when there is no backend', async ({ app: page }) => {
-    await page.getByRole('button', { name: 'Ask AHI' }).click()
+  test('opens from the top bar and shows the offline state when there is no backend', async ({ app: page }) => {
+    // The launcher lives in the top bar (it never floats over the dashboard).
+    const launcher = page.locator('header[data-collapse-level]').getByRole('button', { name: 'Ask AHI' })
+    await launcher.click()
     const offline = page.getByRole('status').filter({ hasText: 'Assistant offline' })
     await expect(offline).toBeVisible()
     await expect(offline).toContainText('The rest of AHI keeps working')
     await expect(offline.getByRole('button', { name: 'Retry' })).toBeVisible()
+  })
+
+  test('is a drawer the user opens and closes: Esc closes it and focus returns to the launcher', async ({ app: page }) => {
+    const launcher = page.locator('header[data-collapse-level]').getByRole('button', { name: 'Ask AHI' })
+    const drawer = page.getByRole('dialog', { name: 'Ask AHI' })
+    await expect(drawer).toHaveCount(0)
+    await launcher.click()
+    await expect(drawer).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(drawer).toHaveCount(0)
+    await expect(launcher).toBeFocused()
+    // Keyboard shortcut.
+    await page.keyboard.press('k')
+    await expect(drawer).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(drawer).toHaveCount(0)
   })
 })
 

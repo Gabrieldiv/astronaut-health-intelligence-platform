@@ -91,6 +91,7 @@ const m: Record<keyof typeof en, string> = {
   'shortcuts.switchView': '地上 / クルービューの切り替え',
   'shortcuts.presentation': 'プレゼンテーションモード（ツールにもあります）',
   'shortcuts.alerts': 'アラートを開く・閉じる',
+  'shortcuts.assistant': 'AHI に質問を開く・閉じる',
   'shortcuts.play': 'シミュレーションを再生・一時停止',
   'shortcuts.esc': 'パネルを閉じる、または体の詳細から戻る',
   'shortcuts.help': 'このヘルプを表示',
