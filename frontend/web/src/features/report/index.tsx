@@ -1,8 +1,8 @@
 import { Check, FileJson, FileText, Printer, RefreshCw, Send } from 'lucide-react'
 import { useState } from 'react'
 import { useAppStore } from '../../state/store'
-import { STATUS_META } from '../../lib/status'
-import { METRIC_CATALOG, REGION_LABELS } from '../../engine/catalog'
+import { STATUS_META, statusLabelEn } from '../../lib/status'
+import { METRIC_CATALOG } from '../../engine/catalog'
 import type { Alert, AppState, Astronaut, CheckIn, CommMessage, CommProfile, ContributingFactor, Intervention, Prediction, Recommendation, Status } from '../../types/domain'
 import { StatusIcon } from '../../components/Status'
 import { Button } from '../../components/ui'
@@ -12,12 +12,14 @@ import { Modal, TOPBAR_BUTTON } from '../mission/Modal'
 import { MENU_ITEM, MenuRow } from '../topbar/menu'
 import { COMM_KIND_LABEL, formatDelay } from '../comms/delay'
 import { INTERVENTION_LABEL } from '../timeline/labels'
+import { inEnglish, t, translatedRecord, useT } from '../../i18n'
+import { commProfileLabel, metricLabel, regionLabel, roleLabel, scenarioName } from '../../i18n/catalog'
 
 const H = 3600000
 const WINDOW_H = 24
-const PRIORITY_LABEL: Record<Recommendation['priority'], string> = { LOW: 'Low', MODERATE: 'Medium', HIGH: 'High', CRITICAL: 'Urgent' }
-const AUDIENCE_LABEL: Record<Recommendation['audience'], string> = { CREW: 'Crew', FLIGHT_SURGEON: 'Flight surgeon', MISSION_CONTROL: 'Mission control' }
-const PHASE_LABEL = { PRE_FLIGHT: 'Pre-flight', IN_FLIGHT: 'In flight', POST_FLIGHT: 'Post-flight' } as const
+const PRIORITY_LABEL: Record<Recommendation['priority'], string> = translatedRecord(['LOW', 'MODERATE', 'HIGH', 'CRITICAL'] as const, (k) => t(`report.priority.${k}`))
+const AUDIENCE_LABEL: Record<Recommendation['audience'], string> = translatedRecord(['CREW', 'FLIGHT_SURGEON', 'MISSION_CONTROL'] as const, (k) => t(`report.audience.${k}`))
+const PHASE_LABEL = translatedRecord(['PRE_FLIGHT', 'IN_FLIGHT', 'POST_FLIGHT'] as const, (k) => t(`report.phase.${k}`))
 
 const SCALE_WORDS = {
   mood: ['very low', 'low', 'okay', 'good', 'very good'],
@@ -118,15 +120,15 @@ function stamp(t: number): string {
 }
 
 function alertState(a: Alert, at: number): string {
-  if (a.acknowledgedAt != null) return `acknowledged by ${a.acknowledgedBy ?? 'crew'} at ${formatUtcTime(a.acknowledgedAt, false)}`
-  if (a.resolvedAt != null && a.resolvedAt <= at) return `resolved at ${formatUtcTime(a.resolvedAt, false)}`
-  return a.escalatedAt != null ? 'open, escalated' : 'open, not acknowledged'
+  if (a.acknowledgedAt != null) return t('report.alert.acknowledged', { who: a.acknowledgedBy ?? t('report.alert.crew'), time: formatUtcTime(a.acknowledgedAt, false) })
+  if (a.resolvedAt != null && a.resolvedAt <= at) return t('report.alert.resolved', { time: formatUtcTime(a.resolvedAt, false) })
+  return a.escalatedAt != null ? t('report.alert.escalated') : t('report.alert.open')
 }
 
 function alertWhere(a: Alert): string {
-  if (a.metric) return METRIC_CATALOG[a.metric].label
-  if (a.region === 'environment') return 'Cabin environment'
-  if (a.region) return REGION_LABELS[a.region].label
+  if (a.metric) return metricLabel(a.metric)
+  if (a.region === 'environment') return t('report.cabinEnvironment')
+  if (a.region) return regionLabel(a.region)
   return ''
 }
 
@@ -136,12 +138,22 @@ function checkInText(k: CheckIn): string {
   return `mood ${w('mood', k.mood)}, fatigue ${w('fatigue', k.fatigue)}, stress ${w('stress', k.stress)}, sleep ${w('sleepQuality', k.sleepQuality)}; symptoms: ${sym.length ? sym.join(', ') : 'none'}${k.note ? `; note: "${k.note}"` : ''}`
 }
 
+/** English forecast line for the plain text sent to ground. */
 function forecastText(p: Prediction): string {
   return `${METRIC_CATALOG[p.metric].label} projected to leave the personal normal range in ${formatHours(p.hoursToBandExit!)} (${p.method}, ${p.intervalLabel})`
 }
 
-/** Plain text version sent to ground (kept short: Earth link bandwidth). */
+/** Forecast line for the on screen report, in the current language. */
+function forecastLabel(p: Prediction): string {
+  return t('report.forecast', { metric: metricLabel(p.metric), hours: formatHours(p.hoursToBandExit!), method: p.method, interval: p.intervalLabel })
+}
+
+/** Plain text version sent to ground (kept short: Earth link bandwidth). Always English. */
 function reportText(snap: Snapshot): string {
+  return inEnglish(() => reportTextEn(snap))
+}
+
+function reportTextEn(snap: Snapshot): string {
   const s = snap.state
   const lines: string[] = [
     `SHIFT HANDOVER REPORT (SIMULATED DATA)`,
@@ -149,13 +161,13 @@ function reportText(snap: Snapshot): string {
     '',
   ]
   for (const c of snap.crew) {
-    lines.push(`${c.astronaut.callsign} (${c.astronaut.roleShort}): ${STATUS_META[c.status].label}. ${c.headline}`)
+    lines.push(`${c.astronaut.callsign} (${c.astronaut.roleShort}): ${statusLabelEn(c.status)}. ${c.headline}`)
     if (c.factors.length) lines.push(`  Factors: ${c.factors.map((f) => f.label).join('; ')}`)
     const open = c.alerts.filter((a) => a.acknowledgedAt == null && a.resolvedAt == null)
     lines.push(`  Alerts 24 h: ${c.alerts.length} (${open.length} open). Actions logged: ${c.interventions.length}. Pending recommendations: ${c.pending.length}.`)
     for (const p of c.forecasts.slice(0, 2)) lines.push(`  Forecast: ${forecastText(p)}`)
   }
-  lines.push(`Cabin: ${STATUS_META[snap.cabin.status].label}. ${snap.cabin.headline}`)
+  lines.push(`Cabin: ${statusLabelEn(snap.cabin.status)}. ${snap.cabin.headline}`)
   lines.push('', 'Decision support only. Not a diagnosis. Demo configuration, not official limits.')
   return lines.join('\n')
 }
@@ -174,19 +186,20 @@ function Empty({ children }: { children: string }) {
 }
 
 function CrewBlock({ c, at }: { c: CrewSection; at: number }) {
+  useT()
   return (
     <section className="rp-section">
       <div className="rp-crew-head">
         <h3 className="rp-h3">
           <span className="rp-dot" style={{ background: c.astronaut.color }} aria-hidden />
-          {c.astronaut.callsign} <span className="rp-muted">· {c.astronaut.role}</span>
+          {c.astronaut.callsign} <span className="rp-muted">· {roleLabel(c.astronaut.role)}</span>
         </h3>
         <StatusChip status={c.status} />
       </div>
       <p className="rp-headline">{c.headline}</p>
       <div className="rp-grid">
         <div>
-          <h4 className="rp-h4">Top contributing factors</h4>
+          <h4 className="rp-h4">{t('report.factors')}</h4>
           {c.factors.length ? (
             <ul className="rp-list">
               {c.factors.map((f) => (
@@ -194,24 +207,24 @@ function CrewBlock({ c, at }: { c: CrewSection; at: number }) {
               ))}
             </ul>
           ) : (
-            <Empty>None. Readings within the personal normal ranges.</Empty>
+            <Empty>{t('report.factorsNone')}</Empty>
           )}
-          {c.confidence != null && c.confidence < 0.7 && <p className="rp-note">Lower confidence ({Math.round(c.confidence * 100)}%): some data is missing or questionable.</p>}
+          {c.confidence != null && c.confidence < 0.7 && <p className="rp-note">{t('report.lowConfidence', { pct: Math.round(c.confidence * 100) })}</p>}
         </div>
         <div>
-          <h4 className="rp-h4">Notable forecasts</h4>
+          <h4 className="rp-h4">{t('report.forecasts')}</h4>
           {c.forecasts.length ? (
             <ul className="rp-list">
               {c.forecasts.slice(0, 3).map((p) => (
-                <li key={p.metric}>{forecastText(p)}</li>
+                <li key={p.metric}>{forecastLabel(p)}</li>
               ))}
             </ul>
           ) : (
-            <Empty>No metric projected to leave its normal range.</Empty>
+            <Empty>{t('report.forecastsNone')}</Empty>
           )}
         </div>
       </div>
-      <h4 className="rp-h4">Alerts</h4>
+      <h4 className="rp-h4">{t('report.alerts')}</h4>
       {c.alerts.length ? (
         <table className="rp-table">
           <tbody>
@@ -231,56 +244,56 @@ function CrewBlock({ c, at }: { c: CrewSection; at: number }) {
           </tbody>
         </table>
       ) : (
-        <Empty>No alerts in the last 24 h.</Empty>
+        <Empty>{t('report.alertsNone')}</Empty>
       )}
-      {c.alerts.length > 8 && <p className="rp-note">and {c.alerts.length - 8} more.</p>}
+      {c.alerts.length > 8 && <p className="rp-note">{t('report.andMore', { n: c.alerts.length - 8 })}</p>}
       <div className="rp-grid">
         <div>
-          <h4 className="rp-h4">Actions logged</h4>
+          <h4 className="rp-h4">{t('report.actions')}</h4>
           {c.interventions.length ? (
             <ul className="rp-list">
               {c.interventions.map((i) => (
                 <li key={i.id}>
-                  <span className="tabular rp-muted">{formatUtcTime(i.loggedAt, false)}</span> {INTERVENTION_LABEL[i.kind]} by {i.actor}
+                  <span className="tabular rp-muted">{formatUtcTime(i.loggedAt, false)}</span> {t('report.actionBy', { action: INTERVENTION_LABEL[i.kind], actor: i.actor })}
                   {i.note ? `: ${i.note}` : ''}
                 </li>
               ))}
             </ul>
           ) : (
-            <Empty>None in the last 24 h.</Empty>
+            <Empty>{t('report.noneLast24')}</Empty>
           )}
         </div>
         <div>
-          <h4 className="rp-h4">Check-ins</h4>
+          <h4 className="rp-h4">{t('report.checkins')}</h4>
           {c.checkIns.length ? (
             <ul className="rp-list">
               {c.checkIns.map((k) => (
                 <li key={k.id}>
-                  <span className="tabular rp-muted">{formatUtcTime(k.at, false)}</span> {checkInText(k)} <span className="rp-muted">({k.data_origin === 'MANUAL' ? 'typed by crew' : 'simulated'})</span>
+                  <span className="tabular rp-muted">{formatUtcTime(k.at, false)}</span> {checkInText(k)} <span className="rp-muted">({k.data_origin === 'MANUAL' ? t('report.typedByCrew') : t('report.simulated')})</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <Empty>No check-in in the last 24 h.</Empty>
+            <Empty>{t('report.checkinsNone')}</Empty>
           )}
         </div>
       </div>
-      <h4 className="rp-h4">Pending recommendations</h4>
+      <h4 className="rp-h4">{t('report.pending')}</h4>
       {c.pending.length ? (
         <ul className="rp-list">
           {c.pending.map((r) => (
             <li key={r.id}>
               <strong>{r.title}</strong>{' '}
               <span className="rp-muted">
-                ({PRIORITY_LABEL[r.priority]} priority, {AUDIENCE_LABEL[r.audience]}
-                {r.requiresHumanReview ? ', needs flight surgeon review' : ''}
-                {r.autonomy === 'GROUND_REVIEW' ? ', ground review' : r.autonomy === 'ONBOARD' ? ', on board' : ''})
+                ({t('report.priorityWord', { priority: PRIORITY_LABEL[r.priority] })}, {AUDIENCE_LABEL[r.audience]}
+                {r.requiresHumanReview ? t('report.needsReview') : ''}
+                {r.autonomy === 'GROUND_REVIEW' ? t('report.groundReview') : r.autonomy === 'ONBOARD' ? t('report.onBoard') : ''})
               </span>
             </li>
           ))}
         </ul>
       ) : (
-        <Empty>No pending recommendations.</Empty>
+        <Empty>{t('report.pendingNone')}</Empty>
       )}
     </section>
   )
@@ -338,51 +351,56 @@ const REPORT_CSS = `
 function ReportDocument({ snap }: { snap: Snapshot }) {
   const s = snap.state
   const p = snap.profile
+  useT()
+  const scenario = s.scenarios.find((x) => x.id === s.clock.scenarioId)
   return (
-    <article className="ahi-report" aria-label="Shift handover report">
+    <article className="ahi-report" aria-label={t('report.aria')}>
       <header>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
           <div>
-            <h1 className="rp-h1">Shift handover report</h1>
+            <h1 className="rp-h1">{t('report.title')}</h1>
             <div className="rp-muted">
               {s.mission.name} · {s.mission.vehicle} · {PHASE_LABEL[s.mission.phase]}
             </div>
           </div>
-          <span className="rp-sim">SIMULATED DATA</span>
+          <span className="rp-sim">{t('report.simulatedData')}</span>
         </div>
         <dl className="rp-meta">
           <div>
-            <dt>Period (sim)</dt>
+            <dt>{t('report.period')}</dt>
             <dd>
-              {formatUtcDate(snap.from).replace(/ \d{4}$/, '')} {formatUtcTime(snap.from, false)} to {formatUtcDate(snap.at).replace(/ \d{4}$/, '')} {formatUtcTime(snap.at, false)} UTC
+              {t('report.periodValue', {
+                from: `${formatUtcDate(snap.from).replace(/ \d{4}$/, '')} ${formatUtcTime(snap.from, false)}`,
+                to: `${formatUtcDate(snap.at).replace(/ \d{4}$/, '')} ${formatUtcTime(snap.at, false)}`,
+              })}
             </dd>
           </div>
           <div>
-            <dt>Generated</dt>
+            <dt>{t('report.generated')}</dt>
             <dd>
               {stamp(snap.at)} · MET {formatMET(s.mission.startedAt, snap.at)}
             </dd>
           </div>
           <div>
-            <dt>Earth link</dt>
-            <dd>{p ? `${p.label}, ${formatDelay(p.oneWayDelaySec)} one way` : 'Unknown'}</dd>
+            <dt>{t('report.earthLink')}</dt>
+            <dd>{p ? t('report.earthLinkValue', { label: commProfileLabel(p), delay: formatDelay(p.oneWayDelaySec) }) : t('report.unknown')}</dd>
           </div>
           <div>
-            <dt>Scenario</dt>
-            <dd>{s.scenarios.find((x) => x.id === s.clock.scenarioId)?.name ?? s.clock.scenarioId}</dd>
+            <dt>{t('report.scenario')}</dt>
+            <dd>{scenario ? scenarioName(scenario) : s.clock.scenarioId}</dd>
           </div>
         </dl>
       </header>
 
-      <h2 className="rp-h2">Crew at a glance</h2>
+      <h2 className="rp-h2">{t('report.atAGlance')}</h2>
       <table className="rp-table">
         <thead>
           <tr>
-            <th>Crew</th>
-            <th>Status</th>
-            <th>Summary</th>
-            <th style={{ textAlign: 'right' }}>Open alerts</th>
-            <th style={{ textAlign: 'right' }}>To do</th>
+            <th>{t('report.col.crew')}</th>
+            <th>{t('report.col.status')}</th>
+            <th>{t('report.col.summary')}</th>
+            <th style={{ textAlign: 'right' }}>{t('report.col.openAlerts')}</th>
+            <th style={{ textAlign: 'right' }}>{t('report.col.todo')}</th>
           </tr>
         </thead>
         <tbody>
@@ -404,7 +422,7 @@ function ReportDocument({ snap }: { snap: Snapshot }) {
             </tr>
           ))}
           <tr>
-            <td style={{ fontWeight: 600 }}>Cabin</td>
+            <td style={{ fontWeight: 600 }}>{t('report.cabin')}</td>
             <td style={{ whiteSpace: 'nowrap' }}>
               <StatusIcon status={snap.cabin.status} size={12} /> {STATUS_META[snap.cabin.status].label}
             </td>
@@ -419,19 +437,19 @@ function ReportDocument({ snap }: { snap: Snapshot }) {
         </tbody>
       </table>
 
-      <h2 className="rp-h2">Crew details (last 24 h)</h2>
+      <h2 className="rp-h2">{t('report.details')}</h2>
       {snap.crew.map((c) => (
         <CrewBlock key={c.astronaut.id} c={c} at={snap.at} />
       ))}
 
-      <h2 className="rp-h2">Cabin environment</h2>
+      <h2 className="rp-h2">{t('report.cabinEnvironment')}</h2>
       <section className="rp-section">
         <div className="rp-crew-head">
-          <h3 className="rp-h3">Cabin</h3>
+          <h3 className="rp-h3">{t('report.cabin')}</h3>
           <StatusChip status={snap.cabin.status} />
         </div>
         <p className="rp-headline">{snap.cabin.headline}</p>
-        <h4 className="rp-h4">Alerts</h4>
+        <h4 className="rp-h4">{t('report.alerts')}</h4>
         {snap.cabin.alerts.length ? (
           <ul className="rp-list">
             {snap.cabin.alerts.slice(0, 8).map((a) => (
@@ -441,25 +459,25 @@ function ReportDocument({ snap }: { snap: Snapshot }) {
             ))}
           </ul>
         ) : (
-          <Empty>No cabin alerts in the last 24 h.</Empty>
+          <Empty>{t('report.cabinAlertsNone')}</Empty>
         )}
         {snap.cabin.forecasts.length > 0 && (
           <>
-            <h4 className="rp-h4">Notable forecasts</h4>
+            <h4 className="rp-h4">{t('report.forecasts')}</h4>
             <ul className="rp-list">
               {snap.cabin.forecasts.map((f) => (
-                <li key={f.metric}>{forecastText(f)}</li>
+                <li key={f.metric}>{forecastLabel(f)}</li>
               ))}
             </ul>
           </>
         )}
         {snap.cabin.pending.length > 0 && (
           <>
-            <h4 className="rp-h4">Pending recommendations</h4>
+            <h4 className="rp-h4">{t('report.pending')}</h4>
             <ul className="rp-list">
               {snap.cabin.pending.map((r) => (
                 <li key={r.id}>
-                  <strong>{r.title}</strong> <span className="rp-muted">({PRIORITY_LABEL[r.priority]} priority)</span>
+                  <strong>{r.title}</strong> <span className="rp-muted">({t('report.priorityWord', { priority: PRIORITY_LABEL[r.priority] })})</span>
                 </li>
               ))}
             </ul>
@@ -467,35 +485,35 @@ function ReportDocument({ snap }: { snap: Snapshot }) {
         )}
       </section>
 
-      <h2 className="rp-h2">Earth link (last 24 h)</h2>
+      <h2 className="rp-h2">{t('report.earthLinkSection')}</h2>
       {snap.comms.length ? (
         <table className="rp-table">
           <tbody>
             {snap.comms.slice(0, 12).map((m) => (
               <tr key={m.id}>
                 <td className="rp-time tabular">{formatUtcTime(m.sentAt, false)}</td>
-                <td style={{ whiteSpace: 'nowrap' }}>{m.direction === 'UPLINK' ? 'From Earth' : 'To Earth'}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>{m.direction === 'UPLINK' ? t('report.fromEarth') : t('report.toEarth')}</td>
                 <td>
                   {m.title} <span className="rp-muted">· {COMM_KIND_LABEL[m.kind]}</span>
                 </td>
                 <td className="rp-muted" style={{ whiteSpace: 'nowrap' }}>
-                  {m.arrivesAt > snap.at ? `arrives ${formatUtcTime(m.arrivesAt, false)}` : `delivered ${formatUtcTime(m.arrivesAt, false)}`}
-                  {m.data_origin === 'SIMULATED' ? ', simulated' : ''}
+                  {m.arrivesAt > snap.at ? t('report.arrives', { time: formatUtcTime(m.arrivesAt, false) }) : t('report.delivered', { time: formatUtcTime(m.arrivesAt, false) })}
+                  {m.data_origin === 'SIMULATED' ? t('report.simSuffix') : ''}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        <Empty>No messages exchanged with Earth in the last 24 h.</Empty>
+        <Empty>{t('report.commsNone')}</Empty>
       )}
 
       <div className="rp-disclaimer">
         <p>
-          <strong>Decision support only. Not a diagnosis and not a medical device.</strong> Status comes from each person's own baseline (personal normal range), not from official limits.
+          <strong>{t('report.disclaimerStrong')}</strong> {t('report.disclaimer1')}
         </p>
-        <p>All device data in this report is simulated. Fixed thresholds and budgets are demo configuration, not official NASA limits. Review with the crew medical officer and the flight surgeon.</p>
-        <p>Model: {s.health[s.crew[0]?.id ?? '']?.risk.model_version ?? 'n/a'}. Crew ids are pseudonymized.</p>
+        <p>{t('report.disclaimer2')}</p>
+        <p>{t('report.model', { model: s.health[s.crew[0]?.id ?? '']?.risk.model_version ?? 'n/a' })}</p>
       </div>
     </article>
   )
@@ -504,19 +522,20 @@ function ReportDocument({ snap }: { snap: Snapshot }) {
 function HandoverModal({ onClose }: { onClose: () => void }) {
   const [snap, setSnap] = useState(() => buildSnapshot(useAppStore.getState()))
   const [notice, setNotice] = useState<string | null>(null)
+  useT()
 
   const exportFhir = () => {
     const s = snap.state
     const bundle = buildFhirBundle({ mission: s.mission, crew: s.crew, devices: s.devices, health: s.health, environment: s.environment, simNow: snap.at })
     const iso = new Date(snap.at).toISOString().replace(/[:]/g, '').replace(/\.\d+Z$/, 'Z')
     downloadJson(`ahi-fhir-r4-bundle-${iso}.json`, bundle)
-    setNotice(`FHIR R4 Bundle downloaded: ${bundle.entry.length} resources (Patient, Device, Observation). Simulated data.`)
+    setNotice(t('report.fhirDone', { n: bundle.entry.length }))
   }
   const send = () => {
     const s = useAppStore.getState()
     const id = s.sendToGround({ astronautId: null, kind: 'HANDOVER_REPORT', title: `Shift handover report, ${stamp(snap.at)}`, body: reportText(snap) })
     const p = s.commProfiles.find((x) => x.id === s.commProfileId)
-    setNotice(id ? `Report queued for Earth. Arrives in about ${formatDelay(p?.oneWayDelaySec ?? 0)} (sim time).` : 'The Earth link did not accept the report in this build.')
+    setNotice(id ? t('report.queued', { delay: formatDelay(p?.oneWayDelaySec ?? 0) }) : t('report.queueFailed'))
   }
 
   return (
@@ -524,10 +543,10 @@ function HandoverModal({ onClose }: { onClose: () => void }) {
       open
       onClose={onClose}
       size="lg"
-      title="Shift handover"
+      title={t('report.modalTitle')}
       hostClassName="ahi-print-host"
       icon={<FileText size={17} className="text-accent" aria-hidden />}
-      subtitle={`Last ${WINDOW_H} sim hours · snapshot at ${formatUtcTime(snap.at, false)} UTC`}
+      subtitle={t('report.subtitle', { n: WINDOW_H, time: formatUtcTime(snap.at, false) })}
       headerExtra={
         <Button
           variant="subtle"
@@ -535,9 +554,9 @@ function HandoverModal({ onClose }: { onClose: () => void }) {
             setSnap(buildSnapshot(useAppStore.getState()))
             setNotice(null)
           }}
-          title="Regenerate the report from the current state"
+          title={t('report.refreshTitle')}
         >
-          <RefreshCw size={13} aria-hidden /> Refresh
+          <RefreshCw size={13} aria-hidden /> {t('report.refresh')}
         </Button>
       }
       footer={
@@ -549,13 +568,13 @@ function HandoverModal({ onClose }: { onClose: () => void }) {
           )}
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button variant="ghost" onClick={() => window.print()}>
-              <Printer size={13} aria-hidden /> Print
+              <Printer size={13} aria-hidden /> {t('report.print')}
             </Button>
-            <Button variant="ghost" onClick={exportFhir} title="Download a FHIR R4 Bundle (collection) with Patient, Device and Observation resources">
-              <FileJson size={13} aria-hidden /> Export FHIR R4 Bundle (JSON)
+            <Button variant="ghost" onClick={exportFhir} title={t('report.fhirTitle')}>
+              <FileJson size={13} aria-hidden /> {t('report.fhir')}
             </Button>
             <Button variant="primary" onClick={send}>
-              <Send size={13} aria-hidden /> Send to ground
+              <Send size={13} aria-hidden /> {t('report.send')}
             </Button>
           </div>
         </div>
@@ -571,16 +590,17 @@ function HandoverModal({ onClose }: { onClose: () => void }) {
 /** Opens the shift handover report. variant="menuitem" renders it as a row of the top bar Tools menu. */
 export function HandoverReportButton({ variant = 'toolbar' }: { variant?: 'toolbar' | 'menuitem' }) {
   const [open, setOpen] = useState(false)
+  useT()
   return (
     <>
       {variant === 'menuitem' ? (
         <button type="button" role="menuitem" tabIndex={-1} data-tour="report" aria-haspopup="dialog" onClick={() => setOpen(true)} className={MENU_ITEM}>
-          <MenuRow icon={<FileText size={16} />} label="Shift handover" hint="Report for the next shift: print, FHIR export, send to ground" />
+          <MenuRow icon={<FileText size={16} />} label={t('report.menuLabel')} hint={t('report.menuHint')} />
         </button>
       ) : (
-        <button type="button" data-tour="report" aria-haspopup="dialog" onClick={() => setOpen(true)} className={TOPBAR_BUTTON} title="Shift handover report: print, export FHIR, send to ground">
+        <button type="button" data-tour="report" aria-haspopup="dialog" onClick={() => setOpen(true)} className={TOPBAR_BUTTON} title={t('report.buttonTitle')}>
           <FileText size={14} className="text-accent" aria-hidden />
-          <span>Handover</span>
+          <span>{t('report.button')}</span>
         </button>
       )}
       {open && <HandoverModal onClose={() => setOpen(false)} />}
