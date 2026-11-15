@@ -397,3 +397,80 @@ export const AUTONOMY = {
   /** At or above this one way delay, the crew acts first and the ground reviews later. */
   crewFirstMinSec: 60,
 } as const
+
+// ---------------------------------------------------------------------------
+// v5: statistical gap fill (CUSUM) and the experimental machine learning layer.
+// DEMO CONFIGURATION, NOT OFFICIAL LIMITS. Values are tuned on simulated data only
+// (npm run evaluate), never on real astronaut data, and none is a clinical threshold.
+// ---------------------------------------------------------------------------
+
+export const CUSUM_METHOD = 'Tabular CUSUM on hourly mean robust z v1'
+
+/**
+ * Tabular CUSUM (PROJECT_MASTER 9.3, "small accumulated changes"). Per continuous metric with
+ * drift detection, the per sample robust z (vs the personal baseline of the current context) is
+ * averaged per hour, then:
+ *   S_up   = min(cap, max(0, S_up + m - k))
+ *   S_down = min(cap, max(0, S_down - m - k))
+ * A side (in the metric's bad direction) at or above h, accumulating for at least minHours,
+ * raises a Watch (MODERATE) flag on the metric's drift rule. CUSUM never escalates above
+ * MODERATE on its own. Demo configuration, not an official limit.
+ */
+export const CUSUM = {
+  /** Aggregation bin (sim minutes). */
+  binMin: 60,
+  /** Allowance (slack) in z units per bin: hourly means below k never accumulate. */
+  k: 0.5,
+  /** Decision interval (accumulated z units). */
+  h: 8,
+  /** The accumulation must have lasted this long before the flag shows (sim hours). */
+  minHours: 12,
+  /** Ceiling of S, so the flag clears in a bounded time after the drift ends. */
+  cap: 16,
+  /** Per sample z clamp before averaging (one spike cannot fake a drift). */
+  zClamp: 4,
+} as const
+
+export const MULTIVARIATE_MODEL_VERSION = 'ahi-iforest-ts v1 (experimental, PCA whitened)'
+
+/**
+ * Multivariate unusual pattern detector (Isolation Forest, src/engine/ml). Experimental,
+ * machine learning. Trained per astronaut on their own baseline window of standardized
+ * metrics (robust z vs the personal baseline), decorrelated with PCA whitening fitted on the
+ * same window. It never sets a status by itself: it adds an
+ * "Unusual combination" flag only when the score stays high AND persistence (EWMA drift)
+ * agrees on at least minAgreeing signals. Demo configuration, not an official limit.
+ */
+export const MULTIVARIATE = {
+  /** Standardized features (robust z per metric). */
+  features: ['HEART_RATE', 'HRV_RMSSD', 'SPO2', 'RESPIRATORY_RATE', 'SYSTOLIC_BP', 'DIASTOLIC_BP', 'SKIN_TEMPERATURE'] as MetricCode[],
+  trees: 100,
+  /** Subsample per tree (psi in Liu, Ting and Zhou 2008). */
+  sampleSize: 256,
+  /** Training window: one vector per 5 sim minutes over 5 days (same span as the baseline). */
+  windowSize: 5 * 288,
+  /** No model below this many training vectors (1 sim day). */
+  minTrainingVectors: 288,
+  /** Retrain only when a feature baseline changed AND at least this many sim hours passed. */
+  retrainMinHours: 6,
+  /** Vectors with any |z| at or above this are not used for training (same as BASELINE.gateZ). */
+  trainGateZ: 3.5,
+  /** Vectors with any |drift z| at or above this are not used for training (same as BASELINE.gateDrift). */
+  trainGateDrift: 1.0,
+  /** Minimum variance per principal axis in the PCA whitening (z units squared). */
+  whiteningFloor: 0.05,
+  /** Personal threshold = max(scoreFloor, this quantile of the training scores). */
+  scoreFloor: 0.6,
+  calibrationQuantile: 0.995,
+  /** Training vectors scored for the calibration (keeps training cheap). */
+  calibrationSample: 256,
+  /** The score must stay above the threshold this long (sim minutes) before the flag shows. */
+  persistMin: 30,
+  /** A contributing signal "agrees" when its EWMA drift has the same sign and at least this size. */
+  agreeDriftZ: 0.5,
+  /** Agreeing signals needed (an unusual COMBINATION involves at least two). */
+  minAgreeing: 2,
+  /** Signals listed in the explanation. */
+  topContributors: 3,
+  seed: 20261115,
+} as const
