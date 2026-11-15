@@ -2,10 +2,9 @@ import { ArrowRight, BookOpen, ChevronLeft, Info, Layers } from 'lucide-react'
 import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
-import type { BodyRegionId, Status } from '../../types/domain'
+import type { BodyRegionId, MetricCode, Status } from '../../types/domain'
 import { tp, useT } from '../../i18n'
 import { regionDescription, regionLabel, regionSystem } from '../../i18n/catalog'
-import { StatusPill } from '../../components/Status'
 import { Badge, IconButton, SectionLabel } from '../../components/ui'
 import { REGION_ICON } from '../stage/CenterStage'
 import { structureById } from '../anatomy/atlas/manifest'
@@ -22,6 +21,10 @@ import {
   sideLabel,
 } from '../anatomy/atlas/health'
 import { RegionDetail } from './RegionDetail'
+import { FeedAwareStatusPill } from './FeedStatus'
+import { regionMetricsFromCatalog } from '../shared/hooks'
+import { engineText } from '../../i18n/engineText'
+import { Details } from '../../components/viz/Details'
 
 function BackRow() {
   const selectStructure = useAppStore((s) => s.selectStructure)
@@ -116,12 +119,13 @@ function StructureCard({ structure, manifest }: { structure: AtlasStructure; man
 
 /** The region a structure is monitored with: name, status of that region and the way to open it. */
 function MonitoredWith({ astronautId, region, structure, manifest }: { astronautId: string; region: BodyRegionId; structure: AtlasStructure; manifest: AtlasManifest }) {
-  const { status, summary } = useAppStore(
+  const { status, summary, metricsKey } = useAppStore(
     useShallow((s) => {
       const r = s.health[astronautId]?.regions[region]
-      return { status: (r?.status ?? 'NO_DATA') as Status, summary: r?.summary ?? '' }
+      return { status: (r?.status ?? 'NO_DATA') as Status, summary: r?.summary ?? '', metricsKey: (r?.metrics ?? []).join(',') }
     }),
   )
+  const metrics = useMemo(() => (metricsKey ? (metricsKey.split(',') as MetricCode[]) : regionMetricsFromCatalog(region)), [metricsKey, region])
   const selectRegion = useAppStore((s) => s.selectRegion)
   const t = useT()
   const label = { label: regionLabel(region), system: regionSystem(region), description: regionDescription(region) }
@@ -155,15 +159,12 @@ function MonitoredWith({ astronautId, region, structure, manifest }: { astronaut
             <div className="truncate text-[11px] text-ink-500">{label.system}</div>
           </div>
         </div>
-        <StatusPill status={status} />
+        <FeedAwareStatusPill astronautId={astronautId} metrics={metrics} status={status} />
       </div>
-      <p className="mt-2 text-[14px] leading-snug text-ink-100">{summary || (status === 'NO_DATA' ? t('attention.structure.noRecent') : label.description)}</p>
-      <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-relaxed text-ink-500">
-        <Info size={12} className="mt-0.5 shrink-0" aria-hidden />
-        <span>
-          {relation.basis} {relation.caveat}
-        </span>
-      </p>
+      <p className="mt-2 text-[13px] leading-snug text-ink-100">{summary ? engineText('regionSummary', summary, region) : status === 'NO_DATA' ? t('attention.structure.noRecent') : label.description}</p>
+      <Details className="mt-1.5">
+        {relation.basis} {relation.caveat}
+      </Details>
     </section>
   )
 }

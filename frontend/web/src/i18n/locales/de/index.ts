@@ -23,6 +23,7 @@ import tour from './tour'
 import stage from './stage'
 import connectivity from './connectivity'
 import backdrop from './backdrop'
+import visual from './visual'
 
 const messages: Messages = {
   ...catalog,
@@ -48,5 +49,6 @@ const messages: Messages = {
   ...stage,
   ...connectivity,
   ...backdrop,
+  ...visual,
 }
 export default messages
