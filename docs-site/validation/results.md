@@ -43,7 +43,7 @@ Minutes from the scenario start (08:00 UTC sim time), on the evaluation grid (1 
 | ACUTE_CARDIO | AST-01 (ORION) | 7 min (R-HR-01) | 7 min | 7 min | CRITICAL (100) | 3 h |
 | SENSOR_FAILURE | AST-03 (VEGA) | 14 min (R-DQ-02) | not reached | not reached | MODERATE (20) | 3 h |
 | ENVIRONMENTAL_CO2 | cabin | 90 min (R-ENV-CO2-01) | 140 min (2.3 h) | not reached | HIGH (77) | 12 h |
-| PROGRESSIVE_FATIGUE | AST-02 (LYRA) | 1905 min (31.8 h, R-FAT-01) | 2010 min (33.5 h) | not reached | HIGH (79) | 96 h |
+| PROGRESSIVE_FATIGUE | AST-02 (LYRA) | 1905 min (31.8 h, R-FAT-01) | 1980 min (33.0 h) | not reached | HIGH (79) | 96 h |
 | PERFORMANCE_DECLINE | AST-04 (ATLAS) | 1650 min (27.5 h, R-EX-01) | 4530 min (75.5 h) | not reached | HIGH (45) | 120 h |
 
 **Reading the results.**

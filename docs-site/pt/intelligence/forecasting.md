@@ -8,7 +8,7 @@ code:
   - frontend/web/src/engine/config.ts
 tests:
   - frontend/web/src/engine/forecast.test.ts
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Previsão
@@ -66,6 +66,19 @@ intervalo = previsão ± 1,2816 x sd_h
 
 Sem dados suficientes, a previsão fica **inelegível** e a interface diz "Not enough data to forecast yet". A previsão é recalculada a cada 10 minutos simulados.
 
+### Horizontes selecionáveis {#selectable-horizons}
+
+No gráfico de tendência o usuário escolhe um horizonte: **24 h, 36 h, 72 h, 7 dias ou 15 dias** (padrão 24 h). O mesmo método de Holt amortecido projeta mais longe; a janela de ajuste cresce com o horizonte e a faixa de 80% continua alargando quanto mais à frente vai.
+
+| Regra | Valor |
+| --- | --- |
+| Histórico necessário | Pelo menos **metade do horizonte** (uma projeção de 7 dias precisa de 3,5 dias de histórico). Regra de demo em `FORECAST_HORIZONS`, não um limite oficial |
+| Histórico insuficiente | "Not enough history for this horizon", com o histórico necessário e o disponível |
+| Além de 72 h | Uma nota extra: "Long horizon: read it as a rough trend, not a value to expect." |
+| Pontos no gráfico | Calculados em resolução total, reduzidos para no máximo 72 pontos |
+
+Com o histórico simulado da demo, frequência cardíaca, HRV e SpO₂ chegam a 7 dias; sono e exercício, que têm históricos diários longos, chegam a 15 dias.
+
 ### Saída da faixa (`hoursToBandExit`)
 
 O primeiro momento em que a **projeção central** sai da faixa pessoal. Se o último valor observado já está fora, o valor é 0.
@@ -99,10 +112,11 @@ O intervalo de 80% não é uma garantia: em 1 a cada 5 casos, em média, o valor
 - Parâmetros fixos, não ajustados por pessoa nem por métrica.
 - A cobertura real do intervalo de 80% não foi medida.
 - ARIMA e modelos mais ricos não estão implementados ([IA e análise](/pt/intelligence/ai-and-analytics)).
+- Horizontes longos com poucos dias de dados são, no máximo, uma tendência aproximada; a faixa que alarga diz isso.
 
 ## Status
 
-<StatusBadge status="IMPLEMENTED" /> Coberto por `forecast.test.ts` (9 testes: tendência amortecida, poucos pontos, intervalo crescente, janelas irregulares, inelegibilidade, horizontes de 6 h e 24 h, saída da faixa, métricas diárias, regra de recuperação).
+<StatusBadge status="IMPLEMENTED" /> Coberto por `forecast.test.ts` (17 testes: tendência amortecida, poucos pontos, intervalo crescente, janelas irregulares, inelegibilidade, horizontes de 6 h e 24 h, saída da faixa, métricas diárias, regra de recuperação, horizontes selecionáveis e a regra de histórico).
 
 ## Próximos passos
 

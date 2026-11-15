@@ -41,7 +41,7 @@ Real seconds after pressing play at the suggested speed, derived from the simula
 | Acute cardio event | about 7 s at 1 min/s | same moment (also CRITICAL) |
 | Sensor failure | about 14 s at 1 min/s | never (MODERATE by design) |
 | Cabin CO2 rise | about 9 s at 10 min/s | about 14 s |
-| Progressive fatigue | about 32 s at 1 h/s | about 34 s |
+| Progressive fatigue | about 32 s at 1 h/s | about 33 s |
 | Exercise performance decline | about 28 s at 1 h/s | about 76 s |
 
 In the nominal scenario nothing should happen: the evaluation found no alert at MODERATE or above.

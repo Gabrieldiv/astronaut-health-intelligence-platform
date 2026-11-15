@@ -1,6 +1,6 @@
 ---
 title: Visão geral da arquitetura
-description: Contexto e contêineres da Astronaut Health Intelligence Platform em estilo C4. Hoje tudo roda no navegador; o backend é plano.
+description: Contexto e contêineres da Astronaut Health Intelligence Platform em estilo C4: um app no navegador com um backend FastAPI opcional e um modo demo offline, com stack e decisões.
 status: IMPLEMENTED
 origin: SIMULATED, DERIVED, REAL_PUBLIC
 code:
@@ -8,14 +8,18 @@ code:
   - frontend/web/src/state/store.ts
   - frontend/web/src/engine/engine.ts
   - frontend/web/src/types/domain.ts
-verified: 2026-11-14
+  - backend/app/main.py
+verified: 2026-11-15
 ---
 
 # Visão geral da arquitetura
 
-Hoje a Astronaut Health Intelligence Platform (AHI) é um **aplicativo web que roda inteiro no navegador**. Simuladores, motor de análise, estado e interface 3D vivem no mesmo bundle. Não há backend, API REST, banco de dados nem autenticação, e o app não chama nenhum serviço externo: só carrega os seus próprios arquivos estáticos (código, painéis do OSDR e a anatomia 3D). Isso deixa a demo rápida, reproduzível e capaz de rodar offline depois da instalação.
+A Astronaut Health Intelligence Platform (AHI) tem duas partes implantáveis:
 
-O desenho alvo com backend está em [Arquitetura alvo](/pt/architecture/target-architecture) e é **conceitual**.
+- O **app web** (`frontend/web`): simuladores, motor de análise, estado e interface 3D rodam na mesma aba do navegador.
+- A **AHI API** opcional (`backend/`): um monólito modular em FastAPI que guarda observações canônicas, lê dados públicos da NASA (DONKI, OSDR), hospeda o assistente de demonstração e um endpoint experimental de análise ([Backend e API](/pt/architecture/backend)).
+
+O app **não depende da API**. Sem ela, roda em **modo demo offline**: tudo funciona, o clima espacial vem de um snapshot real do DONKI empacotado no app, e só a busca ao vivo no OSDR e o assistente ficam indisponíveis. Isso mantém a demo confiável, enquanto os contratos do spec (`HealthObservation` canônico, `data_origin`, regras versionadas) já são compartilhados pelas duas partes. O que ainda é conceitual (autenticação, motor em Python, jobs em segundo plano) está em [Arquitetura alvo](/pt/architecture/target-architecture).
 
 ## Stack
 
@@ -29,7 +33,9 @@ O desenho alvo com backend está em [Arquitetura alvo](/pt/architecture/target-a
 | Estado | zustand |
 | Gráficos | Recharts |
 | Ícones | lucide-react |
-| Testes | vitest |
+| Backend | Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, httpx, scikit-learn (análise experimental), Anthropic SDK (demo do assistente) |
+| Banco de dados | SQLite (padrão), PostgreSQL 17 (Docker Compose) |
+| Testes | vitest (web), pytest (backend) |
 | Lint | oxlint |
 | Documentação | VitePress (este portal) |
 
@@ -44,19 +50,27 @@ flowchart LR
     MC[Mission Control<br/>alertas, cabine]
     RES[Pesquisador<br/>Data and model]
     AHI[Astronaut Health Intelligence Platform<br/>app web no navegador]
+    API[AHI API opcional<br/>FastAPI]
     OSDR[(NASA OSDR<br/>datasets públicos)]
+    DONKI[(NASA DONKI<br/>CCMC)]
+    CLAUDE[Claude API<br/>só na demo do assistente]
     FILE[Arquivo FHIR R4<br/>exportação]
     CREW --> AHI
     FS --> AHI
     MC --> AHI
     RES --> AHI
-    OSDR -. importação offline por script .-> AHI
+    OSDR -. painéis importados no build .-> AHI
+    AHI -. se acessível .-> API
+    API --> DONKI
+    API --> OSDR
+    API -. só com chave .-> CLAUDE
     AHI -. download .-> FILE
 ```
 
-- A ligação com o OSDR **não acontece em tempo de execução**: os scripts de importação rodam uma vez, e os painéis compactos são empacotados no app. Veja [Catálogo de datasets](/pt/data/dataset-catalog).
+- O navegador nunca chama a NASA ou a Claude API diretamente: quando a AHI API está acessível, ela faz isso pelo app; senão o app usa o que já traz consigo.
+- Os painéis do OSDR são importados uma vez por script e empacotados no app. Veja [Catálogo de datasets](/pt/data/dataset-catalog).
 - O mesmo vale para a anatomia 3D: o modelo de origem (Z-Anatomy) é baixado pelo pipeline de assets em desenvolvimento, e o app distribui os arquivos já prontos. Veja [Assets de anatomia 3D](/pt/data/anatomy-assets).
-- Não há sistema externo conectado: nem ISS, nem equipamentos, nem serviços de IA.
+- Nenhum equipamento da ISS está conectado.
 
 ## Nível 2: contêineres
 
@@ -70,8 +84,10 @@ flowchart TB
       ATLAS[("Atlas de anatomia<br/>public/anatomy, um GLB por sistema<br/>e manifest.json")]
       FB["Fallback procedural<br/>Web Workers e cache IndexedDB"]
       LS[(localStorage<br/>preferências)]
-      DATA[(Painéis OSDR<br/>JSON empacotado)]
+      DATA[(Painéis OSDR e snapshot DONKI<br/>JSON empacotado)]
+      CL[Cliente da API<br/>src/lib/api]
     end
+    API[AHI API<br/>backend/]
     PIPE["Pipeline de assets<br/>Blender e glTF Transform<br/>em desenvolvimento"]
     UI <--> STORE
     STORE <--> ENG
@@ -80,6 +96,8 @@ flowchart TB
     VIEW -. "só se o atlas não carregar" .-> FB
     UI --> LS
     UI --> DATA
+    UI --> CL
+    CL -. opcional .-> API
     PIPE -. "npm run anatomy:build" .-> ATLAS
 ```
 
@@ -92,6 +110,10 @@ flowchart TB
 | Atlas de anatomia | Arquivos GLB estáticos (meshopt) e `manifest.json`: anatomia de referência de terceiros (Z-Anatomy, CC BY-SA 4.0), gerada pelo pipeline de assets em desenvolvimento | [Assets de anatomia 3D](/pt/data/anatomy-assets) |
 | Fallback procedural | Corpo simplificado gerado em código (Web Workers), usado só quando o atlas não carrega | [Anatomia 3D](/pt/architecture/anatomy-3d#fallback) |
 | Armazenamento local | Preferências e, no fallback, cache da geometria; nada de dados de saúde | [Governança e privacidade](/pt/data/governance-and-privacy) |
+| Painéis OSDR e snapshot DONKI | JSON estático: dados públicos reais como referência e contexto de missão | [Catálogo de datasets](/pt/data/dataset-catalog), [Fontes de dados da NASA](/pt/data/sources) |
+| Cliente da API | TypeScript, tipos gerados a partir do OpenAPI; testa a API e cai nos caminhos offline | [Backend e API](/pt/architecture/backend#offline-demo-mode) |
+| AHI API (opcional) | Python 3.12, FastAPI: cadastro, ingestão, observações, conectores NASA, assistente, análise | [Backend e API](/pt/architecture/backend) |
+| Banco de dados (com a API) | SQLite por padrão, PostgreSQL 17 com Docker Compose | [Backend e API](/pt/architecture/backend#storage-and-migrations) |
 
 ## Fluxo em tempo de execução
 
@@ -119,16 +141,17 @@ Tudo gira em torno de `frontend/web/src/types/domain.ts`, compartilhado por moto
 
 | Decisão | Motivo | Consequência |
 | --- | --- | --- |
-| Tudo no navegador, sem backend | Demo rápida, offline e reproduzível para o hackathon | Sem persistência, sem multiusuário, sem autenticação |
-| Motor em TypeScript puro, separado da interface | Testável com vitest sem DOM | 143 testes rodam sem navegador |
+| App completo no navegador, backend opcional | Demo rápida, offline e reproduzível para o hackathon | O estado do app e a auditoria se perdem ao recarregar; sem autenticação ainda |
+| Motor em TypeScript puro, separado da interface | Testável com vitest sem DOM | 315 testes web rodam sem navegador |
 | Simulação semeada | Reprodutibilidade de cenários e avaliação | Mesmos dados com a mesma semente |
 | Contrato de adapters | Trocar simulação por fonte real sem mudar a interface | Um backend futuro entra pelo mesmo contrato |
 | Corpo 3D sobre um atlas anatômico aberto (Z-Anatomy), com fallback procedural | Anatomia real, com estruturas nomeadas que podem ser selecionadas e ligadas aos dados; o fallback mantém o painel funcionando | Os arquivos de anatomia têm licença própria (CC BY-SA 4.0, com atribuição); um pipeline com Blender gera os assets; um GLB por sistema, carregado sob demanda |
 | Anatomia e saúde ligadas em um único arquivo (`atlas/health.ts`) | O atlas pode ser reconstruído sem tocar nas regras de saúde | Estruturas sem métrica relacionada ficam só de contexto, sem status |
-| Estatística e regras, sem ML | Explicável e testável | Veja [IA e análise](/pt/intelligence/ai-and-analytics) |
+| Estatística primeiro; ML só experimental e informativo | Explicável e testável | Veja [IA e análise](/pt/intelligence/ai-and-analytics) |
 
 ## Próximos passos
 
 - [Frontend e estado](/pt/architecture/frontend).
 - [Motor e simulação](/pt/architecture/engine-and-simulation).
-- [Arquitetura alvo](/pt/architecture/target-architecture): como um backend real se encaixaria.
+- [Backend e API](/pt/architecture/backend).
+- [Arquitetura alvo](/pt/architecture/target-architecture): o que ainda é conceitual.

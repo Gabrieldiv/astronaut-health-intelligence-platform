@@ -136,6 +136,7 @@ O "e se" responde só a uma pergunta: **dentro do simulador**, como a curva se c
 - As ações são genéricas e não foram revisadas por um médico de voo.
 - Os efeitos são hipotéticos; não há validação clínica.
 - A projeção ignora ruído e eventos futuros.
+- Nenhum modelo de linguagem reescreve recomendações. O assistente opcional Ask AHI pode explicá-las em palavras simples, nunca alterá-las ([IA e análise](/pt/intelligence/ai-and-analytics#language-model-the-ask-ahi-assistant)).
 
 ## Status
 
@@ -145,4 +146,4 @@ O "e se" responde só a uma pergunta: **dentro do simulador**, como a curva se c
 
 - [Alertas e escalonamento](/pt/intelligence/alerts).
 - [Recursos da missão](/pt/product/mission-features#comparacao-e-se): como o "e se" aparece na tela.
-- [Abordagem de IA e análise de dados](/pt/intelligence/ai-and-analytics): a camada de explicação com LLM planejada.
+- [Abordagem de IA e análise de dados](/pt/intelligence/ai-and-analytics): o papel restrito do assistente Ask AHI.

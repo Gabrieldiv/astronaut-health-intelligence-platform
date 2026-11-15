@@ -26,29 +26,35 @@ hero:
 
 features:
   - title: Anatomia 3D ao vivo
-    details: "Um atlas anatômico realista (Z-Anatomy), com 250 estruturas selecionáveis em camadas por sistema. Um sistema que pede atenção acende na cor do seu status, o coração bate na frequência cardíaca atual e os pulmões respiram na frequência respiratória atual."
+    details: "Um atlas anatômico realista (Z-Anatomy), com 250 estruturas. Zoom em direção ao ponteiro, modo Monitor ou Explore, navegador do corpo pelo teclado. Um sistema que pede atenção acende na cor do seu status, o coração bate na frequência cardíaca atual e os pulmões respiram na frequência respiratória atual."
     link: /pt/architecture/anatomy-3d
   - title: Baseline pessoal
     details: "Ninguém é comparado com uma média populacional. A faixa normal de cada métrica é aprendida com os dados da própria pessoa (mediana e MAD), separada por contexto: sono, repouso, trabalho e exercício."
     link: /pt/intelligence/personal-baseline
   - title: Risco explicável
-    details: "Regras transparentes, cada uma com identificador, motivo em linguagem simples e peso no escore de 0 a 100. Sem caixa-preta e sem LLM em tempo de execução."
+    details: "Estatística primeiro. Regras transparentes, cada uma com identificador, motivo em linguagem simples e peso no escore de 0 a 100. Uma nota experimental de aprendizado de máquina e o assistente Ask AHI explicam, mas nunca decidem."
     link: /pt/intelligence/risk-assessment
   - title: Decisões com atraso de comunicação
     details: "Perfis ISS, Lua e Marte. Mensagens viajam com o atraso da luz, e a plataforma separa o que a tripulação pode fazer a bordo do que precisa do médico de voo na Terra."
     link: /pt/intelligence/self-report-and-earth-link
+  - title: Perfis de missão e clima espacial
+    details: "Lançamento, ISS, Lua e trânsito para Marte com valores de referência citados, a dose da missão frente ao limite de carreira da NASA e um aviso de abrigo baseado em eventos reais do NASA DONKI."
+    link: /pt/intelligence/mission-profiles
+  - title: Olhos, ouvidos e acessibilidade
+    details: "Exames oculares periódicos de SANS e testes de audição frente à baseline pré-voo. Sons de alerta com escalonamento, audiodescrição e uso completo pelo teclado."
+    link: /pt/intelligence/eye-and-hearing
   - title: Dados reais da NASA com proveniência
-    details: "Dois datasets públicos do NASA OSDR (hemograma e painel metabólico da Inspiration4) aparecem como referência histórica, com arquivo, SHA-256 e data de download."
+    details: "Dois datasets públicos do NASA OSDR (hemograma e painel metabólico da Inspiration4), com arquivo, SHA-256 e data de download, e o clima espacial do NASA DONKI como contexto de missão. Só contexto, nunca medidas da tripulação."
     link: /pt/data/dataset-catalog
   - title: Validação transparente
-    details: "143 testes automatizados e uma avaliação reproduzível do motor em 5 sementes. Cada número publicado aponta para o código e para o teste que o sustenta."
+    details: "315 testes web, 44 testes de backend e uma avaliação reproduzível do motor em 5 sementes sobre dados simulados. Cada número publicado aponta para o código, um arquivo gerado ou uma fonte citada."
     link: /pt/validation/results
 ---
 
 <div class="ahi-home">
 
 <h2>A plataforma em uma tela</h2>
-<p class="lead">A "Ground view" responde três perguntas, nesta ordem: quem precisa de atenção, o que está acontecendo e o que fazer. Tudo roda no navegador, sem backend.</p>
+<p class="lead">A "Ground view" responde três perguntas, nesta ordem: quem precisa de atenção, o que está acontecendo e o que fazer. O app roda inteiro no navegador, inclusive offline; um backend opcional em FastAPI acrescenta ingestão, dados da NASA ao vivo e a demo do assistente (veja <a href="./architecture/backend">Backend e API</a>).</p>
 
 <figure>
 

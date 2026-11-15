@@ -31,7 +31,8 @@ Todo valor fisiológico do AHI vem de um simulador (`data_origin: SIMULATED`). O
 | Saúde comportamental e cognição | `MOOD`, `PERCEIVED_FATIGUE`, `STRESS`, `REACTION_TIME` | Check-in diário e "Reaction self-test" | SIMULATED ou MANUAL | <StatusBadge status="IMPLEMENTED" /> |
 | Hidratação | `HYDRATION` | "Fluid intake log" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
 | Densidade óssea, volume muscular | nenhum | sem fonte | não se aplica | <StatusBadge status="NOT_IMPLEMENTED" /> |
-| Olhos (SANS) | nenhum | sem fonte | não se aplica | <StatusBadge status="PLANNED" /> roadmap |
+| Olhos (SANS) | `RETINAL_THICKNESS`, `CHOROIDAL_FOLDS`, `OPTIC_NERVE_SHEATH_DIAMETER`, `VISUAL_ACUITY` | Exames oculares periódicos simulados (OCT, ultrassom ocular, acuidade visual) | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Audição e ruído | `HEARING_THRESHOLD_HIGH`, `HEARING_THRESHOLD_LOW`, `NOISE_EXPOSURE`, `NOISE_DOSE` | Testes de audição periódicos simulados, uma leitura diária de ruído usada pelo tripulante | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
 
 Unidade, cadência e região do corpo de cada código estão no [Dicionário de dados](/pt/data/data-dictionary). O status de cada métrica é calculado em relação à faixa normal do próprio astronauta ([Linha de base pessoal](/pt/intelligence/personal-baseline)); alguns valores fixos funcionam como rede de segurança da demonstração ([Limiares e limitações](/pt/intelligence/thresholds)).
 
@@ -105,13 +106,15 @@ Unidade, cadência e região do corpo de cada código estão no [Dicionário de 
 
 **Limitações.** O índice de hidratação é uma pontuação de demonstração, não uma medida fisiológica. O AHI não tem química de urina ou de sangue para a tripulação simulada.
 
-## Olhos e SANS (não monitorados)
+## Olhos e SANS
 
 **Por que importa.** A Spaceflight Associated Neuro-ocular Syndrome (SANS) é um conjunto de achados nos olhos e no cérebro que surge em voos de longa duração: edema do disco óptico, dobras coriorretinianas, achatamento do globo ocular e desvio hipermetrópico da refração.[^r5][^r22] O Human Research Roadmap da NASA afirma que 70% dos tripulantes apresentam um ou mais desses sinais característicos e acompanha a SANS como risco ativo.[^r5] Uma atualização clínica de 2023 estimou que cerca de 66% dos astronautas de longa duração apresentam a indicação mais precoce de SANS.[^r23] A hipótese principal liga a SANS ao deslocamento de fluidos em direção à cabeça na microgravidade, que o estudo Fluid Shifts da NASA investigou com ferramentas não invasivas.[^r24]
 
 **Como é medido em missões.** A vigilância médica inclui avaliação antes, durante e depois do voo com tomografia de coerência óptica (OCT), ultrassom ocular, imagens oftálmicas e testes de acuidade visual, além de ressonância magnética de cérebro e olhos antes do voo e logo após o retorno.[^r5] As Artemis II Standard Measures incluem ressonância magnética para avaliar a saúde dos olhos e do cérebro.[^r27]
 
-**O que o AHI faz hoje.** Nada. Nenhum dispositivo de monitoramento ocular alimenta a plataforma. Os olhos do corpo 3D são anatomia de referência: podem ser selecionados, mas são "só contexto" e nunca mostram status. Incluir indicadores oculares derivados de imagem é trabalho de roadmap: veja o [Roadmap](/pt/resources/roadmap).
+**O que o AHI faz hoje.** Exames oculares periódicos **simulados** no cronograma publicado pela NASA (linha de base pré-voo, depois dia de voo 30, dia de voo 90 e 30 dias antes do retorno) comparam espessura da retina, dobras da coroide, diâmetro da bainha do nervo óptico e acuidade visual com o mesmo olho antes do voo. Um espessamento da retina além da variabilidade publicada de 19,4 µm entre testes é Watch. Testes de audição e ruído diário seguem o mesmo padrão. Detalhes, critérios e fontes: [Saúde ocular e audição](/pt/intelligence/eye-and-hearing).
+
+**Limitações.** Os valores dos exames são simulados; alguns níveis de mudança são configuração de demonstração. Sem fundoscopia, grade de Amsler ou ressonância magnética.
 
 ::: tip Como a plataforma usa isso
 - Faixas normais pessoais por contexto de atividade: [Linha de base pessoal](/pt/intelligence/personal-baseline).

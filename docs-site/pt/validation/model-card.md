@@ -19,7 +19,7 @@ Ficha do motor de inteligência de saúde da Astronaut Health Intelligence Platf
 | --- | --- |
 | Motor | `ahi-engine 2.0.0` |
 | Modelo de risco | `AHI transparent rules v2.0 (demo)` |
-| Avaliação gerada em | 2026-11-14T12:17:47.455Z |
+| Avaliação gerada em | 2026-11-15T05:40:42.825Z |
 | Tipo | Regras estatísticas transparentes (sem aprendizado de máquina e sem LLM; veja [IA e análise](/pt/intelligence/ai-and-analytics)) |
 
 ## Uso pretendido

@@ -17,7 +17,12 @@ tests:
   - frontend/web/src/features/anatomy/atlas/health.test.ts
   - frontend/web/src/features/anatomy/atlas/manifest.contract.test.ts
   - frontend/web/src/state/selection.test.ts
-verified: 2026-11-14
+  - frontend/web/src/features/anatomy/viewer/zoom.test.ts
+  - frontend/web/src/features/anatomy/viewer/interaction.test.ts
+  - frontend/web/src/features/anatomy/viewer/retry.test.ts
+  - frontend/web/src/features/anatomy/viewer/scan.test.ts
+  - frontend/web/src/features/anatomy/a11y/keyboardNav.test.ts
+verified: 2026-11-15
 ---
 
 # Renderização da anatomia 3D
@@ -203,13 +208,29 @@ As cores dos tecidos são aparência de anatomia de referência, não codificaç
 
 ## Interação {#interaction}
 
-### Navegação e vistas predefinidas
+### Navegação e vistas predefinidas {#navigation-and-preset-views}
 
-- **Órbita** (girar, zoom, pan limitado) com amortecimento. O alvo da órbita nunca sai do corpo.
+- **Órbita** (girar, pan limitado) com amortecimento. O alvo da órbita nunca sai do corpo.
+- **Zoom no ponteiro**: a roda do mouse, o trackpad e a pinça com dois dedos aproximam em direção ao ponto sob o ponteiro (ou entre os dedos), então o que você mira continua sob o cursor enquanto cresce; girar depois disso gira em torno da área aproximada. Os limites de distância são mantidos. Código próprio em `viewer/zoom.ts` substitui o dolly padrão da órbita; o zoom arrastando com o botão do meio não existe mais.
 - **Vistas predefinidas**: "Front", "Back", "Left" e "Right" (esquerda e direita do próprio corpo), com transição animada.
 - **Reset**: enquadra o corpo inteiro de novo e limpa a seleção.
 - **Rotação em repouso**: o corpo gira devagar depois de 5 segundos sem interação, e para enquanto algo está selecionado ou sob o ponteiro.
 - O corpo inteiro é ajustado à altura livre entre a margem superior e os controles, e ajustado de novo quando o contêiner muda de tamanho.
+
+### Modos Monitor e Explore {#monitor-and-explore}
+
+Um botão compacto nos controles do visualizador alterna entre dois modos. A escolha fica guardada por dispositivo (chave `ahi.anatomy.interactionMode` no `localStorage`; se o armazenamento estiver bloqueado, volta para Monitor).
+
+| Modo | O que reage ao ponteiro e ao clique | Demais estruturas |
+| --- | --- | --- |
+| **Monitor** (padrão) | Só estruturas que pertencem a uma região monitorada | A anatomia só de contexto fica mais discreta (dessaturada, mais escura) e o ponteiro passa através dela, então o clique chega ao órgão monitorado atrás |
+| **Explore** | Todas as estruturas | Estruturas só de contexto abrem o cartão "Context only", como referência anatômica |
+
+O Monitor mantém a demo focada no que é medido; o Explore mantém o atlas útil para aprender.
+
+### Navegador do corpo pelo teclado {#keyboard-body-navigator}
+
+O canvas é alcançado com `Tab` como o **body navigator** (`aria-roledescription="body navigator"`). `Up` e `Down` passam entre regiões monitoradas, `Left` e `Right` entre as estruturas da região, `Home` e `End` vão para a primeira ou a última, `Enter` seleciona e `Esc` limpa. Cada passo é anunciado em uma região `aria-live`, por exemplo "Heart region. Status: Nominal."; uma região sem leituras é anunciada como "no data". O uso com o ponteiro não muda. Veja também [Acessibilidade](/pt/product/accessibility).
 
 ### Seleção
 
@@ -250,11 +271,17 @@ As cores de status são as mesmas do `STATUS_META` usadas em todo o app ([Design
 
 - Quando o status de uma região muda, um **pulso de varredura** curto (uma frente de onda na cor do status) parte dessa região. Ele não dispara na primeira carga nem na troca de tripulante.
 - Sistemas de corpo inteiro (pele, músculos, esqueleto) brilham menos que órgãos isolados, porque centenas de estruturas acendem de uma vez.
-- Estruturas só de contexto (órgãos digestivos, glândulas, nervos, olhos e outras) nunca mostram cor de status.
+- Estruturas só de contexto (órgãos digestivos, glândulas, nervos e outras) nunca mostram cor de status.
 
-::: info Olhos
-Os olhos são duas estruturas do atlas (`eye-left`, `eye-right`). Podem ser selecionados, mas são só de contexto: nenhum aparelho de medição ocular alimenta este protótipo, então não têm status. O acompanhamento da SANS a partir de exames periódicos está no [roadmap](/pt/resources/roadmap).
+::: info Olhos e ouvidos
+Os olhos são duas estruturas do atlas (`eye-left`, `eye-right`) e pertencem à região **eyes**, alimentada por exames oculares periódicos simulados (monitoramento da SANS). O atlas não tem geometria de ouvido (o ouvido interno foi excluído por questão de licença), então dois pequenos anéis na cor do status, dos lados da cabeça, marcam a região **ears** (testes de audição e ruído). Os anéis são só visuais; os ouvidos são selecionados pelo chip, pelo rótulo ou pelo navegador do teclado. Detalhes: [Saúde ocular e audição](/pt/intelligence/eye-and-hearing).
 :::
+
+### Varredura do corpo {#body-scan}
+
+Uma faixa de luz clara percorre o corpo da cabeça aos pés a cada 6,5 s (a passada em si leva 2,4 s) e depois descansa. Ela é desenhada pelo shader de tecido compartilhado com dois uniforms, então **não acrescenta draw call nem passada extra**. Cada ponto do corpo é cruzado uma vez por ciclo, muito abaixo de três flashes por segundo, e a faixa aparece e some suavemente. Com `prefers-reduced-motion` a passada é lenta e fraca.
+
+Medido pela equipe na mesma GPU integrada abaixo (AMD Radeon Vega 8): nenhuma perda de quadros e os mesmos 119 draw calls com a varredura ligada. É uma observação em uma máquina, não um benchmark.
 
 ## Fisiologia ao vivo {#live-physiology}
 
@@ -321,7 +348,7 @@ Uma falha do 3D nunca pode quebrar o painel.
 | Manifesto ainda carregando | Mensagem "Loading reference anatomy" |
 | Manifesto ausente, malformado ou sem as estruturas obrigatórias | Modelo procedural, com o aviso "Reference atlas unavailable. Showing simplified model." |
 | Falha ao carregar um sistema que contém uma estrutura obrigatória | Mesmo fallback |
-| Falha ao carregar um sistema opcional | O corpo continua; a chave dessa camada fica desabilitada e marcada "n/a" |
+| Falha ao carregar um sistema opcional | Cada arquivo é tentado até 4 vezes, com esperas de 0,6, 1,8 e 5,4 s entre as tentativas; a camada mostra "try 2", "try 3" enquanto tenta de novo. Se todas falharem, o corpo continua e a camada mostra **retry**: ela segue clicável e inicia um novo download |
 | O visualizador do atlas lança erro ao renderizar | O error boundary mostra o modelo procedural |
 | O modelo procedural também falha | Mensagem "3D body view unavailable"; o resto do painel continua funcionando |
 
@@ -338,7 +365,7 @@ O `npm run dev` também serve uma página só de desenvolvimento em `/anatomy-la
 - Os rins são formas procedurais simples e ficam atrás dos intestinos na vista frontal; selecionar a região dos rins leva a câmera para as costas.
 - O hover não existe em dispositivos de toque (um toque seleciona).
 - O nível de qualidade baixo é um caminho só de ida: depois que o monitor de desempenho acusa queda, o visualizador fica em `low` até ser remontado.
-- A renderização em si não tem testes automatizados. A camada de dados tem: contrato do manifesto, mapeamento de saúde e seleção ([Estratégia de testes](/pt/engineering/testing)). Os estados visuais são conferidos à mão na página de laboratório.
+- A renderização em si não tem testes unitários. A camada de dados e a lógica do visualizador têm: contrato do manifesto, mapeamento de saúde, seleção, matemática do zoom, modos de interação, política de nova tentativa, tempo da varredura e navegação pelo teclado ([Estratégia de testes](/pt/engineering/testing)). Os estados visuais são conferidos à mão na página de laboratório.
 
 As limitações dos assets (decimação, agrupamento, estruturas ausentes) estão em [Assets de anatomia 3D](/pt/data/anatomy-assets#limitations). Todas as limitações da plataforma: [Limitações e problemas conhecidos](/pt/validation/limitations).
 
@@ -351,7 +378,7 @@ As limitações dos assets (decimação, agrupamento, estruturas ausentes) estã
 
 ## Status
 
-<StatusBadge status="IMPLEMENTED" /> Visualizador do atlas, seleção de estrutura, mapeamento de saúde, carga sob demanda por sistema e fallback procedural. <StatusBadge status="PLANNED" /> Modelo feminino de referência, texturas e monitoramento ocular ([Matriz de status das funcionalidades](/pt/overview/feature-status#interface-e-produto)).
+<StatusBadge status="IMPLEMENTED" /> Visualizador do atlas, seleção de estrutura, mapeamento de saúde, carga sob demanda por sistema com nova tentativa, zoom no ponteiro, modos Monitor e Explore, navegador do corpo pelo teclado, varredura do corpo, regiões de olhos e ouvidos e fallback procedural. <StatusBadge status="PLANNED" /> Modelo feminino de referência, texturas e rim do BodyParts3D ([Matriz de status das funcionalidades](/pt/overview/feature-status#interface-e-produto)).
 
 ## Próximos passos
 

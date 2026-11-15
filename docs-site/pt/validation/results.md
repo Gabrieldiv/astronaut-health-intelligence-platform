@@ -8,7 +8,7 @@ code:
   - frontend/web/scripts/evaluate.ts
 tests:
   - frontend/web/src/engine/engine.test.ts
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Resultados e evidências
@@ -23,7 +23,8 @@ Todos os resultados do motor vêm de **dados simulados** e medem as regras do pr
 
 | Evidência | Resultado | Fonte |
 | --- | --- | --- |
-| Testes automatizados | 143 testes em 17 arquivos, todos passando | `npm test` em 14/11/2026 |
+| Testes automatizados (web) | 315 testes em 37 arquivos, todos passando | `npm test` em 15/11/2026 |
+| Testes do backend | 44 testes pytest em 6 arquivos, HTTP externo simulado | `python -m pytest` em `backend` |
 | Validação do atlas de anatomia | Passa nos arquivos publicados: 250 estruturas em 9 arquivos GLB, 880.356 triângulos, 4,64 MB | `npm run anatomy:validate` em 14/11/2026 |
 | Checagem de tipos | Limpa | `npx tsc -b` |
 | Build de produção | Ok | `npx vite build` |
@@ -32,7 +33,7 @@ Todos os resultados do motor vêm de **dados simulados** e medem as regras do pr
 
 ## Avaliação do motor
 
-Gerada por `npm run evaluate` (`frontend/web/scripts/evaluate.ts`) em `2026-11-14T12:17:47.455Z`, motor `ahi-engine 2.0.0`. Grava `src/engine/evaluation.json` e `docs/model-card.md`.
+Gerada por `npm run evaluate` (`frontend/web/scripts/evaluate.ts`) em `2026-11-15T05:40:42.825Z`, motor `ahi-engine 2.0.0`. Grava `src/engine/evaluation.json` e `docs/model-card.md`.
 
 ### Alertas falsos no cenário nominal
 
@@ -61,7 +62,7 @@ Minutos a partir do início do cenário (08:00 UTC simulado), medidos na grade d
 | `ACUTE_CARDIO` | AST-01 | 1 min | 7 min (R-HR-01) | 7 min | 7 min | CRITICAL (100) | 3 h |
 | `SENSOR_FAILURE` | AST-03 | 1 min | 14 min (R-DQ-02) | não atinge | não atinge | MODERATE (20) | 3 h |
 | `ENVIRONMENTAL_CO2` | cabine | 5 min | 90 min (R-ENV-CO2-01) | 140 min (2,3 h) | não atinge | HIGH (77) | 12 h |
-| `PROGRESSIVE_FATIGUE` | AST-02 | 15 min | 1905 min (31,8 h, R-FAT-01) | 2010 min (33,5 h) | não atinge | HIGH (79) | 96 h |
+| `PROGRESSIVE_FATIGUE` | AST-02 | 15 min | 1905 min (31,8 h, R-FAT-01) | 1980 min (33,0 h) | não atinge | HIGH (79) | 96 h |
 | `PERFORMANCE_DECLINE` | AST-04 | 15 min | 1650 min (27,5 h, R-EX-01) | 4530 min (75,5 h) | não atinge | HIGH (45) | 120 h |
 
 No cenário de cabine, o nível é o pior entre o status da cabine e o da tripulação.
@@ -75,7 +76,7 @@ No cenário de cabine, o nível é o pior entre o status da cabine e o da tripul
 
 ## Testes automatizados
 
-143 testes em 17 arquivos, todos passando em 14/11/2026. A lista arquivo por arquivo está em [Estratégia de testes](/pt/engineering/testing).
+Web: 315 testes em 37 arquivos, todos passando em 15/11/2026. Backend: 44 testes pytest em 6 arquivos. A lista arquivo por arquivo está em [Estratégia de testes](/pt/engineering/testing).
 
 ## Desempenho observado
 

@@ -1,110 +1,89 @@
 ---
 title: Roadmap
-description: O que a Astronaut Health Intelligence Platform já entrega, o que vem a seguir em dados, plataforma, fluxo clínico, análise e anatomia 3D, e o que está mais longe.
+description: O que a Astronaut Health Intelligence Platform entregou no NASA Space Apps 2026 e o que vem a seguir, da migração do motor para Python e de um fluxo de revisão clínica a perfis de acesso, dados reais de cabine da NASA e os próximos passos da anatomia 3D.
 status: PLANNED
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Roadmap
 
-O que a Astronaut Health Intelligence Platform (AHI) já entrega, o que vem a seguir e o que está mais longe. Os itens futuros vêm do `README.md`, do `PROJECT_MASTER.md` e de [Pipeline e qualidade](/pt/data/pipeline-and-quality). **São planos, não promessas de data.**
+A Astronaut Health Intelligence Platform (AHI) é um protótipo com dados de dispositivos simulados, dados públicos reais da NASA como contexto de missão e um backend opcional. Esta página separa o que está **pronto** do que vem **a seguir**, em ordem aproximada de prioridade. **São planos, não promessas de data.** Status atual de cada capacidade: [Matriz de status das funcionalidades](/pt/overview/feature-status).
 
-## Já entregue (MVP e v2)
+## Pronto {#done}
 
 <StatusBadge status="IMPLEMENTED" />
-| Área | Entrega |
+
+| Área | O que existe |
 | --- | --- |
-| Simulação | Tripulação de 4 pessoas, adapters de dispositivos simulados, 6 cenários, semeada e reproduzível |
-| Motor | Baseline pessoal robusta, detecção aguda, deriva e persistência, regras combinadas, escore de risco explicável, previsão com incerteza, recomendações com autonomia, alertas com escalonamento |
-| Interface | "Ground view" e "Crew view", linha do tempo, gaveta de alertas, modo apresentação, atalhos de teclado, demo guiada de 10 passos |
-| Anatomia 3D | Corpo 3D sobre um atlas anatômico real (Z-Anatomy): 250 estruturas selecionáveis, camadas por sistema, painel da estrutura, mapeamento de saúde, pipeline de assets reproduzível e fallback procedural |
-| Missão | Perfis de comunicação ISS, Lua e Marte; check-in diário; visão de longo prazo; relatório de passagem de turno com exportação FHIR R4; comparação "e se" |
-| Dados reais | OSD-569 e OSD-575 (Inspiration4) importados como `REAL_PUBLIC`, com proveniência completa |
-| Qualidade | 143 testes unitários e de cenário (vitest), avaliação reproduzível (`npm run evaluate`) e model card gerado |
-| Documentação | Portal bilíngue (VitePress) publicado no GitHub Pages, com CI |
+| Simulação | Dispositivos da tripulação e cabine, cenários roteirizados (incluindo "Eye changes (SANS like)"), pausa e retomada de dispositivos |
+| Motor de saúde | Baselines pessoais, z robusto, deriva EWMA, CUSUM, persistência, risco, previsões com horizontes de 24 h a 15 dias, recomendações, alertas; com testes unitários e avaliado em dados simulados |
+| Aprendizado de máquina experimental | Isolation Forest por astronauta que sinaliza uma "Unusual combination" (combinação incomum) sem mudar status ou risco ([Detecção de anomalias](/pt/intelligence/anomaly-detection#unusual-combination-experimental)) |
+| Contexto de missão | Quatro perfis de missão citados (lançamento, ISS, Lua, trânsito para Marte), dose da missão frente ao limite de carreira da NASA, aviso de clima espacial a partir de eventos reais do NASA DONKI ([Perfis de missão](/pt/intelligence/mission-profiles)) |
+| Olhos e ouvidos | Exames oculares periódicos de SANS e monitoramento de audição e ruído frente à baseline pré-voo ([Saúde ocular e audição](/pt/intelligence/eye-and-hearing)) |
+| Interface | Ground view e Crew view (com cartões dos sistemas do corpo), demo guiada, Measured by, link com a Terra, check-in, visão da missão, relatório de passagem de turno com exportação FHIR R4, what-if |
+| Anatomia 3D | Atlas Z-Anatomy com 250 estruturas, zoom em direção ao ponteiro, modos Monitor e Explore, downloads com nova tentativa, navegador do corpo pelo teclado, varredura do corpo, fallback procedural |
+| Acessibilidade | Sons de alerta com escalonamento, audiodescrição, links de salto, regiões ao vivo ([Acessibilidade](/pt/product/accessibility)) |
+| Backend | Monólito modular em FastAPI: cadastro, ingestão idempotente, observações, conectores NASA DONKI e OSDR, assistente, análise experimental; SQLite ou PostgreSQL; modo demo offline no app ([Backend e API](/pt/architecture/backend)) |
+| Assistente | Demo do Ask AHI com a Claude API, arquitetura offline a bordo documentada ([Ask AHI](/pt/product/assistant)) |
+| Dados reais da NASA | Painéis OSDR OSD-569 e OSD-575 como referência, eventos DONKI como contexto de missão |
+| Documentação | Este portal no GitHub Pages (EN e PT-BR) |
 
-## Próximo: dados reais e fundamentação
-
-<StatusBadge status="PLANNED" />
-Prioridades do time de dados:
-
-| Prioridade | Item |
-| --- | --- |
-| P0 | **Replay real do ambiente da ISS** (CO₂, temperatura, umidade) a partir do NASA EDA, como `REAL_PUBLIC`, substituindo o simulador de cabine |
-| P0 | **Série real de dose de radiação** (EDA; RadLab quando voltar do erro HTTP 500) |
-| P0 | **Justificativa científica do catálogo**: tabela métrica x NASA Standard Measure x perigo do HRP |
-| P1 | **Fundamentação dos limiares**: cada limiar de demo com fonte citável (documento, seção, versão) ou o rótulo de demo mantido |
-| P1 | **Calibração do simulador** de vitais e sono com faixas publicadas (com DOI) |
-| P1 | **Dados de sono ou cognição de análogos** (NLSP, OSDR), rotulados como análogos |
-| P1 | **Ampliar laboratório**: cortisol ou marcadores imunes com unidade clínica |
-| P2 | Faixas de desempenho de exercício da literatura de contramedidas; datas reais de missão nos replays |
-
-## Plataforma: backend
+## A seguir {#next}
 
 <StatusBadge status="PLANNED" />
-A arquitetura alvo do `PROJECT_MASTER.md` é um monólito modular:
 
-- **API de ingestão em FastAPI** atrás do **mesmo contrato de adapters** usado hoje no navegador;
-- persistência em PostgreSQL (TimescaleDB opcional), migrações com Alembic, Redis para cache e filas leves;
-- **controle de acesso por perfil** (tripulação, médico de voo, Mission Control, pesquisador);
-- importação de datasets como jobs, com idempotência e nova tentativa;
-- observabilidade com logs estruturados e endpoints de saúde;
-- Docker Compose para rodar tudo localmente;
-- testes de integração e ponta a ponta (pytest, httpx, Playwright).
+### 1. Migrar o motor de saúde para Python {#port-the-health-engine-to-python}
 
-Detalhes em [Arquitetura alvo](/pt/architecture/target-architecture).
+O motor roda em TypeScript no navegador para que o app funcione offline. O backend já tem a interface (`app/modules/engine`, um protocolo `HealthEngine`). Próximo passo: portar módulo por módulo (baseline primeiro), reaproveitar os fixtures do vitest como casos do pytest para que os dois motores respondam às mesmas entradas, rodar depois da ingestão e expor endpoints de baseline, anomalia, risco, previsão e recomendação. O motor TypeScript continua como fallback offline.
 
-## Fluxo clínico
+### 2. Fluxo de revisão clínica {#clinical-review-flow}
 
-<StatusBadge status="PLANNED" />
-- **Fluxo de revisão do médico de voo**: hoje as respostas de solo são simuladas e padronizadas; o próximo passo é um fluxo real de revisão, com registro de decisão.
-- Integração com HL7 FHIR R4 além da exportação (por exemplo, `DiagnosticReport` e `QuestionnaireResponse`).
+Uma fila de revisão para itens de Aviso e Crítico: atribuir, comentar, aprovar ou rejeitar uma recomendação, com cada passo na trilha de auditoria e armazenamento persistente. Hoje as respostas simuladas do médico de voo são templates, e o sinal multivariado e os alertas de olhos e audição terminam em "revisar com o médico de voo" sem um fluxo por trás.
 
-## Análise
+### 3. Perfis de acesso {#access-profiles}
 
-<StatusBadge status="PLANNED" />
-Do plano de modelos do documento mestre, sempre "estatística explicável primeiro, depois aprendizado de máquina":
+Autenticação e papéis para tripulação, médico da tripulação, médico de voo, Mission Control, pesquisador e engenheiro de dados, de acordo com as personas da especificação. Cada papel vê só o que precisa; a API confere isso.
 
-| Método | Prioridade no plano |
-| --- | --- |
-| Isolation Forest (anomalia multivariada) | P1 |
-| ARIMA para séries adequadas | P2 |
-| XGBoost para risco, só com dataset rotulado suficiente | P2 |
-| Análise de sobrevivência (tempo até evento) | Futuro |
-| Explicação em linguagem natural (LLM) de uma recomendação já escolhida pelas regras (US-024) | P2, com humano no circuito e fallback sem LLM |
+### 4. Replay real da cabine da ISS e séries de radiação (NASA EDA) {#real-iss-cabin-replay-and-radiation-series-nasa-eda}
 
-Reconhecimento de atividade por sensor (hoje o contexto vem do cronograma) também melhoraria as baselines por contexto. Regras e limites desses métodos em [Abordagem de IA e análise de dados](/pt/intelligence/ai-and-analytics).
+Substituir o simulador de cabine por um replay `REAL_PUBLIC` de um período real da ISS (CO₂, temperatura, umidade das Data Tables do EDA) e importar as séries de dose do EDA (GCR, SAA, dose acumulada), rotuladas como dados históricos da ISS, não desta tripulação.
 
-## Saúde ocular: SANS
+### 5. Fundamentação científica e revisão nativa de idiomas {#scientific-grounding-and-native-language-review}
 
-<StatusBadge status="PLANNED" />
-Hoje os olhos são estruturas só de contexto do atlas 3D: podem ser selecionados, mas **nenhum aparelho de medição ocular alimenta o MVP**, então não mostram status. A extensão planejada é acompanhar a **SANS** (síndrome neuro-ocular associada ao voo espacial) a partir de **exames periódicos**, como OCT e ultrassom ocular. Seriam medidas pontuais (não um sinal contínuo), que entrariam no mesmo modelo canônico como observações de exame.
+- Fundamentar em uma fonte citável cada limiar de demo que restar, ou manter o rótulo de demo.
+- Calibrar os simuladores com faixas publicadas e documentá-las no model card.
+- Ter falantes nativos revisando qualquer idioma da interface além do inglês antes de apresentá-lo.
 
-## Anatomia 3D: próximos passos {#anatomy-next-steps}
-
-<StatusBadge status="PLANNED" />
-O visualizador do atlas está pronto ([Renderização da anatomia 3D](/pt/architecture/anatomy-3d)). O que vem a seguir:
+### 6. Anatomia 3D: próximos passos {#anatomy-next-steps}
 
 | Item | Por quê |
 | --- | --- |
-| **Modelo feminino de referência** | Hoje um único modelo de referência (fonte adulta masculina, com a virilha neutra) representa todos os tripulantes. Um segundo modelo deixaria o corpo acompanhar o sexo do tripulante. Precisa de uma fonte com licença compatível e dos mesmos ids de estrutura |
-| **Texturas** | A fonte só tem cores chapadas, então todo o detalhe vem da geometria e dos materiais. Texturas dariam detalhe de superfície, ao custo de mais download |
-| **Alternativa de rim do BodyParts3D** | Os rins são formas procedurais simples porque o modelo de rim dentro do Z-Anatomy tem licença não comercial. O BodyParts3D, a base em que o Z-Anatomy se apoia, é uma fonte candidata de geometria real de rim, sob uma licença do tipo "compartilha igual"; os termos precisam ser conferidos antes |
-| **Monitoramento ocular (SANS)** | Veja a seção acima: as estruturas dos olhos já existem e só precisam de dados |
-| **Seleção de estruturas pelo teclado e testes visuais automatizados** | As estruturas só podem ser selecionadas com o ponteiro, e a renderização é conferida à mão |
+| **Texturas** | A fonte só tem cores chapadas, então todo o detalhe vem da geometria e dos materiais. Texturas dão detalhe de superfície, ao custo de mais download |
+| **Modelo feminino de referência** | Hoje um único modelo de referência (fonte adulta masculina, virilha neutra) representa todos os tripulantes. Um segundo modelo precisa de licença compatível e dos mesmos ids de estrutura |
+| **Rim do BodyParts3D** | Os rins são formas procedurais simples porque o modelo de rim dentro do Z-Anatomy tem licença não comercial. O BodyParts3D, a base em que o Z-Anatomy se apoia, é uma fonte candidata de geometria real de rim; os termos da licença precisam ser conferidos antes |
+| **Testes visuais automatizados** | A renderização ainda é conferida à mão na página de laboratório |
 
 Fora dos planos: anatomia por astronauta (exames ou tamanho do corpo). O corpo é anatomia de referência por decisão de projeto.
 
-## Engenharia
+### 7. Mais importações do OSDR {#more-osdr-imports}
 
-<StatusBadge status="PLANNED" />
-- Testes de componente React e de acessibilidade automatizada.
-- Testes ponta a ponta no navegador (Playwright).
-- Avaliação do motor rodando no CI.
-- Testes vitest para os scripts de importação do OSDR.
+OSD-656 (painel de inflamação na urina), os painéis multiplex do OSD-575, cortisol ou marcadores imunes com unidade clínica, e dados de sono ou cognição de análogos, cada um rotulado pelo que é.
 
-## Próximos passos
+### 8. Assistente a bordo {#onboard-assistant}
 
-- [Padrões, contratos e extensões](/pt/engineering/contributing): como pegar um item.
-- [Limitações e problemas conhecidos](/pt/validation/limitations): o que cada item resolve.
-- [Uso responsável](/pt/overview/responsible-use): regras que continuam valendo em cada item.
+Trocar o modelo na nuvem da demo pelo alvo a bordo: um modelo pequeno de pesos abertos no computador da espaçonave, fala para texto local, salvaguardas e um fallback por template ([Ask AHI](/pt/product/assistant#the-onboard-target)).
+
+### 9. Deploy {#deployment}
+
+Hospedar o app web estático (`VITE_API_URL=off`) para que os jurados possam abri-lo sem instalar nada; depois, a stack do Docker Compose.
+
+## Também considerado {#also-considered}
+
+- Reconhecimento de atividade por sensor em vez de contexto pelo cronograma.
+- Comparar o Isolation Forest do navegador com o caminho em scikit-learn em dados reais quando eles existirem.
+
+## Próximos passos {#next-steps}
+
+- [Limitações e problemas conhecidos](/pt/validation/limitations): o que o roadmap resolve.
+- [Pipeline, normalização e qualidade](/pt/data/pipeline-and-quality): prioridades do time de dados.
+- [Fontes de dados da NASA](/pt/data/sources): a situação de cada fonte da NASA.
