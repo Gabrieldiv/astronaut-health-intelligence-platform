@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { NO_VALUE } from './format'
+import { formatFixed } from '../i18n'
 
 function reducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -16,7 +17,7 @@ export function MetricValue({ value, decimals, className, duration = 380 }: { va
 
   useLayoutEffect(() => {
     if (ref.current && ref.current.textContent === '') {
-      ref.current.textContent = value == null ? NO_VALUE : value.toFixed(decimals)
+      ref.current.textContent = value == null ? NO_VALUE : formatFixed(value, decimals)
       shown.current = value ?? null
     }
     // only on mount
@@ -34,7 +35,7 @@ export function MetricValue({ value, decimals, className, duration = 380 }: { va
     const from = shown.current
     const snap = () => {
       shown.current = value
-      el.textContent = value.toFixed(decimals)
+      el.textContent = formatFixed(value, decimals)
     }
     // Snap (no tween) when: first value, reduced motion, no visible change, or the page is hidden
     // (rAF is paused in background tabs and a monitoring display must never show a stale number).
@@ -53,7 +54,7 @@ export function MetricValue({ value, decimals, className, duration = 380 }: { va
       const e = 1 - Math.pow(1 - k, 3)
       const v = from + (value - from) * e
       shown.current = v
-      el.textContent = v.toFixed(decimals)
+      el.textContent = formatFixed(v, decimals)
       if (k < 1) raf = requestAnimationFrame(step)
     }
     raf = requestAnimationFrame(step)

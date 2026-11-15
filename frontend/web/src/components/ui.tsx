@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { X } from 'lucide-react'
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
+import { t } from '../i18n'
 
 /**
  * Shared panel header row: same height, padding and type for every top level panel
@@ -249,7 +250,7 @@ export function Drawer({
             {icon}
             {title}
           </h2>
-          <IconButton label="Close" onClick={onClose} size="sm">
+          <IconButton label={t('common.close')} onClick={onClose} size="sm">
             <X size={16} />
           </IconButton>
         </header>

@@ -10,6 +10,8 @@ import { StatusPill, isUrgent } from '../../components/Status'
 import { Panel } from '../../components/ui'
 import { lastHours } from '../../components/format'
 import { useHistory, useMetric, useSignalLost } from '../shared/hooks'
+import { formatFixed, t, useT } from '../../i18n'
+import { metricLabel, metricShort, roleLabel } from '../../i18n/catalog'
 
 function MiniVital({ astronautId, metric, className }: { astronautId: string; metric: MetricCode; className?: string }) {
   const ms = useMetric(astronautId, metric)
@@ -17,8 +19,8 @@ function MiniVital({ astronautId, metric, className }: { astronautId: string; me
   const status: Status = ms?.current == null ? 'NO_DATA' : (ms.status ?? 'LOW')
   const noData = status === 'NO_DATA'
   return (
-    <div className={clsx('min-w-0', className)} aria-label={`${def.label} ${noData ? 'no data' : `${ms?.current?.toFixed(def.decimals)} ${def.unit}`}`}>
-      <div className="text-[9px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{def.shortLabel}</div>
+    <div className={clsx('min-w-0', className)} aria-label={`${metricLabel(metric)} ${noData ? t('crew.noData') : `${ms?.current != null ? formatFixed(ms.current, def.decimals) : undefined} ${def.unit}`}`}>
+      <div className="text-[9px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{metricShort(metric)}</div>
       <div className="flex items-baseline gap-0.5">
         {noData ? (
           <span className="text-[13px] font-semibold text-nodata">--</span>
@@ -39,8 +41,8 @@ function InlineVital({ astronautId, metric }: { astronautId: string; metric: Met
   const status: Status = ms?.current == null ? 'NO_DATA' : (ms.status ?? 'LOW')
   const noData = status === 'NO_DATA'
   return (
-    <span className="flex items-baseline gap-1 whitespace-nowrap" title={def.label}>
-      <span className="text-[10px] font-semibold text-ink-500">{def.shortLabel}</span>
+    <span className="flex items-baseline gap-1 whitespace-nowrap" title={metricLabel(metric)}>
+      <span className="text-[10px] font-semibold text-ink-500">{metricShort(metric)}</span>
       {noData ? <span className="text-[13px] font-semibold text-nodata">--</span> : <MetricValue value={ms?.current} decimals={def.decimals} className="text-[13px] font-semibold" />}
       <span className="text-[10px] text-ink-500">{def.unit}</span>
       {!noData && status !== 'LOW' && <span className="h-1.5 w-1.5 self-center rounded-full" style={{ background: STATUS_META[status].color }} aria-hidden />}
@@ -85,14 +87,16 @@ function CrewCard({ astronaut, selected, index }: { astronaut: Astronaut; select
   const selectAstronaut = useAppStore((s) => s.selectAstronaut)
   const meta = STATUS_META[status]
   const urgent = isUrgent(status)
+  const t = useT()
+  const role = roleLabel(astronaut.role)
   return (
     <button
       type="button"
       aria-pressed={selected}
-      aria-label={`${astronaut.callsign}, ${astronaut.role}. Status: ${meta.crewLabel}${signalLost ? ', signal lost' : ''}`}
+      aria-label={t(signalLost ? 'crew.cardAriaLost' : 'crew.cardAria', { callsign: astronaut.callsign, role, status: meta.crewLabel })}
       onClick={() => selectAstronaut(astronaut.id)}
       aria-keyshortcuts={String(index + 1)}
-      title={`${astronaut.callsign}, ${astronaut.role} (key ${index + 1})`}
+      title={t('crew.cardTitle', { callsign: astronaut.callsign, role, key: index + 1 })}
       className={clsx(
         'focus-ring group relative w-full overflow-hidden rounded-xl p-2.5 text-left transition-all duration-200 short:py-2',
         selected ? 'bg-white/[0.07] ring-1 ring-white/20' : 'bg-white/[0.02] ring-1 ring-white/[0.05] hover:bg-white/[0.05]',
@@ -111,7 +115,7 @@ function CrewCard({ astronaut, selected, index }: { astronaut: Astronaut; select
               <StatusPill status={status} size="sm" />
             </span>
           </span>
-          <span className="block truncate text-[11px] text-ink-500 short:hidden" title={astronaut.role}>
+          <span className="block truncate text-[11px] text-ink-500 short:hidden" title={role}>
             {astronaut.roleShort}
           </span>
           <span className="mt-1 hidden items-baseline gap-3 short:flex">
@@ -127,7 +131,7 @@ function CrewCard({ astronaut, selected, index }: { astronaut: Astronaut; select
         <MiniVital astronautId={astronaut.id} metric="HEART_RATE" />
         <MiniVital astronautId={astronaut.id} metric="SPO2" />
         <MiniVital astronautId={astronaut.id} metric="RESPIRATORY_RATE" className="hidden roomy:block" />
-        <div className="min-w-0 pb-0.5" title="Heart rate, last 6 hours">
+        <div className="min-w-0 pb-0.5" title={t('crew.trendTitle')}>
           <CrewTrend astronautId={astronaut.id} color={astronaut.color} />
         </div>
       </div>
@@ -138,8 +142,9 @@ function CrewCard({ astronaut, selected, index }: { astronaut: Astronaut; select
 export function CrewRail({ className }: { className?: string }) {
   const crew = useAppStore((s) => s.crew)
   const selectedId = useAppStore((s) => s.selectedAstronautId)
+  const t = useT()
   return (
-    <Panel as="nav" ariaLabel="Crew" tourId="crew" title="Crew" icon={<Users size={12} aria-hidden />} className={className} bodyClassName="flex flex-col overflow-y-auto px-3 pb-3">
+    <Panel as="nav" ariaLabel={t('crew.title')} tourId="crew" title={t('crew.title')} icon={<Users size={12} aria-hidden />} className={className} bodyClassName="flex flex-col overflow-y-auto px-3 pb-3">
       <div className="grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 short:gap-1.5">
         {crew.map((a, i) => (
           <CrewCard key={a.id} astronaut={a} index={i} selected={a.id === selectedId} />
