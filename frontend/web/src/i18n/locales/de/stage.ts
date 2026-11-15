@@ -25,6 +25,6 @@ const m: Record<keyof typeof en, string> = {
   'stage.ind.missingNote': 'Indikatoren ohne Daten werden nie als normal gezählt.',
   'stage.ind.open': 'Was decken diese Indikatoren ab? Aufschlüsselung öffnen',
   'stage.ind.noData': '{n} ohne Daten',
-  'stage.ind.aria': '{ok} von {total} Werten in deinem Normalbereich, {flagged} auffällig, {missing} ohne Daten.',
+  'stage.ind.aria': '{ok} von {total} Indikatoren in deinem Normalbereich, {flagged} auffällig, {missing} ohne Daten.',
 }
 export default m

@@ -14,9 +14,9 @@ const m: Record<keyof typeof en, string> = {
   'components.baseline.learning': 'Dein Normalbereich wird noch gelernt. Bis genug eigene Daten vorliegen, bleibt der Status dieses Signals vorsichtig.',
   'components.baseline.learningN': 'Dein Normalbereich wird noch gelernt ({n} Messungen bisher). Bis genug eigene Daten vorliegen, bleibt der Status dieses Signals vorsichtig.',
   'components.baseline.compares': 'Der Status vergleicht dich mit dir selbst, nicht mit einem Bevölkerungsdurchschnitt.',
-  'components.baseline.method': 'Baseline-Methode: {version}',
+  'components.baseline.method': 'Methode der Basislinie: {version}',
 
-  'components.event.alert': 'Alarm',
+  'components.event.alert': 'Warnung',
   'components.event.intervention': 'Maßnahme protokolliert',
   'components.event.checkin': 'Check-in',
   'components.chart.now': 'Jetzt',

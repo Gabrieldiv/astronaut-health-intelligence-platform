@@ -30,7 +30,7 @@ const m: Record<keyof typeof en, string> = {
   'comms.title': 'Erdverbindung',
   'comms.footer': 'Simulierte Verbindung. Verzögerungen entsprechen ungefähr der Lichtlaufzeit; Antworten vom Boden sind simuliert. Nur Entscheidungsunterstützung.',
   'comms.profileAria': 'Kommunikationsprofil',
-  'comms.oneWayRoundTrip': '{one} einfach · {round} hin und zurück',
+  'comms.oneWayRoundTrip': '{one} pro Richtung · {round} hin und zurück',
   'comms.sendToGround': 'An den Boden senden',
   'comms.sendPacket': 'Gesundheitspaket senden',
   'comms.requestConsult': 'Konsultation beim Flugarzt anfragen',

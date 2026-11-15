@@ -39,7 +39,7 @@ const m: Record<keyof typeof en, string> = {
   'alerts.by': 'von {actor}',
   'alerts.tabOpen': 'Offen ({n})',
   'alerts.tabHistory': 'Verlauf',
-  'alerts.disclaimer': 'Nur Entscheidungshilfe. Keine Diagnose. Simulierte Daten.',
+  'alerts.disclaimer': 'Nur Entscheidungsunterstützung. Keine Diagnose. Simulierte Daten.',
   'alerts.ackAll': 'Alle bestätigen',
   'alerts.openHeading': 'Offen ({n})',
   'alerts.grouping': 'nach Crewmitglied und Körpersystem',
