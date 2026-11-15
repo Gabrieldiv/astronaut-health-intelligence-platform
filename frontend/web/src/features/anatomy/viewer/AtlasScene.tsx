@@ -15,7 +15,9 @@ import { regionOfStructure } from '../atlas/health'
 import { REGIONS } from '../regions'
 import type { LabelRegistry } from '../Labels'
 import { LabelProjector } from '../Labels'
-import { loadSystem } from './atlasLoader'
+import { loadSystem, useAtlasProgress } from './atlasLoader'
+import { errorReason } from './retry'
+import { isInteractive } from './interaction'
 import type { AtlasStore } from './atlasStore'
 import { viewerStats } from './atlasStore'
 import type { LayerModel } from './layers'
@@ -85,6 +87,8 @@ function SceneBody({ manifest, model, store, labels, visible, statuses, anchors,
     () => [...new Set(model.layers.filter((l) => visible[l.id]).map((l) => l.system))].sort().join(','),
     [model, visible],
   )
+  // a failed system is loaded again when the user asks for it (retryAtlasFile bumps the nonce)
+  const retryNonce = useAtlasProgress((s) => s.retryNonce)
   useEffect(() => {
     let alive = true
     for (const system of needed.split(',').filter(Boolean)) {
@@ -100,14 +104,14 @@ function SceneBody({ manifest, model, store, labels, visible, statuses, anchors,
         })
         .catch((err: unknown) => {
           if (!alive) return
-          if (import.meta.env.DEV) console.warn('[anatomy] system failed to load', system, err)
-          if (requiredSystems.has(file.id)) live.current.onFatal(`${file.file} could not be loaded`)
+          // the loader already logged every try (dev); only a required system is fatal
+          if (requiredSystems.has(file.id)) live.current.onFatal(`${file.file} could not be loaded (${errorReason(err)})`)
         })
     }
     return () => {
       alive = false
     }
-  }, [needed, manifest, runtime, requiredSystems])
+  }, [needed, manifest, runtime, requiredSystems, retryNonce])
 
   // dev only: scripted checks read the scene objects (heart and lung motion)
   useEffect(() => {
@@ -118,6 +122,15 @@ function SceneBody({ manifest, model, store, labels, visible, statuses, anchors,
       if (w.__ahiRuntime === runtime) delete w.__ahiRuntime
     }
   }, [runtime])
+
+  // Monitor or Explore: what the pointer can reach (a muted structure never stays hovered)
+  const mode = store((s) => s.mode)
+  useEffect(() => {
+    runtime.setMode(mode)
+    const h = store.getState().hover
+    const s = h ? byId.get(h.id) : undefined
+    if (s && !isInteractive(s, mode)) store.getState().setHover(null)
+  }, [runtime, mode, store, byId])
 
   useEffect(() => runtime.setVisible(visible), [runtime, visible])
   useEffect(() => runtime.setSelection(selectedRegion, selectedStructureId), [runtime, selectedRegion, selectedStructureId])

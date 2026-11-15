@@ -32,6 +32,7 @@ import { Attribution } from './Attribution'
 import { buildLayers, effectiveLayers, regionAnchors, regionFocus, structureFocus } from './layers'
 import type { LayerModel } from './layers'
 import { SystemControls } from './SystemControls'
+import { KeyboardNavigator } from '../a11y/KeyboardNavigator'
 
 export interface AtlasViewerProps extends AnatomyViewerProps {
   manifest: AtlasManifest
@@ -226,6 +227,7 @@ export function AtlasViewer({ manifest, onFatal, className, showControls = true,
           </EffectComposer>
         )}
       </Canvas>
+      {ready && <KeyboardNavigator manifest={manifest} store={store} statuses={statuses} ls={ls} bottom={captionBand + pillBand} />}
       <LabelOverlay
         registry={labels}
         statuses={statuses}
