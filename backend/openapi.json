@@ -754,6 +754,48 @@
           }
         }
       }
+    },
+    "/api/v1/analytics/deviation": {
+      "post": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Daily deviation level of one person against their own baseline (ASTRA, statistical detectors)",
+        "description": "Send the stay of one person so far: one record per day with the daily value of each metric and the mission phase. The person's own PRE_FLIGHT days form the baseline; the expected adaptation and the scale of healthy people come from a reference pack calibrated on NASA bed rest data (an analog, not spaceflight). Returns, per IN_FLIGHT and POST_FLIGHT day, LOW, MODERATE, HIGH or NO_DATA with the detectors that fired. Stateless: nothing is stored. Decision support only, never a diagnosis. Results are DERIVED.",
+        "operationId": "deviation_api_v1_analytics_deviation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1062,6 +1104,47 @@
         ],
         "title": "AstronautSnapshot"
       },
+      "BaselineInfo": {
+        "properties": {
+          "metric": {
+            "type": "string",
+            "enum": [
+              "HEART_RATE",
+              "SYSTOLIC_BP",
+              "DIASTOLIC_BP",
+              "RESPIRATORY_RATE",
+              "BODY_TEMPERATURE",
+              "BODY_WEIGHT"
+            ],
+            "title": "Metric"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "READY",
+              "INSUFFICIENT_DATA"
+            ],
+            "title": "Status"
+          },
+          "pre_days": {
+            "type": "integer",
+            "title": "Pre Days",
+            "description": "Valid PRE_FLIGHT readings found for this metric."
+          },
+          "required": {
+            "type": "integer",
+            "title": "Required"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metric",
+          "status",
+          "pre_days",
+          "required"
+        ],
+        "title": "BaselineInfo"
+      },
       "CabinSnapshot": {
         "properties": {
           "status": {
@@ -1174,6 +1257,299 @@
           "status"
         ],
         "title": "CrewMember"
+      },
+      "DayRecord": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "PRE_FLIGHT",
+              "IN_FLIGHT",
+              "POST_FLIGHT"
+            ],
+            "title": "Phase"
+          },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "propertyNames": {
+              "enum": [
+                "HEART_RATE",
+                "SYSTOLIC_BP",
+                "DIASTOLIC_BP",
+                "RESPIRATORY_RATE",
+                "BODY_TEMPERATURE",
+                "BODY_WEIGHT"
+              ]
+            },
+            "type": "object",
+            "title": "Values",
+            "description": "Daily value per metric: HEART_RATE bpm, SYSTOLIC_BP and DIASTOLIC_BP mmHg, RESPIRATORY_RATE breaths/min, BODY_TEMPERATURE degC, BODY_WEIGHT kg. A daily mean or a standard morning reading, one value per day."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "phase",
+          "values"
+        ],
+        "title": "DayRecord",
+        "description": "One day of one person: the daily value of each metric (null or absent means missing, never zero)."
+      },
+      "DayResult": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "PRE_FLIGHT",
+              "IN_FLIGHT",
+              "POST_FLIGHT"
+            ],
+            "title": "Phase"
+          },
+          "rel_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rel Day",
+            "description": "Days since the start of IN_FLIGHT (day 1); negative before it. null when there is no IN_FLIGHT day yet."
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MODERATE",
+              "HIGH",
+              "NO_DATA"
+            ],
+            "title": "Level",
+            "description": "LOW, MODERATE (attention), HIGH (alert) or NO_DATA. Missing data is never LOW."
+          },
+          "detectors": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "z",
+                "ewma",
+                "cusum",
+                "weight_rate"
+              ]
+            },
+            "type": "array",
+            "title": "Detectors",
+            "description": "Which detectors fired (confirmed) on this day."
+          },
+          "triggered_rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Triggered Rules"
+          },
+          "main_indicator": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "HEART_RATE",
+                  "SYSTOLIC_BP",
+                  "DIASTOLIC_BP",
+                  "RESPIRATORY_RATE",
+                  "BODY_TEMPERATURE",
+                  "BODY_WEIGHT"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Indicator",
+            "description": "Metric with the largest deviation of the day (weight when only its rate fired)."
+          },
+          "deviation_u": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deviation U",
+            "description": "Deviation of main_indicator in units of normal variation, adaptation already discounted."
+          },
+          "deviations": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "propertyNames": {
+              "enum": [
+                "HEART_RATE",
+                "SYSTOLIC_BP",
+                "DIASTOLIC_BP",
+                "RESPIRATORY_RATE",
+                "BODY_TEMPERATURE",
+                "BODY_WEIGHT"
+              ]
+            },
+            "type": "object",
+            "title": "Deviations",
+            "description": "Standardized deviation u per metric. BODY_WEIGHT is the weight rate of change, not the weight."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "phase",
+          "rel_day",
+          "level",
+          "detectors",
+          "triggered_rules",
+          "main_indicator",
+          "deviation_u",
+          "deviations",
+          "message"
+        ],
+        "title": "DayResult"
+      },
+      "DeviationRequest": {
+        "properties": {
+          "subject_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Id",
+            "description": "Pseudonymized id, echoed back."
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/DayRecord"
+            },
+            "type": "array",
+            "maxItems": 400,
+            "minItems": 1,
+            "title": "Days"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "days"
+        ],
+        "title": "DeviationRequest",
+        "description": "The whole stay of ONE person so far: PRE_FLIGHT days (baseline), then IN_FLIGHT, then POST_FLIGHT."
+      },
+      "DeviationResponse": {
+        "properties": {
+          "subject_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Id"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "reference_pack": {
+            "type": "string",
+            "title": "Reference Pack"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "data_origin": {
+            "type": "string",
+            "const": "DERIVED",
+            "title": "Data Origin",
+            "default": "DERIVED"
+          },
+          "baselines": {
+            "items": {
+              "$ref": "#/components/schemas/BaselineInfo"
+            },
+            "type": "array",
+            "title": "Baselines"
+          },
+          "invalid_values": {
+            "type": "integer",
+            "title": "Invalid Values",
+            "description": "Values outside the physical plausibility limits, treated as missing."
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/DayResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject_id",
+          "model_version",
+          "reference_pack",
+          "method",
+          "baselines",
+          "invalid_values",
+          "results",
+          "limitations"
+        ],
+        "title": "DeviationResponse"
       },
       "DeviceIn": {
         "properties": {
