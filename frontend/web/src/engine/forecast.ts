@@ -17,6 +17,7 @@ import type { ForecastHorizonHours, ForecastPoint, MetricCode, Prediction } from
 import { FORECAST, FORECAST_HORIZONS, FORECAST_METHOD } from './config'
 import { clamp, sd } from './stats'
 import { DAY_MS, HOUR_MS, MIN_MS } from './text'
+import { msg, said } from './msg'
 
 export interface HoltFit {
   level: number
@@ -105,8 +106,10 @@ export function binMeans(points: Array<{ t: number; v: number }>, t0: number, bi
   return [...sums.entries()].sort((a, b) => a[0] - b[0]).map(([k, e]) => ({ t: t0 + (k + 0.5) * binMs, v: e.s / e.n }))
 }
 
-export const FORECAST_DISCLAIMER =
-  'Statistical projection from recent simulated data. Not a clinical prediction: uncertainty grows with the horizon and the projection assumes recent conditions continue.'
+export const FORECAST_DISCLAIMER = said(
+  'Statistical projection from recent simulated data. Not a clinical prediction: uncertainty grows with the horizon and the projection assumes recent conditions continue.',
+  msg('forecast.disclaimer'),
+)
 
 export interface ForecastInput {
   astronautId: string

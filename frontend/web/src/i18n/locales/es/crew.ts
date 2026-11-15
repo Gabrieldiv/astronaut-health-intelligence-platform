@@ -6,6 +6,7 @@ const m: Record<keyof typeof en, string> = {
   'crew.noData': 'sin datos',
   'crew.cardAria': '{callsign}, {role}. Estado: {status}',
   'crew.cardAriaLost': '{callsign}, {role}. Estado: {status}, señal perdida',
+  'crew.cardAriaPaused': '{callsign}, {role}. Monitoreo pausado por el operador, sin lecturas en vivo',
   'crew.cardTitle': '{callsign}, {role} (tecla {key})',
   'crew.trendTitle': 'Frecuencia cardiaca, últimas 6 horas',
 }

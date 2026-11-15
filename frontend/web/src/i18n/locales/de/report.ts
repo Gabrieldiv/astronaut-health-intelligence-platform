@@ -85,5 +85,8 @@ const m: Record<keyof typeof en, string> = {
   'report.menuHint': 'Bericht für die nächste Schicht: drucken, FHIR exportieren, an den Boden senden',
   'report.buttonTitle': 'Schichtübergabebericht: drucken, FHIR exportieren, an den Boden senden',
   'report.button': 'Übergabe',
+  'report.noLiveReadings': "Keine Live-Messwerte vom Wearable. Fehlende Daten gelten nie als normal.",
+  'report.noHealthData': "Keine Gesundheitsdaten verfügbar.",
+  'report.cabinNoSummary': "Zusammenfassung der Kabinenumgebung nicht verfügbar.",
 }
 export default m

@@ -29,6 +29,7 @@ import { METRIC_CATALOG } from '../catalog'
 import { EXAMS } from '../config'
 import type { RuleHit } from '../risk'
 import { DAY_MS } from '../text'
+import { msg } from '../msg'
 import { ExamSimulator, SIDES, meanThreshold } from '../sim/exams'
 import { EXAM_RULE_TITLES, assessSession, baselineMap, noiseStatus, sessionStatus } from './assess'
 import { examSchedule, flightDayLabel, nextDue, type PlannedSession } from './schedule'
@@ -263,7 +264,9 @@ export class ExamBook {
         kind: 'PHYSIO',
         label: noiseSentence(day).replace(/\.$/, ''),
         phrase: 'Noise exposure was above its reference level yesterday',
+        phraseMsg: msg('exam.noisePhrase'),
         title: EXAM_RULE_TITLES['R-NOISE-01']!,
+        titleMsg: msg('ruleTitle', { title: { key: 'eng.rule.R-NOISE-01', en: EXAM_RULE_TITLES['R-NOISE-01']! } }),
       })
     }
     return out
@@ -282,7 +285,9 @@ export class ExamBook {
       kind: 'PHYSIO',
       label: `${eyes ? 'Eye exam' : 'Hearing test'} ${flightDayLabel(s.flightDay)} versus pre-flight baseline: ${flagged.slice(0, 3).map((r) => r.note).join('; ')}`,
       phrase: eyes ? 'Your last eye exam changed from your pre-flight baseline' : 'Your last hearing test changed from your pre-flight baseline',
+      phraseMsg: msg(eyes ? 'exam.eyePhrase' : 'exam.earPhrase'),
       title: EXAM_RULE_TITLES[ruleId]!,
+      titleMsg: msg('ruleTitle', { title: { key: `eng.rule.${ruleId}`, en: EXAM_RULE_TITLES[ruleId]! } }),
     }
   }
 

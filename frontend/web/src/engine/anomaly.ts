@@ -16,7 +16,8 @@
  * every BASELINE.recomputeEvery accepted samples, so nothing re-sorts days of data
  * on every tick.
  */
-import type { ActivityContext, Anomaly, Baseline, MetricCode, QualityStatus, RiskLevel, Status } from '../types/domain'
+import type { ActivityContext, Anomaly, Baseline, EngineMsg, EngineParam, MetricCode, QualityStatus, RiskLevel, Status } from '../types/domain'
+import { msg } from './msg'
 import { METRIC_CATALOG } from './catalog'
 import { ANOMALY, BASELINE, CUSUM, FIXED_THRESHOLDS, METRIC_RULES, SIM, type FixedThreshold, type MetricRuleConfig } from './config'
 import { Reservoir, baselineScale, computeBaseline } from './baseline'
@@ -88,6 +89,9 @@ export interface MetricAssessment {
   cusum?: number | null
   /** v5: true when the CUSUM rule (small but steady drift) is the reason for the status. */
   cusumFlag?: boolean
+  /** Additive: structured forms of `label` and `phrase` for translation (engine/msg.ts). */
+  labelMsg?: EngineMsg | null
+  phraseMsg?: EngineMsg | null
 }
 
 const LEVEL_RANK: Record<RiskLevel, number> = { LOW: 0, MODERATE: 1, HIGH: 2, CRITICAL: 3 }
@@ -113,6 +117,8 @@ interface Candidate {
   ruleId: string
   label: string
   phrase: string
+  labelMsg: EngineMsg
+  phraseMsg: EngineMsg
   /** v5: produced by the CUSUM rule. */
   cusum?: boolean
 }
@@ -384,8 +390,15 @@ export class MetricTracker {
         ruleId: 'R-DQ-01',
         label: since !== null ? `No ${inlineLabel(this.metric)} data for ${fmtDuration(since)}` : `No ${inlineLabel(this.metric)} data yet`,
         phrase: `${sentenceLabel(this.metric)} is not being received`,
+        labelMsg:
+          since !== null
+            ? msg('dq.label.for', { metric: { metric: this.metric, form: 'inline' }, dur: { durationMs: since } })
+            : msg('dq.label.yet', { metric: { metric: this.metric, form: 'inline' } }),
+        phraseMsg: msg('dq.phrase', { metric: { metric: this.metric, form: 'sentence' } }),
       }
     }
+    const mInline: EngineParam = { metric: this.metric, form: 'inline' }
+    const mSentence: EngineParam = { metric: this.metric, form: 'sentence' }
 
     const v = this.lastValue
     const candidates: Candidate[] = []
@@ -403,6 +416,16 @@ export class MetricTracker {
         ruleId: f.ruleId,
         label: `${sentenceLabel(this.metric)} ${fmtValue(this.metric, recentMedian)}, ${word} the ${f.name} of ${fmtValue(this.metric, f.value)}`,
         phrase: `${this.subjectId === 'CABIN' ? 'Cabin' : 'Your'} ${inlineLabel(this.metric).replace('cabin ', '')} is ${word} the ${f.name}`,
+        labelMsg: msg(`fixed.label.${word}`, {
+          metric: mSentence,
+          value: { value: recentMedian, metric: this.metric },
+          name: { key: `eng.threshold.${f.name}`, en: f.name },
+          limit: { value: f.value, metric: this.metric },
+        }),
+        phraseMsg: msg(`fixed.phrase.${this.subjectId === 'CABIN' ? 'cabin' : 'your'}.${word}`, {
+          metric: { metric: this.metric, form: 'nocabin' },
+          name: { key: `eng.threshold.${f.name}`, en: f.name },
+        }),
       })
       break
     }
@@ -420,6 +443,15 @@ export class MetricTracker {
       }
       return `${Math.round(Math.abs(pct))}%`
     }
+    // Structured twin of pctOrDiff (same numbers, localized by src/i18n/engineText.ts).
+    const amtMsg = (pct: number, diff: number): EngineMsg => {
+      if (def.unit === '% of baseline') return msg('amt.pct', { n: { num: Math.round(Math.abs(diff)), decimals: 0 } })
+      if (def.unit === '1-5' || def.unit === '%') return msg('amt.points', { n: { num: Math.abs(diff), decimals: 1 } })
+      if (def.unit === '°C') return msg('amt.degC', { n: { num: Math.abs(diff), decimals: 1 } })
+      return msg('amt.pct', { n: { num: Math.round(Math.abs(pct)), decimals: 0 } })
+    }
+    const ctxMsg: EngineParam = ctx ? msg(`ctx.${this.lastBucket}`) : ''
+    const leadMsg: EngineParam = this.metric === 'HEART_RATE' ? msg('lead.restingHr') : mSentence
 
     if (this.cfg.kind === 'event') {
       if (baseline && baseline.status === 'READY' && this.z !== null) {
@@ -435,18 +467,23 @@ export class MetricTracker {
           const word = avgDiff < 0 ? 'below' : 'above'
           const unit = this.cfg.eventUnit ?? ['value', 'values']
           const span = `${run} ${run === 1 ? unit[0] : unit[1]}`
+          const spanMsg = msg(`span.${unit[0]}`, { n: run })
           const what = this.metric === 'SLEEP_DURATION' ? (word === 'below' ? 'shorter than' : 'longer than') : `${word}`
           const self = SELF_REPORT_NOUN[this.metric]
           if (self) {
             // Self report (daily check-in): plain, non-diagnostic wording.
             const more = word === 'above' ? self.up : self.down
             const sentence = `You reported ${more} than usual ${run === 1 ? 'in your last check-in' : `in your last ${span}`}`
+            const moreMsg = msg(`self.${this.metric}.${word === 'above' ? 'up' : 'down'}`)
+            const sentenceMsg = run === 1 ? msg('self.sentence.last1', { more: moreMsg }) : msg('self.sentence.lastN', { more: moreMsg, span: spanMsg })
             candidates.push({
               level,
               method: 'PERSISTENCE',
               ruleId: this.cfg.acuteRule,
               label: `${sentence} (${pctOrDiff(avgPct, avgDiff)} ${word} your normal on a 1 to 5 scale)`,
               phrase: sentence,
+              labelMsg: msg('self.label', { sentence: sentenceMsg, amt: amtMsg(avgPct, avgDiff), dev: msg(`dev.plain.${word}`) }),
+              phraseMsg: sentenceMsg,
             })
             base.deviationPct = avgPct
             base.persistenceHours = null
@@ -459,6 +496,11 @@ export class MetricTracker {
               this.metric === 'SLEEP_DURATION'
                 ? `Sleep has been ${what} your normal for ${span}`
                 : `${sentenceLabel(this.metric)} has been ${what} your normal for ${span}`,
+            labelMsg: msg('trend.label', { metric: mSentence, amt: amtMsg(avgPct, avgDiff), dev: msg(`dev.plain.${word}`), span: spanMsg }),
+            phraseMsg:
+              this.metric === 'SLEEP_DURATION'
+                ? msg('trend.phrase', { metric: msg('lead.sleep'), dev: msg(`dev.sleep.${word}`), span: spanMsg })
+                : msg('trend.phrase', { metric: mSentence, dev: msg(`dev.plain.${word}`), span: spanMsg }),
           })
           base.deviationPct = avgPct
           base.persistenceHours = null
@@ -483,6 +525,14 @@ export class MetricTracker {
             ruleId: this.cfg.acuteRule,
             label: `${sentenceLabel(this.metric)} ${fmtValue(this.metric, recentMedian)}, ${adverb} ${word} your normal${ctxPart} (robust z ${this.z > 0 ? '+' : ''}${this.z.toFixed(1)})`,
             phrase: `${subj} ${inlineLabel(this.metric)} is ${adverb} ${word} your normal${ctxPart}`,
+            labelMsg: msg('acute.label', {
+              metric: mSentence,
+              value: { value: recentMedian, metric: this.metric },
+              dev: msg(`dev.${adverb}.${word}`),
+              ctx: ctxMsg,
+              z: { num: this.z, decimals: 1, sign: true },
+            }),
+            phraseMsg: msg(`acute.phrase.${subj === 'Cabin' ? 'cabin' : 'your'}`, { metric: mInline, dev: msg(`dev.${adverb}.${word}`), ctx: ctxMsg }),
           })
         }
       }
@@ -503,6 +553,8 @@ export class MetricTracker {
             ruleId: this.cfg.driftRule,
             label: `${lead} ${pctOrDiff(this.driftPct, this.driftDiff)} ${word} your normal for ${dur}`,
             phrase: `${lead} has been ${word} your normal for ${dur}`,
+            labelMsg: msg('trend.label', { metric: leadMsg, amt: amtMsg(this.driftPct, this.driftDiff), dev: msg(`dev.plain.${word}`), span: { durationMs: now - this.driftSince } }),
+            phraseMsg: msg('trend.phrase', { metric: leadMsg, dev: msg(`dev.plain.${word}`), span: { durationMs: now - this.driftSince } }),
           })
         }
       }
@@ -519,6 +571,8 @@ export class MetricTracker {
           ruleId: this.cfg.driftRule,
           label: `${lead} ${pctOrDiff(side.pctSum / n, side.diffSum / n)} ${word} your normal: a small but steady drift over ${dur} (CUSUM)`,
           phrase: `${lead} has been slightly ${word} your normal for ${dur}`,
+          labelMsg: msg('cusum.label', { metric: leadMsg, amt: amtMsg(side.pctSum / n, side.diffSum / n), dev: msg(`dev.plain.${word}`), dur: { durationMs: now - side.since! } }),
+          phraseMsg: msg('trend.phrase', { metric: leadMsg, dev: msg(`dev.slightly.${word}`), span: { durationMs: now - side.since! } }),
           cusum: true,
         })
       }
@@ -531,12 +585,14 @@ export class MetricTracker {
 
     let level = best.level
     let label = best.label
+    let labelMsg = best.labelMsg
     if (this.cfg.maxLevel && LEVEL_RANK[level] > LEVEL_RANK[this.cfg.maxLevel]) level = this.cfg.maxLevel
     if (base.questionable && LEVEL_RANK[level] > LEVEL_RANK.MODERATE) {
       // Low quality data cannot escalate beyond MODERATE on its own.
       level = 'MODERATE'
       label = `${label} (questionable signal, capped at Watch)`
+      labelMsg = msg('questionable', { label: labelMsg })
     }
-    return { ...base, status: level, level, method: best.method, ruleId: best.ruleId, label, phrase: best.phrase, cusumFlag: best.cusum === true }
+    return { ...base, status: level, level, method: best.method, ruleId: best.ruleId, label, phrase: best.phrase, labelMsg, phraseMsg: best.phraseMsg, cusumFlag: best.cusum === true }
   }
 }

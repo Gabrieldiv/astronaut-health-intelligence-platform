@@ -31,8 +31,10 @@ import { examValueText } from '../anatomy/regions'
 import { ExamCardNote } from '../attention/ExamHistory'
 import { wearablePausedHeadline, useMetricPaused, useWearablePaused } from '../vitals/deviceMeta'
 import { WhatIfButton } from '../whatif'
+import { MissionBackdrop, MissionHud } from '../mission/backdrops'
 import { t, useT, type MessageKey } from '../../i18n'
 import { metricShort, regionDescription, regionLabel, regionSystem, roleLabel } from '../../i18n/catalog'
+import { engineText, recRationale, recTitle } from '../../i18n/engineText'
 
 /**
  * Crew view: one astronaut looking at their own health. Plain language, big type,
@@ -225,8 +227,8 @@ function BigActionCard({ rec, onDone }: { rec: Recommendation; onDone: (title: s
         </span>
         <AutonomyBadge rec={rec} size="lg" />
       </div>
-      <div className="mt-2 text-[18px] leading-snug font-semibold text-ink-100">{rec.title}</div>
-      <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-300">{rec.rationale}</p>
+      <div className="mt-2 text-[18px] leading-snug font-semibold text-ink-100">{recTitle(rec)}</div>
+      <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-300">{recRationale(rec)}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {rec.interventionKind ? (
           <button
@@ -235,7 +237,7 @@ function BigActionCard({ rec, onDone }: { rec: Recommendation; onDone: (title: s
               logIntervention({ astronautId: rec.astronautId, kind: rec.interventionKind!, recommendationId: rec.id })
               onDone(rec.title)
             }}
-            aria-label={t('crewview.markDoneAria', { title: rec.title })}
+            aria-label={t('crewview.markDoneAria', { title: recTitle(rec) })}
             className="focus-ring inline-flex h-11 items-center gap-2 rounded-xl bg-accent px-5 text-[15px] font-semibold text-space-950 transition-colors hover:bg-accent-strong"
           >
             <Check size={18} strokeWidth={3} aria-hidden /> {t('crewview.markDone')}
@@ -403,7 +405,7 @@ function BodySystemCard({ astronautId, region, keyMetric }: { astronautId: strin
           selectRegion(selected ? null : region)
           selectMetric(null)
         }}
-        aria-label={`${label.label}: ${word}.${reading ? ` ${reading}.` : ''} ${summary} ${selected ? t('crewview.shownClear') : t('crewview.pressShow')}`}
+        aria-label={`${label.label}: ${word}.${reading ? ` ${reading}.` : ''} ${summary ? engineText('regionSummary', summary) : ''} ${selected ? t('crewview.shownClear') : t('crewview.pressShow')}`}
         className={clsx(
           'focus-ring flex min-h-[64px] w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left transition-colors',
           selected
@@ -457,10 +459,12 @@ export function CrewView() {
       <CriticalBanner />
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_392px] xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_500px]">
         <section aria-label={t('crewview.statusAria')} className="glass relative flex min-h-[560px] flex-col overflow-hidden rounded-2xl lg:min-h-0">
+          <MissionBackdrop />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_55%,rgba(94,234,212,0.09),transparent_70%)]" aria-hidden />
           <Hero />
           <div data-tour="body" className="relative min-h-0 flex-1">
             <Stage3D />
+            <MissionHud className="top-2 left-3" />
             <RegionCard />
           </div>
           <EarthLink />

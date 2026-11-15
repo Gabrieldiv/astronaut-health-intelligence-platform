@@ -3,6 +3,8 @@
  * The app never depends on the assistant: every failure becomes an "offline" or "error" state.
  */
 import { apiBaseUrl } from '../../lib/api/client'
+import { networkAllowed } from '../../lib/api/connectivity'
+import { t } from '../../i18n'
 import { LIMITS, type AssistantStatusResponse, type ChatEvent, type ChatRequest, type ChatTurn } from './types'
 
 export interface ChatMessage {
@@ -107,6 +109,7 @@ async function detail(res: Response): Promise<string> {
 export async function fetchAssistantStatus(timeoutMs = 2500): Promise<AssistantAvailability> {
   const base = apiBaseUrl()
   if (base === null) return { kind: 'offline', reason: 'The AHI API is disabled in this build.', apiReachable: false }
+  if (!networkAllowed()) return { kind: 'offline', reason: t('connectivity.assistant.offlineMode'), apiReachable: false }
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {
@@ -126,6 +129,7 @@ export async function fetchAssistantStatus(timeoutMs = 2500): Promise<AssistantA
 export async function streamChat(req: ChatRequest, onEvent: (ev: ChatEvent) => void, signal: AbortSignal): Promise<void> {
   const base = apiBaseUrl()
   if (base === null) throw new AssistantHttpError('The AHI API is disabled in this build.', null)
+  if (!networkAllowed()) throw new AssistantHttpError(t('connectivity.assistant.offlineMode'), null)
   let res: Response
   try {
     res = await fetch(`${base}/api/v1/assistant/chat`, {

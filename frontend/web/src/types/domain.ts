@@ -343,6 +343,8 @@ export interface ContributingFactor {
   metric: MetricCode | null
   label: string // e.g. "HRV 28% below personal baseline for 3 days"
   weight: number // 0..1 relative contribution
+  /** Additive: localized form of `label` (src/i18n/engineText.ts). */
+  msg?: EngineMsg
 }
 
 export interface RiskAssessment {
@@ -358,6 +360,8 @@ export interface RiskAssessment {
   limitations: string[]
   /** One plain-language sentence summarizing the state for the crew. */
   headline: string
+  /** Additive: localized form of `headline`. */
+  headlineMsg?: EngineMsg
 }
 
 export interface ForecastPoint {
@@ -412,6 +416,9 @@ export interface Recommendation {
    * or self care). GROUND_REVIEW = needs the flight surgeon on Earth (subject to comm delay).
    */
   autonomy?: 'ONBOARD' | 'GROUND_REVIEW'
+  /** Additive: localized forms of `title` and `rationale`. */
+  titleMsg?: EngineMsg
+  rationaleMsg?: EngineMsg
 }
 
 export type InterventionKind =
@@ -451,6 +458,9 @@ export interface Alert {
   escalatedAt?: number | null
   /** Additive (v2): number of escalation steps reached (0 = none). */
   escalationLevel?: number
+  /** Additive: localized forms of `title` and `detail`. */
+  titleMsg?: EngineMsg
+  detailMsg?: EngineMsg
 }
 
 export interface AuditEvent {
@@ -480,6 +490,8 @@ export interface RegionState {
   status: Status
   metrics: MetricCode[]
   summary: string // plain language, e.g. "Heart rate trending up, HRV below your normal"
+  /** Additive: localized form of `summary`. */
+  summaryMsg?: EngineMsg
 }
 
 export interface AstronautHealth {
@@ -818,3 +830,33 @@ export interface AppStateV2 {
 
 /** Mission context with its own exposure (radiation, gravity, distance, delay). */
 export type MissionProfileId = 'LAUNCH' | 'ISS' | 'MOON' | 'MARS_TRANSIT'
+
+// ---------------------------------------------------------------------------
+// Localized engine text (additive). The engine keeps writing its English sentences; next to them
+// it attaches a structured message (stable id + params) that src/i18n/engineText.ts renders in the
+// selected language. Ids map to `eng.<id>` keys in src/i18n/locales/<lang>/engine.ts.
+// ---------------------------------------------------------------------------
+
+/** A parameter of an engine message. Plain strings and numbers are inserted as they are. */
+export type EngineParam =
+  | string
+  | number
+  | EngineMsg
+  /** Metric name: `inline` (inside a sentence), `sentence` (sentence start), `lower` (lower case label), `nocabin` (inline without "cabin"). */
+  | { metric: MetricCode; form: 'inline' | 'sentence' | 'lower' | 'nocabin' }
+  /** A metric value with its unit. */
+  | { value: number; metric: MetricCode }
+  /** A fixed decimal number; `sign` adds "+" to positive values. */
+  | { num: number; decimals: number; sign?: boolean }
+  /** A duration ("25 min", "5 hours", "3 days"). */
+  | { durationMs: number }
+  /** A catalog or UI message key, with the English text used for English and as fallback. */
+  | { key: string; en: string }
+  /** A list joined as "a, b and c" (or "a, b, c" with `comma`). */
+  | { list: EngineParam[]; comma?: boolean }
+
+/** Stable message id plus params. */
+export interface EngineMsg {
+  id: string
+  params?: Record<string, EngineParam>
+}

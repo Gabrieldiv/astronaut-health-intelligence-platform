@@ -14,6 +14,8 @@
  * With no significant event the advisory is calm. With no data yet it says so (missing data is
  * never shown as "all clear").
  */
+import type { EngineMsg } from '../../types/domain'
+import { msg, said } from '../msg'
 import type { MissionProfileId, RiskLevel } from '../../types/domain'
 import type { SpaceWeatherEvent, SpaceWeatherSnapshot } from '../../types/nasa'
 import { SPACE_WEATHER } from '../config'
@@ -89,6 +91,26 @@ export function recentSignificantEvents(s: SpaceWeatherSnapshot): SpaceWeatherEv
     .sort((a, b) => Date.parse(b.startTime) - Date.parse(a.startTime))
 }
 
+/** Structured twin of eventLabel (engine/msg.ts). */
+function eventLabelMsg(e: SpaceWeatherEvent): EngineMsg {
+  switch (e.kind) {
+    case 'SOLAR_FLARE':
+      return e.classType ? msg('sw.event.flareClass', { cls: e.classType }) : msg('sw.event.flare')
+    case 'SEP':
+      return msg('sw.event.sep')
+    case 'CME':
+      return msg('sw.event.cme')
+    case 'GEOMAGNETIC_STORM':
+      return e.kpIndex != null ? msg('sw.event.stormKp', { kp: String(e.kpIndex) }) : msg('sw.event.storm')
+  }
+}
+
+function listEventsMsg(events: SpaceWeatherEvent[]): EngineMsg {
+  const shown = events.slice(0, 2).map(eventLabelMsg)
+  const list = shown.length === 2 ? msg('sw.two', { a: shown[0]!, b: shown[1]! }) : shown[0]!
+  return events.length > 2 ? msg('sw.more', { list, n: events.length - 2 }) : list
+}
+
 function listEvents(events: SpaceWeatherEvent[]): string {
   const shown = events.slice(0, 2).map(eventLabel)
   const more = events.length > 2 ? ` and ${events.length - 2} more` : ''
@@ -111,8 +133,11 @@ export function assessSpaceWeather(snapshot: SpaceWeatherSnapshot | null, profil
       ...base,
       kind: 'NO_DATA',
       level: 'NO_DATA',
-      title: 'Space weather not available yet',
-      body: 'No NASA DONKI data has been loaded. This is unknown, not "all clear": follow the space weather briefing from mission control.',
+      title: said('Space weather not available yet', msg('sw.noData.title')),
+      body: said(
+        'No NASA DONKI data has been loaded. This is unknown, not "all clear": follow the space weather briefing from mission control.',
+        msg('sw.noData.body'),
+      ),
       autonomy: null,
       triggers: [],
       link: base.sourceUrl,
@@ -124,25 +149,31 @@ export function assessSpaceWeather(snapshot: SpaceWeatherSnapshot | null, profil
       ...base,
       kind: 'QUIET',
       level: 'LOW',
-      title: `No major solar event in the last ${SPACE_WEATHER.recentHours} hours`,
-      body: `No solar energetic particle event or X class flare in NASA DONKI in the ${SPACE_WEATHER.recentHours} h before the data was retrieved.`,
+      title: said(`No major solar event in the last ${SPACE_WEATHER.recentHours} hours`, msg('sw.quiet.title', { h: SPACE_WEATHER.recentHours })),
+      body: said(
+        `No solar energetic particle event or X class flare in NASA DONKI in the ${SPACE_WEATHER.recentHours} h before the data was retrieved.`,
+        msg('sw.quiet.body', { h: SPACE_WEATHER.recentHours }),
+      ),
       autonomy: null,
       triggers: [],
       link: base.sourceUrl,
     }
   }
   const what = listEvents(triggers)
+  const whatMsg = listEventsMsg(triggers)
   const link = triggers[0]!.link || base.sourceUrl
   if (p.radiation.outsideMagnetosphere) {
     return {
       ...base,
       kind: 'SHELTER',
       level: 'HIGH',
-      title: 'Move to the radiation storm shelter',
-      body:
+      title: said('Move to the radiation storm shelter', msg('sw.shelter.title')),
+      body: said(
         `NASA DONKI reports a recent ${what}. ${p.shortLabel === 'Moon' ? 'On the Moon' : 'In deep space'} there is no Earth magnetic field to stop solar particles. ` +
-        'Follow the shelter procedure now: move to the most shielded area, stop surface or extravehicular activity, and keep personal dosimeters on. ' +
-        'Do not wait for Earth to confirm; report to mission control when you can.',
+          'Follow the shelter procedure now: move to the most shielded area, stop surface or extravehicular activity, and keep personal dosimeters on. ' +
+          'Do not wait for Earth to confirm; report to mission control when you can.',
+        msg(p.shortLabel === 'Moon' ? 'sw.shelter.bodyMoon' : 'sw.shelter.bodyDeep', { what: whatMsg }),
+      ),
       autonomy: 'ONBOARD',
       triggers,
       link,
@@ -153,8 +184,11 @@ export function assessSpaceWeather(snapshot: SpaceWeatherSnapshot | null, profil
       ...base,
       kind: 'PRE_LAUNCH',
       level: 'MODERATE',
-      title: 'Pre launch space weather note',
-      body: `NASA DONKI reports a recent ${what}. The ascent dose is negligible, but the launch team should include space weather in the go or no go briefing and in the plan for the first days in orbit.`,
+      title: said('Pre launch space weather note', msg('sw.launch.title')),
+      body: said(
+        `NASA DONKI reports a recent ${what}. The ascent dose is negligible, but the launch team should include space weather in the go or no go briefing and in the plan for the first days in orbit.`,
+        msg('sw.launch.body', { what: whatMsg }),
+      ),
       autonomy: 'GROUND_REVIEW',
       triggers,
       link,
@@ -164,8 +198,11 @@ export function assessSpaceWeather(snapshot: SpaceWeatherSnapshot | null, profil
     ...base,
     kind: 'MONITOR',
     level: 'MODERATE',
-    title: 'Monitor radiation: solar event reported',
-    body: `NASA DONKI reports a recent ${what}. In low Earth orbit the magnetic field shields most of it. Keep monitoring the dosimeters and follow flight control guidance about shielded areas and spacewalks.`,
+    title: said('Monitor radiation: solar event reported', msg('sw.monitor.title')),
+    body: said(
+      `NASA DONKI reports a recent ${what}. In low Earth orbit the magnetic field shields most of it. Keep monitoring the dosimeters and follow flight control guidance about shielded areas and spacewalks.`,
+      msg('sw.monitor.body', { what: whatMsg }),
+    ),
     autonomy: 'GROUND_REVIEW',
     triggers,
     link,

@@ -4,13 +4,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchOsdrStudies, getBackendStatus, type ApiOsdrStudyList, type BackendStatus } from '../../lib/api/client'
 import { loadSpaceWeather } from '../../lib/nasa/spaceWeather'
 import type { SpaceWeatherEvent, SpaceWeatherEventKind, SpaceWeatherSnapshot } from '../../types/nasa'
+import { useT } from '../../i18n'
+import { tx } from '../../i18n/rich'
 import { ExtLink, OriginBadge, formatIsoUtc } from './shared'
+import { ConnectivityPanel } from '../connectivity'
+import { useConnectivityMode } from '../../lib/api/connectivity'
 
-const KIND_META: Record<SpaceWeatherEventKind, { label: string; plain: string; icon: LucideIcon }> = {
-  SOLAR_FLARE: { label: 'Solar flare', plain: 'A sudden burst of X-ray light from the Sun.', icon: Sun },
-  SEP: { label: 'Solar energetic particles', plain: 'High energy particles from the Sun that add to radiation exposure in space.', icon: Zap },
-  CME: { label: 'Coronal mass ejection', plain: 'A cloud of solar plasma; when Earth directed it can trigger a storm days later.', icon: Orbit },
-  GEOMAGNETIC_STORM: { label: 'Geomagnetic storm', plain: "A disturbance of Earth's magnetic field (Kp index, 0 to 9).", icon: Magnet },
+const KIND_ICON: Record<SpaceWeatherEventKind, LucideIcon> = {
+  SOLAR_FLARE: Sun,
+  SEP: Zap,
+  CME: Orbit,
+  GEOMAGNETIC_STORM: Magnet,
 }
 const KIND_ORDER: SpaceWeatherEventKind[] = ['SOLAR_FLARE', 'SEP', 'CME', 'GEOMAGNETIC_STORM']
 const DONKI_DOCS = 'https://ccmc.gsfc.nasa.gov/tools/DONKI/'
@@ -18,9 +22,11 @@ const DONKI_DOCS = 'https://ccmc.gsfc.nasa.gov/tools/DONKI/'
 type Load<T> = { kind: 'loading' } | { kind: 'ready'; data: T } | { kind: 'error'; message: string }
 
 export function NasaContextTab() {
+  const t = useT()
   const [status, setStatus] = useState<BackendStatus | null>(null)
   const [weather, setWeather] = useState<Load<SpaceWeatherSnapshot>>({ kind: 'loading' })
   const [nonce, setNonce] = useState(0)
+  const mode = useConnectivityMode()
 
   useEffect(() => {
     let alive = true
@@ -31,7 +37,7 @@ export function NasaContextTab() {
     return () => {
       alive = false
     }
-  }, [nonce])
+  }, [nonce, mode])
 
   const retry = useCallback(() => {
     setStatus(null)
@@ -43,37 +49,40 @@ export function NasaContextTab() {
       <div role="note" className="flex gap-3 rounded-xl bg-accent/[0.06] px-4 py-3 ring-1 ring-accent/20">
         <Globe2 size={18} className="mt-0.5 shrink-0 text-accent" aria-hidden />
         <div className="text-xs leading-relaxed text-ink-300">
-          <p className="font-semibold text-ink-100">Public mission context from NASA. These are not the astronauts&apos; own measurements.</p>
-          <p className="mt-1">
-            Space weather events from NASA DONKI and the list of human studies in NASA OSDR are real public data (REAL_PUBLIC). They help explain the environment a crew
-            flies in; they do not change the simulated crew readings, baselines or alerts.
-          </p>
+          <p className="font-semibold text-ink-100">{t('datasources.nasa.noteTitle')}</p>
+          <p className="mt-1">{t('datasources.nasa.noteBody')}</p>
         </div>
       </div>
 
+      <ConnectivityPanel />
       <BackendCard status={status} onRetry={retry} />
       <SpaceWeatherSection state={weather} />
-      <OsdrSection status={status} />
+      {mode !== 'offline' && <OsdrSection status={status} />}
     </div>
   )
 }
 
 function BackendCard({ status, onRetry }: { status: BackendStatus | null; onRetry: () => void }) {
+  const t = useT()
   const connected = status?.kind === 'connected'
   return (
-    <section aria-label="Backend status" className="flex flex-wrap items-center gap-3 rounded-xl bg-white/[0.025] px-4 py-3 ring-1 ring-white/[0.08]" aria-live="polite">
+    <section aria-label={t('datasources.nasa.backendAria')} className="flex flex-wrap items-center gap-3 rounded-xl bg-white/[0.025] px-4 py-3 ring-1 ring-white/[0.08]" aria-live="polite">
       {status === null ? (
         <span className="flex items-center gap-2 text-xs text-ink-500" role="status">
-          <LoaderCircle size={14} className="animate-spin" aria-hidden /> Checking the AHI API
+          <LoaderCircle size={14} className="animate-spin" aria-hidden /> {t('datasources.nasa.checking')}
         </span>
       ) : connected ? (
         <>
           <Server size={16} className="shrink-0 text-accent" aria-hidden />
           <div className="min-w-0 flex-1 text-xs">
-            <p className="font-semibold text-ink-100">Connected to AHI API</p>
+            <p className="font-semibold text-ink-100">{t('datasources.nasa.connected')}</p>
             <p className="text-ink-500">
-              <span className="font-mono text-[11px]">{status.baseUrl}</span> · version {status.health.version} · database {status.health.database_backend}
-              {status.health.status !== 'ok' && <span className="text-amber-200"> (degraded: database not reachable)</span>}
+              {tx('datasources.nasa.connectedDetail', {
+                url: <span className="font-mono text-[11px]">{status.baseUrl}</span>,
+                version: status.health.version,
+                db: status.health.database_backend,
+              })}
+              {status.health.status !== 'ok' && <span className="text-amber-200"> {t('datasources.nasa.degraded')}</span>}
             </p>
           </div>
         </>
@@ -81,10 +90,10 @@ function BackendCard({ status, onRetry }: { status: BackendStatus | null; onRetr
         <>
           <ServerOff size={16} className="shrink-0 text-ink-500" aria-hidden />
           <div className="min-w-0 flex-1 text-xs">
-            <p className="font-semibold text-ink-100">Offline demo mode</p>
+            <p className="font-semibold text-ink-100">{t('datasources.nasa.offlineTitle')}</p>
             <p className="text-ink-500">
-              The app runs fully in the browser. Space weather comes from a bundled copy of real NASA DONKI data; the live OSDR search needs the API.
-              <span className="sr-only"> Reason: {status.reason}</span>
+              {t('datasources.nasa.offlineBody')}
+              <span className="sr-only"> {t('datasources.nasa.reason', { reason: status.reason })}</span>
             </p>
           </div>
         </>
@@ -95,7 +104,7 @@ function BackendCard({ status, onRetry }: { status: BackendStatus | null; onRetr
           onClick={onRetry}
           className="focus-ring inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold text-ink-300 ring-1 ring-white/10 hover:bg-white/[0.06] hover:text-ink-100"
         >
-          <RefreshCw size={12} aria-hidden /> Check again
+          <RefreshCw size={12} aria-hidden /> {t('datasources.nasa.checkAgain')}
         </button>
       )}
     </section>
@@ -103,6 +112,7 @@ function BackendCard({ status, onRetry }: { status: BackendStatus | null; onRetr
 }
 
 function SpaceWeatherSection({ state }: { state: Load<SpaceWeatherSnapshot> }) {
+  const t = useT()
   const [showAll, setShowAll] = useState(false)
   const counts = useMemo(() => {
     const c: Record<SpaceWeatherEventKind, number> = { SOLAR_FLARE: 0, SEP: 0, CME: 0, GEOMAGNETIC_STORM: 0 }
@@ -119,7 +129,7 @@ function SpaceWeatherSection({ state }: { state: Load<SpaceWeatherSnapshot> }) {
             {state.kind === 'ready' && <ModeChip mode={state.data.mode} />}
           </div>
           <h3 id="sw-title" className="mt-1.5 text-sm font-semibold text-ink-100">
-            Space weather, last 30 days
+            {t('datasources.nasa.swTitle')}
           </h3>
           <p className="text-[11px] text-ink-500">NASA DONKI (Space Weather Database Of Notifications, Knowledge, Information), CCMC at NASA Goddard</p>
         </div>
@@ -131,28 +141,30 @@ function SpaceWeatherSection({ state }: { state: Load<SpaceWeatherSnapshot> }) {
       <div className="px-4 py-3">
         {state.kind === 'loading' && (
           <div className="flex items-center gap-2 py-4 text-xs text-ink-500" role="status">
-            <LoaderCircle size={14} className="animate-spin" aria-hidden /> Loading space weather
+            <LoaderCircle size={14} className="animate-spin" aria-hidden /> {t('datasources.nasa.swLoading')}
           </div>
         )}
         {state.kind === 'error' && (
           <p role="alert" className="py-2 text-xs text-ink-300">
-            Space weather could not be loaded ({state.message}). Nothing is shown in its place.
+            {t('datasources.nasa.swError', { message: state.message })}
           </p>
         )}
         {state.kind === 'ready' && (
           <>
             <p className="text-[11px] leading-relaxed text-ink-500">
-              Retrieved <span className="tabular text-ink-300">{formatIsoUtc(state.data.retrievedAt)}</span>
-              {state.data.mode === 'snapshot' ? ' (bundled copy for offline demos)' : ' (live through the AHI API)'}. Window{' '}
-              <span className="tabular">{formatIsoUtc(state.data.window.start)}</span> to <span className="tabular">{formatIsoUtc(state.data.window.end)}</span>.
+              {tx(state.data.mode === 'snapshot' ? 'datasources.nasa.retrievedSnapshot' : 'datasources.nasa.retrievedLive', {
+                when: <span className="tabular text-ink-300">{formatIsoUtc(state.data.retrievedAt)}</span>,
+                start: <span className="tabular">{formatIsoUtc(state.data.window.start)}</span>,
+                end: <span className="tabular">{formatIsoUtc(state.data.window.end)}</span>,
+              })}
             </p>
-            <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Events by type">
+            <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label={t('datasources.nasa.eventsByType')}>
               {KIND_ORDER.map((k) => {
-                const M = KIND_META[k]
+                const Icon = KIND_ICON[k]
                 return (
-                  <li key={k} className="rounded-lg bg-white/[0.03] px-3 py-2 ring-1 ring-white/[0.06]" title={M.plain}>
+                  <li key={k} className="rounded-lg bg-white/[0.03] px-3 py-2 ring-1 ring-white/[0.06]" title={t(`datasources.nasa.kind.${k}.plain`)}>
                     <span className="flex items-center gap-1.5 text-[11px] text-ink-500">
-                      <M.icon size={12} aria-hidden /> {M.label}
+                      <Icon size={12} aria-hidden /> {t(`datasources.nasa.kind.${k}.label`)}
                     </span>
                     <span className="tabular text-lg font-semibold text-ink-100">{counts[k]}</span>
                   </li>
@@ -160,10 +172,10 @@ function SpaceWeatherSection({ state }: { state: Load<SpaceWeatherSnapshot> }) {
               })}
             </ul>
             {state.data.events.length === 0 ? (
-              <p className="mt-3 text-xs text-ink-500">DONKI lists no event in this window.</p>
+              <p className="mt-3 text-xs text-ink-500">{t('datasources.nasa.noEvents')}</p>
             ) : (
               <>
-                <h4 className="mt-4 text-[11px] font-semibold tracking-[0.12em] text-ink-500 uppercase">Latest events</h4>
+                <h4 className="mt-4 text-[11px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{t('datasources.nasa.latestEvents')}</h4>
                 <ul className="mt-1 divide-y divide-white/[0.05]">
                   {(showAll ? state.data.events : state.data.events.slice(0, 8)).map((e) => (
                     <EventRow key={e.id} e={e} />
@@ -176,13 +188,13 @@ function SpaceWeatherSection({ state }: { state: Load<SpaceWeatherSnapshot> }) {
                     aria-expanded={showAll}
                     className="focus-ring mt-2 rounded text-[11px] font-semibold text-accent hover:underline"
                   >
-                    {showAll ? 'Show fewer' : `Show all ${state.data.events.length} events`}
+                    {showAll ? t('datasources.nasa.showFewer') : t('datasources.nasa.showAll', { n: state.data.events.length })}
                   </button>
                 )}
               </>
             )}
             <p className="mt-3 text-[11px] leading-relaxed text-ink-500">
-              Context only: AHI does not turn these events into health limits. How DONKI works: <ExtLink href={DONKI_DOCS}>CCMC DONKI</ExtLink>
+              {tx('datasources.nasa.contextOnly', { link: <ExtLink href={DONKI_DOCS}>CCMC DONKI</ExtLink> })}
             </p>
           </>
         )}
@@ -192,19 +204,25 @@ function SpaceWeatherSection({ state }: { state: Load<SpaceWeatherSnapshot> }) {
 }
 
 function EventRow({ e }: { e: SpaceWeatherEvent }) {
-  const M = KIND_META[e.kind]
-  const detail = e.kind === 'SOLAR_FLARE' && e.classType ? `class ${e.classType}` : e.kind === 'GEOMAGNETIC_STORM' && e.kpIndex != null ? `Kp ${e.kpIndex}` : null
+  const t = useT()
+  const Icon = KIND_ICON[e.kind]
+  const detail =
+    e.kind === 'SOLAR_FLARE' && e.classType
+      ? t('datasources.nasa.classType', { value: e.classType })
+      : e.kind === 'GEOMAGNETIC_STORM' && e.kpIndex != null
+        ? `Kp ${e.kpIndex}`
+        : null
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-xs">
-      <M.icon size={14} className="shrink-0 text-ink-500" aria-hidden />
-      <span className="min-w-[150px] font-medium text-ink-100" title={M.plain}>
-        {M.label}
+      <Icon size={14} className="shrink-0 text-ink-500" aria-hidden />
+      <span className="min-w-[150px] font-medium text-ink-100" title={t(`datasources.nasa.kind.${e.kind}.plain`)}>
+        {t(`datasources.nasa.kind.${e.kind}.label`)}
         {detail && <span className="ml-1.5 font-mono text-[11px] text-ink-300">{detail}</span>}
       </span>
       <span className="tabular text-ink-500">{formatIsoUtc(e.startTime)}</span>
-      {e.peakTime && <span className="tabular text-ink-500">peak {formatIsoUtc(e.peakTime).slice(11)}</span>}
+      {e.peakTime && <span className="tabular text-ink-500">{t('datasources.nasa.peak', { time: formatIsoUtc(e.peakTime).slice(11) })}</span>}
       <ExtLink href={e.link} className="ml-auto text-[11px]">
-        <span className="sr-only">DONKI record </span>
+        <span className="sr-only">{t('datasources.nasa.donkiRecord')} </span>
         {e.id}
       </ExtLink>
     </li>
@@ -212,13 +230,14 @@ function EventRow({ e }: { e: SpaceWeatherEvent }) {
 }
 
 function ModeChip({ mode }: { mode: SpaceWeatherSnapshot['mode'] }) {
+  const t = useT()
   return (
     <span
       className={clsx(
         'inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold tracking-wide',
         mode === 'live' ? 'bg-accent/10 text-accent ring-1 ring-accent/30' : 'bg-white/[0.06] text-ink-300 ring-1 ring-white/15',
       )}
-      title={mode === 'live' ? 'Fetched now from NASA DONKI through the AHI API' : 'Bundled copy of a real DONKI download, used when the API is not running'}
+      title={mode === 'live' ? t('datasources.nasa.modeLiveTitle') : t('datasources.nasa.modeSnapshotTitle')}
     >
       {mode === 'live' ? 'LIVE' : 'SNAPSHOT'}
     </span>
@@ -226,6 +245,7 @@ function ModeChip({ mode }: { mode: SpaceWeatherSnapshot['mode'] }) {
 }
 
 function OsdrSection({ status }: { status: BackendStatus | null }) {
+  const t = useT()
   // 'loading' until the first answer after the API is found connected.
   const [state, setState] = useState<Load<ApiOsdrStudyList>>({ kind: 'loading' })
   const connected = status?.kind === 'connected'
@@ -250,33 +270,34 @@ function OsdrSection({ status }: { status: BackendStatus | null }) {
             <Microscope size={13} className="text-ink-500" aria-hidden />
           </div>
           <h3 id="osdr-title" className="mt-1.5 text-sm font-semibold text-ink-100">
-            Human spaceflight research in NASA OSDR
+            {t('datasources.nasa.osdrTitle')}
           </h3>
-          <p className="text-[11px] text-ink-500">Open Science Data Repository, searched live for &quot;astronaut&quot; among studies whose organism is Homo sapiens</p>
+          <p className="text-[11px] text-ink-500">{t('datasources.nasa.osdrSubtitle')}</p>
         </div>
         <ExtLink href="https://osdr.nasa.gov/bio/repo/" className="shrink-0 text-xs font-semibold">
           OSDR
         </ExtLink>
       </header>
       <div className="px-4 py-3 text-xs">
-        {!connected && status !== null && (
-          <p className="text-ink-500">Available when the AHI API is running: it queries the NASA OSDR public API. Nothing is shown in offline demo mode.</p>
-        )}
+        {!connected && status !== null && <p className="text-ink-500">{t('datasources.nasa.osdrNeedsApi')}</p>}
         {(status === null || (connected && state.kind === 'loading')) && (
           <div className="flex items-center gap-2 py-2 text-ink-500" role="status">
-            <LoaderCircle size={14} className="animate-spin" aria-hidden /> Loading studies
+            <LoaderCircle size={14} className="animate-spin" aria-hidden /> {t('datasources.nasa.osdrLoading')}
           </div>
         )}
         {connected && state.kind === 'error' && (
           <p role="alert" className="text-ink-300">
-            OSDR could not be reached through the API ({state.message}). Nothing is shown in its place.
+            {t('datasources.nasa.osdrError', { message: state.message })}
           </p>
         )}
         {connected && state.kind === 'ready' && (
           <>
             <p className="text-[11px] text-ink-500">
-              {state.data.total} matching studies, first {state.data.studies.length} shown. Retrieved <span className="tabular">{formatIsoUtc(state.data.retrievedAt)}</span>. Some
-              are cell culture or ground studies: the type is shown as reported by OSDR.
+              {tx('datasources.nasa.osdrSummary', {
+                total: state.data.total,
+                shown: state.data.studies.length,
+                when: <span className="tabular">{formatIsoUtc(state.data.retrievedAt)}</span>,
+              })}
             </p>
             <ul className="mt-2 divide-y divide-white/[0.05]">
               {state.data.studies.map((s) => (
@@ -288,7 +309,8 @@ function OsdrSection({ status }: { status: BackendStatus | null }) {
                     <span className="font-medium text-ink-100">{s.title}</span>
                   </div>
                   <p className="mt-0.5 text-[11px] text-ink-500">
-                    {[s.projectType, s.mission, s.releaseDate ? `released ${s.releaseDate}` : null].filter(Boolean).join(' · ') || 'Details not stated in the source'}
+                    {[s.projectType, s.mission, s.releaseDate ? t('datasources.nasa.released', { date: s.releaseDate }) : null].filter(Boolean).join(' · ') ||
+                      t('datasources.nasa.detailsNotStated')}
                   </p>
                 </li>
               ))}

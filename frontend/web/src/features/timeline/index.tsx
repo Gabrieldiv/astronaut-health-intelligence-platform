@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { ChevronUp, Info } from 'lucide-react'
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
+import { useOverlayOpen } from './useOverlayOpen'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
@@ -14,6 +15,7 @@ import { COMM_KIND_LABEL, useCommsUi } from '../comms/delay'
 import { INTERVENTION_LABEL, INTERVENTION_REGION } from './labels'
 import { t as tr, tp, translatedRecord, useLang, useT } from '../../i18n'
 import { metricLabel, regionLabel } from '../../i18n/catalog'
+import { alertTitle } from '../../i18n/engineText'
 
 export interface TimelineStripProps {
   className?: string
@@ -204,7 +206,7 @@ function buildMarkers(
       kind: 'alert',
       t: a.createdAt,
       laneId: lane(a.astronautId),
-      title: a.title,
+      title: alertTitle(a),
       meta: `${callsign(a.astronautId)}${where ? ` · ${where}` : ''}${acked ? tr('timeline.meta.acknowledgedBy', { who: a.acknowledgedBy ?? tr('timeline.meta.crew') }) : a.resolvedAt != null ? tr('timeline.meta.resolved') : tr('timeline.meta.open')}`,
       status: a.severity,
       acked: acked || a.resolvedAt != null,
@@ -777,14 +779,16 @@ function Tooltip({
   levels: Record<string, Status> | null
   lanes: Lane[]
 }) {
-  if (!anchor) return null
+  // Never float over a drawer or dialog: hide while one is open.
+  const overlayOpen = useOverlayOpen()
+  if (!anchor || overlayOpen) return null
   const rect = anchor.getBoundingClientRect()
   const above = rect.top > 220
   const left = Math.min(window.innerWidth - 150, Math.max(150, clientX))
   const style = above ? { left, top: rect.top - 8, transform: 'translate(-50%, -100%)' } : { left, top: rect.bottom + 8, transform: 'translate(-50%, 0)' }
   const timeText = `${formatUtcTime(t, false)} UTC · ${formatUtcDate(t).replace(/ \d{4}$/, '')} · ${relTime(t, now)}`
   return createPortal(
-    <div role="tooltip" className="glass-strong pointer-events-none fixed z-[80] w-[260px] rounded-xl px-3 py-2.5 text-xs" style={style}>
+    <div role="tooltip" className="glass-strong pointer-events-none fixed z-(--z-tooltip) w-[260px] rounded-xl px-3 py-2.5 text-xs" style={style}>
       {marker ? (
         <>
           <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-ink-500 uppercase">

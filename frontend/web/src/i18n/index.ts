@@ -165,6 +165,16 @@ export function useT(): typeof t {
   return t
 }
 
+/**
+ * Calls `fn` after every language change, once the new messages are active (t() already answers
+ * in the new language). Returns the unsubscribe function.
+ */
+export function onLanguageChange(fn: (lang: Lang, prev: Lang) => void): () => void {
+  return useI18n.subscribe((s, prev) => {
+    if (s.lang !== prev.lang) fn(s.lang, prev.lang)
+  })
+}
+
 /** Hook: current language id. */
 export const useLang = (): Lang => useI18n((s) => s.lang)
 

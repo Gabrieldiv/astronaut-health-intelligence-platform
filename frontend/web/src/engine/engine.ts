@@ -31,6 +31,7 @@ import type {
   Intervention,
   InterventionComparison,
   InterventionKind,
+  EngineParam,
   MetricCode,
   MetricState,
   Mission,
@@ -73,6 +74,7 @@ import { compareIntervention as projectIntervention, resolveMetric, type Compare
 import { heuristicLevel, isoDate, sameDay, synthDay } from './missionDays'
 import { RecommendationManager, applySuppression, isActionable } from './recommendations'
 import { assessRisk, buildRegions, combinedHits, hitFromAssessment, scoreHits, topHit, type RuleHit } from './risk'
+import { msg, said } from './msg'
 import { linearSlope, round } from './stats'
 import { DAY_MS, HOUR_MS, MIN_MS, fmtClock, fmtDuration, inlineLabel } from './text'
 import {
@@ -656,6 +658,13 @@ export class HealthEngine implements SimWorld {
         label: `No data from ${devName} for ${Number.isFinite(since) ? fmtDuration(since) : 'a while'} (${metrics.map(inlineLabel).join(', ')}): status unknown, not normal`,
         phrase: subjectId ? `Your ${devName} is not sending data` : `The ${devName} is not sending data`,
         title: `${devName} not sending data`,
+        labelMsg: msg(Number.isFinite(since) ? 'device.silent.label' : 'device.silent.labelWhile', {
+          dev: devName,
+          dur: { durationMs: Number.isFinite(since) ? since : 0 },
+          list: { list: metrics.map((m): EngineParam => ({ metric: m, form: 'inline' })), comma: true },
+        }),
+        phraseMsg: msg(subjectId ? 'device.silent.phrase.your' : 'device.silent.phrase.the', { dev: devName }),
+        titleMsg: msg('device.silent.title', { dev: devName }),
       })
     }
     for (const [devId, metrics] of shaky) {
@@ -672,6 +681,9 @@ export class HealthEngine implements SimWorld {
         label: `${devName} signal is weak; ${metrics.map(inlineLabel).join(', ')} marked questionable and capped at Watch`,
         phrase: subjectId ? `Your ${devName} signal is weak` : `The ${devName} signal is weak`,
         title: `${devName} signal quality reduced`,
+        labelMsg: msg('device.weak.label', { dev: devName, list: { list: metrics.map((m): EngineParam => ({ metric: m, form: 'inline' })), comma: true } }),
+        phraseMsg: msg(subjectId ? 'device.weak.phrase.your' : 'device.weak.phrase.the', { dev: devName }),
+        titleMsg: msg('device.weak.title', { dev: devName }),
       })
     }
     return out
@@ -826,9 +838,14 @@ export class HealthEngine implements SimWorld {
       metrics: envMetrics,
       status: worstStatus(Object.values(envMetrics).map((m) => m!.status)),
       predictions: this.predCache.get('CABIN') ?? {},
-      headline: envTop
-        ? `${envTop.phrase}, so ${envTop.kind === 'DATA_QUALITY' ? 'a sensor check is suggested' : 'a cabin air check is suggested'}.`
-        : 'Cabin air and radiation are within their usual range.',
+      headline: said(
+        envTop
+          ? `${envTop.phrase}, so ${envTop.kind === 'DATA_QUALITY' ? 'a sensor check is suggested' : 'a cabin air check is suggested'}.`
+          : 'Cabin air and radiation are within their usual range.',
+        envTop
+          ? msg('head.so', { phrase: envTop.phraseMsg ?? envTop.phrase, tail: msg(envTop.kind === 'DATA_QUALITY' ? 'tail.sensor' : 'tail.air') })
+          : msg('head.cabinNormal'),
+      ),
     }
     this.versions.environment++
 
@@ -1124,7 +1141,7 @@ export class HealthEngine implements SimWorld {
       if (h.risk.contributing_factors.length) parts.push(`Factors: ${h.risk.contributing_factors.slice(0, 3).map((f) => f.label).join('; ')}.`)
     } else {
       const co2 = this.environment.metrics.CO2
-      parts.push(`Cabin: CO₂ ${co2 && co2.current !== null ? `${co2.current} ppm` : 'no data'}, status ${this.environment.status}.`)
+      parts.push(`Cabin: COâ‚‚ ${co2 && co2.current !== null ? `${co2.current} ppm` : 'no data'}, status ${this.environment.status}.`)
     }
     parts.push('Simulated data (data_origin SIMULATED). Decision support, not a diagnosis.')
     return parts.join(' ')

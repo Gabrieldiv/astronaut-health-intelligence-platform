@@ -10,6 +10,7 @@ import { structureById, useAtlasManifest } from '../anatomy/atlas/manifest'
 import type { AtlasManifest, AtlasStructure } from '../anatomy/atlas/types'
 import { formatFixed, getLang, t, tOr } from '../../i18n'
 import { INTERVENTION_LABEL } from '../timeline/labels'
+import { alertTitle } from '../../i18n/engineText'
 
 /** Intervention name for chart markers: English keeps the original "Sentence case of the enum" text. */
 function interventionText(kind: InterventionKind): string {
@@ -182,7 +183,7 @@ export function useChartEvents(astronautId: string, metric: MetricCode | null, r
       if (a.astronautId !== astronautId) continue
       const aRegion = a.region ?? (a.metric ? METRIC_CATALOG[a.metric].region : null)
       if (metric && a.metric !== metric && aRegion !== region) continue
-      out.push({ id: `a-${a.id}`, t: a.createdAt, kind: 'alert', label: a.title, severity: a.severity, detail: a.acknowledgedAt != null ? t('shared.event.acknowledged') : a.resolvedAt != null ? t('shared.event.resolved') : t('shared.event.open') })
+      out.push({ id: `a-${a.id}`, t: a.createdAt, kind: 'alert', label: alertTitle(a), severity: a.severity, detail: a.acknowledgedAt != null ? t('shared.event.acknowledged') : a.resolvedAt != null ? t('shared.event.resolved') : t('shared.event.open') })
     }
     for (const i of interventions) {
       if (i.astronautId !== astronautId) continue

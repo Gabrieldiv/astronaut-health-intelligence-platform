@@ -13,7 +13,9 @@ import { ScenarioControl } from './ScenarioControl'
 import { ToolsMenu } from './ToolsMenu'
 import { usePriorityCollapse } from './usePriorityCollapse'
 import { CommsIndicator } from '../comms'
+import { ConnectivityChip } from '../connectivity'
 import { MissionProfileControl } from '../mission/MissionContext'
+import { MISSION_ACCENT } from '../mission/backdrops/facts'
 import { t, translatedRecord, useT } from '../../i18n'
 
 const PHASE_LABEL: Record<MissionPhase, string> = translatedRecord(['PRE_FLIGHT', 'IN_FLIGHT', 'POST_FLIGHT'] as const, (p) => t(`topbar.phase.${p}`))
@@ -247,6 +249,16 @@ const Divider = () => <div className="h-6 w-px shrink-0 bg-white/[0.08]" aria-hi
  *  - right: Earth link, Ground / Crew toggle, Tools menu, Start demo, alerts bell
  * Every control is 36 px tall (h-9) with a 12 px radius.
  */
+/** Thin underline in the mission accent color (same color as the stage platform ring). */
+function MissionAccent({ children }: { children: React.ReactNode }) {
+  const accent = MISSION_ACCENT[useAppStore((s) => s.missionProfileId)]
+  return (
+    <span className="relative flex shrink-0 rounded-xl transition-shadow duration-500" style={{ boxShadow: `inset 0 -2px 0 color-mix(in srgb, ${accent} 70%, transparent)` }}>
+      {children}
+    </span>
+  )
+}
+
 export function TopBar() {
   const { barRef, zoneSetters, level } = usePriorityCollapse(STEPS.length, 3)
   const on = (s: Step) => STEPS.indexOf(s) < level
@@ -261,7 +273,9 @@ export function TopBar() {
         <ProvenanceBadge />
         <Divider />
         {!on('missionName') && <MissionName />}
-        <MissionProfileControl showLabel={!on('profileLabel')} />
+        <MissionAccent>
+          <MissionProfileControl showLabel={!on('profileLabel')} />
+        </MissionAccent>
         <MissionClock />
       </div>
 
@@ -271,6 +285,7 @@ export function TopBar() {
 
       <div ref={zoneSetters[2]} className="flex w-max items-center gap-2 justify-self-end">
         {!on('crewDots') && <CrewDots />}
+        <ConnectivityChip />
         <div className={clsx('flex shrink-0 [&>button]:h-9 [&>button]:rounded-xl [&>button]:ring-white/[0.08]', on('commsLabel') && '[&>button]:px-2.5 [&>button>span:first-of-type]:hidden')}>
           <CommsIndicator />
         </div>

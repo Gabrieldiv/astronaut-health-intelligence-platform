@@ -2,7 +2,7 @@ import type { MouseEvent } from 'react'
 import { useT } from '../../i18n'
 
 const LINK =
-  'sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-lg focus:bg-accent focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-space-950 focus:outline-2 focus:outline-offset-2 focus:outline-white'
+  'sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-(--z-skip) focus:rounded-lg focus:bg-accent focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-space-950 focus:outline-2 focus:outline-offset-2 focus:outline-white'
 
 /** Moves keyboard focus to the target (made focusable just for this) instead of only scrolling to it. */
 function jump(e: MouseEvent<HTMLAnchorElement>, selector: string) {

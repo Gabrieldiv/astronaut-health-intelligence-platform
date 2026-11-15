@@ -3,6 +3,7 @@ import { METRIC_CATALOG } from '../../engine/catalog'
 import { RISK_ORDER, STATUS_META } from '../../lib/status'
 import { getBcp47, getLang, t, tp, type MessageKey } from '../../i18n'
 import { metricLabel, regionLabel, roleLabel } from '../../i18n/catalog'
+import { alertTitle, engineText, recTitle } from '../../i18n/engineText'
 
 /**
  * Spoken and announced text, built from the store with pure functions (unit tested).
@@ -87,7 +88,7 @@ const actionOf = (s: Status): string => (s === 'CRITICAL' || s === 'HIGH' || s =
 export function describeAlert(a: Alert, callsign: string | null): string {
   const who = callsign ? t('a11y.say.forCallsign', { callsign }) : t('a11y.say.forCabin')
   const loc = whereOf(a)
-  const title = a.title.trim().replace(/[.!]+$/, '')
+  const title = alertTitle(a).trim().replace(/[.!]+$/, '')
   return t('a11y.say.alert', { severity: severityWord(a), who, loc: loc ? `, ${loc}` : '', title, action: actionOf(a.severity) }).trim()
 }
 
@@ -107,7 +108,7 @@ export function describeStatusChange(callsign: string, prev: Status, next: Statu
 /** "ORION selected. Commander. Status: Watch, keep an eye. Sleep shorter than usual." */
 export function describeAstronaut(a: Astronaut, health: AstronautHealth | undefined): string {
   const status = crewStatusOf(health)
-  const headline = status === 'NO_DATA' ? '' : (health?.risk.headline ?? '').trim()
+  const headline = status === 'NO_DATA' ? '' : engineText('headline', health?.risk.headline ?? '').trim()
   return [t('a11y.say.astronautSelected', { callsign: a.callsign, role: roleLabel(a.role) }), t('a11y.say.status', { phrase: statusPhrase(status) }), headline && /[.!?]$/.test(headline) ? headline : headline ? `${headline}.` : '']
     .filter(Boolean)
     .join(' ')
@@ -134,7 +135,7 @@ export function describeRegion(callsign: string, region: BodyRegionId, health: A
   const rs = health?.regions[region]
   const status: Status = rs?.status ?? 'NO_DATA'
   const parts = [t('a11y.say.regionSelected', { label, callsign }), t('a11y.say.status', { phrase: statusPhrase(status) })]
-  const summary = rs?.summary?.trim()
+  const summary = rs?.summary ? engineText('regionSummary', rs.summary).trim() : undefined
   if (summary && status !== 'NO_DATA') parts.push(/[.!?]$/.test(summary) ? summary : `${summary}.`)
   parts.push(...regionReadings(health, region))
   return parts.join(' ')
@@ -165,7 +166,7 @@ export function describeScreen(s: ScreenState, view: 'ground' | 'crew' = 'ground
     const h = s.health[a.id]
     const status = crewStatusOf(h)
     parts.push(t('a11y.say.showing', { callsign: a.callsign, role: roleLabel(a.role) }), t('a11y.say.overall', { phrase: statusPhrase(status) }))
-    const headline = h?.risk.headline?.trim()
+    const headline = h?.risk.headline ? engineText('headline', h.risk.headline).trim() : undefined
     if (headline && status !== 'NO_DATA') parts.push(/[.!?]$/.test(headline) ? headline : `${headline}.`)
     if (s.selectedRegion) parts.push(t('a11y.say.regionIs', { label: regionLabel(s.selectedRegion) }))
   }
@@ -185,7 +186,7 @@ export function describeScreen(s: ScreenState, view: 'ground' | 'crew' = 'ground
     if (recs.length === 0) parts.push(t('a11y.say.noRecs'))
     else {
       parts.push(t('a11y.say.recs'))
-      recs.forEach((r, i) => parts.push(`${i + 1}. ${r.title.trim().replace(/[.!]+$/, '')}.`))
+      recs.forEach((r, i) => parts.push(`${i + 1}. ${recTitle(r).trim().replace(/[.!]+$/, '')}.`))
     }
   }
 

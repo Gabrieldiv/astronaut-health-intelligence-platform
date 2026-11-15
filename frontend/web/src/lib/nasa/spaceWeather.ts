@@ -1,5 +1,6 @@
 import type { SpaceWeatherEvent, SpaceWeatherEventKind, SpaceWeatherSnapshot } from '../../types/nasa'
 import { apiGet } from '../api/client'
+import { getConnectivityMode, type ConnectivityMode } from '../api/connectivity'
 
 /**
  * Loads recent space weather from NASA DONKI (REAL_PUBLIC context, not crew measurements).
@@ -9,13 +10,16 @@ import { apiGet } from '../api/client'
  *    download written by `python -m app.cli donki-snapshot` (mode "snapshot", real retrievedAt).
  *
  * Never throws for a missing backend, and never invents events: either source is real DONKI data.
+ * Offline mode (src/lib/api/connectivity.ts) skips step 1 entirely: no network request at all.
+ * Online mode still falls back to the snapshot when the API is unreachable, so the panel stays usable.
  */
 export async function loadSpaceWeather(): Promise<SpaceWeatherSnapshot> {
   const now = Date.now()
-  if (cache && now < cache.expires) return cache.value
-  const value = loadUncached()
+  const mode = getConnectivityMode()
+  if (cache && cache.mode === mode && now < cache.expires) return cache.value
+  const value = mode === 'offline' ? loadBundledSnapshot() : loadUncached()
   // A live answer is reused for 5 minutes; the snapshot only for 1 minute so a backend started later is picked up.
-  cache = { value, expires: now + 60_000 }
+  cache = { value, mode, expires: now + 60_000 }
   value.then(
     (s) => {
       if (cache?.value === value) cache.expires = Date.now() + (s.mode === 'live' ? 5 * 60_000 : 60_000)
@@ -27,7 +31,7 @@ export async function loadSpaceWeather(): Promise<SpaceWeatherSnapshot> {
   return value
 }
 
-let cache: { value: Promise<SpaceWeatherSnapshot>; expires: number } | null = null
+let cache: { value: Promise<SpaceWeatherSnapshot>; mode: ConnectivityMode; expires: number } | null = null
 
 /** Test helper. */
 export function resetSpaceWeatherCache(): void {

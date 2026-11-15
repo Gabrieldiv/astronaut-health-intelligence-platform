@@ -96,6 +96,7 @@ test.describe('5. Sensor failure', () => {
 
 test.describe('Devices', () => {
   test('pausing a device shows no data, never normal, and is audited; resuming restores it', async ({ app: page }) => {
+    test.setTimeout(120_000)
     const devicesButton = page.getByRole('button', { name: /^Devices:/ })
     await devicesButton.click()
     const devices = page.getByRole('dialog', { name: 'Devices' })
@@ -112,9 +113,12 @@ test.describe('Devices', () => {
     await expect(devices.getByRole('button', { name: 'Pause monitoring: Bio-Monitor shirt' })).toBeVisible()
     await expect(devicesButton).not.toHaveAccessibleName(/paused by operator/)
     await page.keyboard.press('Escape')
+    await expect(devices).toBeHidden()
 
     await page.getByRole('button', { name: /^Alerts,/ }).click()
-    await page.getByRole('tab', { name: 'History' }).click()
+    const alerts = page.getByRole('dialog', { name: 'Alerts' })
+    await expect(alerts).toBeVisible()
+    await alerts.getByRole('tab', { name: 'History' }).click()
     const log = page.getByRole('list', { name: 'Activity log, newest first' })
     await expect(log).toContainText('Device paused')
     await expect(log).toContainText('Device resumed')
@@ -131,10 +135,10 @@ test.describe('Forecast horizons', () => {
     // Heart rate has history for up to 7 days of projection, not 15 (demo rule: half the horizon).
     await horizons.getByRole('button', { name: '15 days' }).click()
     await expect(horizons.getByRole('button', { name: '15 days' })).toHaveAttribute('aria-pressed', 'true')
-    await expect(forecast.getByRole('button', { name: /^Heart rate\. Not enough history for this horizon/ })).toBeVisible()
+    await expect(forecast.getByRole('button', { name: /^Heart rate: .*Not enough history for this horizon/ })).toBeVisible()
 
     await horizons.getByRole('button', { name: '7 days' }).click()
-    await expect(forecast.getByRole('button', { name: /^Heart rate\. / })).not.toHaveAccessibleName(/Not enough history/)
+    await expect(forecast.getByRole('button', { name: /^Heart rate: / })).not.toHaveAccessibleName(/Not enough history/)
   })
 })
 

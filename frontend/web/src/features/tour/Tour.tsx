@@ -180,7 +180,7 @@ export function Tour() {
   const pos = placeCard(rect, cardH)
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[90]" aria-live="polite">
+    <div className="pointer-events-none fixed inset-0 z-(--z-tour)" aria-live="polite">
       {rect ? (
         <div className="tour-spotlight" style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }} aria-hidden />
       ) : (

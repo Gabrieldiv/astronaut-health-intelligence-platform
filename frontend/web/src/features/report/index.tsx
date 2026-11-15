@@ -14,6 +14,7 @@ import { COMM_KIND_LABEL, formatDelay } from '../comms/delay'
 import { INTERVENTION_LABEL } from '../timeline/labels'
 import { inEnglish, t, translatedRecord, useT } from '../../i18n'
 import { commProfileLabel, metricLabel, regionLabel, roleLabel, scenarioName } from '../../i18n/catalog'
+import { alertTitle, engineText, recTitle } from '../../i18n/engineText'
 
 const H = 3600000
 const WINDOW_H = 24
@@ -57,6 +58,18 @@ function notableForecasts(preds: Partial<Record<string, Prediction>> | undefined
     .sort((a, b) => (a.hoursToBandExit ?? 0) - (b.hoursToBandExit ?? 0))
 }
 
+// The snapshot keeps English (the plain text handover stays English); the page translates on render.
+const NO_LIVE_EN = 'No live readings from the wearable. Missing data is never treated as normal.'
+const NO_HEALTH_EN = 'No health data available.'
+const NO_CABIN_EN = 'Cabin environment summary not available.'
+
+function headlineText(english: string): string {
+  if (english === NO_LIVE_EN) return t('report.noLiveReadings')
+  if (english === NO_HEALTH_EN) return t('report.noHealthData')
+  if (english === NO_CABIN_EN) return t('report.cabinNoSummary')
+  return engineText('headline', english)
+}
+
 function buildSnapshot(s: AppState): Snapshot {
   const at = s.clock.simNow
   const from = at - WINDOW_H * H
@@ -73,7 +86,7 @@ function buildSnapshot(s: AppState): Snapshot {
     return {
       astronaut: c,
       status: level,
-      headline: h ? (lost ? 'No live readings from the wearable. Missing data is never treated as normal.' : h.risk.headline) : 'No health data available.',
+      headline: h ? (lost ? NO_LIVE_EN : h.risk.headline) : NO_HEALTH_EN,
       factors: [...(h?.risk.contributing_factors ?? [])].sort((a, b) => b.weight - a.weight).slice(0, 3),
       confidence: h ? h.risk.confidence : null,
       alerts: byTimeDesc(
@@ -100,7 +113,7 @@ function buildSnapshot(s: AppState): Snapshot {
     crew,
     cabin: {
       status: s.environment.status,
-      headline: s.environment.headline ?? 'Cabin environment summary not available.',
+      headline: s.environment.headline ?? NO_CABIN_EN,
       alerts: byTimeDesc(
         s.alerts.filter((a) => a.astronautId == null && (inWindow(a.createdAt) || (a.acknowledgedAt == null && a.resolvedAt == null))),
         (a) => a.createdAt,
@@ -196,14 +209,14 @@ function CrewBlock({ c, at }: { c: CrewSection; at: number }) {
         </h3>
         <StatusChip status={c.status} />
       </div>
-      <p className="rp-headline">{c.headline}</p>
+      <p className="rp-headline">{headlineText(c.headline)}</p>
       <div className="rp-grid">
         <div>
           <h4 className="rp-h4">{t('report.factors')}</h4>
           {c.factors.length ? (
             <ul className="rp-list">
               {c.factors.map((f) => (
-                <li key={f.label}>{f.label}</li>
+                <li key={f.label}>{engineText('factor', f.label, f.msg)}</li>
               ))}
             </ul>
           ) : (
@@ -235,7 +248,7 @@ function CrewBlock({ c, at }: { c: CrewSection; at: number }) {
                   <StatusIcon status={a.severity} size={11} /> {STATUS_META[a.severity].label}
                 </td>
                 <td>
-                  {a.title}
+                  {alertTitle(a)}
                   {alertWhere(a) && <span className="rp-muted"> · {alertWhere(a)}</span>}
                 </td>
                 <td className="rp-muted">{alertState(a, at)}</td>
@@ -283,7 +296,7 @@ function CrewBlock({ c, at }: { c: CrewSection; at: number }) {
         <ul className="rp-list">
           {c.pending.map((r) => (
             <li key={r.id}>
-              <strong>{r.title}</strong>{' '}
+              <strong>{recTitle(r)}</strong>{' '}
               <span className="rp-muted">
                 ({t('report.priorityWord', { priority: PRIORITY_LABEL[r.priority] })}, {AUDIENCE_LABEL[r.audience]}
                 {r.requiresHumanReview ? t('report.needsReview') : ''}
@@ -412,7 +425,7 @@ function ReportDocument({ snap }: { snap: Snapshot }) {
               <td style={{ whiteSpace: 'nowrap' }}>
                 <StatusIcon status={c.status} size={12} /> {STATUS_META[c.status].label}
               </td>
-              <td className="rp-muted">{c.headline}</td>
+              <td className="rp-muted">{headlineText(c.headline)}</td>
               <td className="tabular" style={{ textAlign: 'right' }}>
                 {c.alerts.filter((a) => a.acknowledgedAt == null && a.resolvedAt == null).length}
               </td>
@@ -426,7 +439,7 @@ function ReportDocument({ snap }: { snap: Snapshot }) {
             <td style={{ whiteSpace: 'nowrap' }}>
               <StatusIcon status={snap.cabin.status} size={12} /> {STATUS_META[snap.cabin.status].label}
             </td>
-            <td className="rp-muted">{snap.cabin.headline}</td>
+            <td className="rp-muted">{headlineText(snap.cabin.headline)}</td>
             <td className="tabular" style={{ textAlign: 'right' }}>
               {snap.cabin.alerts.filter((a) => a.acknowledgedAt == null && a.resolvedAt == null).length}
             </td>
@@ -448,13 +461,13 @@ function ReportDocument({ snap }: { snap: Snapshot }) {
           <h3 className="rp-h3">{t('report.cabin')}</h3>
           <StatusChip status={snap.cabin.status} />
         </div>
-        <p className="rp-headline">{snap.cabin.headline}</p>
+        <p className="rp-headline">{headlineText(snap.cabin.headline)}</p>
         <h4 className="rp-h4">{t('report.alerts')}</h4>
         {snap.cabin.alerts.length ? (
           <ul className="rp-list">
             {snap.cabin.alerts.slice(0, 8).map((a) => (
               <li key={a.id}>
-                <span className="tabular rp-muted">{formatUtcTime(a.createdAt, false)}</span> {STATUS_META[a.severity].label}: {a.title} <span className="rp-muted">({alertState(a, snap.at)})</span>
+                <span className="tabular rp-muted">{formatUtcTime(a.createdAt, false)}</span> {STATUS_META[a.severity].label}: {alertTitle(a)} <span className="rp-muted">({alertState(a, snap.at)})</span>
               </li>
             ))}
           </ul>
@@ -477,7 +490,7 @@ function ReportDocument({ snap }: { snap: Snapshot }) {
             <ul className="rp-list">
               {snap.cabin.pending.map((r) => (
                 <li key={r.id}>
-                  <strong>{r.title}</strong> <span className="rp-muted">({t('report.priorityWord', { priority: PRIORITY_LABEL[r.priority] })})</span>
+                  <strong>{recTitle(r)}</strong> <span className="rp-muted">({t('report.priorityWord', { priority: PRIORITY_LABEL[r.priority] })})</span>
                 </li>
               ))}
             </ul>

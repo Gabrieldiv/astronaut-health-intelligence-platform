@@ -1,20 +1,24 @@
 import clsx from 'clsx'
 import { ChevronDown, ChevronLeft, FlaskConical, Signal } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
 import type { BodyRegionId, MetricCode, Status } from '../../types/domain'
 import { METRIC_CATALOG } from '../../engine/catalog'
 import { useT } from '../../i18n'
+import { engineText } from '../../i18n/engineText'
+import { Details } from '../../components/viz/Details'
 import { tx } from '../../i18n/rich'
 import { metricLabel, metricPlain, regionDescription, regionLabel, regionSystem } from '../../i18n/catalog'
 import { MetricValue } from '../../components/MetricValue'
-import { StatusDot, StatusIcon, StatusPill } from '../../components/Status'
+import { StatusDot, StatusIcon } from '../../components/Status'
+import { Sparkline } from '../../components/Sparkline'
+import { BandGauge } from '../../components/viz/BandGauge'
 import { EventLegend, TrendChart } from '../../components/TrendChart'
 import { BaselineInfo } from '../../components/BaselineInfo'
 import { Badge, IconButton } from '../../components/ui'
-import { ORIGIN_LABEL, QUALITY_LABEL, deltaVsNormal, fmtMetric } from '../../components/format'
+import { ORIGIN_LABEL, QUALITY_LABEL, deltaVsNormal, fmtMetric, lastHours, relTime } from '../../components/format'
 import { REGION_ICON } from '../stage/CenterStage'
 import { regionMetricsFromCatalog, useActions, useChartEvents } from '../shared/hooks'
 import { RegionAlertsJump, RegionEvents } from './RegionEvents'
@@ -22,6 +26,7 @@ import { MeasuredBy } from './MeasuredBy'
 import { forHorizon, historyNote, useForecastHorizon } from './forecastHorizon'
 import { HorizonPicker } from './HorizonPicker'
 import { ExamHistory } from './ExamHistory'
+import { FeedAwareStatusPill, FeedLabel, PAUSED_COLOR, PausedNotice, useFeedState } from './FeedStatus'
 
 const WINDOWS = [6, 24, 72] as const
 
@@ -43,6 +48,15 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
   const t = useT()
   const bandText = b && b.status === 'READY' ? t('attention.range', { low: fmtMetric(metric, b.low), high: fmtMetric(metric, b.high), unit: def.unit }) : t('attention.stillLearningNormal')
   const id = `metric-${metric}`
+  const feed = useFeedState(astronautId, metric)
+  const simNow = useAppStore((s) => Math.floor(s.clock.simNow / 60000) * 60000)
+  const spark = useMemo(() => lastHours(history, 24), [history])
+  const live = feed === 'LIVE'
+  const color = !live ? (feed === 'PAUSED' ? PAUSED_COLOR : STATUS_META.NO_DATA.color) : meta.color === STATUS_META.LOW.color ? '#5eead4' : meta.color
+  const ready = b && b.status === 'READY'
+  const gaugeLabel = live
+    ? t('visual.gaugeAria', { metric: metricLabel(metric), value: fmtMetric(metric, ms?.current), unit: def.unit, band: bandText, status: `${meta.crewLabel}, ${delta.text}` })
+    : t('visual.gaugeAriaNoValue', { metric: metricLabel(metric), state: t(`visual.feed.${feed}`), band: bandText })
   return (
     <li
       className={clsx('rounded-xl ring-1 transition-colors', expanded ? 'bg-white/[0.05] ring-white/15' : 'bg-white/[0.025] ring-white/[0.06]', noData && 'border border-dashed border-nodata/40 ring-0')}
@@ -55,31 +69,39 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
           <span className="flex items-baseline justify-between gap-2">
             <span className="truncate text-[13px] font-semibold text-ink-100">{metricLabel(metric)}</span>
             <span className="flex shrink-0 items-baseline gap-1">
-              {noData ? (
-                <span className="text-sm font-semibold text-nodata">{t('attention.signalLost')}</span>
-              ) : (
+              {live ? (
                 <>
                   <MetricValue value={ms?.current} decimals={def.decimals} className="text-[20px] leading-none font-semibold text-ink-100" />
                   <span className="text-[11px] text-ink-500">{def.unit}</span>
                 </>
+              ) : (
+                <FeedLabel feed={feed} className="text-sm" />
               )}
             </span>
           </span>
-          <span className="mt-1 flex items-center justify-between gap-2 text-xs">
-            <span className={clsx('flex items-center gap-1 font-medium')} style={{ color: delta.tone === 'in' ? '#a9b6cf' : meta.color }}>
-              <StatusIcon status={status} size={12} />
-              {delta.text}
-            </span>
-            <span className="text-[11px] text-ink-500">{meta.crewLabel}</span>
+          <BandGauge value={live ? ms?.current : null} low={ready ? b.low : null} high={ready ? b.high : null} color={color} label={gaugeLabel} className="mt-2" height={8} />
+          <span className="mt-1.5 flex items-center justify-between gap-2 text-[11px]">
+            {live ? (
+              <span className="flex items-center gap-1 font-medium" style={{ color: delta.tone === 'in' ? '#a9b6cf' : meta.color }}>
+                <StatusIcon status={status} size={12} />
+                {delta.short}
+              </span>
+            ) : (
+              <span className="text-ink-500">{feed === 'LOST' ? meta.crewLabel : t(feed === 'PAUSED' ? 'visual.feed.pausedHint' : 'visual.feed.waitingHint')}</span>
+            )}
+            <span className="tabular shrink-0 text-ink-500">{ready ? t('visual.normalShort', { low: fmtMetric(metric, b.low), high: fmtMetric(metric, b.high) }) : t('visual.learning')}</span>
+          </span>
+          <span className="mt-1 flex items-center gap-2 text-[10px] text-ink-500" aria-hidden>
+            <span className="shrink-0 font-semibold tracking-wide uppercase">{t('visual.last24h')}</span>
+            <Sparkline points={spark} color={color} band={ready ? { low: b.low, high: b.high } : null} height={20} className="min-w-0 flex-1" maxPoints={60} />
+            <span className="tabular shrink-0">{ms && ms.lastUpdated > 0 ? t('visual.updated', { when: relTime(ms.lastUpdated, simNow) }) : t('visual.noUpdate')}</span>
           </span>
         </span>
         <ChevronDown size={14} className={clsx('mt-1 shrink-0 text-ink-500 transition-transform', expanded && 'rotate-180')} aria-hidden />
       </button>
       <div className="flex items-center gap-1 pr-3 pb-2.5 pl-[33px] text-[11px] text-ink-500">
-        <span>
-          {tx('attention.yourNormal', { band: <span className="tabular text-ink-300">{bandText}</span> })}
-          {ms?.zScore != null && !noData && <span className="tabular present:hidden"> · z {ms.zScore.toFixed(1)}</span>}
-        </span>
+        <span className="sr-only">{tx('attention.yourNormal', { band: <span>{bandText}</span> })}</span>
+        {ms?.zScore != null && !noData && <span className="tabular present:hidden">z {ms.zScore.toFixed(1)}</span>}
         <BaselineInfo metric={metric} baseline={b} />
       </div>
       {expanded && (
@@ -108,7 +130,7 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
               ))}
             </div>
           </div>
-          <TrendChart metric={metric} history={history ?? []} baseline={b ?? null} prediction={prediction ?? null} color={noData ? '#94a3b8' : meta.color === STATUS_META.LOW.color ? '#5eead4' : meta.color} windowHours={win} height={170} events={events} />
+          <TrendChart metric={metric} history={history ?? []} baseline={b ?? null} prediction={prediction ?? null} color={color} windowHours={win} height={170} events={events} />
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-ink-500 present:hidden">
             <span className="flex items-center gap-1">
               <span className="inline-block h-2 w-3 rounded-sm bg-accent/20 ring-1 ring-accent/40" aria-hidden /> {t('attention.legend.band')}
@@ -194,13 +216,14 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
                 <div className="text-xs text-ink-500">{label.system}</div>
               </div>
             </div>
-            <StatusPill status={status} />
+            <FeedAwareStatusPill astronautId={astronautId} metrics={metrics} status={status} />
           </div>
-          {summary && <p className="mt-3 text-[14px] leading-snug text-ink-100">{summary}</p>}
-          <p className="mt-1.5 text-xs leading-relaxed text-ink-500">{label.description}</p>
+          {summary && <p className="mt-3 text-[13px] leading-snug text-ink-100">{engineText('regionSummary', summary, region)}</p>}
+          <Details className="mt-1.5">{label.description}</Details>
         </div>
       )}
       <RegionAlertsJump astronautId={astronautId} region={region} />
+      {region !== 'eyes' && region !== 'ears' && <PausedNotice astronautId={astronautId} metrics={metrics} />}
       {region === 'eyes' || region === 'ears' ? (
         // periodic exams: a session history instead of live trend charts
         <ExamHistory astronautId={astronautId} region={region} />

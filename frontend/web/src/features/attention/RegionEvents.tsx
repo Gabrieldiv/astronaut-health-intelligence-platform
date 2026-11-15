@@ -15,6 +15,7 @@ import { StatusIcon, StatusPill } from '../../components/Status'
 import { Badge, SectionLabel } from '../../components/ui'
 import { ORIGIN_LABEL, fmtMetric, formatUtcTime, relTime } from '../../components/format'
 import { ANOMALY_METHOD_LABEL, observedAt, regionAlerts, regionAnomalies } from '../anatomy/atlas/health'
+import { alertTitle } from '../../i18n/engineText'
 
 /** Statistical flags older than this (sim time) are history, not part of the current picture. */
 const ANOMALY_WINDOW_MS = 24 * 3_600_000
@@ -92,7 +93,7 @@ function AlertRow({ astronautId, alert, now }: { astronautId: string; alert: Ale
           {formatUtcTime(alert.createdAt, false)} UTC · {relTime(alert.createdAt, now)}
         </span>
       </div>
-      <div className="mt-1.5 text-[13px] leading-snug font-semibold text-ink-100">{alert.title}</div>
+      <div className="mt-1.5 text-[13px] leading-snug font-semibold text-ink-100">{alertTitle(alert)}</div>
       {def && (
         <button
           type="button"

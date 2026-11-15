@@ -5,8 +5,12 @@
  * The app never depends on the API: every caller has an offline path. Configure the base URL with
  * VITE_API_URL (default http://localhost:8000); set VITE_API_URL=off for static hosting so the app
  * goes straight to offline demo mode without any network attempt.
+ *
+ * The online and offline switch (connectivity.ts) applies here too: in offline mode no request
+ * leaves the browser, and the backend status says so.
  */
 import type { components, paths } from '../../types/api.gen'
+import { apiDisabledByBuild, getConnectivityMode, networkAllowed, recordBackendStatus, type ConnectivityMode } from './connectivity'
 
 export type ApiSchemas = components['schemas']
 export type ApiHealth = ApiSchemas['HealthStatus']
@@ -18,8 +22,8 @@ export const DEFAULT_TIMEOUT_MS = 3500
 
 /** Base URL of the API, or null when the API is disabled for this build. */
 export function apiBaseUrl(): string | null {
+  if (apiDisabledByBuild()) return null
   const raw = (import.meta.env.VITE_API_URL as string | undefined)?.trim()
-  if (raw && ['off', 'none', 'false', '0'].includes(raw.toLowerCase())) return null
   return (raw || DEFAULT_API_URL).replace(/\/+$/, '')
 }
 
@@ -47,6 +51,7 @@ export interface GetOptions<P extends GetPaths> {
 export async function apiGet<P extends GetPaths>(path: P, opts: GetOptions<P> = {}): Promise<GetResponse<P>> {
   const base = apiBaseUrl()
   if (base === null) throw new ApiError('API disabled for this build (VITE_API_URL=off)')
+  if (!networkAllowed()) throw new ApiError('Offline mode is on: the app does not use the network')
   const url = new URL(base + path)
   for (const [k, v] of Object.entries((opts.query ?? {}) as Record<string, unknown>)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v))
@@ -93,7 +98,7 @@ function isHealth(v: unknown): v is ApiHealth {
 }
 
 const STATUS_TTL_MS = 30_000
-let statusCache: { at: number; value: Promise<BackendStatus> } | null = null
+let statusCache: { at: number; mode: ConnectivityMode; value: Promise<BackendStatus> } | null = null
 
 /**
  * Detects whether the AHI API is reachable. Never throws: an unreachable API is "offline demo mode".
@@ -101,9 +106,14 @@ let statusCache: { at: number; value: Promise<BackendStatus> } | null = null
  */
 export function getBackendStatus(opts: { force?: boolean; timeoutMs?: number } = {}): Promise<BackendStatus> {
   const now = Date.now()
-  if (!opts.force && statusCache && now - statusCache.at < STATUS_TTL_MS) return statusCache.value
+  const mode = getConnectivityMode()
+  if (!opts.force && statusCache && statusCache.mode === mode && now - statusCache.at < STATUS_TTL_MS) return statusCache.value
   const value = probe(opts.timeoutMs ?? 2500)
-  statusCache = { at: now, value }
+  statusCache = { at: now, mode, value }
+  void value.then((s) => {
+    // A probe that finished after a mode change describes the old mode: do not publish it.
+    if (statusCache?.value === value && getConnectivityMode() === mode) recordBackendStatus(s)
+  })
   return value
 }
 
@@ -111,6 +121,7 @@ async function probe(timeoutMs: number): Promise<BackendStatus> {
   const baseUrl = apiBaseUrl()
   const checkedAt = new Date().toISOString()
   if (baseUrl === null) return { kind: 'offline', baseUrl, reason: 'API disabled for this build', checkedAt }
+  if (!networkAllowed()) return { kind: 'offline', baseUrl, reason: 'Offline mode is on', checkedAt }
   try {
     const health = await apiGet('/api/v1/health', { timeoutMs })
     if (!isHealth(health)) return { kind: 'offline', baseUrl, reason: 'The server at this address is not the AHI API', checkedAt }

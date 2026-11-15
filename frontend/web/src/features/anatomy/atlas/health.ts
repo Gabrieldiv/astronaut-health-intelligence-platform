@@ -40,6 +40,7 @@ import type { Alert, Anomaly, AppState, AstronautHealth, BodyRegionId, MetricCod
 import { METRIC_CATALOG } from '../../../engine/catalog'
 import type { AnatomySystemId, AtlasManifest, AtlasStructure } from './types'
 import { t, translatedRecord } from '../../../i18n'
+import { engineText } from '../../../i18n/engineText'
 
 // ---------------------------------------------------------------------------
 // Structure -> region
@@ -409,7 +410,7 @@ export function selectStructureHealth(
     region,
     monitored: true,
     status: structureStatus(health, structure),
-    summary: health?.regions?.[region]?.summary ?? '',
+    summary: engineText('regionSummary', health?.regions?.[region]?.summary ?? '', health?.regions?.[region]?.summaryMsg),
     metricCodes,
     metrics,
     missing,

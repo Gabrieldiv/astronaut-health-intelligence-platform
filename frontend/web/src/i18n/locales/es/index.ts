@@ -21,6 +21,10 @@ import comms from './comms'
 import whatif from './whatif'
 import tour from './tour'
 import stage from './stage'
+import connectivity from './connectivity'
+import backdrop from './backdrop'
+import visual from './visual'
+import engine from './engine'
 
 const messages: Messages = {
   ...catalog,
@@ -44,5 +48,9 @@ const messages: Messages = {
   ...whatif,
   ...tour,
   ...stage,
+  ...connectivity,
+  ...backdrop,
+  ...visual,
+  ...engine,
 }
 export default messages

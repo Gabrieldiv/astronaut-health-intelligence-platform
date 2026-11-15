@@ -72,7 +72,7 @@ export function Modal({
   }, [open])
   if (!open) return null
   return createPortal(
-    <div className={clsx('ahi-modal-host fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6', hostClassName)}>
+    <div className={clsx('ahi-modal-host fixed inset-0 z-(--z-dialog) flex items-center justify-center p-3 sm:p-6', hostClassName)}>
       <div className="ahi-modal-scrim animate-fade-in absolute inset-0 bg-space-950/65 backdrop-blur-[3px]" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
