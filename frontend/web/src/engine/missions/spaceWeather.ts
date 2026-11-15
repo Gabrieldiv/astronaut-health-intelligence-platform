@@ -124,7 +124,7 @@ export function assessSpaceWeather(snapshot: SpaceWeatherSnapshot | null, profil
       ...base,
       kind: 'QUIET',
       level: 'LOW',
-      title: 'No major solar event in the last days',
+      title: `No major solar event in the last ${SPACE_WEATHER.recentHours} hours`,
       body: `No solar energetic particle event or X class flare in NASA DONKI in the ${SPACE_WEATHER.recentHours} h before the data was retrieved.`,
       autonomy: null,
       triggers: [],

@@ -127,6 +127,26 @@ Quality summary: CBC 553 of 560 expected cells present (7 missing rows, mostly M
 - OSD-575's description lists post-flight time points R+1, R+45, R+82, but the CMP file and sample list also contain R+194. Shown as found in the file and flagged in the manifest.
 - Fasting status for glucose is not stated. Age is not stated. Sample collection time of day is not stated.
 - Multiplex cytokine panels (OSD-575 Eve and Alamar, OSD-656 urine) were not imported; they are normalized relative values and would need careful explanation.
-- Not yet validated: NASA EDA cabin environment downloads, NASA RadLab dosimetry coverage, NASA Life Sciences Portal (NLSP) resources, Standard Measures datasets. None was assumed to have a usable public API.
+- Not yet validated: NASA RadLab dosimetry coverage, NASA Life Sciences Portal (NLSP) resources, Standard Measures datasets. None was assumed to have a usable public API.
 - OSDR search does not index every study (OSD-575 and OSD-656 were missing from search results), so this inventory may miss relevant studies.
 - These datasets are reference only: they do not calibrate baselines, train models or set thresholds in the AHI engine.
+
+## 7. NASA EDA: ISS cabin environment and radiation dose (added 2026-11-15)
+
+| Field | Value |
+| --- | --- |
+| Source and URL | NASA OSDR Environmental Data Application, https://visualization.osdr.nasa.gov/eda/ ; REST API documented at https://visualization.osdr.nasa.gov/eda/api_reference |
+| Date of consultation | 2026-11-15 |
+| Organism and population | None: ISS cabin environment during rodent (RR) and plant (APEX, VEG) payload missions. Not crew data |
+| Population type | NOT_APPLICABLE (subject_id CABIN) |
+| Missions and phases | 24 missions listed; telemetry with ISS CO2 in 10 (RR-1, 3, 5, 6, 7, 9, 10, 12, 19, 23); daily radiation in 12. All values are IN_FLIGHT (ISS); payload phase kept in metadata |
+| Metrics and units | Temp_degC_ISS (degC), RH_percent_ISS (%), CO2_ppm_ISS (ppm), radiation GCR, SAA and total in mGy/day, absorbed dose in water converted from silicon, preliminary SRAG NASA-JSC analysis |
+| Frequency and period | Telemetry 1 to 10 min, 2014 to 2024; radiation daily |
+| Files, size and format | JSON from the API, one telemetry and one radiation file per mission in data/raw/EDA/ (about 150 MB total); SHA-256 per file in data/manifests/EDA.json |
+| License and access | Public, anonymous; license not stated. *_ground columns (ground control cages) excluded |
+| Quality | RR-18 has 1434 RH values above 100% (flagged QUESTIONABLE). RR-4, 8, 17, 22, VEG-01B return no telemetry; APEX and VEG-01A, 01C return rows with empty ISS columns |
+| AHI metrics fed | CO2, CABIN_TEMPERATURE, RELATIVE_HUMIDITY, RADIATION_DOSE_RATE (REAL_PUBLIC), RADIATION_DOSE (DERIVED running sum) |
+| Decision | Chosen. Full replay for RR-7 (2018, 76 days of dose) and RR-12 (2019, complete) in data/processed/EDA-<mission>.observations.json; daily summary for every mission in data/processed/EDA.daily.json |
+| Limitations | Historical replay, never live. Cabin values are not crew exposure. activity context is unknown (null). Radiation is preliminary analysis per the source |
+
+Thresholds, calibration ranges and the full workbook: data/references/ and data/AHI_dados_reais_publicos.xlsx.
