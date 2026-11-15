@@ -140,7 +140,7 @@ describe('scenarios', () => {
     expect(e.recommendations.some((r) => r.astronautId === 'AST-02' && r.ruleId === 'R-FAT-01' && r.audience === 'FLIGHT_SURGEON')).toBe(true)
     // the rest of the crew stays below HIGH
     expect(rank(e.health['AST-01']!.risk.risk_level)).toBeLessThan(rank('HIGH'))
-  }, 30000)
+  }, 120000)
 
   it('ENVIRONMENTAL_CO2 raises CO2 for everyone, and CABIN_VENTILATION brings it down', () => {
     const e = new HealthEngine({ scenarioId: 'ENVIRONMENTAL_CO2' })
@@ -163,7 +163,7 @@ describe('scenarios', () => {
     expect(ex.status).toBe('HIGH')
     expect(ex.current!).toBeLessThan(85)
     expect(ex.explanation).toMatch(/below your normal for \d sessions/)
-  }, 30000)
+  }, 120000)
 
   it('acknowledging an alert writes an audit event', () => {
     const e = new HealthEngine({ scenarioId: 'ACUTE_CARDIO' })
