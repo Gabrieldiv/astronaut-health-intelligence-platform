@@ -359,3 +359,41 @@ export const FORECAST_HORIZONS = {
   /** Points kept per projection for charts (computed at full resolution, then thinned). */
   maxPoints: 72,
 } as const
+
+// ---------------------------------------------------------------------------
+// v4: mission profiles (src/engine/missions). Reference values with citations live in
+// src/engine/missions/profiles.ts; the numbers below are DEMO CONFIGURATION, NOT OFFICIAL
+// LIMITS, used only to shape the simulation and the messages.
+// ---------------------------------------------------------------------------
+
+export const MISSION_PROFILE_SIM = {
+  /**
+   * Launch profile: dosimeters show an order of magnitude ground background level (µGy/h).
+   * Demo configuration, not a reference value: the ascent dose itself is negligible.
+   */
+  launchBackgroundUGyPerHour: 0.1,
+  /** Deep space dose rate: slow wobble around the reference mean (fraction, simulated GCR variation). */
+  deepSpaceSlowWobble: 0.04,
+  deepSpaceSlowPeriodHours: 27 * 24,
+  /** Deep space dose rate: short term noise (fraction of the mean, per noise bin). */
+  deepSpaceNoise: 0.03,
+  deepSpaceNoiseBinMin: 5,
+} as const
+
+export const SPACE_WEATHER = {
+  /**
+   * A DONKI event counts as "recent" when it started at most this many hours before the data
+   * was retrieved. Demo configuration, not an operational flight rule.
+   */
+  recentHours: 72,
+  /** Flare class letters that raise the alert (NOAA SWPC classes: X means peak flux of 1e-4 W/m2 or more). */
+  strongFlareClasses: ['X'] as readonly string[],
+} as const
+
+/** Autonomy messaging by one way light time (seconds). Demo configuration. */
+export const AUTONOMY = {
+  /** Below this one way delay, ground support is near real time. */
+  nearRealTimeMaxSec: 1,
+  /** At or above this one way delay, the crew acts first and the ground reviews later. */
+  crewFirstMinSec: 60,
+} as const

@@ -35,6 +35,7 @@ import type {
   MetricState,
   Mission,
   MissionDaySummary,
+  MissionProfileId,
   Prediction,
   RiskLevel,
   ScenarioId,
@@ -89,6 +90,7 @@ import { AstronautPhysiology } from './sim/physiology'
 import { buildProfile } from './sim/profiles'
 import { ScenarioModel } from './sim/scenarios'
 import { SCHEDULE, dayIndex } from './sim/schedule'
+import { DEFAULT_MISSION_PROFILE, doseScaleVsOrbitalModel, missionDoseRate, missionProfile } from './missions'
 
 export interface EngineOptions {
   scenarioId: ScenarioId
@@ -102,6 +104,8 @@ export interface EngineOptions {
   commProfileId?: CommProfileId
   /** Compute status frames during pre-generation for this many hours (default TIMELINE.pregenHours). */
   timelinePregenHours?: number
+  /** Additive (v4): mission profile (dose rate, vehicle label, recommendation context). Default ISS. */
+  missionProfileId?: MissionProfileId
 }
 
 export interface InterventionInput {
@@ -232,6 +236,8 @@ export class HealthEngine implements SimWorld {
   audit: AuditEvent[] = []
   mission: Mission
   commProfileId: CommProfileId
+  /** v4: mission profile, fixed for the life of the engine (the store restarts on change). */
+  readonly missionProfileId: MissionProfileId
   checkIns: CheckIn[] = []
   missionDays: Record<string, MissionDaySummary[]> = {}
   statusTimeline: StatusFrame[] = []
@@ -272,19 +278,22 @@ export class HealthEngine implements SimWorld {
     this.dailyStart = this.startedAt - dailyDays * DAY_MS
     this.timelinePregenFrom = this.startedAt - (opts.timelinePregenHours ?? TIMELINE.pregenHours) * HOUR_MS
     this.commProfileId = opts.commProfileId ?? COMMS.defaultProfile
-    this.mission = { ...MISSION, commDelaySec: commProfileById(this.commProfileId).oneWayDelaySec }
+    this.missionProfileId = opts.missionProfileId ?? DEFAULT_MISSION_PROFILE
+    this.mission = { ...MISSION, vehicle: missionProfile(this.missionProfileId).vehicle, commDelaySec: commProfileById(this.commProfileId).oneWayDelaySec }
     this.commMgr = new CommManager(this.seed)
+    // v4: prior mission dose follows the profile mean dose rate (mission profile dose model).
+    const priorDosePerDay = PRIOR_DOSE_PER_DAY * doseScaleVsOrbitalModel(this.missionProfileId)
 
     const sc = this.scenario
     this.crewBase.forEach((a, i) => {
       const profile = buildProfile(a, i, this.seed)
       const fx = { fatigue: (t: number) => sc.fatigue(a.id, t), acute: (t: number) => sc.acute(a.id, t), perfLoss: (t: number) => sc.perfLoss(a.id, t) }
       this.physioMap.set(a.id, new AstronautPhysiology(a.id, profile, this.seed, fx))
-      const initDose = (PRIOR_DOSE_PER_DAY * profile.shieldFactor * Math.max(0, histStart - MISSION_START)) / DAY_MS
+      const initDose = (priorDosePerDay * profile.shieldFactor * Math.max(0, histStart - MISSION_START)) / DAY_MS
       this.doses.set(a.id, initDose)
       // Dose at the start of the day that contains histStart (for the mission day view).
       const dH = dayIndex(histStart)
-      const startOfDay = initDose - (PRIOR_DOSE_PER_DAY * profile.shieldFactor * (histStart - dH * DAY_MS)) / DAY_MS
+      const startOfDay = initDose - (priorDosePerDay * profile.shieldFactor * (histStart - dH * DAY_MS)) / DAY_MS
       this.doseAtDayStart.set(a.id, new Map([[dH, startOfDay]]))
       this.checkInsBy.set(a.id, [])
       this.manualDays.set(a.id, new Set())
@@ -329,7 +338,7 @@ export class HealthEngine implements SimWorld {
     this.addAudit(
       'SCENARIO_CHANGED',
       'system',
-      `Scenario "${name}" started. Simulation reset (seed ${this.seed}); ${historyDays} days of simulated history regenerated. All device data is SIMULATED.`,
+      `Scenario "${name}" started (mission profile: ${missionProfile(this.missionProfileId).label}). Simulation reset (seed ${this.seed}); ${historyDays} days of simulated history regenerated. All device data is SIMULATED.`,
     )
     this.evaluate()
   }
@@ -402,6 +411,8 @@ export class HealthEngine implements SimWorld {
     const prevT = this.simTime
     const sc = this.scenario
     const cabin = this.cabinModel.step(t, dtMin, sc.co2Add(t))
+    // v4: the dose rate follows the mission profile (missions/dose.ts); dosimeters read it from the cabin truth.
+    cabin.doseRate = missionDoseRate(this.missionProfileId, t, cabin.doseRate, this.seed)
     for (const id of this.crewIds) {
       this.physioMap.get(id)!.step(
         t,
@@ -835,7 +846,7 @@ export class HealthEngine implements SimWorld {
         `Alert ${a.id} (${a.severity}: ${a.title}) not acknowledged for ${fmtDuration((a.escalatedAt ?? now) - a.createdAt)}: escalation level ${a.escalationLevel}, ${step}.`,
       )
     }
-    if (this.recMgr.sync(actionable, now, { profile: this.commProfile, reviewMin: COMMS.reviewMinMin })) this.versions.recommendations++
+    if (this.recMgr.sync(actionable, now, { profile: this.commProfile, reviewMin: COMMS.reviewMinMin, missionProfileId: this.missionProfileId })) this.versions.recommendations++
 
     // Earth link: deliveries and simulated ground replies up to the precise clock.
     this.processComms()

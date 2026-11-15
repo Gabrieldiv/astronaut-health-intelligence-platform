@@ -655,4 +655,18 @@ export interface AppStateV2 {
   submitCheckIn: (input: Omit<CheckIn, 'id' | 'at' | 'data_origin'>) => void
   /** Pure projection: two trajectories for the next hours, with and without the intervention. */
   compareIntervention: (input: { astronautId: string; kind: InterventionKind; metric?: MetricCode; horizonHours?: number }) => InterventionComparison | null
+  /**
+   * Additive (v4, mission profiles): active mission context (src/engine/missions). Orthogonal to
+   * the scenario; changing it restarts the simulation like a scenario change, keeps the scenario,
+   * and switches the Earth link to the profile default comm profile.
+   */
+  missionProfileId: MissionProfileId
+  setMissionProfile: (id: MissionProfileId) => void
 }
+
+// ---------------------------------------------------------------------------
+// v4 additions (mission profiles). All additive.
+// ---------------------------------------------------------------------------
+
+/** Mission context with its own exposure (radiation, gravity, distance, delay). */
+export type MissionProfileId = 'LAUNCH' | 'ISS' | 'MOON' | 'MARS_TRANSIT'

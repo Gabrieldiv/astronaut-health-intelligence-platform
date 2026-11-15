@@ -13,6 +13,7 @@ import { ScenarioControl } from './ScenarioControl'
 import { ToolsMenu } from './ToolsMenu'
 import { usePriorityCollapse } from './usePriorityCollapse'
 import { CommsIndicator } from '../comms'
+import { MissionProfileControl } from '../mission/MissionContext'
 
 const PHASE_LABEL: Record<MissionPhase, string> = { PRE_FLIGHT: 'Pre-flight', IN_FLIGHT: 'In flight', POST_FLIGHT: 'Post-flight' }
 
@@ -31,6 +32,7 @@ const STEPS = [
   'missionName', // mission name block (MET stays)
   'restartToMenu', // restart button moves into the Tools menu
   'commsLabel', // Earth link delay text (icon and in-transit count stay)
+  'profileLabel', // mission profile name (icon, advisory dot and tooltip stay)
   'wordmark', // "AHI" text next to the logo
   'scenarioName', // scenario name (tooltip and accessible name keep it)
   'demoShort', // "Start demo" becomes "Demo"
@@ -236,7 +238,7 @@ const Divider = () => <div className="h-6 w-px shrink-0 bg-white/[0.08]" aria-hi
 /**
  * Three zones on a `1fr auto 1fr` grid, so the scenario player sits at the true center whenever
  * the sides allow it:
- *  - left: logo, SIMULATED chip, mission name, MET clock (UTC in its tooltip)
+ *  - left: logo, SIMULATED chip, mission name, mission profile selector, MET clock (UTC in its tooltip)
  *  - center: scenario player capsule
  *  - right: Earth link, Ground / Crew toggle, Tools menu, Start demo, alerts bell
  * Every control is 36 px tall (h-9) with a 12 px radius.
@@ -255,6 +257,7 @@ export function TopBar() {
         <ProvenanceBadge />
         <Divider />
         {!on('missionName') && <MissionName />}
+        <MissionProfileControl showLabel={!on('profileLabel')} />
         <MissionClock />
       </div>
 
