@@ -59,5 +59,6 @@ const m: Record<keyof typeof en, string> = {
   'timeline.clickToView': 'Clique para ver',
   'timeline.notRecorded': 'Sem registro',
   'timeline.noStatus': 'Nenhum status registrado neste momento.',
+  'timeline.nowLabel': 'Agora',
 }
 export default m

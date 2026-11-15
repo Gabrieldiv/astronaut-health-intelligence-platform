@@ -59,5 +59,6 @@ const m: Record<keyof typeof en, string> = {
   'timeline.clickToView': 'クリックして表示',
   'timeline.notRecorded': '記録なし',
   'timeline.noStatus': 'この時点の状態は記録されていません。',
+  'timeline.nowLabel': '現在',
 }
 export default m

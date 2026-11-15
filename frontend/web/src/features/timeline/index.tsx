@@ -544,7 +544,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
         <path d={`M${xs(to) - 3.5} 0L${xs(to) + 3.5} 0L${xs(to)} 4Z`} fill={ACCENT} />
         {layout.axisH > 0 && (
           <text x={xs(to)} y={h - 2} textAnchor="end" fontSize={10} fontWeight={600} fill={ACCENT}>
-            Now
+            {tr('timeline.nowLabel')}
           </text>
         )}
       </g>
