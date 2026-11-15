@@ -1,0 +1,97 @@
+{
+ "took": 3,
+ "timed_out": false,
+ "_shards": {
+  "total": 5,
+  "successful": 5,
+  "skipped": 0,
+  "failed": 0
+ },
+ "hits": {
+  "total": 13,
+  "max_score": 9.435102,
+  "hits": [
+   {
+    "_index": "study",
+    "_type": "docs",
+    "_id": "Ft_6g4QB28eYt3lGMLZx",
+    "_score": 9.435102,
+    "_source": {
+     "Accession": "OSD-53",
+     "Study Title": "Spaceflight Modulates Gene Expression in Astronauts",
+     "organism": "Homo sapiens",
+     "Project Type": "Spaceflight Study",
+     "Mission": {
+      "Start Date": "",
+      "End Date": "",
+      "Name": ""
+     },
+     "Study Public Release Date": 1381795200.0,
+     "Study Description": "Astronauts are exposed to a unique combination of stressors during spaceflight, which leads to alterations in their physiology and potentially increases their susceptibility to infectious pathogens. Here we report the first microarray evaluation of any astronaut tissue sample, specifically whole blood, before and after spaceflight using an array comprising 234 well-characterized stress response genes. Differentially regulated genes included those important for DNA repair, oxidative stress, and protein folding/degradation. Microarrays comprising 234 well characterized stress-related genes were used to profile transcriptomic changes in six astronauts before and after short-duration spaceflight. Blood samples were collected for analysis from each eastronaut 10 days prior and 2-3 hours after return from spaceflight. Data submitted for platform GPL140 contain genes that have been pre-filtered by the analytical software to remove values of low certainty, resulting in missing values for some samples. Unfortunately, these original data are no longer available due to physical damage at Tulane University during hurricane Katrina, but the processed values were retained in redundant locations and these are submitted for upload to GEO."
+    },
+    "highlight": {
+     "all": [
+      "and re-suspended in deionized water (BD Biosciences Clontech) to yield a 4 ug sample of RNA for each <em>astronaut</em>",
+      "All <em>astronaut</em> arrays (L-10 and R+0) were normalized to an average of 5 control arrays from the whole",
+      "blood of healthy non-<em>astronaut</em> control subjects.",
+      "<em>cgene</em>",
+      "Here we report the first microarray evaluation of any <em>astronaut</em> tissue sample, specifically whole blood"
+     ]
+    }
+   },
+   {
+    "_index": "study",
+    "_type": "docs",
+    "_id": "ZN_6g4QB28eYt3lGNrY7",
+    "_score": 8.958163,
+    "_source": {
+     "Accession": "OSD-174",
+     "Study Title": "Effects of a Closed Space Environment on Gene Expression in Hair Follicles of Astronauts in the International Space Station",
+     "organism": "Homo sapiens",
+     "Project Type": "Spaceflight",
+     "Mission": {
+      "Start Date": "",
+      "End Date": "",
+      "Name": ""
+     },
+     "Study Public Release Date": 1459382400.0,
+     "Study Description": "In recent times, long-term stay has become a common occurrence in the International Space Station (ISS). However, adaptation to the space environment can sometimes pose physiological problems to the astronauts after their return. Therefore, it is important to develop healthcare technologies for astronauts. In this study, hair, an easy-to-obtain sample, was identified as the candidate. In order to investigate the genetic changes in human hair during space flight, the hair follicles of 10 astronauts were analyzed by DNA microarray and real time q-PCR analyses. Space environment induced gene expression of hair follicles of astronaut was measured 6 differnent times included 2 in flight on orbit. Ten independent experiments were performed on differing astronauts. and the sampling day was differed for each astronaut because of their schedules."
+    },
+    "highlight": {
+     "all": [
+      "In each mission, five strands of hair were sampled six times from each <em>astronaut</em> within the period of",
+      "<em>cgene</em>",
+      "Space environment induced gene expression of hair follicles of <em>astronaut</em> was measured 6 differnent times",
+      "independent experiments were performed on differing astronauts. and the sampling day was differed for each <em>astronaut</em>"
+     ]
+    }
+   },
+   {
+    "_index": "study",
+    "_type": "docs",
+    "_id": "BeCe5IQB28eYt3lGyYop",
+    "_score": 7.3963604,
+    "_source": {
+     "Accession": "OSD-484",
+     "Study Title": "Astronauts plasma-derived exosomes induced gene expression in AC16 cells",
+     "organism": "Homo sapiens",
+     "Project Type": "Ground Study",
+     "Mission": {
+      "End Date": "",
+      "Start Date": "",
+      "Name": ""
+     },
+     "Study Public Release Date": 1647043200.0,
+     "Study Description": "There are unique stressors in the spaceflight environment. Exposure to such stressors is associated with adverse effects on astronauts' health, including increased cancer and cardiovascular disease risks. Small extracellular vesicles (sEVs, i.e., exosomes) play a vital role in intercellular communication and regulate various biological processes contributing to their role in disease pathogenesis. To assess whether spaceflight alters sEVs transcriptome profile, sEVs were isolated from the blood plasma of 3 astronauts at two different time points: 10 days before launch (L-10) and 3 days after return (R+3) from the Shuttle mission. Human adult ventricular cardiomyocyte cells (AC16) were treated with L-10 and R+3 astronauts-derived exosomes for 24 hours. Total RNA was isolated and analyzed for gene expression profiling using Affymetrix microarrays. Enrichment analysis was performed using Enrichr. Transcription factor enrichment analysis using the ENCODE/ChEA Consensus TF database identified gene sets related to the polycomb repressive complex 2 (PRC2) and Vitamin D receptor (VDR) in AC16 cells treated with R+3 compared to cells treated with L-10 astronauts-derived exosomes. Further analysis of the histone modifications using datasets from the Roadmap Epigenomics Project confirmed enrichment in gene sets related to the H3K27me3 repressive mark. Interestingly, analysis of previously published H3K27me3\u2013chromatin immunoprecipitation sequencing (ChIP-Seq) ENCODE datasets showed enrichment of H3K27me3 in the VDR promoter. Collectively, our results suggest that astronaut-derived sEVs may epigenetically repress the expression of the VDR in human adult cardiomyocytes c by promoting the activation of the PRC2 complex and H3K27me3 levels. Gene expression was measured in untreated (n equals 3) and exosome-treated (n equals 6) AC16 human cardiomyocyte cell line. Cell were treated with exosomes isolated from 3 austonauts at two different time points: 10 days before mission (n equals 3) and 3 days upon return from mission (n equals 3)."
+    },
+    "highlight": {
+     "all": [
+      "Total RNA was extracted from AC16 cells treated with <em>astronaut</em>-derived exosomes (ExoL-10 and ExoR+3)",
+      "Collectively, our results suggest that <em>astronaut</em>-derived sEVs may epigenetically repress the expression",
+      "<em>cgene</em>"
+     ]
+    }
+   }
+  ]
+ }
+}

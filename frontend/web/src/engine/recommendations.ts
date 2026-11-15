@@ -12,7 +12,7 @@
  *    CRITICAL GROUND_REVIEW item also gets an ONBOARD first step, because Earth cannot answer
  *    before 2 x one way delay + review time.
  */
-import type { BodyRegionId, CommProfile, InterventionKind, Recommendation, RiskLevel } from '../types/domain'
+import type { BodyRegionId, CommProfile, InterventionKind, MissionProfileId, Recommendation, RiskLevel } from '../types/domain'
 import { ALERTS, COMMS, REC_CATALOG_VERSION } from './config'
 import { levelRank } from './anomaly'
 import type { RuleHit } from './risk'
@@ -174,6 +174,42 @@ export interface CommContext {
   profile: CommProfile
   /** Minimum simulated review time on Earth (minutes). */
   reviewMin: number
+  /** Additive (v4): active mission profile, adds a context sentence to some recommendations. */
+  missionProfileId?: MissionProfileId
+}
+
+const MICROGRAVITY_EXERCISE = 'In weightlessness, daily exercise is the main countermeasure against bone and muscle loss, so keeping the planned sessions matters.'
+const DEEP_SPACE_RADIATION = 'Outside the Earth magnetic field a solar particle event can raise the dose quickly: know the shelter location and follow the shelter procedure without waiting for Earth.'
+
+/**
+ * Mission profile context per rule (v4). Plain, non diagnostic sentences appended to the
+ * rationale when the profile makes the rule more relevant. Only where the environment justifies it.
+ */
+export const PROFILE_CONTEXT: Partial<Record<MissionProfileId, Partial<Record<string, string>>>> = {
+  ISS: {
+    'R-EX-01': MICROGRAVITY_EXERCISE,
+    'R-ACT-01': MICROGRAVITY_EXERCISE,
+  },
+  MARS_TRANSIT: {
+    'R-EX-01': MICROGRAVITY_EXERCISE,
+    'R-ACT-01': MICROGRAVITY_EXERCISE,
+    'R-ENV-RAD-01': DEEP_SPACE_RADIATION,
+    'R-RAD-02': 'In deep space the dose grows every day of the trip: dose planning matters more the longer the mission.',
+    'R-PSY-01': 'Months of isolation with a delayed link to Earth: private time and family contact are part of the plan.',
+  },
+  MOON: {
+    'R-EX-01': 'Partial gravity alone does not protect bone and muscle: keep the planned exercise sessions.',
+    'R-ENV-RAD-01': DEEP_SPACE_RADIATION,
+  },
+  LAUNCH: {
+    'R-HR-01': 'Launch phase: acceleration, noise and stress raise heart rate; compare with the launch timeline before acting.',
+  },
+}
+
+/** Rationale with the mission profile context sentence, when one applies. */
+export function withProfileContext(rationale: string, ruleId: string, profileId: MissionProfileId | undefined): string {
+  const extra = profileId ? PROFILE_CONTEXT[profileId]?.[ruleId] : undefined
+  return extra ? `${rationale} ${extra}` : rationale
 }
 
 /** Earliest possible Earth reply after a request sent now: 2 x one way delay + review time (ms). */
@@ -294,7 +330,7 @@ export class RecommendationManager {
         if (rec && rec.status === 'PENDING' && (levelRank(hit.level) > levelRank(rec.priority) || rec.active === false)) {
           const priority = levelRank(hit.level) > levelRank(rec.priority) ? hit.level : rec.priority
           recs = recs.slice()
-          recs[idx] = { ...rec, priority, rationale: `${hit.label}. ${tpl.why}`, requiresHumanReview: requiresReview(priority, tpl.audience), active: true }
+          recs[idx] = { ...rec, priority, rationale: withProfileContext(`${hit.label}. ${tpl.why}`, hit.ruleId, comm?.missionProfileId), requiresHumanReview: requiresReview(priority, tpl.audience), active: true }
           changed = true
         }
         continue
@@ -304,7 +340,7 @@ export class RecommendationManager {
         astronautId: subject,
         ruleId: hit.ruleId,
         title: tpl.title,
-        rationale: `${hit.label}. ${tpl.why}`,
+        rationale: withProfileContext(`${hit.label}. ${tpl.why}`, hit.ruleId, comm?.missionProfileId),
         priority: hit.level,
         audience: tpl.audience,
         region: tpl.region ?? hit.region,

@@ -40,7 +40,7 @@ The objectives come from the product spec (`PROJECT_MASTER.md`, section 2.3). Th
 | 7 | Classify operational attention levels with transparent rules | <StatusBadge status="IMPLEMENTED" /> [Risk assessment](../intelligence/risk-assessment) |
 | 8 | Present non-prescriptive, explainable recommendations | <StatusBadge status="IMPLEMENTED" /> [Recommendations](../intelligence/recommendations) |
 | 9 | Record alerts, decisions and interventions | <StatusBadge status="IMPLEMENTED" /> in-browser audit trail, no persistence |
-| 10 | Demonstrate controlled scenarios | <StatusBadge status="IMPLEMENTED" /> six scenarios and a guided demo |
+| 10 | Demonstrate controlled scenarios | <StatusBadge status="IMPLEMENTED" /> seven scenarios, four mission profiles and a guided demo |
 
 The complete list of capabilities, including what is planned or deliberately absent, is in the [Feature status matrix](./feature-status).
 
@@ -49,20 +49,23 @@ The complete list of capabilities, including what is planned or deliberately abs
 1. **Compares each person with their own baseline** (their personal normal range), per activity context.
 2. **Detects deviations and trends**: sudden changes, slow drifts, persistent patterns and data quality problems.
 3. **Combines signals with transparent rules** into an operational attention level (`LOW`, `MODERATE`, `HIGH`, `CRITICAL`) with a documented score and contributing factors.
-4. **Projects short term trends** with an uncertainty interval, only when there is enough data.
-5. **Suggests non-prescriptive next steps**, says why, and says who can act (crew on board or flight surgeon on Earth).
-6. **Shows it all on a 3D body**, with plain language first and technical detail second.
+4. **Projects trends** from 24 h up to 15 days with an uncertainty interval, only when there is enough history.
+5. **Puts health in mission context**: cited mission profiles (launch, ISS, Moon, Mars transit), the mission dose against the NASA career limit and space weather from real NASA DONKI events.
+6. **Follows eyes and ears** with periodic simulated exams against each person's pre-flight baseline.
+7. **Suggests non-prescriptive next steps**, says why, and says who can act (crew on board or flight surgeon on Earth).
+8. **Shows it all on a 3D body**, with plain language first and technical detail second, alert sounds and audio description, and full keyboard use.
 
-The engine is statistical and rule based. There is no machine learning model and no language model at runtime: see [AI and analytics approach](../intelligence/ai-and-analytics).
+Status comes only from statistics and transparent rules. An experimental machine learning detector adds an informational note, and the optional Ask AHI assistant explains what the engine shows; neither decides anything. See [AI and analytics approach](../intelligence/ai-and-analytics).
 
 ## Scope
 
 | In scope (prototype) | Out of scope |
 | --- | --- |
-| Simulated crew of four and a simulated cabin, six scenarios | Real astronaut data, real patients |
+| Simulated crew of four and a simulated cabin, seven scenarios, four mission profiles | Real astronaut data, real patients |
 | Personal baselines, anomaly rules, risk score, forecasts, recommendations, alerts | Diagnosis, autonomous clinical decisions, medication or treatment |
 | Earth link delay model, check-in, mission overview, handover report, what-if | Live connection to ISS devices or any real communication system |
-| Two real NASA OSDR lab panels as historical reference | Training a clinical model on small historical datasets |
+| Two real NASA OSDR lab panels as historical reference, NASA DONKI space weather as context | Training a clinical model on small historical datasets |
+| Optional backend: ingestion, observations, NASA connectors, assistant demo | A certified or flight qualified system |
 | FHIR R4 export of the current state | A certified clinical interface |
 
 These non goals come from section 2.4 of the product spec.
@@ -71,17 +74,19 @@ These non goals come from section 2.4 of the product spec.
 
 ```mermaid
 flowchart LR
-    subgraph BROWSER["Browser tab (everything that exists today)"]
+    subgraph BROWSER["Browser tab (works on its own)"]
       SIM["Device simulators"] --> ENG["Health engine"]
       ENG --> STORE["Store"] --> UI["UI and 3D body"]
-      OSDR["OSDR panels<br/>(static JSON)"] --> UI
+      OSDR["OSDR panels, DONKI snapshot<br/>(static JSON)"] --> UI
     end
     USER["Crew, flight surgeon,<br/>mission control"] <--> UI
     UI -. "FHIR JSON download,<br/>print" .-> FILES["Local files"]
+    UI -. "optional" .-> API["AHI API<br/>(FastAPI)"]
+    API --> NASA["NASA DONKI, OSDR"]
 ```
 
-- Inside the boundary: simulation, engine, store and UI, all in one browser tab. The app calls no external service; it only loads its own static files, including the 3D anatomy.
-- Outside: people (who read and act), and files they export. No backend, no database, no authentication: these are [planned](../architecture/target-architecture).
+- Inside the boundary: simulation, engine, store and UI, all in one browser tab. On its own the app calls no external service; it loads its own static files, including the 3D anatomy and the DONKI snapshot.
+- Outside: people (who read and act), files they export, and the optional [AHI API](../architecture/backend), which reads NASA data and hosts the assistant demo. Authentication and access profiles are [planned](../resources/roadmap).
 
 ## What is real and what is simulated
 
@@ -91,6 +96,9 @@ flowchart LR
 | Check-ins typed in the app, logged actions, acknowledgements | <OriginBadge origin="MANUAL" /> | Entered by a person in the interface |
 | Personal baselines, risk scores, forecasts, group means | <OriginBadge origin="DERIVED" /> | Computed from records of known origin |
 | Inspiration4 blood panels (OSD-569, OSD-575) | <OriginBadge origin="REAL_PUBLIC" /> | Historical reference only, never mixed with the simulated crew |
+| Space weather events from NASA DONKI | <OriginBadge origin="REAL_PUBLIC" /> | Mission context only; never feeds a baseline, a status or an alert |
+| Eye and hearing exam results | <OriginBadge origin="SIMULATED" /> | Periodic simulated exams on NASA's published schedule |
+| Mission profile reference values (dose rates, gravity, distance, delay) | published sources | Cited per value ([Mission profiles](../intelligence/mission-profiles)) |
 | The anatomical model of the 3D body | third party reference asset | Z-Anatomy atlas (CC BY-SA 4.0). One reference body for every crew member, not a scan and not health data ([3D anatomy assets](../data/anatomy-assets)) |
 
 The labels are defined in [Data origins and provenance](../data/data-origins).

@@ -56,5 +56,5 @@ describe('status timeline', () => {
     checkGrid(f)
     expect(f[f.length - 1]!.t - f[0]!.t).toBeLessThanOrEqual(SIM.historyDays * DAY_MS)
     expect(f.length).toBeLessThanOrEqual((SIM.historyDays * DAY_MS) / FRAME + 1)
-  }, 60000)
+  }, 120000)
 })

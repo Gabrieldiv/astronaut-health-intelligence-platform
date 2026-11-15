@@ -8,7 +8,7 @@ code:
   - frontend/web/src/engine/config.ts
 tests:
   - frontend/web/src/engine/forecast.test.ts
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Forecasting
@@ -70,6 +70,19 @@ range = yhat +/- 1.2816 x sd_h
 
 Otherwise the prediction is `eligible: false` with a reason such as "8 of 12 half-hour windows with data". This follows spec section 9.6: show only horizons supported by the data.
 
+### Selectable horizons {#selectable-horizons}
+
+In the trend chart the user can pick a horizon: **24 h, 36 h, 72 h, 7 days or 15 days** (default 24 h). The same damped Holt method projects further; the fit window grows with the horizon and the 80% band keeps widening the further ahead it goes.
+
+| Rule | Value |
+| --- | --- |
+| History needed | At least **half the horizon** (a 7 day projection needs 3.5 days of history). Demo rule in `FORECAST_HORIZONS`, not an official limit |
+| Too little history | "Not enough history for this horizon", with the history needed and available |
+| Beyond 72 h | An extra note: "Long horizon: read it as a rough trend, not a value to expect." |
+| Points on the chart | Computed at full resolution, thinned to at most 72 points |
+
+With the simulated history of the demo, heart rate, HRV and SpO₂ reach up to 7 days; sleep and exercise, which have long daily histories, reach 15 days.
+
 ### Band exit and recovery
 
 - **Band exit.** `hoursToBandExit` is the first time the central projection leaves the personal band, or 0 if the latest window is already outside.
@@ -88,11 +101,12 @@ On the trend chart the projection is the dashed **forecast cone** after "now".
 - Assumes recent conditions continue; a scheduled event (exercise, sleep) is not anticipated.
 - The normal error assumption behind the interval is not verified; intervals are not calibrated on real data.
 - Only five crew metrics and cabin CO2 are forecast.
+- Long horizons on a few days of data are a rough trend at best; the widening band says so.
 - No ARIMA or other model selection ([Methods status](./overview#methods-status)).
 
 ## Status
 
-<StatusBadge status="IMPLEMENTED" /> Covered by `forecast.test.ts` (damped linear trend, too few points, widening interval, irregular binning, eligibility, 6 h and 24 h horizons, band exit, daily steps, recovery rule). Spec requirement: US-021.
+<StatusBadge status="IMPLEMENTED" /> Covered by `forecast.test.ts` (damped linear trend, too few points, widening interval, irregular binning, eligibility, 6 h and 24 h horizons, band exit, daily steps, recovery rule, selectable horizons and the history rule). Spec requirement: US-021.
 
 ## Next steps
 

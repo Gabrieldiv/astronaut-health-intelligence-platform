@@ -1,28 +1,30 @@
 ---
 title: Testing Strategy
-description: How the Astronaut Health Intelligence Platform is tested, the 17 vitest files with 143 tests and what each covers, plus what is not tested yet.
+description: How the Astronaut Health Intelligence Platform is tested, the 37 vitest files with 375 tests and the backend pytest suite, what each covers, plus what is not tested yet.
 status: IMPLEMENTED
 code:
   - frontend/web/package.json
   - .github/workflows/ci.yml
   - .github/workflows/docs-check.yml
+  - backend/tests
 tests:
   - frontend/web/src/engine/engine.test.ts
   - frontend/web/src/engine/risk.test.ts
   - frontend/web/src/features/anatomy/atlas/health.test.ts
   - frontend/web/src/features/anatomy/atlas/manifest.contract.test.ts
   - frontend/web/src/state/selection.test.ts
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Testing Strategy
 
-The rules are the product, so the Astronaut Health Intelligence Platform (AHI) tests the engine first. All tests use **vitest**, run headless (no browser) and are deterministic because the simulator is seeded.
+The rules are the product, so the Astronaut Health Intelligence Platform (AHI) tests the engine first. Web tests use **vitest**, run headless (no browser) and are deterministic because the simulator is seeded. The backend uses **pytest** with external HTTP mocked (respx), so the live NASA sources and the Claude API are never called.
 
-| Fact | Value (2026-11-14) |
+| Fact | Value (2026-11-15) |
 | --- | --- |
-| Test files | 17 |
-| Tests | 143, all passing |
+| Web test files | 38 |
+| Web tests | 375, all passing |
+| Backend tests | 44 in 6 files (`python -m pytest` in `backend`) |
 | Typecheck | `npx tsc -b` clean |
 | Production build | `npx vite build` ok |
 | Where | Next to the code (`*.test.ts`) |
@@ -37,14 +39,15 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | Store | Slices, references, actions; structure, region and metric selection | <StatusBadge status="IMPLEMENTED" /> (14 tests in 2 files) |
 | Anatomy data layer | Structure to region mapping, structure health view, manifest contract against the real GLB files | <StatusBadge status="IMPLEMENTED" /> (29 tests in 2 files) |
 | Anatomy assets | `npm run anatomy:validate` on the published files ([3D anatomy assets](../data/anatomy-assets#rebuild)) | <StatusBadge status="IMPLEMENTED" /> (script, not a test) |
-| 3D rendering | Visual states, picking, loading and fallback, checked by hand on `anatomy-lab.html` | <StatusBadge status="NOT_IMPLEMENTED" /> (no automated test) |
+| Viewer logic | Zoom math, interaction modes, retry policy, scan timing, keyboard navigation | <StatusBadge status="IMPLEMENTED" /> (36 tests in 5 files) |
+| 3D rendering | Visual states, picking, loading and fallback, checked by hand on `anatomy-lab.html` | <StatusBadge status="NOT_IMPLEMENTED" /> (no pixel test) |
 | Evaluation | Headless replay with metrics ([Results](../validation/results)) | <StatusBadge status="IMPLEMENTED" /> (script, not a test) |
 | UI component tests | React components | <StatusBadge status="PLANNED" /> |
 | End to end (browser) | Open dashboard, select astronaut, run scenario, acknowledge alert (spec section 16) | <StatusBadge status="PLANNED" /> |
-| API, database, ingestion integration | Spec section 16 | <StatusBadge status="PLANNED" /> (no backend) |
+| API, database, ingestion integration | Health and registry, ingestion and observations, NASA connectors, assistant, analytics, OpenAPI schema | <StatusBadge status="IMPLEMENTED" /> (pytest, 44 tests) |
 | Data tests | Schema, units, timestamps, duplicates, provenance | Partial: enforced inside the OSDR import script (fails on sex mismatch, counts missing cells), not as separate tests |
 
-## The 17 test files
+## Web test files
 
 | File | Tests | What it covers |
 | --- | --- | --- |
@@ -52,7 +55,7 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | <CodeLink path="frontend/web/src/engine/baseline.test.ts" /> | 5 | `INSUFFICIENT_DATA` below the minimum sample size; median plus or minus 2 robust SD band; robustness to outliers; clamping to physical limits; reservoir keeps the most recent values |
 | <CodeLink path="frontend/web/src/engine/anomaly.test.ts" /> | 8 | Baseline and LOW on normal data; acute jump to CRITICAL within a few readings; single spike filtered by the 3 reading median; EWMA drift catches a sustained shift and escalates with persistence; missing or stale data is `NO_DATA`, never LOW; questionable data capped at MODERATE; exercise compared with the exercise baseline; consecutive short nights with persistence wording |
 | <CodeLink path="frontend/web/src/engine/risk.test.ts" /> | 14 | Score bands; three MODERATE rules become HIGH; one weight per rule and slow patterns capped at HIGH; data quality weight cap; R-CARD-01; R-FAT-01 two of three and three of three; missing data never a normal component; assessment output (rules, factors, confidence, limitations, headline); headline with no findings; region `NO_DATA`; alert dedupe, escalation, auto resolve and history; acute MODERATE blips not actionable; combined rules group components; one recommendation per astronaut and rule with human review |
-| <CodeLink path="frontend/web/src/engine/forecast.test.ts" /> | 9 | Damped linear trend; too few points; interval widens with the horizon; binning of irregular points; not eligible with insufficient data; 6 h and 24 h horizons with widening 80% intervals; hours to band exit; daily steps; no band exit while recovering from the opposite side |
+| <CodeLink path="frontend/web/src/engine/forecast.test.ts" /> | 17 | Damped linear trend; too few points; interval widens with the horizon; binning of irregular points; not eligible with insufficient data; 6 h and 24 h horizons with widening 80% intervals; hours to band exit; daily steps; no band exit while recovering from the opposite side; selectable horizons up to 15 days and the history rule ("Not enough history for this horizon") |
 | <CodeLink path="frontend/web/src/engine/alerts.test.ts" /> | 5 | CRITICAL escalation at 5 and 15 min; late evaluation jumps to the right level; HIGH at 30 and 90 min, MODERATE never; stops when acknowledged or resolved; escalations audited in the engine |
 | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> | 11 | Baselines `READY` at startup; reproducible with the same seed; bounded history; NOMINAL never reaches HIGH over two simulated days; ACUTE_CARDIO reaches CRITICAL within about 15 sim minutes with one grouped alert; it eases after a logged consult (hypothetical); SENSOR_FAILURE goes stale then offline and is `NO_DATA`; PROGRESSIVE_FATIGUE escalates over days; ENVIRONMENTAL_CO2 raises CO2 for everyone and ventilation lowers it; PERFORMANCE_DECLINE lowers output; acknowledging writes an audit event |
 | <CodeLink path="frontend/web/src/engine/checkins.test.ts" /> | 8 | One simulated check-in per astronaut per morning; check-in metrics in the brain region; live morning check-ins; fatigue scenario moves answers but stays MODERATE alone; CO2 makes a headache more likely; manual check-in replaces the simulated one and is `MANUAL`; self report reaches MODERATE at most with no alert; high fatigue run count |
@@ -65,6 +68,27 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | <CodeLink path="frontend/web/src/state/selection.test.ts" /> | 13 | Nothing selected at start; `selectStructure` sets structure and region in one update and clears the metric; a context only structure clears the region; `selectStructure(null)` clears everything; `selectRegion` clears the structure; `selectAstronaut` clears structure, region and metric; `selectMetric` keeps them; a clock tick never touches the selection; `focusTarget` (alert View buttons) clears a structure of another region, keeps one of the same region, changes astronaut first and ignores cabin targets; `clearSelection` goes back to the overview |
 | <CodeLink path="frontend/web/src/features/anatomy/atlas/health.test.ts" /> | 21 | Every anatomical system mapped by rule; only brain structures map to the brain and only the kidneys map to the kidneys (procedural origin kept); digestive organs, glands, lymphoid and sense organs stay context only; required ids; primary structure of a region; atlas counts; related metrics come only from the catalog and never include cabin metrics; status is `null` for context only, `NO_DATA` (never normal) when health is missing, else the region status; region alerts by severity then time; anomalies inside a time window; observed value at a time, never invented; structure health view for monitored and context only structures; plain language texts never claim a diagnosis or a neurological measurement and contain no em dash or en dash |
 | <CodeLink path="frontend/web/src/features/anatomy/atlas/manifest.contract.test.ts" /> | 8 | Reads the real `public/anatomy`: GLB JSON chunk reader; top level shape, source and license facts; valid structures with unique ids; the seven required ids mapped to their regions; paired structures on the side their id names; real structures mapped by the health rules; one file entry per system with consistent counts; every GLB shipped with one mesh node named after each structure id |
+| <CodeLink path="frontend/web/src/engine/cusum.test.ts" /> | 7 | No accumulation within the allowance; accumulation by (m - k) per hour up to h; independent of the sampling cadence; cap and bounded clearing; spike clamp; a small resting heart rate drift under the EWMA rule; LOW on stable data |
+| <CodeLink path="frontend/web/src/engine/devicePause.test.ts" /> | 6 | Paused device state and detail; metrics `NO_DATA` with "Paused by operator", never normal; no sensor failure alarm; audit entries; resume waits for the first reading |
+| <CodeLink path="frontend/web/src/engine/exams/exams.test.ts" /> | 19 | SANS eye exam schedule (pre-flight, FD 30, FD 90, R-30); hearing cadence; 19.4 µm retinal rule; new folds only; demo levels for optic nerve sheath and acuity; HSRB hearing shift; noise dose and 72 dBA rule; missing data never normal; SANS scenario Watch then Warning |
+| <CodeLink path="frontend/web/src/engine/missions/missions.test.ts" /> | 18 | Four profiles with https sources; published reference values; Earth link per profile; dose rates per profile; 600 mSv career limit; space weather advisory per profile, calm cases and no data; autonomy by delay; no em dash or en dash |
+| <CodeLink path="frontend/web/src/engine/ml/isolationForest.test.ts" /> | 5 | Standard c(n) normalization; deterministic per seed; far points score higher; constant features and too little data handled |
+| <CodeLink path="frontend/web/src/engine/ml/whitening.test.ts" /> | 3 | PCA whitening decorrelates and keeps the variance floor |
+| <CodeLink path="frontend/web/src/engine/ml/multivariate.test.ts" /> | 7 | Personal threshold; flag only when the score persists and the drift rules agree; contributions; explanation wording |
+| <CodeLink path="frontend/web/src/engine/ml/engineMultivariate.test.ts" /> | 3 | Quiet on a nominal day; flags the acute scenario without touching the risk score; `NO_DATA` when the shirt stops |
+| <CodeLink path="frontend/web/src/state/missionProfile.test.ts" /> | 1 | Store wiring of the mission profile |
+| <CodeLink path="frontend/web/src/lib/api/client.test.ts" /> | 6 | `VITE_API_URL` and `off`; connected when `/health` answers as the AHI API; offline otherwise |
+| <CodeLink path="frontend/web/src/lib/nasa/spaceWeather.test.ts" /> | 7 | Bundled snapshot is valid REAL_PUBLIC DONKI data; contract check; backend used when it answers; fallback to the snapshot when the backend is unreachable, DONKI is down (502), the payload is unexpected or the call times out |
+| <CodeLink path="frontend/web/src/features/a11y/alarmSchedule.test.ts" /> | 15 | Which alerts ring, repeat intervals, escalation after 2 min, one sound at a time, minimum gap, history never rings |
+| <CodeLink path="frontend/web/src/features/a11y/describe.test.ts" /> | 9 | Spoken status, readings and units; missing data spoken as no data; simulated data stated |
+| <CodeLink path="frontend/web/src/features/assistant/assistant.test.ts" /> | 11 | Grounded snapshot; "Based on:" split; speech text without markdown; stream parsing |
+| <CodeLink path="frontend/web/src/features/anatomy/atlas/examRegions.test.ts" /> | 11 | Eyes and ears regions on the atlas; ear anchors; exam metrics per region |
+| <CodeLink path="frontend/web/src/features/anatomy/a11y/keyboardNav.test.ts" /> | 12 | Region and structure order; arrows, Home and End; announcements with status and no data |
+| <CodeLink path="frontend/web/src/features/anatomy/viewer/zoom.test.ts" /> | 5 | Zoom toward the pointer keeps the aimed point; distance limits; no move at a limit |
+| <CodeLink path="frontend/web/src/features/anatomy/viewer/interaction.test.ts" /> | 5 | Monitor and Explore: which structures are interactive; persisted mode with safe fallback |
+| <CodeLink path="frontend/web/src/features/anatomy/viewer/retry.test.ts" /> | 8 | Backoff 0.6, 1.8, 5.4 s; 4 tries; error keeps the last cause; non retryable errors |
+| <CodeLink path="frontend/web/src/features/anatomy/viewer/scan.test.ts" /> | 6 | Scan timing; one pass per cycle; reduced motion is slow and dim |
+| <CodeLink path="frontend/web/src/i18n/i18n.test.ts" /> | 60 | Five languages, English first and the only reviewed one; every locale has exactly the English keys, no empty strings, the same placeholders, no dash characters and the protected tokens untranslated; status words and catalog labels follow the language |
 
 ## Principles
 

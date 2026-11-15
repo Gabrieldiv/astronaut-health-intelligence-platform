@@ -1,22 +1,26 @@
 ---
 title: Setup, Commands & Troubleshooting
-description: Run the Astronaut Health Intelligence Platform locally, the available commands, your first two minutes in the app and fixes for common problems.
+description: Run the Astronaut Health Intelligence Platform locally (app only, app plus backend, or Docker Compose), the available commands, your first two minutes in the app and fixes for common problems.
 status: IMPLEMENTED
 code:
   - frontend/web/package.json
   - frontend/web/vite.config.ts
-verified: 2026-11-14
+  - backend/.env.example
+  - docker-compose.yml
+verified: 2026-11-15
 ---
 
 # Setup, Commands & Troubleshooting
 
-The Astronaut Health Intelligence Platform (AHI) runs entirely in the browser. There is no backend and no database: the simulation, the health engine and the 3D viewer all run on your machine. After `npm install` the demo works offline.
+The Astronaut Health Intelligence Platform (AHI) web app runs entirely in the browser: the simulation, the health engine and the 3D viewer all run on your machine. After `npm install` the demo works offline (**offline demo mode**). The optional backend adds live NASA data, the OSDR study search and the Ask AHI assistant ([Backend and API](../architecture/backend)).
 
 ## Requirements
 
 | Requirement | Notes |
 | --- | --- |
 | Node.js 20 or newer | Includes npm |
+| Python 3.12 or newer | Only for the optional backend |
+| Docker | Only for the optional Docker Compose stack |
 | A desktop browser with WebGL | Chrome, Edge or Firefox with hardware acceleration on |
 | Screen | Best at 1440x900 or larger. Short laptop screens get a compact layout |
 
@@ -30,6 +34,39 @@ npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173). You will see a short loading screen ("Connecting simulated devices and calibrating personal baselines...") and then the Ground view.
+
+## App plus backend
+
+In a second terminal:
+
+```bash
+cd backend
+python -m venv .venv
+# Windows: .venv\Scripts\activate    macOS or Linux: source .venv/bin/activate
+pip install -r requirements-dev.txt
+cp .env.example .env
+uvicorn app.main:create_app --factory --reload --port 8000
+```
+
+The API docs are at [http://localhost:8000/docs](http://localhost:8000/docs). Reload the app: **Data and model, NASA context** now says "Connected to AHI API" and space weather comes live from NASA DONKI. SQLite is used by default, no setup needed.
+
+### Docker Compose
+
+From the repository root, `docker compose up --build` starts PostgreSQL 17 and the API on port 8000 (migrations run on start). The web app still runs with `npm run dev`.
+
+### The assistant key
+
+Ask AHI needs a Claude API key in `backend/.env` (gitignored, never commit it):
+
+```bash
+ANTHROPIC_API_KEY=your-key-here
+```
+
+Without it the API answers 503 for the assistant and the app shows "Assistant offline"; everything else works. Details: [Ask AHI](../product/assistant).
+
+### Static hosting
+
+Build with `VITE_API_URL=off` to skip the API probe entirely (for example on GitHub Pages).
 
 ## Other commands
 
@@ -48,6 +85,17 @@ Run these inside `frontend/web`.
 | `npm run anatomy:build` | Rebuilds the 3D atlas from the Z-Anatomy source. Needs Blender 4.5 LTS (`BLENDER_BIN`) and takes about 5 minutes. Not needed to run the app: the built files are in the repository ([3D anatomy assets](../data/anatomy-assets#rebuild)) |
 | `node scripts/osdr/discover.mjs` | Searches NASA OSDR and writes `data/manifests/osdr-discovery.json` |
 | `node scripts/osdr/import.mjs` | Downloads, hashes and parses the two OSDR datasets used in the app |
+| `npm run api:types` | Regenerates `src/types/api.gen.ts` from `backend/openapi.json` |
+
+Backend commands, inside `backend`:
+
+| Command | What it does |
+| --- | --- |
+| `uvicorn app.main:create_app --factory --reload --port 8000` | Run the API |
+| `python -m pytest` | Backend tests (external HTTP is mocked) |
+| `python -m app.cli openapi` | Export `backend/openapi.json` |
+| `python -m app.cli donki-snapshot` | Refresh the bundled DONKI snapshot in `frontend/web/src/data/nasa/` |
+| `alembic upgrade head` | Run the migrations by hand |
 
 ::: tip TypeScript rules
 The project uses `erasableSyntaxOnly` (no `enum`, no parameter properties) and `noUnusedLocals`. Run `npx tsc -b` before pushing.
@@ -58,10 +106,11 @@ The project uses `erasableSyntaxOnly` (no `enum`, no parameter properties) and `
 1. **Look at the crew rail (left).** Four astronauts: ORION, LYRA, VEGA and ATLAS. Each card says in plain words how that person is doing.
 2. **Look at the body (center).** It is a realistic anatomical model. A body system that needs attention lights up in its status color. The heart beats at the live heart rate and the lungs breathe at the live breathing rate.
 3. **Click the Heart chip** beside the body. The right panel switches to the body system detail: each metric with its trend chart, the shaded personal normal band and the forecast cone. Then **click any part of the body**, for example the skull: the camera moves to it and the panel says what the structure is and which body system it is monitored with. Structures that nothing measures, such as the intestines, are "Context only" and show no status.
-4. **Open the scenario picker** in the top bar and choose **Acute cardio event**. At **1 min/s** a CRITICAL banner appears within simulated minutes.
-5. **Mark an action done** in "What needs attention" and **acknowledge** the alert.
-6. **Press `V`** to switch to the Crew view, then `V` again to come back.
-7. **Click Start demo** to let the 10 step guided tour drive the story for you.
+4. **Open the scenario picker** in the top bar and choose **Acute cardio event**. At **1 min/s** a CRITICAL banner appears within simulated minutes and an alert sound plays (turn it off in Tools > Accessibility and sound).
+5. **Pick a mission profile** in the top bar, for example **Mars transit**, and open its info button: hazards, cited reference values, the mission dose and the space weather advisory.
+6. **Mark an action done** in "What needs attention" and **acknowledge** the alert.
+7. **Press `V`** to switch to the Crew view, then `V` again to come back.
+8. **Click Start demo** to let the 10 step guided tour drive the story for you.
 
 Press `?` at any time to see every keyboard shortcut.
 
@@ -77,6 +126,14 @@ The app could not load the atlas (`public/anatomy/manifest.json` or one of the r
 
 ::: details The body is missing completely ("3D body view unavailable")
 Neither the atlas nor the fallback model could render, which usually means WebGL is not available. Turn hardware acceleration on in the browser and reload. The rest of the dashboard keeps working.
+:::
+
+::: details "Offline demo mode" although the backend runs
+The app probes `http://localhost:8000/api/v1/health` at start. Check that the API answers there, that `CORS_ORIGINS` in `backend/.env` includes the app's origin (5173 is in the example), and that the app was not built with `VITE_API_URL=off`. Reload the app after starting the API.
+:::
+
+::: details A system layer shows "retry"
+Its file failed to download four times in a row (for example while the dev server restarted). Click it to try again; the rest of the body keeps working.
 :::
 
 ::: details Port 5173 is already in use

@@ -2,6 +2,8 @@
 import { create } from 'zustand'
 import type { LayerChoice } from './layers'
 import { DEFAULT_SKIN_OPACITY } from './layers'
+import type { InteractionMode } from './interaction'
+import { readInteractionMode, writeInteractionMode } from './interaction'
 
 export interface AtlasHover {
   /** Structure id under the pointer. */
@@ -19,6 +21,9 @@ export interface AtlasViewState {
   /** Last requested preset view (nonce changes on every request). */
   view: { preset: ViewPreset; nonce: number } | null
   resetNonce: number
+  /** Monitor (only monitored structures are interactive) or Explore (every structure). Persisted. */
+  mode: InteractionMode
+  setMode: (mode: InteractionMode) => void
   setHover: (h: AtlasHover | null) => void
   setLayer: (id: string, on: boolean) => void
   setLayers: (choice: LayerChoice, skinOpacity?: number) => void
@@ -34,6 +39,12 @@ export function createAtlasStore() {
     skinOpacity: DEFAULT_SKIN_OPACITY,
     view: null,
     resetNonce: 0,
+    mode: readInteractionMode(),
+    setMode: (mode) => {
+      if (mode === get().mode) return
+      writeInteractionMode(mode)
+      set({ mode })
+    },
     setHover: (h) => {
       const cur = get().hover
       if (cur === h) return

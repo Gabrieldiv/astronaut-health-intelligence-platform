@@ -13,7 +13,9 @@ import clsx from 'clsx'
 import type { BodyRegionId, Status } from '../../../types/domain'
 import { useAppStore } from '../../../state/store'
 import { STATUS_META } from '../../../lib/status'
-import { REGION_LABELS } from '../../../engine/catalog'
+import { getLang, t as tr, tOr, useLang, useT } from '../../../i18n'
+
+import { regionLabel } from '../../../i18n/catalog'
 import type { AnatomyViewerProps } from '../AnatomyViewer'
 import type { AtlasManifest, AtlasStructure } from '../atlas/types'
 import { regionOfStructure } from '../atlas/health'
@@ -32,6 +34,7 @@ import { Attribution } from './Attribution'
 import { buildLayers, effectiveLayers, regionAnchors, regionFocus, structureFocus } from './layers'
 import type { LayerModel } from './layers'
 import { SystemControls } from './SystemControls'
+import { KeyboardNavigator } from '../a11y/KeyboardNavigator'
 
 export interface AtlasViewerProps extends AnatomyViewerProps {
   manifest: AtlasManifest
@@ -44,6 +47,7 @@ function StructureTooltip({ structure, systemLabel, statuses, registry, selected
   const region = regionOfStructure(structure)
   const status = region ? statuses[region] : null
   const meta = status ? STATUS_META[status] : null
+  const t = useT()
   return (
     <TooltipShell registry={registry} glow={meta && status !== 'LOW' ? meta.glow : 'rgba(94,231,245,0.18)'}>
       <div className="flex items-center" style={{ gap: 8 * ls }}>
@@ -60,23 +64,34 @@ function StructureTooltip({ structure, systemLabel, statuses, registry, selected
       <div className="mt-1 flex items-center justify-between" style={{ gap: 12 * ls }}>
         <span className="text-slate-400" style={{ fontSize: 10 * ls }}>
           {systemLabel}
-          {region ? ` · ${REGION_LABELS[region].label}` : ''}
+          {region ? ` · ${regionLabel(region)}` : ''}
         </span>
         {region && status ? (
           <ValueText region={region} status={status} ls={ls} />
         ) : (
           <span className="whitespace-nowrap text-slate-400" style={{ fontSize: 10 * ls }}>
-            Not monitored
+            {t('anatomy.tooltip.notMonitored')}
           </span>
         )}
       </div>
       {!selected && (
         <div className="mt-1 uppercase tracking-[0.14em] text-slate-500" style={{ fontSize: 9 * ls }}>
-          Click to select
+          {t('anatomy.tooltip.clickSelect')}
         </div>
       )}
     </TooltipShell>
   )
+}
+
+/** System name from the manifest, in the current language when a translation exists. */
+function manifestSystemLabel(f: { id: string; label: string } | undefined): string | undefined {
+  return f ? tOr(`anatomy.manifestSystem.${f.id}`, f.label) : undefined
+}
+
+/** "skeletal system, nervous system" for the loading pill (German nouns keep their capital letter). */
+function pendingNames(list: { id: string; label: string }[]): string {
+  const s = list.map((f) => manifestSystemLabel(f)!).join(', ')
+  return getLang() === 'de' ? s : s.toLowerCase()
 }
 
 function HoverTooltip({ store, manifest, statuses, registry }: { store: AtlasStore; manifest: AtlasManifest; statuses: Record<BodyRegionId, Status>; registry: LabelRegistry }) {
@@ -84,7 +99,7 @@ function HoverTooltip({ store, manifest, statuses, registry }: { store: AtlasSto
   const selectedId = useAppStore((s) => s.selectedStructureId)
   const structure = useMemo(() => (id ? (manifest.structures.find((s) => s.id === id) ?? null) : null), [manifest, id])
   if (!structure) return null
-  const systemLabel = manifest.systems.find((f) => f.id === structure.system)?.label ?? structure.system
+  const systemLabel = manifestSystemLabel(manifest.systems.find((f) => f.id === structure.system)) ?? structure.system
   return <StructureTooltip structure={structure} systemLabel={systemLabel} statuses={statuses} registry={registry} selected={selectedId === structure.id} />
 }
 
@@ -96,7 +111,8 @@ function useLoadProgress(manifest: AtlasManifest, model: LayerModel, visible: Re
     let loaded = 0
     let total = 0
     let pending = 0
-    const names: string[] = []
+    /** Systems still loading (translated at render, see pendingNames). */
+    const names: { id: string; label: string }[] = []
     for (const f of manifest.systems) {
       if (!systems.has(f.id)) continue
       const p = files[f.id]
@@ -106,7 +122,7 @@ function useLoadProgress(manifest: AtlasManifest, model: LayerModel, visible: Re
       else {
         pending++
         loaded += Math.min(f.bytes, p?.loaded ?? 0)
-        names.push(f.label)
+        names.push(f)
       }
     }
     return { loaded, total, pending, names, fraction: total > 0 ? loaded / total : 1 }
@@ -117,6 +133,8 @@ const mb = (bytes: number) => `${(bytes / 1048576).toFixed(1)} MB`
 
 export function AtlasViewer({ manifest, onFatal, className, showControls = true, autoRotate = true, bloom = true, labelScale, compact: compactProp = false, legend = true }: AtlasViewerProps) {
   const [store] = useState(createAtlasStore)
+  // Stage3D is memoized: subscribe here so the overlays follow a language change.
+  useLang()
   const rootRef = useRef<HTMLDivElement>(null)
   const width = useWidth(rootRef)
   const [labels] = useState(createLabelRegistry)
@@ -226,6 +244,7 @@ export function AtlasViewer({ manifest, onFatal, className, showControls = true,
           </EffectComposer>
         )}
       </Canvas>
+      {ready && <KeyboardNavigator manifest={manifest} store={store} statuses={statuses} ls={ls} bottom={captionBand + pillBand} />}
       <LabelOverlay
         registry={labels}
         statuses={statuses}
@@ -239,21 +258,21 @@ export function AtlasViewer({ manifest, onFatal, className, showControls = true,
           <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex justify-center px-3">
             <div role="status" className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/55 px-3 py-1 text-cyan-100/85 backdrop-blur-md" style={{ fontSize: 10.5 * ls }}>
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-300" />
-              Loading {progress.names.join(', ').toLowerCase()} {Math.round(progress.fraction * 100)}%
+              {tr('anatomy.loading.systems', { names: pendingNames(progress.names), pct: Math.round(progress.fraction * 100) })}
             </div>
           </div>
         ) : (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-4">
             <div role="status" aria-live="polite" className="rounded-2xl border border-white/10 bg-slate-950/50 text-center text-cyan-50/90 backdrop-blur-md" style={{ width: 220 * ls, maxWidth: '100%', padding: `${12 * ls}px ${14 * ls}px` }}>
               <div className="font-medium tracking-wide" style={{ fontSize: 11.5 * ls }}>
-                Loading reference anatomy
+                {tr('anatomy.loading.reference')}
               </div>
               <div className="overflow-hidden rounded-full bg-white/10" style={{ height: 3 * ls, marginTop: 9 * ls }}>
                 <div className="h-full rounded-full bg-cyan-300 transition-[width] duration-150" style={{ width: `${Math.round(progress.fraction * 100)}%` }} />
               </div>
               <div className="flex justify-between font-mono tabular text-slate-400" style={{ fontSize: 9.5 * ls, marginTop: 6 * ls }}>
                 <span>
-                  {mb(progress.loaded)} of {mb(progress.total)}
+                  {tr('anatomy.loading.of', { loaded: mb(progress.loaded), total: mb(progress.total) })}
                 </span>
                 <span>{Math.round(progress.fraction * 100)}%</span>
               </div>

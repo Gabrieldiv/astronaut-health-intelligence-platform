@@ -8,11 +8,14 @@
     "evaluate": "tsx scripts/evaluate.ts",
     "anatomy:build": "node scripts/anatomy/build.mjs",
     "anatomy:validate": "node scripts/anatomy/validate.mjs",
+    "api:types": "npx --yes openapi-typescript@7.13.0 ../../backend/openapi.json -o src/types/api.gen.ts",
     "typecheck": "tsc -b",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "e2e": "playwright test",
+    "e2e:update": "playwright test e2e/visual.spec.ts --update-snapshots"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
@@ -31,6 +34,7 @@
     "@gltf-transform/core": "4.5.1",
     "@gltf-transform/extensions": "4.5.1",
     "@gltf-transform/functions": "4.5.1",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3.5",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",

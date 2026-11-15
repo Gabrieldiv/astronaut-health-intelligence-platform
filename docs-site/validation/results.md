@@ -43,7 +43,7 @@ Minutes from the scenario start (08:00 UTC sim time), on the evaluation grid (1 
 | ACUTE_CARDIO | AST-01 (ORION) | 7 min (R-HR-01) | 7 min | 7 min | CRITICAL (100) | 3 h |
 | SENSOR_FAILURE | AST-03 (VEGA) | 14 min (R-DQ-02) | not reached | not reached | MODERATE (20) | 3 h |
 | ENVIRONMENTAL_CO2 | cabin | 90 min (R-ENV-CO2-01) | 140 min (2.3 h) | not reached | HIGH (77) | 12 h |
-| PROGRESSIVE_FATIGUE | AST-02 (LYRA) | 1905 min (31.8 h, R-FAT-01) | 2010 min (33.5 h) | not reached | HIGH (79) | 96 h |
+| PROGRESSIVE_FATIGUE | AST-02 (LYRA) | 1905 min (31.8 h, R-FAT-01) | 1980 min (33.0 h) | not reached | HIGH (79) | 96 h |
 | PERFORMANCE_DECLINE | AST-04 (ATLAS) | 1650 min (27.5 h, R-EX-01) | 4530 min (75.5 h) | not reached | HIGH (45) | 120 h |
 
 **Reading the results.**
@@ -66,9 +66,10 @@ npm run evaluate
 
 ## Tests
 
-| Measure | Value (2026-11-14) |
+| Measure | Value (2026-11-15) |
 | --- | --- |
-| vitest tests | **143 in 17 files, all passing** |
+| vitest tests (web) | **375 in 38 files, all passing** |
+| pytest tests (backend) | 44 in 6 files, external HTTP mocked |
 | Anatomy atlas validation (`npm run anatomy:validate`) | passes on the published files: 250 structures in 9 GLB files, 880,356 triangles, 4.64 MB |
 | Typecheck (`npx tsc -b`) | clean |
 | Production build (`npx vite build`) | ok |

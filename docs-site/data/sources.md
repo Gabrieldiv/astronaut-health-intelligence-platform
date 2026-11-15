@@ -1,27 +1,36 @@
 ---
 title: NASA Data Sources
-description: The NASA data sources examined for the Astronaut Health Intelligence Platform (OSDR, EDA, RadLab, NLSP, Standard Measures, Artemis II), what each offers and its status.
+description: The NASA data sources used or examined for the Astronaut Health Intelligence Platform (DONKI space weather, OSDR, EDA, RadLab, NLSP, Standard Measures, Artemis II), what each offers and its status.
 status: IMPLEMENTED
 origin: REAL_PUBLIC
 code:
   - frontend/web/scripts/osdr/discover.mjs
   - frontend/web/scripts/osdr/import.mjs
-verified: 2026-11-14
+  - backend/app/modules/nasa/donki.py
+  - backend/app/modules/nasa/osdr.py
+  - frontend/web/src/data/nasa/donki-snapshot.json
+  - frontend/web/src/lib/nasa/spaceWeather.ts
+verified: 2026-11-15
 ---
 
 # NASA Data Sources
 
 The Astronaut Health Intelligence Platform (AHI) separates three things clearly: **simulated** crew data (everything on the live dashboard), **real public** NASA data (shown only as historical reference), and **reference material** that justifies what is monitored. This page lists every NASA source examined and what was found. The datasets actually imported are detailed in the [Dataset catalog](./dataset-catalog).
 
-::: info Checked on 2026-11-14
-All queries were made live against public NASA endpoints on 2026-11-14 (UTC), without API keys or authentication. Availability can change.
+::: info Checked on 2026-11-14 and 2026-11-15
+The OSDR, EDA and RadLab queries were made live on 2026-11-14 (UTC); the DONKI snapshot was retrieved on 2026-11-15. No API key or authentication is needed for any of them. Availability can change.
+:::
+
+::: tip Context, not crew measurements
+Every real NASA record in AHI is `REAL_PUBLIC` **mission context or reference**. None of it is an astronaut measurement of this crew, and none of it feeds a personal baseline, a status or an alert.
 :::
 
 ## Summary
 
 | Source | What it offers | Status on 2026-11-14 | Used in AHI |
 | --- | --- | --- | --- |
-| [NASA OSDR](#nasa-osdr) | Space life science studies, files and ISA metadata | Public APIs reachable | <StatusBadge status="IMPLEMENTED" /> OSD-569 and OSD-575 |
+| [NASA DONKI](#donki-space-weather) | Space weather events: flares, solar energetic particles, CMEs, geomagnetic storms | Reachable at the new CCMC host | <StatusBadge status="IMPLEMENTED" /> space weather advisory, live through the AHI API or from a bundled snapshot |
+| [NASA OSDR](#nasa-osdr) | Space life science studies, files and ISA metadata | Public APIs reachable | <StatusBadge status="IMPLEMENTED" /> OSD-569 and OSD-575 panels; live study search through the AHI API |
 | [NASA EDA](#nasa-eda) | ISS cabin environment telemetry and radiation doses | API lists 24 payload missions (metadata only); telemetry CSV via the Data Tables tab | <StatusBadge status="PLANNED" /> top priority (P0) |
 | [NASA RadLab](#nasa-radlab) | Dosimetry from several instruments and agencies | HTTP 500 on all routes | <StatusBadge status="PLANNED" /> retry later |
 | [NLSP](#nasa-life-sciences-portal-nlsp) | Discovery portal for life science and human health data | Reachable; access per resource | <StatusBadge status="PLANNED" /> analog data |
@@ -32,6 +41,21 @@ All queries were made live against public NASA endpoints on 2026-11-14 (UTC), wi
 ::: warning No public live vital signs
 There is no public, continuous physiological telemetry of astronauts (heart rate, ECG, SpO2 minute by minute). That is why the vitals in AHI are simulated, and the plan is to calibrate the simulator with published ranges rather than to look for a live feed. See [Health monitoring in space missions](../science/health-monitoring-in-missions).
 :::
+
+## DONKI space weather {#donki-space-weather}
+
+DONKI (Space Weather Database Of Notifications, Knowledge, Information) is run by the Community Coordinated Modeling Center (CCMC) at NASA Goddard. AHI uses four of its feeds to build the [space weather advisory](../intelligence/mission-profiles#space-weather-advisory).
+
+| Item | Value |
+| --- | --- |
+| Endpoints | `https://ccmc.gsfc.nasa.gov/DONKI/WS/get/{FLR,SEP,CME,GST}?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd` (solar flares, solar energetic particles, coronal mass ejections, geomagnetic storms) |
+| Moved host | CCMC retired the former `kauai.ccmc.gsfc.nasa.gov` host; the paths after `/DONKI/` did not change. The backend uses the new host |
+| Key | None needed |
+| Live path | `GET /api/v1/space-weather?days=30` on the [AHI API](../architecture/backend), cached 15 min; if any of the four feeds fails it answers 502, never a partial list that would read as "no storms" |
+| Offline path | Bundled real snapshot `frontend/web/src/data/nasa/donki-snapshot.json` |
+| Refresh | `python -m app.cli donki-snapshot` in `backend` |
+
+**The bundled snapshot** holds **105 real events** retrieved on 2026-11-15 at 04:06 UTC for the previous 30 days: 90 coronal mass ejections, 14 solar flares, 1 geomagnetic storm (Kp 6) and 0 solar energetic particle events. The app says whether it shows the snapshot or live data and when the data was retrieved.
 
 ## NASA OSDR
 
@@ -57,6 +81,10 @@ The NASA Open Science Data Repository is the main repository for space life scie
 2. Across the first 100 hits of each term: **367 unique studies, 110 with organism Homo sapiens**. Most of those are cell cultures, organoids, tissue chips or ground analogs, not astronauts.
 3. Read metadata and file listings of the human candidates and recorded a decision for each (chosen or rejected, and why). The decisions are in the [Dataset catalog](./dataset-catalog#candidates-examined).
 4. Downloaded only the chosen files, hashed them and parsed them as text.
+
+### Live study search
+
+When the AHI API runs, the Data and model dialog can search OSDR human studies live (`GET /api/v1/nasa/osdr/studies?q=`, backed by `https://osdr.nasa.gov/osdr/data/search` filtered to *Homo sapiens*). It returns accession, title, study link, project type, mission and release date. In offline demo mode the search is not shown.
 
 ::: tip The search index is not exhaustive
 OSD-575 and OSD-656 never appeared in any search result although they exist and are public. They were found through the "related studies" list in the OSD-569 and OSD-575 descriptions. Always read study descriptions.

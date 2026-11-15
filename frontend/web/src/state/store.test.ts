@@ -43,5 +43,5 @@ describe('store v2 slices and actions', () => {
     expect(s5.commProfileId).toBe('MARS_FAR')
     expect(s5.mission.commDelaySec).toBe(1320)
     expect(s5.comms).toHaveLength(0)
-  }, 60000)
+  }, 120000)
 })

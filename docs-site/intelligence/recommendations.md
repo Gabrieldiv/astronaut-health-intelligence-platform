@@ -104,7 +104,7 @@ It is a pure function (no state change, under 5 ms per call) and returns both tr
 - The catalog is a demo list written for this prototype, not an approved operational procedure set.
 - Intervention effect sizes in the what-if and in the simulator are made up parameters, not evidence; this is why the feature is marked <StatusBadge status="EXPERIMENTAL" />.
 - Autonomy is decided by audience and profile only; real crew authority rules are richer.
-- No language model rewrites or explains recommendations ([AI and analytics](./ai-and-analytics#planned-llm-explanation-layer)).
+- No language model rewrites recommendations. The optional Ask AHI assistant can explain them in plain words, never change them ([AI and analytics](./ai-and-analytics#language-model-the-ask-ahi-assistant)).
 
 ## Status
 

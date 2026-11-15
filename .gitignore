@@ -4,3 +4,9 @@ dist/
 *.local
 .DS_Store
 Thumbs.db
+
+# Playwright (frontend/web end to end tests)
+frontend/web/test-results/
+frontend/web/playwright-report/
+frontend/web/blob-report/
+frontend/web/playwright/.cache/

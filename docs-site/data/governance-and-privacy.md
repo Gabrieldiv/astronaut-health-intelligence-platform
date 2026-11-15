@@ -22,7 +22,8 @@ How the Astronaut Health Intelligence Platform (AHI) handles personal data, acce
 - The real datasets keep the source pseudonyms (C001 to C004). No attempt is made to link them to named people.
 - The FHIR R4 export contains `Patient` resources with pseudonymized ids only: no name, birth date, gender or other personal data (covered by a test in `fhir.test.ts`).
 - Only processed, publicly accessible OSDR files were used. Controlled access data (for example astronaut sequencing data) was never requested or touched.
-- UI preferences (view, presentation mode, alert sound) are stored only in the browser's `localStorage`. There is no backend, no account and no tracking.
+- UI preferences (view, presentation mode, sounds, audio description, viewer mode) are stored only in the browser's `localStorage`. There is no account and no tracking. The optional AHI API stores only pseudonymized registry records and canonical observations sent to it; the registry rejects unknown fields such as a real name.
+- The Ask AHI demo sends a compact snapshot of engine outputs (pseudonymized call signs, values, statuses) to the Claude API through the AHI API, and only when a key is configured. A real mission must keep this on board ([Ask AHI](../product/assistant#the-onboard-target)).
 - The 3D body is one reference model shown for every crew member. It is not a scan of anyone and holds no personal data.
 
 ## Populations are never mixed
@@ -51,7 +52,7 @@ The proposed `metadata.population_type` values for future imports are listed in 
 | 9 | Trace which data produced each alert | <StatusBadge status="IMPLEMENTED" /> rule id, metric, factors and audit events, in memory only |
 | 10 | Show limitations and uncertainty | <StatusBadge status="IMPLEMENTED" /> confidence, intervals, limitations on every assessment |
 | 11 | Require human validation for health decisions | <StatusBadge status="IMPLEMENTED" /> `requiresHumanReview` on HIGH, CRITICAL and flight surgeon items |
-| 12 | Use generative AI only for controlled explanation and summarization | <StatusBadge status="NOT_IMPLEMENTED" /> no generative AI at runtime; a guarded layer is [planned](../intelligence/ai-and-analytics#planned-llm-explanation-layer) |
+| 12 | Use generative AI only for controlled explanation and summarization | <StatusBadge status="EXPERIMENTAL" /> only the optional Ask AHI demo uses a language model, to explain engine outputs ([AI and analytics](../intelligence/ai-and-analytics#language-model-the-ask-ahi-assistant)) |
 
 ## Third party licenses {#third-party-licenses}
 
@@ -68,7 +69,7 @@ The anatomy files carry their own `LICENSE.md`, the app shows the attribution un
 The engine records `AuditEvent` entries (`at`, `actor`, `action`, `detail`) for acknowledgements, logged interventions, scenario changes, escalations, Earth link messages, profile changes and check-ins. The trail is shown in the alerts drawer (History tab) and is bounded to 300 entries.
 
 ::: warning In memory only
-The audit trail lives in the browser tab and is lost on reload. A persistent, tamper evident audit store needs the planned backend ([Target architecture](../architecture/target-architecture)).
+The audit trail lives in the browser tab and is lost on reload. A persistent, tamper evident audit store is planned on the backend ([Roadmap](../resources/roadmap)).
 :::
 
 ## Security posture today

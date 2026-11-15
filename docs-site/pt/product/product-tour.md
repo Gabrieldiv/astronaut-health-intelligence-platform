@@ -13,12 +13,16 @@ code:
   - frontend/web/src/features/timeline/index.tsx
   - frontend/web/src/features/alerts/Alerts.tsx
   - frontend/web/src/features/crewview/CrewView.tsx
-verified: 2026-11-14
+  - frontend/web/src/features/mission/MissionContext.tsx
+  - frontend/web/src/features/attention/MeasuredBy.tsx
+  - frontend/web/src/features/attention/HorizonPicker.tsx
+  - frontend/web/src/features/vitals/DevicesIndicator.tsx
+verified: 2026-11-15
 ---
 
 # Tour do produto
 
-Esta página descreve cada área da tela da Astronaut Health Intelligence Platform (AHI). A interface é **somente em inglês** (o projeto é avaliado por um júri internacional), então os nomes de botões e painéis aparecem aqui em inglês, entre aspas ou em formatação de código, com a explicação em português.
+Esta página descreve cada área da tela da Astronaut Health Intelligence Platform (AHI). A interface é em **inglês por padrão** (o projeto é avaliado por um júri internacional; outros idiomas são opcionais, veja [Idiomas](/pt/product/accessibility#languages)), então os nomes de botões e painéis aparecem aqui em inglês, entre aspas ou em formatação de código, com a explicação em português.
 
 ::: info
 Tudo o que aparece na tela usa dados **simulados**. O selo `SIMULATED` fica sempre visível ao lado do logo.
@@ -31,7 +35,7 @@ A AHI tem duas visões. Ambas leem o mesmo estado ao vivo; a diferença é o pú
 | Visão | Para quem | O que prioriza |
 | --- | --- | --- |
 | "Ground view" | Médico de voo (flight surgeon) e Mission Control | Tripulação inteira, corpo 3D, motivos, previsões, linha do tempo, vitais, cabine e dispositivos |
-| "Crew view" | O astronauta | Uma pessoa, linguagem simples, letras grandes, só as duas ações principais, check-in diário |
+| "Crew view" | O astronauta | Uma pessoa, linguagem simples, letras grandes, só as duas ações principais, cartões "Your body systems", check-in diário |
 
 Troque de visão pelo seletor "Ground" / "Crew" na barra superior ou com a tecla `V`.
 
@@ -53,6 +57,8 @@ A "Crew view" mostra uma pessoa por vez:
 - "Your body vs your normal": frequência cardíaca, oxigênio no sangue, respiração e variabilidade cardíaca, cada uma contra a faixa pessoal ("Normal for you" ou "Check the sensor");
 - uma frase sobre o "Earth link" que explica quanto tempo uma resposta da Terra leva.
 
+**"Your body systems"** lista um cartão por sistema do corpo, um por linha: um rótulo simples (por exemplo "Heart"), o status em palavras e cor, e a leitura-chave. Toque em um cartão para destacar aquele sistema no corpo 3D.
+
 ## Barra superior
 
 Da esquerda para a direita:
@@ -60,7 +66,8 @@ Da esquerda para a direita:
 | Elemento | O que faz |
 | --- | --- |
 | Logo "AHI" e selo `SIMULATED` | O selo abre "Where this data comes from": explica que toda leitura é simulada e lista os adapters de dispositivos ativos |
-| Nome da missão e `MET` | Missão ("Demo Expedition", fase "In flight") e o tempo decorrido de missão. A hora UTC simulada aparece no tooltip |
+| Nome da missão e **perfil de missão** | Missão ("Demo Expedition", fase "In flight") e o perfil: "Launch and ascent", "ISS", "Moon (Artemis class)" ou "Mars transit". O botão de informação abre o diálogo de contexto da missão: riscos, valores de referência citados, dose da missão e clima espacial. Veja [Perfis de missão](/pt/intelligence/mission-profiles) |
+| `MET` | Tempo decorrido de missão no relógio simulado. A hora UTC simulada aparece no tooltip |
 | Player de cenário | Escolha do cenário, play/pause, velocidade e reinício (detalhes abaixo) |
 | "Earth link" | Perfil de comunicação (ISS, Moon, Mars near, Mars far), atraso só de ida e mensagens em trânsito. Abre a gaveta de comunicação |
 | "Ground" / "Crew" | Alterna a visão |
@@ -70,7 +77,7 @@ Da esquerda para a direita:
 
 ### Player de cenário
 
-- **"Scenario"**: abre a lista dos 6 cenários ("Nominal day", "Progressive fatigue", "Cabin CO₂ rise", "Exercise performance decline", "Sensor failure", "Acute cardio event"), cada um com descrição e quem é afetado. Há um botão "Restart" no rodapé.
+- **"Scenario"**: abre a lista dos 7 cenários ("Nominal day", "Progressive fatigue", "Cabin CO₂ rise", "Exercise performance decline", "Sensor failure", "Acute cardio event", "Eye changes (SANS like)"), cada um com descrição e quem é afetado. Há um botão "Restart" no rodapé.
 - **Play/pause**: também pela barra de espaço.
 - **Velocidade**: "Real time" (1 s por s), "1 min/s", "10 min/s" e "1 h/s".
 - **Reiniciar**: volta ao começo do cenário atual.
@@ -85,6 +92,8 @@ Veja o que acontece em cada cenário em [Cenários e demo guiada](/pt/product/de
 | "Shift handover" | Relatório de passagem de turno: imprimir, exportar FHIR, enviar à Terra |
 | "Data and model" | Datasets reais da NASA, dispositivos simulados, model card e origens dos dados |
 | "Presentation mode" | Letras maiores e menos detalhes (tecla `P`) |
+| "Accessibility and sound" | Sons de alerta, audiodescrição e velocidade da voz ([Acessibilidade](/pt/product/accessibility)) |
+| "Language" | Idioma da interface: inglês (padrão) ou um idioma opcional ainda em revisão nativa ([Idiomas](/pt/product/accessibility#languages)) |
 | "Keyboard shortcuts" | Lista de atalhos (tecla `?`) |
 
 Esses recursos estão descritos em [Recursos da missão](/pt/product/mission-features).
@@ -118,13 +127,16 @@ No centro fica o nome da pessoa, o dia de missão, a atividade atual ("Sleeping"
 
 O corpo 3D é um modelo anatômico realista (o atlas Z-Anatomy), com as cores naturais dos tecidos sob uma pele translúcida. Um sistema que pede atenção acende na cor do seu status, o coração bate na frequência cardíaca ao vivo e os pulmões respiram na frequência respiratória ao vivo. Uma mudança de status dispara um pulso de varredura curto a partir daquela região. Quando falta dado, o órgão fica cinza e para de se mover.
 
-Sob o corpo ficam a pílula de controles ("Layers", as vistas "Front", "Back", "Left" e "Right" e o botão de reset), a legenda de status e a **legenda de anatomia de referência**: "Reference anatomy: Z-Anatomy atlas (CC BY-SA 4.0)". O botão de informação dela explica que este é um único modelo adulto de referência, mostrado para todos os tripulantes, não um exame do astronauta, e lista os créditos.
+Uma **varredura** suave de luz percorre o corpo da cabeça aos pés a cada poucos segundos, sinal de que o monitoramento está ao vivo (lenta e fraca com movimento reduzido).
+
+Sob o corpo ficam a pílula de controles ("Layers", o botão de modo "Monitor" / "Explore", as vistas "Front", "Back", "Left" e "Right" e o botão de reset), a legenda de status e a **legenda de anatomia de referência**: "Reference anatomy: Z-Anatomy atlas (CC BY-SA 4.0)". O botão de informação dela explica que este é um único modelo adulto de referência, mostrado para todos os tripulantes, não um exame do astronauta, e lista os créditos.
 
 Ao lado do corpo ficam os **chips dos sistemas**, como rótulos anatômicos. Um chip sempre significa o sistema inteiro:
 
 | Coluna esquerda | Coluna direita |
 | --- | --- |
-| "Brain" (Neuro and sleep) | "Muscles" (Musculoskeletal) |
+| "Brain" (Neuro and sleep) | "Ears" (Hearing and noise) |
+| "Eyes" (Vision, SANS monitoring) | "Muscles" (Musculoskeletal) |
 | "Lungs" (Respiratory) | "Skeleton" (Bone and radiation) |
 | "Heart" (Cardiovascular) | "Skin" (Thermal) |
 | "Kidneys" (Renal and hydration) | |
@@ -137,13 +149,16 @@ Ao lado do corpo ficam os **chips dos sistemas**, como rótulos anatômicos. Um 
 | "Skin opacity" | Um controle deslizante de 0 a 100% (22% por padrão), para ver mais da superfície ou mais do interior |
 | "Presets" | "Default", "Organs", "Skeleton", "Muscles", "All" |
 | "Front" / "Back" / "Left" / "Right" | Giram o corpo para uma vista predefinida, com transição suave |
+| "Monitor" / "Explore" | Monitor (padrão): só os sistemas monitorados reagem ao ponteiro e ao clique; o resto fica mais discreto e o clique passa através dele. Explore: qualquer estrutura pode ser selecionada, como referência anatômica. Fica guardado neste dispositivo |
 | Reset | Mostra o corpo inteiro de novo e limpa a seleção |
 
-Também dá para arrastar para girar, rolar para dar zoom e deslocar a vista. O corpo gira devagar sozinho quando nada está selecionado. Um sistema que ainda está baixando mostra o progresso; o resto do corpo continua utilizável.
+Arraste para girar e deslocar a vista. A roda do mouse, o trackpad ou a pinça **aproximam em direção ao ponto sob o ponteiro**, então o que você mira fica no lugar. O corpo gira devagar sozinho quando nada está selecionado. Um sistema que ainda está baixando mostra o progresso, e "try 2" ou "try 3" enquanto tenta de novo; se ainda falhar, mostra **retry** e continua clicável. O resto do corpo continua utilizável.
+
+**Teclado**: `Tab` até o corpo, depois `Up` / `Down` para os sistemas, `Left` / `Right` para as estruturas, `Enter` para selecionar e `Esc` para limpar. Cada passo é anunciado ([Acessibilidade](/pt/product/accessibility)).
 
 ### Selecionar uma estrutura {#selecting-a-structure}
 
-Passe o ponteiro sobre qualquer parte do corpo para ver o nome, o sistema anatômico e o status, ou "Not monitored". Clique para selecionar: a câmera vai até a estrutura, o resto do corpo esmaece em um contorno translúcido e o painel da direita vira "Anatomy detail".
+Passe o ponteiro sobre uma parte do corpo para ver o nome, o sistema anatômico e o status, ou "Not monitored" (no modo Explore). Clique para selecionar: a câmera vai até a estrutura, o resto do corpo esmaece em um contorno translúcido e o painel da direita vira "Anatomy detail".
 
 | Parte do painel | Conteúdo |
 | --- | --- |
@@ -151,7 +166,8 @@ Passe o ponteiro sobre qualquer parte do corpo para ver o nome, o sistema anatô
 | "Reference anatomy" | De onde vem a forma 3D: "Z-Anatomy atlas" ou "AHI procedural" (os rins) |
 | Estruturas no atlas | Quantas estruturas aquele sistema anatômico tem, e "Part of" quando a estrutura pertence a uma maior (por exemplo, as artérias coronárias fazem parte do coração) |
 | "Monitored with" | Para estruturas monitoradas: o sistema do corpo com o qual ela é monitorada, o status desse sistema, uma frase simples dizendo como os indicadores se relacionam à estrutura, e as mesmas métricas, gráficos, alertas e sinalizações do detalhe do sistema. "Whole region" passa para o sistema inteiro |
-| "Context only: not monitored" | Para estruturas às quais nenhum aparelho ou métrica se relaciona (por exemplo o estômago, um nervo ou os olhos): um cartão calmo, sem status. "No status is shown here because nothing is measured. That is not the same as normal." |
+| "Measured by" | Os aparelhos que alimentam as leituras: nome, tipo, estado, bateria, último contato e origem do dado. Leituras que vêm do app da tripulação (check-ins, autotestes, registro de líquidos) aparecem como tal |
+| "Context only: not monitored" | Para estruturas às quais nenhum aparelho ou métrica se relaciona (por exemplo o estômago ou um nervo), no modo Explore: um cartão calmo, sem status. "No status is shown here because nothing is measured. That is not the same as normal." |
 
 Os indicadores descrevem um sistema do corpo como um todo. São **indicadores relacionados, não medidas da estrutura selecionada**: selecionar o fêmur esquerdo mostra a dose de radiação acumulada como contexto de saúde óssea, não uma medida daquele osso. Quais estruturas se relacionam a quais métricas: [Mapeamento da anatomia para a saúde](/pt/architecture/data-model#anatomy-to-health-mapping).
 
@@ -159,8 +175,8 @@ Os indicadores descrevem um sistema do corpo como um todo. São **indicadores re
 
 Clique de novo na estrutura selecionada, clique no espaço vazio, aperte `Esc` ou use "Overview" para voltar. Se o atlas de referência não carregar, o app mostra um corpo simplificado com o aviso "Reference atlas unavailable. Showing simplified model."; os sistemas do corpo, os chips e os alertas continuam funcionando. Detalhes técnicos em [Renderização da anatomia 3D](/pt/architecture/anatomy-3d).
 
-::: warning ATENÇÃO
-Os olhos podem ser selecionados, mas são só de contexto: não existe aparelho de medição ocular no MVP, então eles nunca mostram status. O acompanhamento da SANS a partir de exames periódicos está no [roadmap](/pt/resources/roadmap).
+::: info Olhos e ouvidos
+Os olhos e os ouvidos são monitorados por exames periódicos simulados (exames oculares da SANS, testes de audição, ruído diário). O detalhe deles mostra o histórico de exames contra a linha de base pré-voo; "No exam yet" nunca aparece como normal. Os ouvidos não têm geometria 3D: dois pequenos anéis de status dos lados da cabeça os marcam. Veja [Saúde ocular e audição](/pt/intelligence/eye-and-hearing).
 :::
 
 ## Painel "What needs attention"
@@ -176,6 +192,8 @@ O painel da direita explica o estado da pessoa selecionada.
 ### Motivos ("Why")
 
 Lista dos fatores que contribuem para o status, cada um com seu peso relativo em porcentagem. Exemplo de fator: HRV abaixo da faixa pessoal há algumas horas. Sistemas sem dado ao vivo aparecem com o aviso de que dado ausente nunca é tratado como normal.
+
+Quando o detector experimental vê uma mistura incomum de sinais, uma nota neutra "Unusual combination" lista os sinais que mais contribuíram, a versão do modelo e "Experimental, machine learning". Ela não muda o status ([Detecção de anomalias](/pt/intelligence/anomaly-detection#unusual-combination-experimental)).
 
 ### Ações recomendadas ("Recommended actions")
 
@@ -226,7 +244,7 @@ Abaixo das métricas, "Alerts and flags" lista os alertas abertos daquele sistem
 | --- | --- |
 | Faixa sombreada ("Your normal band") | Faixa pessoal ([Linha de base pessoal](/pt/intelligence/personal-baseline)) |
 | Linha ("Measured") | Valores medidos |
-| Cone tracejado ("Forecast (80% interval)") | Projeção com intervalo de 80% ([Previsão](/pt/intelligence/forecasting)) |
+| Cone tracejado ("Forecast (80% interval)") | Projeção com intervalo de 80% ([Previsão](/pt/intelligence/forecasting)), com um **seletor de horizonte**: 24 h, 36 h, 72 h, 7 dias ou 15 dias. Um horizonte precisa de pelo menos metade da sua duração em histórico; senão aparece "Not enough history for this horizon" ([Previsão](/pt/intelligence/forecasting#selectable-horizons)) |
 | Marcadores | Alertas ("Alert"), ações registradas ("Action logged") e check-ins ("Check-in") |
 | Lacunas | "Gaps mean no data": falta de dado nunca é preenchida |
 
@@ -255,7 +273,7 @@ Na base da "Ground view":
 | --- | --- |
 | "Live vitals" | Frequência cardíaca, variabilidade cardíaca ("Heart variability"), oxigênio no sangue, frequência respiratória, pressão arterial e temperatura da pele, com minicurva das últimas 6 h e faixa pessoal. Cada bloco diz "Normal for you", a diferença em relação ao normal, ou "Check the sensor" |
 | "Cabin" | CO₂, temperatura, umidade e taxa de dose de radiação da cabine |
-| "Devices" | Quantos dispositivos estão online ("All online" ou a contagem), menor bateria e acesso à lista. Estados: "Online", "Degraded", "Data stale", "Offline" |
+| "Devices" | Quantos dispositivos estão online ("All online" ou a contagem), menor bateria e acesso à lista. Estados: "Online", "Degraded", "Data stale", "Offline", "Paused by operator". Na lista, cada aparelho pode ser **pausado** (com confirmação) e retomado. As leituras de um aparelho pausado mostram "Paused by operator" e sem dados, nunca valores normais ([Pausar um aparelho](/pt/intelligence/scenario-simulation#pausing-a-device)) |
 
 ## Gaveta de alertas
 
@@ -267,7 +285,7 @@ Aberta pelo sino ou pela tecla `A`.
 - **Ações por alerta**: "Acknowledge" (reconhecer) e "View" (ir à pessoa e ao sistema). Há também "Acknowledge all".
 - **Escalonamento**: alertas HIGH e CRITICAL não reconhecidos sobem de nível depois de tempos de demo ([Alertas e escalonamento](/pt/intelligence/alerts#escalonamento)). O cartão mostra o selo "Escalated" e o texto "Unacknowledged for ... Escalated". Reconhecer ou resolver o alerta interrompe o escalonamento.
 - **Resolução automática**: o alerta se resolve sozinho quando a regra fica normal por alguns minutos simulados ("Resolved, back in normal range").
-- **Som**: a opção "Sound for new critical alerts" toca um aviso curto de dois tons para novos alertas CRITICAL. Vem **desligada** por padrão e a preferência fica salva no navegador.
+- **Sons**: alertas CRITICAL tocam por padrão e repetem até serem reconhecidos, com um som mais urgente depois de 2 minutos; alertas de aviso também podem tocar. Ajustes em Tools > "Accessibility and sound" ([Acessibilidade](/pt/product/accessibility#alert-sounds)).
 - **"Activity log"**: registro de auditoria, do mais novo para o mais antigo (alertas reconhecidos, ações, check-ins, mensagens com a Terra, mudanças de cenário).
 
 Um alerta CRITICAL também aparece como **faixa sobre o cabeçalho** do corpo, sem encolher o 3D. Ela tem "View", "Acknowledge" e um botão para esconder a faixa ("Hide banner (alert stays open)"): o alerta continua aberto.
@@ -287,9 +305,14 @@ Um alerta CRITICAL também aparece como **faixa sobre o cabeçalho** do corpo, s
 | `Space` | Play ou pause da simulação |
 | `Esc` | Fechar um painel, ou voltar do detalhe do corpo ou da anatomia |
 | `?` | Mostrar a ajuda de atalhos |
+| `D` | Descrever a tela em voz alta (`Shift` + `D` liga ou desliga a audiodescrição) |
 | `←` `→` | Passo anterior / próximo na demo guiada |
 
 Os atalhos são ignorados enquanto você digita em um campo e quando Ctrl, Alt ou Cmd estão pressionados.
+
+## Ask AHI
+
+O botão **"Ask AHI"** no canto inferior direito abre o assistente: respostas em linguagem simples sobre o que o app mostra, em streaming, com uma linha "Based on:", entrada por voz onde o navegador permite e leitura em voz alta opcional. Precisa do backend com uma chave; senão mostra "Assistant offline". Veja [Ask AHI](/pt/product/assistant).
 
 ## Modo compacto
 
@@ -304,4 +327,5 @@ O layout se adapta à tela sem configuração:
 
 - [Jornadas de usuário e papéis](/pt/product/user-journeys): o caminho de cada persona por estas telas.
 - [Recursos da missão](/pt/product/mission-features): comunicação com a Terra, check-in, visão de missão, relatório e "e se".
+- [Acessibilidade, som e idiomas](/pt/product/accessibility).
 - [Cenários e demo guiada](/pt/product/demo-scenarios): o que observar em cada cenário.

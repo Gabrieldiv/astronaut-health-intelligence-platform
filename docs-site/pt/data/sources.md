@@ -1,12 +1,16 @@
 ---
 title: Fontes de dados da NASA
-description: As fontes públicas da NASA investigadas pela Astronaut Health Intelligence Platform (OSDR, EDA, RadLab, NLSP, Standard Measures, Artemis II) e o status de cada uma.
+description: As fontes públicas da NASA usadas ou investigadas pela Astronaut Health Intelligence Platform (clima espacial do DONKI, OSDR, EDA, RadLab, NLSP, Standard Measures, Artemis II) e o status de cada uma.
 status: IMPLEMENTED
 origin: REAL_PUBLIC
 code:
   - frontend/web/scripts/osdr/discover.mjs
   - frontend/web/scripts/osdr/import.mjs
-verified: 2026-11-14
+  - backend/app/modules/nasa/donki.py
+  - backend/app/modules/nasa/osdr.py
+  - frontend/web/src/data/nasa/donki-snapshot.json
+  - frontend/web/src/lib/nasa/spaceWeather.ts
+verified: 2026-11-15
 ---
 
 # Fontes de dados da NASA
@@ -14,24 +18,40 @@ verified: 2026-11-14
 Esta página descreve as fontes públicas da NASA que a Astronaut Health Intelligence Platform (AHI) investigou, o que cada uma oferece e o status de uso. O detalhe dos dois datasets importados (arquivos, hashes, população, qualidade) fica no [Catálogo de datasets](/pt/data/dataset-catalog).
 
 ::: info Data da consulta
-Todas as consultas foram feitas ao vivo contra endpoints públicos da NASA em **14/11/2026 (UTC)**, sem chave de API e sem autenticação.
+As consultas ao OSDR, EDA e RadLab foram feitas ao vivo em **14/11/2026 (UTC)**; o snapshot do DONKI foi obtido em **15/11/2026**. Nenhuma delas precisa de chave de API nem de autenticação. A disponibilidade pode mudar.
 :::
 
 ::: warning ATENÇÃO
-**Todo dado de dispositivo da tripulação no painel é `SIMULATED`.** Os dois datasets reais (OSD-569 e OSD-575) são **referência histórica**: não são telemetria ao vivo, não são a tripulação mostrada e não calibram baselines, não treinam modelos e não definem limiares.
+**Todo dado de dispositivo da tripulação no painel é `SIMULATED`.** Todo registro real da NASA na AHI é `REAL_PUBLIC` e serve como **contexto da missão ou referência**: os dois datasets do OSDR (OSD-569 e OSD-575) e os eventos de clima espacial do DONKI não são medidas desta tripulação, não calibram baselines, não treinam modelos, não definem limiares e não geram status nem alertas.
 :::
 
 ## Status das fontes em 14/11/2026
 
 | Fonte | Status | Uso na AHI |
 | --- | --- | --- |
-| NASA OSDR | Validado, em uso | OSD-569 e OSD-575 importados como `REAL_PUBLIC` |
+| [NASA DONKI](#donki-space-weather) | No ar, no novo host do CCMC (consulta em 15/11/2026) | <StatusBadge status="IMPLEMENTED" /> aviso de clima espacial, ao vivo pela AHI API ou por um snapshot empacotado |
+| NASA OSDR | Validado, em uso | OSD-569 e OSD-575 importados como `REAL_PUBLIC`; busca de estudos ao vivo pela AHI API |
 | NASA EDA | Validado, ainda não importado | Prioridade P0: replay real do ambiente da ISS |
 | NASA RadLab | Fora do ar (HTTP 500) | Usar doses do EDA enquanto isso |
 | NASA Life Sciences Portal (NLSP) | Portal no ar, acesso por recurso | Possível caminho para sono e cognição de estudos análogos |
 | NASA Standard Measures | Referência de domínio, não é dataset | Justificar o catálogo de métricas |
 | Artemis II Standard Measures | Referência do que está planejado | Não assumir dados abertos |
 | NASA HRP (cinco perigos) | Referência | Enquadrar cada domínio de dado em um perigo |
+
+## Clima espacial do DONKI {#donki-space-weather}
+
+O DONKI (Space Weather Database Of Notifications, Knowledge, Information) é mantido pelo Community Coordinated Modeling Center (CCMC), no NASA Goddard. A AHI usa quatro dos seus feeds para montar o [aviso de clima espacial](/pt/intelligence/mission-profiles#space-weather-advisory).
+
+| Item | Valor |
+| --- | --- |
+| Endpoints | `https://ccmc.gsfc.nasa.gov/DONKI/WS/get/{FLR,SEP,CME,GST}?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd` (erupções solares, partículas solares energéticas, ejeções de massa coronal, tempestades geomagnéticas) |
+| Host novo | O CCMC desativou o antigo host `kauai.ccmc.gsfc.nasa.gov`; os caminhos depois de `/DONKI/` não mudaram. O backend usa o host novo |
+| Chave | Não precisa |
+| Caminho ao vivo | `GET /api/v1/space-weather?days=30` na [AHI API](/pt/architecture/backend), com cache de 15 min; se qualquer um dos quatro feeds falhar, responde 502, nunca uma lista parcial que pareceria "sem tempestades" |
+| Caminho offline | Snapshot real empacotado em `frontend/web/src/data/nasa/donki-snapshot.json` |
+| Atualização | `python -m app.cli donki-snapshot` em `backend` |
+
+**O snapshot empacotado** tem **105 eventos reais**, obtidos em 15/11/2026 às 04:06 UTC para os 30 dias anteriores: 90 ejeções de massa coronal, 14 erupções solares, 1 tempestade geomagnética (Kp 6) e 0 eventos de partículas solares energéticas. O app diz se mostra o snapshot ou dados ao vivo e quando os dados foram obtidos.
 
 ## NASA OSDR (Open Science Data Repository)
 
@@ -61,6 +81,10 @@ Contagem de resultados informada pela API: human 227, astronaut 68, Inspiration4
 Não foram encontrados: sinais fisiológicos contínuos de astronautas (ECG, FC, SpO₂), arquivos de sono ou actigrafia de astronautas, nem telemetria de cabine como dado humano.
 
 OSD-569 e OSD-575 foram escolhidos e importados. Os motivos, os candidatos rejeitados e as regras do parser estão no [Catálogo de datasets](/pt/data/dataset-catalog).
+
+### Busca de estudos ao vivo {#live-study-search}
+
+Com a AHI API rodando, o diálogo Data and model pode buscar estudos humanos do OSDR ao vivo (`GET /api/v1/nasa/osdr/studies?q=`, apoiado em `https://osdr.nasa.gov/osdr/data/search` filtrado para *Homo sapiens*). Ele devolve accession, título, link do estudo, tipo de projeto, missão e data de publicação. No modo demo offline a busca não aparece.
 
 ## NASA EDA (Environmental Data Application)
 

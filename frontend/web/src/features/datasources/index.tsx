@@ -2,6 +2,7 @@ import { Database } from 'lucide-react'
 import { lazy, Suspense, useState } from 'react'
 import { TOPBAR_BUTTON } from '../mission/Modal'
 import { MENU_ITEM, MenuRow } from '../topbar/menu'
+import { useT } from '../../i18n'
 
 // The dialog (charts, real datasets, model card) loads only when first opened.
 const DataModelDialog = lazy(() => import('./DataModelDialog'))
@@ -13,6 +14,7 @@ const DataModelDialog = lazy(() => import('./DataModelDialog'))
 export function DataSourcesButton({ variant = 'toolbar' }: { variant?: 'toolbar' | 'menuitem' }) {
   const [open, setOpen] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const t = useT()
   const onOpen = () => {
     setLoaded(true)
     setOpen(true)
@@ -31,7 +33,7 @@ export function DataSourcesButton({ variant = 'toolbar' }: { variant?: 'toolbar'
           onFocus={() => setLoaded(true)}
           className={MENU_ITEM}
         >
-          <MenuRow icon={<Database size={16} />} label="Data and model" hint="Real NASA datasets, simulated devices, model card" />
+          <MenuRow icon={<Database size={16} />} label={t('datasources.title')} hint={t('datasources.menuHint')} />
         </button>
       ) : (
         <button
@@ -41,11 +43,11 @@ export function DataSourcesButton({ variant = 'toolbar' }: { variant?: 'toolbar'
           aria-expanded={open}
           onClick={onOpen}
           onPointerEnter={() => setLoaded(true)}
-          title="Data and model: real NASA datasets, simulated devices, model card"
+          title={t('datasources.buttonTitle')}
           className={TOPBAR_BUTTON}
         >
           <Database size={14} aria-hidden className="text-accent" />
-          Data
+          {t('datasources.buttonShort')}
         </button>
       )}
       {loaded && (

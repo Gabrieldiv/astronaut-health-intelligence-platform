@@ -26,6 +26,15 @@ export const METRIC_CATALOG: Record<MetricCode, MetricDefinition> = {
   PERCEIVED_FATIGUE: { code: 'PERCEIVED_FATIGUE', label: 'Fatigue (self report)', shortLabel: 'Fatigue', unit: '1-5', region: 'brain', decimals: 0, badDirection: 'up', plainLanguage: 'How tired you said you feel, from 1 (rested) to 5 (exhausted).', displayRange: [1, 5] },
   STRESS: { code: 'STRESS', label: 'Stress (self report)', shortLabel: 'Stress', unit: '1-5', region: 'brain', decimals: 0, badDirection: 'up', plainLanguage: 'How stressed you said you feel, from 1 (calm) to 5 (very stressed).', displayRange: [1, 5] },
   RADIATION_DOSE: { code: 'RADIATION_DOSE', label: 'Accumulated dose', shortLabel: 'Dose', unit: 'mGy', region: 'bones', decimals: 2, badDirection: 'up', plainLanguage: 'Total radiation absorbed since mission start.', displayRange: [0, 100] },
+  // v5 periodic exam measures (src/engine/exams). Status = change versus the pre-flight baseline.
+  RETINAL_THICKNESS: { code: 'RETINAL_THICKNESS', label: 'Retinal thickness (OCT)', shortLabel: 'Retina', unit: 'µm', region: 'eyes', decimals: 0, badDirection: 'up', plainLanguage: 'Thickness of the retina around the optic nerve, from the eye scan (OCT). A thicker retina than before flight can be an early sign of optic disc swelling.', displayRange: [300, 480] },
+  CHOROIDAL_FOLDS: { code: 'CHOROIDAL_FOLDS', label: 'Choroidal folds (OCT)', shortLabel: 'Folds', unit: 'present', decimals: 0, region: 'eyes', badDirection: 'up', plainLanguage: 'Small folds in the layers at the back of the eye, seen on the eye scan. New folds since before flight are a sign to review.', displayRange: [0, 1] },
+  OPTIC_NERVE_SHEATH_DIAMETER: { code: 'OPTIC_NERVE_SHEATH_DIAMETER', label: 'Optic nerve sheath (ultrasound)', shortLabel: 'ONSD', unit: 'mm', region: 'eyes', decimals: 1, badDirection: 'up', plainLanguage: 'Width of the sheath around the optic nerve, from the eye ultrasound.', displayRange: [3.5, 7.5] },
+  VISUAL_ACUITY: { code: 'VISUAL_ACUITY', label: 'Visual acuity', shortLabel: 'Acuity', unit: 'logMAR', region: 'eyes', decimals: 2, badDirection: 'up', plainLanguage: 'Sharpness of vision on the eye chart. Higher logMAR means blurrier (0.1 is about one chart line).', displayRange: [-0.3, 0.6] },
+  HEARING_THRESHOLD_HIGH: { code: 'HEARING_THRESHOLD_HIGH', label: 'Hearing threshold, high pitch', shortLabel: 'High pitch', unit: 'dB HL', region: 'ears', decimals: 0, badDirection: 'up', plainLanguage: 'Quietest high pitched tones heard (mean of 2, 3 and 4 kHz). Higher means hearing got less sensitive.', displayRange: [-10, 60] },
+  HEARING_THRESHOLD_LOW: { code: 'HEARING_THRESHOLD_LOW', label: 'Hearing threshold, low pitch', shortLabel: 'Low pitch', unit: 'dB HL', region: 'ears', decimals: 0, badDirection: 'up', plainLanguage: 'Quietest low pitched tones heard (mean of 0.25, 0.5 and 1 kHz). Higher means hearing got less sensitive.', displayRange: [-10, 60] },
+  NOISE_EXPOSURE: { code: 'NOISE_EXPOSURE', label: 'Noise exposure (work period)', shortLabel: 'Noise', unit: 'dBA', region: 'ears', decimals: 1, badDirection: 'up', plainLanguage: 'Average sound level at your ears during the 16 hour work period, from the crew worn acoustic dosimeter.', displayRange: [50, 90] },
+  NOISE_DOSE: { code: 'NOISE_DOSE', label: 'Daily noise dose', shortLabel: 'Noise dose', unit: '%', region: 'ears', decimals: 0, badDirection: 'up', plainLanguage: 'Share of the 24 hour noise exposure limit used that day (100% = the limit).', displayRange: [0, 120] },
 }
 
 export const VITAL_METRICS: MetricCode[] = ['HEART_RATE', 'HRV_RMSSD', 'SPO2', 'RESPIRATORY_RATE', 'SYSTOLIC_BP', 'SKIN_TEMPERATURE']
@@ -39,6 +48,8 @@ export const REGION_LABELS: Record<BodyRegionId, { label: string; system: string
   muscles: { label: 'Muscles', system: 'Musculoskeletal', description: 'Activity and exercise performance vs your own baseline.' },
   bones: { label: 'Skeleton', system: 'Bone and radiation', description: 'Accumulated radiation dose and bone health context.' },
   skin: { label: 'Skin', system: 'Thermal', description: 'Skin temperature and thermal comfort.' },
+  eyes: { label: 'Eyes', system: 'Vision (SANS)', description: 'Periodic eye exams: retina scan (OCT), eye ultrasound and visual acuity, compared with your pre-flight baseline.' },
+  ears: { label: 'Ears', system: 'Hearing and noise', description: 'Periodic hearing tests and daily noise exposure. The ear itself is not modeled in the 3D body.' },
 }
 
 export const MISSION: Mission = {
@@ -64,6 +75,7 @@ export const SCENARIOS: ScenarioDefinition[] = [
   { id: 'PERFORMANCE_DECLINE', name: 'Exercise performance decline', description: 'Workout output falls session after session compared to personal baseline.', targetAstronautId: 'AST-04' },
   { id: 'SENSOR_FAILURE', name: 'Sensor failure', description: 'Bio-Monitor shirt stops sending data. Missing data is never treated as normal.', targetAstronautId: 'AST-03' },
   { id: 'ACUTE_CARDIO', name: 'Acute cardio event', description: 'Sudden heart rate rise with blood oxygen drop. Tests fast alerting.', targetAstronautId: 'AST-01' },
+  { id: 'SANS_PROGRESSION', name: 'Eye changes (SANS like)', description: 'Simulated eye exams show a gradual change from the pre-flight baseline over the mission: thicker retina, wider optic nerve sheath, then new folds.', targetAstronautId: 'AST-01' },
 ]
 
 /** Earth link profiles. Delays are approximate public figures for light time. */

@@ -27,6 +27,7 @@ import type { AppState, ScenarioId } from '../types/domain'
 import { COMM_PROFILES, CREW, SCENARIOS } from '../engine/catalog'
 import { DEFAULT_SPEED, MISSION_PLAN, SPEED_PRESETS } from '../engine/config'
 import { HealthEngine, type SliceName } from '../engine/engine'
+import { isMissionProfileId, missionProfile } from '../engine/missions'
 
 export { SPEED_PRESETS }
 
@@ -135,7 +136,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   setScenario: (id: ScenarioId) => {
     const clock = get().clock
-    engine = new HealthEngine({ scenarioId: id, commProfileId: engine.commProfileId })
+    engine = new HealthEngine({ scenarioId: id, commProfileId: engine.commProfileId, missionProfileId: engine.missionProfileId })
     lastPublishReal = realNow()
     set({
       ...allSlices(engine),
@@ -160,6 +161,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
   dismissRecommendation: (id) => {
     if (engine.dismissRecommendation(id)) set(changedSlices(engine))
   },
+  // v4: operator pause / resume of one device (audited). Re-evaluate so NO_DATA shows at once.
+  setDevicePaused: (deviceId, paused, actor = 'operator') => {
+    if (!engine.setDevicePaused(deviceId, paused, actor)) return
+    engine.evaluate()
+    set(changedSlices(engine))
+  },
 
   // v2 actions
   setCommProfile: (id) => {
@@ -179,6 +186,17 @@ export const useAppStore = create<AppState>()((set, get) => ({
     set(changedSlices(engine))
   },
   compareIntervention: (input) => engine.compareIntervention(input),
+
+  // v4: mission profile (orthogonal to the scenario). Restarts the simulation like a scenario
+  // change, keeps the scenario, and switches the Earth link to the profile default.
+  missionProfileId: engine.missionProfileId,
+  setMissionProfile: (id) => {
+    if (!isMissionProfileId(id) || id === engine.missionProfileId) return
+    const clock = get().clock
+    engine = new HealthEngine({ scenarioId: clock.scenarioId, commProfileId: missionProfile(id).defaultCommProfileId, missionProfileId: id })
+    lastPublishReal = realNow()
+    set({ ...allSlices(engine), missionProfileId: id, clock: { ...clock, simNow: engine.simTime, startedAt: engine.startedAt } })
+  },
 
   fastForward: (simMs) => {
     const s = get()

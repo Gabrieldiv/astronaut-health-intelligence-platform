@@ -397,7 +397,7 @@ Status conferido em 14/11/2026 com chamadas HTTP diretas.
   - APEX-03-1, APEX-03-2, APEX-04;
   - VEG-01A, VEG-01B, VEG-01C.
 
-  O registro de cada missão traz só `name`, `title`, `description` e `link`. **Não há série temporal via API.**
+  O registro de cada missão traz `name`, `title`, `description` e `link`. **Há série temporal via API** (conferido em 15/11/2026, ver https://visualization.osdr.nasa.gov/eda/api_reference): `/missions/{m}/telemetry_data/`, `/missions/{m}/radiation_data/`, filtros `start` e `end` em ISO 8601. Importador: `frontend/web/scripts/eda/import_eda.py`.
 - **Como obter a telemetria:** pela interface, aba **Data Tables**, com download em CSV (página cita "EDA_Telemetry_data").
 - **Campos vistos na página:**
   - `CO2_ppm_ISS` e `CO2_ppm_Ground` (cabine vs controle em solo);

@@ -32,7 +32,7 @@ import {
 import { FIXTURE_MANIFEST as M, fixtureStructure } from './__fixtures__/manifest.fixture'
 
 const SYSTEMS: AnatomySystemId[] = ['integumentary', 'skeletal', 'muscular', 'cardiovascular', 'respiratory', 'nervous', 'digestive', 'urinary', 'other']
-const REGIONS: BodyRegionId[] = ['brain', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin']
+const REGIONS: BodyRegionId[] = ['brain', 'eyes', 'ears', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin']
 /** Em dash and en dash, built from char codes so this file itself stays free of them. */
 const DASHES = new RegExp('[' + String.fromCharCode(0x2013, 0x2014) + ']')
 
@@ -96,7 +96,7 @@ describe('structure to region mapping', () => {
       'ureter-left': null,
       'thyroid-gland': null,
       spleen: null,
-      'eyeball-left': null,
+      'eyeball-left': 'eyes',
     }
     // The fixture and the expectation table cover the same structures, and every system.
     expect(Object.keys(expected).sort()).toEqual(M.structures.map((s) => s.id).sort())
@@ -138,9 +138,10 @@ describe('structure to region mapping', () => {
     ).toEqual(['kidney-left', 'kidney-right'])
   })
 
-  it('keeps digestive organs, glands, lymphoid and sense organs context only', () => {
+  it('keeps digestive organs, glands and lymphoid organs context only (the eyes are monitored)', () => {
     for (const sys of ['digestive', 'other'] as const) {
       for (const s of structuresOfSystem(M, sys)) {
+        if (s.tissue === 'eye') continue
         expect(regionOfStructure(s), s.id).toBeNull()
         expect(relatedMetrics(s), s.id).toEqual([])
         expect(structureStatus(healthWith({}), s), s.id).toBeNull()
@@ -224,7 +225,7 @@ describe('related metrics', () => {
 describe('structure status', () => {
   it('is null for context only structures, whatever the health state', () => {
     const critical = healthWith(Object.fromEntries(REGIONS.map((r) => [r, { status: 'CRITICAL', summary: 'x' }])))
-    for (const id of ['liver', 'stomach', 'spinal-cord', 'sciatic-nerve-left', 'urinary-bladder', 'thyroid-gland', 'spleen', 'eyeball-left', 'teeth']) {
+    for (const id of ['liver', 'stomach', 'spinal-cord', 'sciatic-nerve-left', 'urinary-bladder', 'thyroid-gland', 'spleen', 'teeth']) {
       expect(structureStatus(critical, get(id)), id).toBeNull()
       expect(structureStatus(undefined, get(id)), id).toBeNull()
     }

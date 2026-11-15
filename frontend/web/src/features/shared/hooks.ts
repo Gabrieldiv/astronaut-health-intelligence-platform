@@ -2,12 +2,21 @@ import { useEffect, useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { useUiStore } from '../../app/uiStore'
-import type { BodyRegionId, MetricCode, Recommendation, Status } from '../../types/domain'
+import type { BodyRegionId, InterventionKind, MetricCode, Recommendation, Status } from '../../types/domain'
 import { RISK_ORDER } from '../../lib/status'
 import { METRIC_CATALOG } from '../../engine/catalog'
 import type { ChartEvent } from '../../components/TrendChart'
 import { structureById, useAtlasManifest } from '../anatomy/atlas/manifest'
 import type { AtlasManifest, AtlasStructure } from '../anatomy/atlas/types'
+import { formatFixed, getLang, t, tOr } from '../../i18n'
+import { INTERVENTION_LABEL } from '../timeline/labels'
+
+/** Intervention name for chart markers: English keeps the original "Sentence case of the enum" text. */
+function interventionText(kind: InterventionKind): string {
+  if (getLang() !== 'en') return INTERVENTION_LABEL[kind]
+  const k = kind.replaceAll('_', ' ').toLowerCase()
+  return k.charAt(0).toUpperCase() + k.slice(1)
+}
 
 export const BODY_REGIONS: BodyRegionId[] = ['brain', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin']
 
@@ -34,6 +43,8 @@ export function useRisk(astronautId: string) {
 }
 
 export const SIGNAL_LOST_HEADLINE = 'No live readings from the wearable. Missing data is never treated as normal: check the sensor.'
+/** SIGNAL_LOST_HEADLINE in the current language. */
+export const signalLostHeadline = () => t('shared.signalLostHeadline')
 
 /** True when the core wearable vitals are missing for this astronaut. */
 export function useSignalLost(astronautId: string): boolean {
@@ -135,16 +146,19 @@ export const LARGE_DELAY_SEC = 60
 /** Earliest round trip to Earth in plain words, e.g. "44 min". */
 export function roundTripText(oneWaySec: number): string {
   const rt = oneWaySec * 2
-  if (rt < 10) return `${rt.toFixed(1)} s`
+  if (rt < 10) return `${formatFixed(rt, 1)} s`
   if (rt < 120) return `${Math.round(rt)} s`
   return `${Math.round(rt / 60)} min`
 }
 
 /** Calm sentence about the Earth link for the crew. */
 export function earthLinkSentence(oneWaySec: number): { text: string; far: boolean } {
-  if (oneWaySec >= LARGE_DELAY_SEC) return { text: `Earth replies take at least ${roundTripText(oneWaySec)}. Follow on-board steps first.`, far: true }
-  if (oneWaySec >= 1) return { text: `Earth link delay is about ${Math.round(oneWaySec * 10) / 10} s each way. Ground support is close at hand.`, far: false }
-  return { text: 'Mission Control is a near real time call away.', far: false }
+  if (oneWaySec >= LARGE_DELAY_SEC) return { text: t('shared.earth.far', { rt: roundTripText(oneWaySec) }), far: true }
+  if (oneWaySec >= 1) {
+    const s = Math.round(oneWaySec * 10) / 10
+    return { text: t('shared.earth.near', { s: formatFixed(s, Number.isInteger(s) ? 0 : 1) }), far: false }
+  }
+  return { text: t('shared.earth.realtime'), far: false }
 }
 
 /** Status of one astronaut for cards and avatars (missing core vitals never read as normal). */
@@ -154,8 +168,8 @@ export function useCrewStatus(astronautId: string): Status {
   return level == null ? 'NO_DATA' : lost && level === 'LOW' ? 'NO_DATA' : level
 }
 
-const SCALE_WORD = ['', 'very low', 'low', 'okay', 'good', 'very good']
-const FATIGUE_WORD = ['', 'rested', 'a little tired', 'tired', 'very tired', 'exhausted']
+const scaleWord = (n: number) => tOr(`shared.mood.${n}`, String(n))
+const fatigueWord = (n: number) => tOr(`shared.fatigue.${n}`, String(n))
 
 /** Alerts, logged actions and check-ins for one astronaut, as chart markers. */
 export function useChartEvents(astronautId: string, metric: MetricCode | null, region: BodyRegionId | null): ChartEvent[] {
@@ -168,12 +182,11 @@ export function useChartEvents(astronautId: string, metric: MetricCode | null, r
       if (a.astronautId !== astronautId) continue
       const aRegion = a.region ?? (a.metric ? METRIC_CATALOG[a.metric].region : null)
       if (metric && a.metric !== metric && aRegion !== region) continue
-      out.push({ id: `a-${a.id}`, t: a.createdAt, kind: 'alert', label: a.title, severity: a.severity, detail: a.acknowledgedAt != null ? 'Acknowledged' : a.resolvedAt != null ? 'Resolved' : 'Open' })
+      out.push({ id: `a-${a.id}`, t: a.createdAt, kind: 'alert', label: a.title, severity: a.severity, detail: a.acknowledgedAt != null ? t('shared.event.acknowledged') : a.resolvedAt != null ? t('shared.event.resolved') : t('shared.event.open') })
     }
     for (const i of interventions) {
       if (i.astronautId !== astronautId) continue
-      const kind = i.kind.replaceAll('_', ' ').toLowerCase()
-      out.push({ id: `i-${i.id}`, t: i.loggedAt, kind: 'intervention', label: kind.charAt(0).toUpperCase() + kind.slice(1), detail: i.note || `Logged by ${i.actor}` })
+      out.push({ id: `i-${i.id}`, t: i.loggedAt, kind: 'intervention', label: interventionText(i.kind), detail: i.note || t('shared.event.loggedBy', { actor: i.actor }) })
     }
     for (const c of checkIns ?? []) {
       if (c.astronautId !== astronautId) continue
@@ -181,8 +194,8 @@ export function useChartEvents(astronautId: string, metric: MetricCode | null, r
         id: `c-${c.id}`,
         t: c.at,
         kind: 'checkin',
-        label: `Mood ${SCALE_WORD[c.mood] ?? c.mood}, feeling ${FATIGUE_WORD[c.fatigue] ?? c.fatigue}`,
-        detail: c.symptoms.length ? `Symptoms: ${c.symptoms.join(', ')}` : c.note || undefined,
+        label: t('shared.event.checkin', { mood: scaleWord(c.mood), fatigue: fatigueWord(c.fatigue) }),
+        detail: c.symptoms.length ? t('shared.event.symptoms', { list: c.symptoms.join(', ') }) : c.note || undefined,
       })
     }
     return out

@@ -3,7 +3,13 @@ import { ArrowLeft, ArrowRight, Check, Pause, Play, X } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useUiStore } from '../../app/uiStore'
 import { Kbd } from '../../components/ui'
-import { TOUR_STEPS, restoreAfterTour } from './steps'
+import { TOUR_STEPS, restoreAfterTour, type TourStep } from './steps'
+import { tOr, useT } from '../../i18n'
+import { tx } from '../../i18n/rich'
+
+const stepTitle = (s: TourStep) => tOr(`tour.step.${s.id}.title`, s.title)
+const stepCaption = (s: TourStep) => tOr(`tour.step.${s.id}.caption`, s.caption)
+const stepHint = (s: TourStep) => (s.hint ? tOr(`tour.step.${s.id}.hint`, s.hint) : undefined)
 
 interface Rect {
   top: number
@@ -74,6 +80,7 @@ export function Tour() {
   const total = TOUR_STEPS.length
   const step = TOUR_STEPS[Math.min(tour.step, total - 1)]!
   const last = tour.step >= total - 1
+  const t = useT()
 
   const exit = useCallback(() => {
     restoreAfterTour()
@@ -183,38 +190,38 @@ export function Tour() {
         ref={cardRef}
         role="dialog"
         aria-modal="false"
-        aria-label={`Guided demo, step ${tour.step + 1} of ${total}: ${step.title}`}
+        aria-label={t('tour.dialogAria', { n: tour.step + 1, total, title: stepTitle(step) })}
         tabIndex={-1}
         className="glass-strong pointer-events-auto fixed rounded-2xl p-5 outline-none"
         style={{ width: CARD_W, left: pos.left, top: pos.top, transition: 'left 320ms cubic-bezier(0.2,0.8,0.2,1), top 320ms cubic-bezier(0.2,0.8,0.2,1)', boxShadow: '0 0 0 1px rgba(94,234,212,0.25), 0 30px 80px -20px rgba(0,0,0,0.85)' }}
       >
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-semibold tracking-[0.14em] text-accent uppercase">
-            Guided demo <span className="tabular text-ink-500">{tour.step + 1} / {total}</span>
+            {t('tour.heading')} <span className="tabular text-ink-500">{tour.step + 1} / {total}</span>
           </span>
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setTourAutoplay(!tour.autoplay)}
               aria-pressed={tour.autoplay}
-              title={tour.autoplay ? 'Pause auto-play' : 'Auto-play: advance every few seconds'}
+              title={tour.autoplay ? t('tour.autoPause') : t('tour.autoStart')}
               className={clsx(
                 'focus-ring flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold ring-1 transition-colors',
                 tour.autoplay ? 'bg-accent/15 text-accent ring-accent/35' : 'text-ink-300 ring-white/10 hover:bg-white/[0.06]',
               )}
             >
               {tour.autoplay ? <Pause size={12} aria-hidden /> : <Play size={12} aria-hidden />}
-              Auto
+              {t('tour.auto')}
             </button>
-            <button type="button" onClick={exit} aria-label="Exit demo (Esc)" title="Exit demo (Esc)" className="focus-ring flex h-7 w-7 items-center justify-center rounded-lg text-ink-500 hover:bg-white/[0.06] hover:text-ink-100">
+            <button type="button" onClick={exit} aria-label={t('tour.exit')} title={t('tour.exit')} className="focus-ring flex h-7 w-7 items-center justify-center rounded-lg text-ink-500 hover:bg-white/[0.06] hover:text-ink-100">
               <X size={15} />
             </button>
           </div>
         </div>
         <div key={tour.step} className="animate-fade-in">
-          <h2 className="mt-2.5 text-[19px] leading-tight font-semibold text-ink-100">{step.title}</h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-ink-300">{step.caption}</p>
-          {step.hint && <p className="mt-2 text-[13px] leading-snug font-medium text-accent">{step.hint}</p>}
+          <h2 className="mt-2.5 text-[19px] leading-tight font-semibold text-ink-100">{stepTitle(step)}</h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-ink-300">{stepCaption(step)}</p>
+          {step.hint && <p className="mt-2 text-[13px] leading-snug font-medium text-accent">{stepHint(step)}</p>}
         </div>
         {tour.autoplay && !last && (
           <div className="mt-3 h-0.5 overflow-hidden rounded-full bg-white/[0.06]" aria-hidden>
@@ -222,15 +229,15 @@ export function Tour() {
           </div>
         )}
         <div className="mt-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5" role="tablist" aria-label="Demo steps">
+          <div className="flex items-center gap-1.5" role="tablist" aria-label={t('tour.stepsAria')}>
             {TOUR_STEPS.map((s, i) => (
               <button
                 key={s.id}
                 type="button"
                 role="tab"
                 aria-selected={i === tour.step}
-                aria-label={`Step ${i + 1}: ${s.title}`}
-                title={s.title}
+                aria-label={t('tour.stepAria', { n: i + 1, title: stepTitle(s) })}
+                title={stepTitle(s)}
                 onClick={() => go(i)}
                 className={clsx('focus-ring h-2 rounded-full transition-all', i === tour.step ? 'w-5 bg-accent' : i < tour.step ? 'w-2 bg-accent/45 hover:bg-accent/70' : 'w-2 bg-white/15 hover:bg-white/30')}
               />
@@ -243,7 +250,7 @@ export function Tour() {
               disabled={tour.step === 0}
               className="focus-ring flex h-9 items-center gap-1 rounded-xl px-3 text-xs font-semibold text-ink-300 ring-1 ring-white/10 hover:bg-white/[0.06] hover:text-ink-100 disabled:opacity-35"
             >
-              <ArrowLeft size={14} aria-hidden /> Back
+              <ArrowLeft size={14} aria-hidden /> {t('tour.back')}
             </button>
             <button
               type="button"
@@ -252,19 +259,18 @@ export function Tour() {
             >
               {last ? (
                 <>
-                  Finish <Check size={14} strokeWidth={3} aria-hidden />
+                  {t('tour.finish')} <Check size={14} strokeWidth={3} aria-hidden />
                 </>
               ) : (
                 <>
-                  Next <ArrowRight size={14} aria-hidden />
+                  {t('tour.next')} <ArrowRight size={14} aria-hidden />
                 </>
               )}
             </button>
           </div>
         </div>
         <div className="mt-3 flex items-center gap-1.5 text-[11px] text-ink-500 present:hidden">
-          <Kbd>←</Kbd>
-          <Kbd>→</Kbd> to move, <Kbd>Esc</Kbd> to exit. Exiting resets to a nominal day.
+          {tx('tour.keysHint', { left: <Kbd>←</Kbd>, right: <Kbd>→</Kbd>, esc: <Kbd>Esc</Kbd> })}
         </div>
       </div>
     </div>

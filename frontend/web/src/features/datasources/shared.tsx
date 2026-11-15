@@ -2,32 +2,33 @@ import clsx from 'clsx'
 import { Check, Copy, ExternalLink } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import type { DataOrigin } from '../../types/domain'
+import { t } from '../../i18n'
 
-export const ORIGIN_META: Record<DataOrigin, { label: string; className: string; meaning: string; inAhi: string }> = {
-  REAL_PUBLIC: {
-    label: 'REAL_PUBLIC',
-    className: 'bg-accent/10 text-accent ring-1 ring-accent/30',
-    meaning: 'Obtained as is from a public source, with accession, file and checksum recorded.',
-    inAhi: 'Historical NASA OSDR lab panels in this window. Reference only: never live telemetry and never this crew.',
+interface OriginMeta {
+  /** Origin code, never translated. */
+  label: string
+  className: string
+  /** Translated on read (getters, see src/i18n). */
+  readonly meaning: string
+  readonly inAhi: string
+}
+
+const origin = (o: DataOrigin, className: string): OriginMeta => ({
+  label: o,
+  className,
+  get meaning() {
+    return t(`datasources.origin.${o}.meaning`)
   },
-  DERIVED: {
-    label: 'DERIVED',
-    className: 'bg-sky-400/10 text-sky-200 ring-1 ring-sky-300/30',
-    meaning: 'Computed from records of known origin. The method is stated next to the value.',
-    inAhi: 'Personal baselines, risk scores, forecasts, and group means of the real datasets.',
+  get inAhi() {
+    return t(`datasources.origin.${o}.inAhi`)
   },
-  SIMULATED: {
-    label: 'SIMULATED',
-    className: 'bg-violet-400/10 text-violet-200 ring-1 ring-violet-300/30',
-    meaning: 'Synthetic values produced by a simulator. Nothing comes from a real person.',
-    inAhi: 'Every device reading of the crew on the dashboard: wearables, exercise devices, cabin sensors, dosimeters.',
-  },
-  MANUAL: {
-    label: 'MANUAL',
-    className: 'bg-white/[0.06] text-ink-300 ring-1 ring-white/15',
-    meaning: 'Entered by a person in the interface, for the demo or for configuration.',
-    inAhi: 'Check-ins typed in the app, logged interventions and acknowledgements.',
-  },
+})
+
+export const ORIGIN_META: Record<DataOrigin, OriginMeta> = {
+  REAL_PUBLIC: origin('REAL_PUBLIC', 'bg-accent/10 text-accent ring-1 ring-accent/30'),
+  DERIVED: origin('DERIVED', 'bg-sky-400/10 text-sky-200 ring-1 ring-sky-300/30'),
+  SIMULATED: origin('SIMULATED', 'bg-violet-400/10 text-violet-200 ring-1 ring-violet-300/30'),
+  MANUAL: origin('MANUAL', 'bg-white/[0.06] text-ink-300 ring-1 ring-white/15'),
 }
 
 export function OriginBadge({ origin, className }: { origin: DataOrigin; className?: string }) {
@@ -52,7 +53,7 @@ export function ExtLink({ href, children, className }: { href: string; children:
     >
       {children}
       <ExternalLink size={11} aria-hidden className="shrink-0" />
-      <span className="sr-only">(opens in a new tab)</span>
+      <span className="sr-only">{t('datasources.opensNewTab')}</span>
     </a>
   )
 }
@@ -77,14 +78,14 @@ export function HashValue({ value }: { value: string }) {
       <button
         type="button"
         onClick={copy}
-        aria-label={copied ? 'SHA-256 copied' : 'Copy full SHA-256'}
-        title={copied ? 'Copied' : 'Copy full SHA-256'}
+        aria-label={copied ? t('datasources.shaCopied') : t('datasources.copySha')}
+        title={copied ? t('datasources.copied') : t('datasources.copySha')}
         className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-md text-ink-500 ring-1 ring-white/[0.07] hover:bg-white/[0.06] hover:text-ink-100"
       >
         {copied ? <Check size={12} className="text-accent" /> : <Copy size={12} />}
       </button>
       <span aria-live="polite" className="sr-only">
-        {copied ? 'Copied' : ''}
+        {copied ? t('datasources.copied') : ''}
       </span>
     </span>
   )
@@ -101,7 +102,7 @@ export function Field({ label, children, className }: { label: string; children:
 }
 
 export function NotStated() {
-  return <span className="text-ink-500 italic">Not stated in the source</span>
+  return <span className="text-ink-500 italic">{t('datasources.notStated')}</span>
 }
 
 export function formatIsoUtc(iso: string): string {

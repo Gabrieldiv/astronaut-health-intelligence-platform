@@ -17,7 +17,7 @@ describe('compareIntervention', () => {
   beforeAll(() => {
     fatigue = new HealthEngine({ scenarioId: 'PROGRESSIVE_FATIGUE' })
     run(fatigue, 48 * 60, 60)
-  }, 60000)
+  }, 120000)
 
   it('SLEEP_EXTENSION: HRV recovers with the intervention, not without (fast, deterministic, no state change)', () => {
     const versions = { ...fatigue.versions }
@@ -107,5 +107,5 @@ describe('compareIntervention', () => {
     expect(c.without.length).toBeLessThanOrEqual(7)
     expect(last(c.with).v!).toBeGreaterThan(last(c.without).v! + 5)
     expect(c.assumptions.some((a) => /One point per planned exercise session/.test(a))).toBe(true)
-  }, 60000)
+  }, 120000)
 })

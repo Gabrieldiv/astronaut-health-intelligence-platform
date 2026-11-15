@@ -37,7 +37,7 @@ A tabela abaixo mostra onde cada hazard aparece no AHI hoje. Todo sinal listado 
 | Ambientes hostis ou fechados | CO₂, temperatura do ar e umidade relativa da cabine; efeito do CO₂ alto na frequência respiratória e no tempo de reação simulados | `CO2`, `CABIN_TEMPERATURE`, `RELATIVE_HUMIDITY` | <StatusBadge status="IMPLEMENTED" /> simulado. Telemetria real da cabine da ISS pelo NASA EDA: <StatusBadge status="PLANNED" /> |
 
 ::: warning ATENÇÃO
-O AHI não modela risco de câncer, função imune, microbiologia, ruído, iluminação, densidade mineral óssea, volume muscular, função sensório-motora nem saúde ocular. Em missões reais, parte disso é medida apenas em exames periódicos ou amostras biológicas (veja [Monitoramento de saúde em missões](/pt/science/health-monitoring-in-missions)). A plataforma não estima risco de saúde por radiação; ela só exibe valores simulados de dose em comparação com níveis de observação de demonstração.
+O AHI não modela risco de câncer, função imune, microbiologia, iluminação, densidade mineral óssea, volume muscular nem função sensório-motora. Saúde ocular (SANS), audição e ruído são acompanhados por exames periódicos simulados ([Saúde ocular e audição](/pt/intelligence/eye-and-hearing)). Em missões reais, parte disso é medida apenas em exames periódicos ou amostras biológicas (veja [Monitoramento de saúde em missões](/pt/science/health-monitoring-in-missions)). A plataforma não estima risco de saúde por radiação; ela exibe valores simulados de dose em comparação com níveis de observação de demonstração e uma dose aproximada da missão contra o limite de carreira da NASA ([Perfis de missão](/pt/intelligence/mission-profiles)).
 :::
 
 ## Hazard por hazard

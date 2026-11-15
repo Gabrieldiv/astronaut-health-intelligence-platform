@@ -5,7 +5,7 @@ name: Docs check
 # not built twice for one push.
 on:
   pull_request:
-    branches: [master]
+    branches: [master, develop]
     paths:
       - 'docs-site/**'
       - '.github/workflows/docs-check.yml'
