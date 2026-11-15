@@ -94,6 +94,18 @@ Atrás do corpo 3D, o palco mostra uma cena do perfil ativo: a plataforma de lan
 
 O período orbital da ISS é **derivado**, não citado: uma órbita circular na altitude citada de 400 km, com a terceira lei de Kepler, o raio médio da Terra (6371 km) e o parâmetro gravitacional da Terra (398.600 km³/s²)[^m16], dá cerca de 92 minutos. O atraso da Lua é a distância média dividida pela velocidade da luz. Os números seguem o idioma escolhido na interface. Como o cenário é desenhado: [Anatomia 3D](/pt/architecture/anatomy-3d#mission-backdrop).
 
+### O que o perfil altera
+
+O chip é um botão: abre o painel Missão e link com a Terra, que agora começa com **O que o perfil de missão altera**. O perfil altera apenas o lado do ambiente e da comunicação na simulação:
+
+- a **radiação** lida pelos dosímetros e a dose da missão em relação ao limite de carreira da NASA;
+- o **link com a Terra**: o atraso das mensagens e quem decide primeiro (tripulação ou solo);
+- as **recomendações**: frases de contexto extras onde o ambiente torna uma regra mais relevante;
+- o **aviso de clima espacial**: abrigo na Lua e em trânsito a Marte, monitoramento na ISS, a partir de eventos reais do NASA DONKI;
+- o **cenário e o chip** no palco 3D.
+
+Ele **não** altera os sinais vitais, o sono nem o exercício simulados dos astronautas: eles seguem o cenário de demonstração escolhido e a linha de base de cada pessoa.
+
 ## Limitações {#limitations}
 
 - Um valor de referência por perfil; as taxas reais variam com o ciclo solar, a blindagem e o local no veículo.

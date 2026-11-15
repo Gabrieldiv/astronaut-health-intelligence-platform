@@ -94,6 +94,18 @@ Behind the 3D body the stage shows a scene of the active profile: the launch pad
 
 The ISS orbit period is **derived**, not quoted: a circular orbit at the cited 400 km altitude, with Kepler's third law, the mean Earth radius (6371 km) and Earth's gravitational parameter (398,600 km³/s²)[^m16], gives about 92 minutes. The Moon delay is the mean distance divided by the speed of light. Numbers follow the selected interface language. How the backdrop is drawn: [3D anatomy](../architecture/anatomy-3d#mission-backdrop).
 
+### What the profile changes
+
+The chip is a button: it opens the Mission and Earth link panel, which now starts with **What the mission profile changes**. The profile changes only the environment and communication side of the simulation:
+
+- the **radiation** read by the dosimeters and the mission dose against the NASA career limit;
+- the **Earth link**: the message delay and who decides first (crew or ground);
+- the **recommendations**: extra context sentences where the environment makes a rule more relevant;
+- the **space weather advisory**: shelter on the Moon and Mars transit, monitoring on the ISS, from real NASA DONKI events;
+- the **scenery and the chip** on the 3D stage.
+
+It does **not** change the simulated vital signs, sleep or exercise of the astronauts: those follow the selected demo scenario and each person's own baseline.
+
 ## Limitations
 
 - One reference value per profile; real dose rates vary with solar cycle, shielding and location in the vehicle.

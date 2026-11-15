@@ -133,6 +133,8 @@ No centro fica o nome da pessoa, o dia de missão, a atividade atual ("Sleeping"
 
 O corpo 3D é um modelo anatômico realista (o atlas Z-Anatomy), com as cores naturais dos tecidos sob uma pele translúcida. Um sistema que pede atenção acende na cor do seu status, o coração bate na frequência cardíaca ao vivo e os pulmões respiram na frequência respiratória ao vivo. Uma mudança de status dispara um pulso de varredura curto a partir daquela região. Quando falta dado, o órgão fica cinza e para de se mover.
 
+A **contagem de indicadores de saúde** ao lado do título (por exemplo "25/25 indicadores normais"): cada segmento é um indicador medido, como frequência cardíaca, sono ou oxigênio no sangue, comparado com a faixa normal do próprio astronauta. Clique nela para ver o detalhamento por sistema do corpo, com os indicadores em destaque e os sem dados nomeados. Indicador sem dado nunca é contado como normal.
+
 Uma **varredura** suave de luz percorre o corpo da cabeça aos pés a cada poucos segundos, sinal de que o monitoramento está ao vivo (lenta e fraca com movimento reduzido).
 
 Sob o corpo ficam a pílula de controles ("Layers", o botão de modo "Monitor" / "Explore", as vistas "Front", "Back", "Left" e "Right" e o botão de reset), a legenda de status e a **legenda de anatomia de referência**: "Reference anatomy: Z-Anatomy atlas (CC BY-SA 4.0)". O botão de informação dela explica que este é um único modelo adulto de referência, mostrado para todos os tripulantes, não um exame do astronauta, e lista os créditos.
