@@ -19,6 +19,7 @@ import comms from './comms'
 import whatif from './whatif'
 import tour from './tour'
 import stage from './stage'
+import connectivity from './connectivity'
 
 /** English, the default and source of truth. Flat keys, namespaced by feature. */
 export const en = {
@@ -43,6 +44,7 @@ export const en = {
   ...whatif,
   ...tour,
   ...stage,
+  ...connectivity,
 }
 
 export type MessageKey = keyof typeof en

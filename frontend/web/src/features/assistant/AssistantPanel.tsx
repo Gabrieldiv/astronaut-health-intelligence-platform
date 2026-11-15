@@ -14,6 +14,7 @@ import {
   type AssistantAvailability,
   type ChatMessage,
 } from './chat'
+import { speechGeneration } from '../a11y/speech'
 import { loadSpeakPref, saveSpeakPref, speak, speechInputSupported, speechOutputSupported, stopSpeaking, useSpeechInput } from './speech'
 import { LIMITS } from './types'
 import { t, useT } from '../../i18n'
@@ -115,6 +116,8 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
       const question = raw.trim().slice(0, LIMITS.question)
       if (!question || busy) return
       stopSpeaking()
+      // A language change while the answer streams resets speech: the answer is then not read aloud.
+      const speechGen = speechGeneration()
       const history = toHistory(messagesRef.current)
       // Fresh snapshot of the engine outputs at the moment of the question (read only).
       const context = buildAssistantContext(useAppStore.getState())
@@ -146,7 +149,7 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
         abort.current = null
         setBusy(false)
         updateLast((m) => ({ ...m, pending: false, error: failure ?? undefined }))
-        if (!failure && answer && speakRef.current) speak(speakableText(answer))
+        if (!failure && answer && speakRef.current && speechGen === speechGeneration()) speak(speakableText(answer))
       }
     },
     [busy, t],

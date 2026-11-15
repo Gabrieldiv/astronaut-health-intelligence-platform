@@ -67,6 +67,31 @@ export function stopSpeaking() {
   if (speechSupported()) window.speechSynthesis.cancel()
 }
 
+/** Bumped by resetSpeech(), so text prepared before a reset is not spoken after it. */
+let generation = 0
+const resetListeners = new Set<() => void>()
+
+/** Current speech generation (a caller that speaks later can check it did not change meanwhile). */
+export const speechGeneration = (): number => generation
+
+/** Registers a queue that must be emptied on resetSpeech() (pending read aloud, on-screen description). */
+export function onSpeechReset(fn: () => void): () => void {
+  resetListeners.add(fn)
+  return () => {
+    resetListeners.delete(fn)
+  }
+}
+
+/**
+ * Hard stop of every voice: cancels the browser speech queue (audio description, describe the
+ * screen and the assistant read aloud all share it) and clears the registered app queues.
+ */
+export function resetSpeech() {
+  generation++
+  stopSpeaking()
+  for (const fn of [...resetListeners]) fn()
+}
+
 export function isSpeaking(): boolean {
   return speechSupported() && (window.speechSynthesis.speaking || window.speechSynthesis.pending)
 }

@@ -21,6 +21,7 @@ import comms from './comms'
 import whatif from './whatif'
 import tour from './tour'
 import stage from './stage'
+import connectivity from './connectivity'
 
 const messages: Messages = {
   ...catalog,
@@ -44,5 +45,6 @@ const messages: Messages = {
   ...whatif,
   ...tour,
   ...stage,
+  ...connectivity,
 }
 export default messages

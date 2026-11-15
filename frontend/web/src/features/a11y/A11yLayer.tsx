@@ -5,6 +5,7 @@ import { A11ySettingsDialog } from './A11ySettings'
 import { enableSound, useA11yShortcuts, useAlarmSounds, useLiveAnnouncements, useSpokenSelection } from './hooks'
 import { useA11yStore, type Politeness } from './settings'
 import { speak, speechSupported } from './speech'
+import { installLanguageSpeechGuard } from './languageSpeech'
 import { useT } from '../../i18n'
 
 /**
@@ -39,7 +40,7 @@ function EnableSoundPrompt() {
   const t = useT()
   if (!blocked || !soundOn) return null
   return (
-    <div role="region" aria-label={t('a11y.layer.blockedRegion')} className="glass-strong animate-drop-in fixed bottom-4 left-4 z-[80] flex max-w-[360px] items-center gap-3 rounded-2xl px-3.5 py-3">
+    <div role="region" aria-label={t('a11y.layer.blockedRegion')} className="glass-strong animate-drop-in fixed bottom-4 left-4 z-(--z-toast) flex max-w-[360px] items-center gap-3 rounded-2xl px-3.5 py-3">
       <Volume2 size={18} className="shrink-0 text-watch" aria-hidden />
       <p className="min-w-0 flex-1 text-xs leading-snug text-ink-300">
         {level ? t('a11y.layer.blockedAlarm') : t('a11y.layer.blockedOn')}
@@ -67,7 +68,7 @@ function DescriptionCard() {
   }, [text, close])
   if (!text) return null
   return (
-    <div role="region" aria-label={tr('a11y.layer.screenDesc')} className="glass-strong animate-drop-in fixed right-4 bottom-4 z-[80] w-[min(420px,calc(100vw-2rem))] rounded-2xl p-4">
+    <div role="region" aria-label={tr('a11y.layer.screenDesc')} className="glass-strong animate-drop-in fixed right-4 bottom-4 z-(--z-toast) w-[min(420px,calc(100vw-2rem))] rounded-2xl p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-ink-100">
           <AudioLines size={15} className="text-accent" aria-hidden /> {tr('a11y.layer.whatOnScreen')}
@@ -95,6 +96,8 @@ export function A11yLayer() {
   useLiveAnnouncements()
   useSpokenSelection()
   useA11yShortcuts()
+  // A language change stops every voice first, so two languages never speak at once.
+  useEffect(() => installLanguageSpeechGuard(), [])
   return (
     <>
       <LiveRegion politeness="polite" />
