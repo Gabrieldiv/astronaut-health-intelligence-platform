@@ -17,6 +17,7 @@ import type { LabelRegistry } from '../Labels'
 import { LabelProjector } from '../Labels'
 import { loadSystem, useAtlasProgress } from './atlasLoader'
 import { errorReason } from './retry'
+import { isInteractive } from './interaction'
 import type { AtlasStore } from './atlasStore'
 import { viewerStats } from './atlasStore'
 import type { LayerModel } from './layers'
@@ -121,6 +122,15 @@ function SceneBody({ manifest, model, store, labels, visible, statuses, anchors,
       if (w.__ahiRuntime === runtime) delete w.__ahiRuntime
     }
   }, [runtime])
+
+  // Monitor or Explore: what the pointer can reach (a muted structure never stays hovered)
+  const mode = store((s) => s.mode)
+  useEffect(() => {
+    runtime.setMode(mode)
+    const h = store.getState().hover
+    const s = h ? byId.get(h.id) : undefined
+    if (s && !isInteractive(s, mode)) store.getState().setHover(null)
+  }, [runtime, mode, store, byId])
 
   useEffect(() => runtime.setVisible(visible), [runtime, visible])
   useEffect(() => runtime.setSelection(selectedRegion, selectedStructureId), [runtime, selectedRegion, selectedStructureId])

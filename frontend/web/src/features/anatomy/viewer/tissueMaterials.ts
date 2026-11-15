@@ -9,6 +9,7 @@
  * - ghost: see through x-ray look for everything that is not the current selection
  * - scan pulse: a spherical wavefront when a region status changes
  * - intro scan: a band of light sweeps up the body once at load
+ * - quiet: context only structures are muted in Monitor mode (see interaction.ts)
  *
  * Uniforms are shared by reference: one write per region per frame updates every material.
  */
@@ -87,6 +88,8 @@ export interface RegionUniforms {
   uGrey: IUniform<number>
   /** 1 while the whole region is the current selection. */
   uRegionSel: IUniform<number>
+  /** 1 = muted (context only structures in Monitor mode; only the 'none' region uses it). */
+  uQuiet: IUniform<number>
 }
 
 interface OwnUniforms {
@@ -172,6 +175,7 @@ uniform vec3 uTint;
 uniform float uRim;
 uniform float uGrey;
 uniform float uRegionSel;
+uniform float uQuiet;
 uniform float uSel;
 uniform float uLift;
 uniform float uAlpha;
@@ -184,6 +188,8 @@ const FRAG_BODY = /* glsl */ `
   float ahiLum = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722));
   // no data: grey, slightly cool, a bit darker
   outgoingLight = mix(outgoingLight, vec3(ahiLum) * vec3(0.74, 0.8, 0.92), uGrey);
+  // quiet: context only anatomy steps back in Monitor mode (desaturated and dimmer)
+  outgoingLight = mix(outgoingLight, vec3(ahiLum) * vec3(0.5, 0.56, 0.66), uQuiet * 0.7);
   #ifdef AHI_SKIN
     outgoingLight = mix(outgoingLight, vec3(0.34, 0.58, 0.86) * (0.2 + 0.5 * ahiLum), uDim);
     diffuseColor.a = clamp(uAlpha + (1.0 - uAlpha) * ahiFres * 0.55 * smoothstep(0.0, 0.08, uAlpha), 0.0, 1.0);
@@ -237,7 +243,7 @@ export class TissueBank {
 
   constructor() {
     this.regions = Object.fromEntries(
-      REGION_KEYS.map((r) => [r, { uTint: { value: new Color('#000000') }, uRim: { value: 0 }, uGrey: { value: 0 }, uRegionSel: { value: 0 } }]),
+      REGION_KEYS.map((r) => [r, { uTint: { value: new Color('#000000') }, uRim: { value: 0 }, uGrey: { value: 0 }, uRegionSel: { value: 0 }, uQuiet: { value: 0 } }]),
     ) as Record<RegionKey, RegionUniforms>
   }
 

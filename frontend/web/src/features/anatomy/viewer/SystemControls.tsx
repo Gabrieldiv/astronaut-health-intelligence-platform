@@ -4,13 +4,15 @@
  * labelScale so it stays usable in presentation mode and in small containers.
  */
 import { useCallback, useRef, useState } from 'react'
-import { Layers, RefreshCw, RotateCcw } from 'lucide-react'
+import { Activity, Compass, Layers, RefreshCw, RotateCcw } from 'lucide-react'
 import clsx from 'clsx'
 import { useAppStore } from '../../../state/store'
 import { useDismiss } from '../hooks'
 import { retryAtlasFile, useAtlasProgress } from './atlasLoader'
 import type { AtlasStore, ViewPreset } from './atlasStore'
 import type { LayerModel } from './layers'
+import { INTERACTION_MODE_INFO } from './interaction'
+import type { InteractionMode } from './interaction'
 import { PRESETS, presetChoice } from './layers'
 
 const VIEWS: { id: ViewPreset; label: string; title: string }[] = [
@@ -41,6 +43,8 @@ export function SystemControls({ store, model, visible, compact, ls, bottom }: S
   const setSkinOpacity = store((s) => s.setSkinOpacity)
   const setView = store((s) => s.setView)
   const resetView = store((s) => s.resetView)
+  const mode = store((s) => s.mode)
+  const setMode = store((s) => s.setMode)
   const files = useAtlasProgress((s) => s.files)
   const [open, setOpen] = useState(false)
   const wrap = useRef<HTMLDivElement>(null)
@@ -219,6 +223,23 @@ export function SystemControls({ store, model, visible, compact, ls, bottom }: S
       </span>
     </button>
   )
+  // Monitor (default) or Explore: one compact button, its visible text is the current mode
+  const info = INTERACTION_MODE_INFO[mode]
+  const next: InteractionMode = mode === 'monitor' ? 'explore' : 'monitor'
+  const ModeIcon = mode === 'monitor' ? Activity : Compass
+  const modeButton = (
+    <button
+      type="button"
+      title={info.title}
+      aria-label={`${info.label} mode. Activate to switch to ${INTERACTION_MODE_INFO[next].label} mode`}
+      onClick={() => setMode(next)}
+      className={clsx(btn, 'flex items-center', mode === 'explore' ? 'bg-amber-300/10 text-amber-50 ring-1 ring-amber-300/30' : idle)}
+      style={{ fontSize: fs, gap: 5 * ls, padding: compact ? `${4 * ls}px ${7 * ls}px` : `${4 * ls}px ${9 * ls}px` }}
+    >
+      <ModeIcon size={Math.round(12 * ls)} aria-hidden />
+      {!compact && info.label}
+    </button>
+  )
   const sep = <span className="mx-0.5 h-4 w-px shrink-0 bg-white/10" aria-hidden />
 
   return (
@@ -227,6 +248,7 @@ export function SystemControls({ store, model, visible, compact, ls, bottom }: S
         {panel}
         <div className={clsx(SHELL, 'flex items-center gap-0.5 p-1')}>
           {layersButton}
+          {modeButton}
           {!compact && (
             <>
               {sep}

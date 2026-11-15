@@ -19,6 +19,8 @@ import type { Box, LayerModel } from './layers'
 import { primaryStructures, unionBox } from './layers'
 import { ACCENT, TissueBank } from './tissueMaterials'
 import type { RegionKey, TissueMaterial } from './tissueMaterials'
+import { DEFAULT_INTERACTION_MODE, isInteractive } from './interaction'
+import type { InteractionMode } from './interaction'
 
 interface Entry {
   s: AtlasStructure
@@ -130,6 +132,8 @@ export class AtlasRuntime {
   private selRegion: BodyRegionId | null = null
   private selStructure: string | null = null
   private hoverId: string | null = null
+  private mode: InteractionMode = DEFAULT_INTERACTION_MODE
+  private quiet = 1
   private readonly heartPivot = new Vector3()
   private readonly lungPivot = new Vector3()
   private readonly rim = Object.fromEntries(REGIONS.map((r) => [r, { rim: 0, grey: 0, sel: 0 }])) as Record<BodyRegionId, { rim: number; grey: number; sel: number }>
@@ -317,6 +321,15 @@ export class AtlasRuntime {
     }
   }
 
+  /** Monitor: only monitored structures can be picked (the others are muted). Explore: all of them. */
+  setMode(mode: InteractionMode) {
+    this.mode = mode
+  }
+
+  get interactionMode(): InteractionMode {
+    return this.mode
+  }
+
   private rebuildPickables() {
     const list: Mesh[] = []
     for (const e of this.entries.values()) if (this.visible[e.layer]) for (const m of e.meshes) list.push(m)
@@ -326,15 +339,22 @@ export class AtlasRuntime {
   /**
    * Structure under the ray. Solid structures win over ghosted ones, and the translucent skin
    * only counts when nothing else is hit, so inner anatomy stays reachable through it.
+   * In Monitor mode the ray passes through context only structures (they never answer), but they
+   * still keep the skin from answering in their place.
    */
   pick(raycaster: Raycaster): PickHit | null {
     if (!this.pickables.length) return null
     const hits = raycaster.intersectObjects(this.pickables, false)
     let ghost: PickHit | null = null
     let skin: PickHit | null = null
+    let muted = false
     const skinSolid = this.skinAlpha >= 0.75
     for (const h of hits) {
       const e = h.object.userData.entry as Entry
+      if (!isInteractive(e.s, this.mode)) {
+        muted = true
+        continue
+      }
       const hit: PickHit = { id: e.s.id, point: [h.point.x, h.point.y, h.point.z] }
       if (e.skin) {
         if (this.skinAlpha < 0.02) continue
@@ -346,7 +366,7 @@ export class AtlasRuntime {
         return hit
       }
     }
-    return ghost ?? skin
+    return ghost ?? (muted ? null : skin)
   }
 
   /** Scan pulse: an expanding wavefront from a region whose status just changed. */
@@ -417,6 +437,9 @@ export class AtlasRuntime {
       u.uGrey.value = a.grey
       u.uRegionSel.value = a.sel
     }
+    // Monitor mode mutes the context only structures (all of them share the 'none' region uniforms)
+    this.quiet += ((this.mode === 'monitor' ? 1 : 0) - this.quiet) * k
+    this.bank.regions.none.uQuiet.value = this.quiet < 0.004 ? 0 : this.quiet
 
     // live physiology: heart beats at the live heart rate, lungs breathe at the live respiratory rate
     const beating = f.statuses.heart !== 'NO_DATA' && f.hr !== null && f.hr > 0
