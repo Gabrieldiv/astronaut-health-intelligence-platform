@@ -76,7 +76,7 @@ The audit trail lives in the browser tab and is lost on reload. A persistent, ta
 
 | Topic | Today | Planned |
 | --- | --- | --- |
-| Authentication and roles | None; anyone with the page sees everything | RBAC for crew, crew medical officer, flight surgeon, mission control, researcher, data engineer |
+| Authentication and roles | **Not implemented.** None; anyone with the page or the API sees everything | SSO (OIDC) and server side RBAC in the FastAPI backend: crew member, flight surgeon, mission control, administrator ([Roadmap](../resources/roadmap#access-profiles)) |
 | Transport | Static files; the docs portal is served over HTTPS by GitHub Pages | TLS for every published service |
 | Secrets | None needed: no API keys | Secrets outside the code |
 | Third party calls | Web fonts from Google Fonts when the page loads; no other third party call. Everything else, including the 3D anatomy files, is served from the app's own origin (no CDN) | Self hosted fonts if needed |

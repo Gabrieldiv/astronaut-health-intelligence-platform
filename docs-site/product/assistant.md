@@ -27,7 +27,7 @@ The assistant never diagnoses, never suggests medication and never raises, clear
 
 ## In the app
 
-- The **Ask AHI** button sits at the bottom right. It opens a side panel with three starter questions.
+- The **Ask AHI** button sits in the top bar (key `K`). It opens a side panel with three starter questions.
 - Answers **stream** as they are written. Each answer ends with a **"Based on:"** line naming the readings, alerts or recommendations it used (or "no matching data in the app").
 - **Voice in**: a microphone button uses the browser speech recognition where the browser supports it.
 - **Read aloud**: a toggle speaks each answer with the browser speech synthesis (the "Based on:" line is shown, not read). A stop button ends an answer while it streams.

@@ -128,7 +128,7 @@ The full script is <CodeLink path="docs/demo-script.md" />. All device data is s
 | 0:20 to 0:50 | **The screen in 10 seconds** | Crew cards in plain words, the 3D body with its scan band, What needs attention, live vitals, the `SIMULATED` badge. |
 | 0:50 to 1:10 | **Monitor mode and zoom** | Scroll over the heart (zoom to the pointer), click it: readings, personal band, **Measured by**. Monitor mode keeps the focus on what is measured. |
 | 1:10 to 2:00 | **Acute event, sound, fast decision** | Acute cardio event on ORION: CRITICAL banner and alert sound. **Mark done** on the rest action, acknowledge (the sound stops). Press `D` for the spoken description. |
-| 2:00 to 2:40 | **Mission profiles and space weather** | Switch to **Mars transit**, open the mission context: cited dose rate, 4 to 24 min delay, mission dose vs the NASA 600 mSv career limit, DONKI space weather card (shelter advice if a recent X flare or SEP, otherwise calm; never "all clear" without data). |
+| 2:00 to 2:40 | **Mission profiles and space weather** | Switch to **Mars transit**, open the Mission and Earth link panel (the control in the top bar): cited dose rate, 4 to 24 min delay, mission dose vs the NASA 600 mSv career limit, DONKI space weather card (shelter advice if a recent X flare or SEP, otherwise calm; never "all clear" without data). |
 | 2:40 to 3:20 | **Slow drift** | Progressive fatigue on LYRA at 1 h/s: HRV below her own band; pick the 7 day horizon and show the band widening. |
 | 3:20 to 3:50 | **Eyes** | Eye changes (SANS like): the eyes read Watch from the flight day 30 exam; exam history against the pre-flight baseline. |
 | 3:50 to 4:10 | **Crew view** | `V`: big status word, two actions, **Your body systems** cards, check-in. |
@@ -143,7 +143,7 @@ The full script is <CodeLink path="docs/demo-script.md" />. All device data is s
 - **Cabin CO2 rise** (10 min/s): the whole crew shifts slightly; the app shows co-occurrence and reminds that correlation is not causation.
 :::
 
-Next steps to mention: the engine port to Python, a clinical review flow, access profiles and real ISS cabin data from NASA EDA. See the [roadmap](../resources/roadmap).
+Next steps to mention: the engine port to Python, a clinical review flow, authentication and role based access control and real ISS cabin data from NASA EDA. See the [roadmap](../resources/roadmap).
 
 ## Next steps
 

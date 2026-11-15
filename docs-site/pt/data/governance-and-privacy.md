@@ -85,7 +85,7 @@ Estudos em solo que imitam o voo (HERA, repouso no leito, confinamento) são val
 
 | Item | Status |
 | --- | --- |
-| Autenticação e controle de acesso por papel | <StatusBadge status="PLANNED" /> |
+| Autenticação e controle de acesso por papel (**não implementado**; veja o [Roadmap](/pt/resources/roadmap#access-profiles)) | <StatusBadge status="PLANNED" /> |
 | Auditoria persistente e imutável | <StatusBadge status="PLANNED" /> no backend ([Roadmap](/pt/resources/roadmap)) |
 | TLS e gestão de segredos em ambiente publicado | <StatusBadge status="PLANNED" /> (hoje a chave do assistente fica só em `backend/.env`, fora do git) |
 | Política de retenção de dados | <StatusBadge status="PLANNED" /> |

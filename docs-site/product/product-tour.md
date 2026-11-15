@@ -66,10 +66,10 @@ The top bar has three zones: identity on the left, the scenario player in the ce
 | Element | What it does |
 | --- | --- |
 | AHI logo and **SIMULATED** chip | Always visible. Click the chip to see where the data comes from (simulated device adapters, planned real data, derived values) |
-| Mission name and **mission profile** | Launch and ascent, ISS, Moon (Artemis class) or Mars transit. Its info button opens the mission context dialog: hazards, cited reference values, mission dose and space weather. See [Mission profiles](../intelligence/mission-profiles) |
+| Mission name and the **Mission and Earth link** control | The mission name, and one control that shows the mission profile (Launch and ascent, ISS, Moon (Artemis class) or Mars transit), the Earth link and the one way delay, with a dot when the space weather advisory needs a look. It opens the **Mission and Earth link** panel with three tabs: **Mission** (profile picker, what the profile changes, hazards, cited reference values, mission dose), **Earth link** (profile, messages in transit and delivered) and **Space weather**. See [Mission profiles](../intelligence/mission-profiles) and [Mission features](./mission-features#earth-link-and-mars-delay) |
 | **MET** | Mission elapsed time on the simulated clock. The UTC time is in the tooltip |
 | **Scenario player** | Scenario picker, play and pause, speed (Real time, 1 min/s, 10 min/s, 1 h/s) and restart |
-| **Earth link** | Current profile (ISS, Moon, Mars near, Mars far), one way delay and messages in transit. Opens the Earth link drawer. See [Mission features](./mission-features#earth-link-and-mars-delay) |
+| **Ask AHI** | Opens the assistant drawer (key `K`). See [Ask AHI](./assistant) |
 | **Ground / Crew** | View toggle |
 | **Connection chip** | "Offline demo", "Live NASA data", "API unreachable" or "Checking connection". Opens Data and model, where the [Online and offline switch](../architecture/backend#online-and-offline-switch) lives |
 | **Tools** menu | Mission overview, Shift handover, Data and model, Presentation mode, Accessibility and sound, Language, Keyboard shortcuts |
@@ -200,7 +200,7 @@ The slim strip under the stage has one lane per astronaut plus the cabin, colore
 | Check-in | A daily check-in (simulated or typed) |
 | Earth link | A message to or from Earth, in transit or delivered |
 
-Choose **24 h**, **72 h** or **All**. Click a marker to jump to that crew member and body system (Earth link markers open the Earth link drawer). With the timeline focused, arrow keys step through markers and `Enter` opens one.
+Choose **24 h**, **72 h** or **All**. Click a marker to jump to that crew member and body system (Earth link markers open the Earth link tab of the Mission and Earth link panel). With the timeline focused, arrow keys step through markers and `Enter` opens one.
 
 ![Status timeline during progressive fatigue: LYRA's lane drifts from green to amber and orange over days](/screenshots/timeline-fatigue.png)
 
@@ -259,7 +259,7 @@ Shortcuts are ignored while you type in a field or hold a modifier key.
 
 ## Ask AHI
 
-The **Ask AHI** button at the bottom right opens the assistant: plain language answers about what the app shows, streamed, with a "Based on:" line, voice input where the browser supports it and optional read aloud. It needs the backend with a key; otherwise it shows "Assistant offline". See [Ask AHI](./assistant).
+The **Ask AHI** button in the top bar (key `K`) opens the assistant: plain language answers about what the app shows, streamed, with a "Based on:" line, voice input where the browser supports it and optional read aloud. It needs the backend with a key; otherwise it shows "Assistant offline". See [Ask AHI](./assistant).
 
 ## Screen sizes
 

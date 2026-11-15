@@ -1,6 +1,6 @@
 ---
 title: Roadmap
-description: What the Astronaut Health Intelligence Platform delivered for NASA Space Apps 2026 and what comes next, from the Python engine port and a clinical review flow to access profiles, real NASA cabin data and the next steps of the 3D anatomy.
+description: What the Astronaut Health Intelligence Platform delivered for NASA Space Apps 2026 and what comes next, from the Python engine port and a clinical review flow to authentication and access control, real NASA cabin data and the next steps of the 3D anatomy.
 status: PLANNED
 verified: 2026-11-15
 ---
@@ -25,6 +25,7 @@ The Astronaut Health Intelligence Platform (AHI) is a prototype with simulated d
 | Backend | FastAPI modular monolith: registry, idempotent ingestion, observations, NASA DONKI and OSDR connectors, assistant, experimental analytics; SQLite or PostgreSQL; offline demo mode in the app ([Backend and API](../architecture/backend)) |
 | Assistant | Ask AHI demo with the Claude API, onboard offline architecture documented ([Ask AHI](../product/assistant)) |
 | Real NASA data | OSDR OSD-569 and OSD-575 panels as reference, DONKI events as mission context |
+| Tests | vitest unit and scenario tests, pytest for the backend, Playwright end to end tests of the demo script and visual tests of the panels, all in CI ([Testing strategy](../engineering/testing)) |
 | Documentation | This portal on GitHub Pages (EN and PT-BR) |
 
 ## Next
@@ -37,9 +38,20 @@ The engine runs in TypeScript in the browser so the app works offline. The backe
 
 A review queue for Warning and Critical items: assign, comment, approve or reject a recommendation, with every step in the audit trail and a persistent store. Today the simulated flight surgeon replies are templates, and the multivariate flag and the eye and hearing flags all end in "review with the flight surgeon" without a workflow behind them.
 
-### 3. Access profiles
+### 3. Authentication and role based access control {#access-profiles}
 
-Authentication and roles for crew, crew medical officer, flight surgeon, mission control, researcher and data engineer, matching the personas of the spec. Each role sees only what it needs; the API checks it.
+**Not implemented in this version.** The demo has no login and no roles: anyone who opens the page sees every astronaut, and the API accepts every request without authentication. That is acceptable for a simulated prototype and is not acceptable for real crew data. A real deployment needs sign in (SSO) and role based access control (RBAC) **enforced on the server, in the FastAPI backend**, never only in the interface.
+
+Design sketch (a proposal, nothing of this exists in the code yet):
+
+| Piece | Proposal |
+| --- | --- |
+| Sign in | Single sign on with OpenID Connect (OIDC) against the organization's identity provider. Short lived tokens; AHI stores no passwords |
+| Roles | **Crew member**: own data only (the Crew view). **Flight surgeon**: the crew of the assigned missions, with review and acknowledgment rights. **Mission control**: operational status, alerts and communications for the missions it supports. **Administrator**: users, roles and configuration, without access to health data by default |
+| Enforcement | A FastAPI dependency checks the token and the role on every route and filters rows by astronaut and mission. The interface hides what a role cannot use, but the server is the control |
+| Audit | Every read and write of health data records who, what and when in a persistent, tamper evident store (the same store the clinical review flow needs) |
+
+Which fields mission control sees, and under what rules, is a policy decision for the stakeholders, not a technical one. This item depends on the persistent store of item 2.
 
 ### 4. Real ISS cabin replay and radiation series (NASA EDA)
 
@@ -50,7 +62,7 @@ Replace the cabin simulator with a `REAL_PUBLIC` replay of a real ISS period (CO
 - Ground each remaining demo threshold in a citable source, or keep the demo label.
 - Calibrate the simulators with published ranges and document them in the model card.
 - Have native speakers review any interface language other than English before it is presented.
-- Finish the engine text translations: some exam notes, forecast notes, data quality notes and mission profile texts are still English in the other languages ([Engine text](../product/accessibility#engine-text)).
+- Keep every engine sentence on a structured message so it translates (exam notes, forecast notes, device notes and mission profile texts already do; the plain text handover and ground packets stay English by design) ([Engine text](../product/accessibility#engine-text)).
 
 ### 6. 3D anatomy next steps {#anatomy-next-steps}
 
@@ -59,7 +71,7 @@ Replace the cabin simulator with a `REAL_PUBLIC` replay of a real ISS period (CO
 | **Textures** | The source has flat colors only, so all detail comes from geometry and materials. Textures add surface detail at a cost in download size |
 | **Female reference model** | One reference model (adult male source, neutral groin) stands for every crew member today. A second model needs a compatible license and the same structure ids |
 | **BodyParts3D kidney** | The kidneys are simple procedural shapes because the kidney model inside Z-Anatomy has a non commercial license. BodyParts3D, the database Z-Anatomy is based on, is a candidate source for real kidney geometry; its license terms must be checked first |
-| **Automated visual tests** | Rendering is still checked by hand on the lab page |
+| **Automated visual tests of the 3D canvas** | Playwright visual tests cover the panels, but the canvas is masked because its frames depend on the GPU. The rendering of the body itself is still checked by hand on the lab page |
 
 Not planned: per astronaut anatomy (scans or body size). The body is reference anatomy by design.
 

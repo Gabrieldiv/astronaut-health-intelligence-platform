@@ -80,11 +80,13 @@ Todos rodam dentro de `frontend/web`.
 | Comando | O que faz |
 | --- | --- |
 | `npm run dev` | Servidor de desenvolvimento Vite (porta 5173) |
-| `npm test` | Testes unitários e de cenário (vitest): 375 testes em 38 arquivos |
+| `npm test` | Testes unitários e de cenário (vitest): 430 testes em 48 arquivos |
 | `npx tsc -b` | Checagem de tipos (também `npm run typecheck`) |
 | `npx vite build` | Build de produção em `dist/` (`npm run build` roda `tsc -b` e depois o build) |
 | `npm run evaluate` | Roda o motor sem interface sobre os cenários e regenera `src/engine/evaluation.json` e `docs/model-card.md` |
 | `npm run lint` | Lint com oxlint |
+| `npm run e2e` | Testes ponta a ponta do Playwright no Chromium (os testes visuais precisam de imagens de referência commitadas, veja [Estratégia de testes](/pt/engineering/testing#end-to-end-and-visual-tests)). Na primeira vez: `npx playwright install chromium` |
+| `npm run e2e:update` | Regenera as capturas visuais desta plataforma |
 | `npm run preview` | Serve o build de produção localmente |
 | `npm run anatomy:validate` | Confere o atlas 3D publicado (`public/anatomy/`) contra o contrato do manifesto |
 | `npm run anatomy:build` | Reconstrói o atlas 3D a partir da fonte Z-Anatomy. Precisa do Blender 4.5 LTS (`BLENDER_BIN`) e leva cerca de 5 minutos. Não é necessário para rodar o app ([Assets de anatomia 3D](/pt/data/anatomy-assets#rebuild)) |
@@ -115,7 +117,7 @@ Detalhes em [Catálogo de datasets](/pt/data/dataset-catalog#importacao-e-reprod
 2. **Leia a lista da tripulação** à esquerda. Cada cartão diz em palavras simples como a pessoa está: "All good", "Keep an eye", "Act soon", "Act now" ou "Signal lost".
 3. **Clique no chip "Heart"** ao lado do corpo. O painel da direita abre o detalhe do sistema, com gráfico, faixa pessoal e previsão. Depois **clique em qualquer parte do corpo 3D**, por exemplo o crânio: a câmera vai até a estrutura e o painel diz o que ela é e com qual sistema do corpo é monitorada. Estruturas que nada mede, como os intestinos, aparecem como "Context only", sem status.
 4. **Troque o cenário** no player do topo: escolha "Acute cardio event" e veja o alerta CRITICAL surgir em minutos simulados, com o som de alerta (desligue em Tools > Accessibility and sound).
-5. **Escolha um perfil de missão** na barra do topo, por exemplo **Mars transit**, e abra o botão de informação: riscos, valores de referência citados, a dose da missão e o aviso de clima espacial.
+5. **Abra o controle Mission and Earth link** na barra do topo e escolha um perfil de missão, por exemplo **Mars transit**: riscos, valores de referência citados, a dose da missão e o aviso de clima espacial.
 6. **Clique em "Start demo"** para a [demo guiada](/pt/product/demo-scenarios) de 10 passos. Use as setas para avançar e Esc para sair.
 7. **Aperte `?`** para ver todos os atalhos de teclado.
 

@@ -27,7 +27,7 @@ O assistente nunca diagnostica, nunca sugere medicação e nunca cria, encerra o
 
 ## No app {#in-the-app}
 
-- O botão **Ask AHI** fica no canto inferior direito. Ele abre um painel lateral com três perguntas iniciais.
+- O botão **Ask AHI** fica na barra superior (tecla `K`). Ele abre um painel lateral com três perguntas iniciais.
 - As respostas chegam **em streaming** enquanto são escritas. Cada resposta termina com uma linha **"Based on:"** (com base em) que nomeia as leituras, alertas ou recomendações usados (ou "no matching data in the app").
 - **Voz de entrada**: um botão de microfone usa o reconhecimento de fala do navegador, onde o navegador oferece.
 - **Leitura em voz alta**: um botão liga a leitura de cada resposta com a síntese de fala do navegador (a linha "Based on:" é mostrada, não lida). Um botão de parar encerra uma resposta durante o streaming.

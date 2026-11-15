@@ -150,6 +150,6 @@ stream format do not change.
 1. Start the API (see `backend/README.md`).
 2. Put `ANTHROPIC_API_KEY=...` in `backend/.env` (gitignored, never commit it). Optional: `ASSISTANT_MODEL`,
    `ASSISTANT_EFFORT`, rate limits (see `backend/.env.example`).
-3. Restart the API and open "Ask AHI" in the web app (bottom right).
+3. Restart the API and open "Ask AHI" in the web app (top bar).
 
 Without a key the endpoint answers `503 assistant not configured` and the panel explains how to enable it.
