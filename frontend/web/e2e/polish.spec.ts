@@ -126,7 +126,7 @@ test.describe('Connection mode', () => {
     await expect(osdr).toHaveCount(0)
     await expect(dialog).toContainText('Offline: no network request.')
 
-    await page.keyboard.press('Escape')
+    await dialog.getByRole('button', { name: 'Close', exact: true }).click()
     await expect(dialog).toHaveCount(0)
     await expect(page.getByRole('button', { name: /^Connection: Offline demo/ })).toContainText('Offline demo')
   })
