@@ -45,8 +45,12 @@ NASA-STD-3001 sets a career limit: an individual crewmember's total career effec
 | Personal accumulated dose | `RADIATION_DOSE` (mGy) | Integrated per astronaut with a personal shielding factor | MODERATE above 50 mGy ("demo mission dose watch level"); demo mission budget 100 mGy over 180 days |
 
 ::: info Units are absorbed dose
-AHI shows absorbed dose (mGy, µGy/h), while NASA limits are effective dose (mSv). The demo watch levels are therefore **not comparable** with the NASA career or SPE limits, and AHI does not estimate radiation health risk. The simulated mean of 0.42 mGy per day is described in the code as an ISS like order of magnitude; it has not been calibrated against a cited dosimetry dataset.
+AHI shows absorbed dose (mGy, µGy/h), while NASA limits are effective dose (mSv). The demo watch levels are therefore **not comparable** with the NASA career or SPE limits, and AHI does not estimate radiation health risk.
 :::
+
+### Mission profiles and space weather
+
+The simulated dose rate now follows the active **mission profile**: the ISS profile is scaled to a published ISS measurement (DOSIS 3D), the Moon and Mars transit profiles to published lunar surface and MSL cruise measurements. The mission dose is shown against the 600 mSv career limit as an **approximation** (absorbed dose times the reference quality ratio of the same measurement), and real NASA DONKI events drive a space weather advisory (shelter outside the magnetosphere after a recent solar particle event or X class flare). Every value, its source and the limits of the approximation: [Mission profiles, radiation and space weather](../intelligence/mission-profiles).
 
 ## Cabin carbon dioxide
 

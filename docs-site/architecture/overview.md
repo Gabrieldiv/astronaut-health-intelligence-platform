@@ -1,6 +1,6 @@
 ---
 title: Architecture Overview
-description: C4 style context and container views of the Astronaut Health Intelligence Platform as implemented today, a browser only application, with its stack and performance decisions.
+description: C4 style context and container views of the Astronaut Health Intelligence Platform as implemented today, a browser application with an optional FastAPI backend and an offline demo mode, with its stack and performance decisions.
 status: IMPLEMENTED
 origin: SIMULATED, REAL_PUBLIC
 code:
@@ -8,14 +8,18 @@ code:
   - frontend/web/src/state/store.ts
   - frontend/web/src/engine/engine.ts
   - frontend/web/src/types/domain.ts
-verified: 2026-11-14
+  - backend/app/main.py
+verified: 2026-11-15
 ---
 
 # Architecture Overview
 
-The Astronaut Health Intelligence Platform (AHI) is a **browser only** application today. The simulation of the crew devices, the health engine, the state store and the 3D viewer all run in one browser tab. There is no backend, no database, no authentication and no call to any external service: the app only loads its own static files (code, OSDR panels and the 3D anatomy).
+The Astronaut Health Intelligence Platform (AHI) has two deployable parts:
 
-This keeps the hackathon demo reliable (it works offline) while the code follows the contracts of the product spec, so a real backend can plug in later without changing the engine or the UI. The planned backend is described separately in [Target architecture](./target-architecture) (conceptual).
+- The **web app** (`frontend/web`): the simulation of the crew devices, the health engine, the state store and the 3D viewer all run in one browser tab.
+- The optional **AHI API** (`backend/`): a FastAPI modular monolith that stores canonical observations, reads public NASA data (DONKI, OSDR), hosts the demo assistant and an experimental analytics endpoint ([Backend and API](./backend)).
+
+The app **does not depend on the API**. Without it the app runs in **offline demo mode**: everything works, space weather comes from a bundled real DONKI snapshot, and only the live OSDR search and the assistant are unavailable. This keeps the hackathon demo reliable while the contracts of the product spec (canonical `HealthObservation`, `data_origin`, versioned rules) are already shared by both parts. What is still conceptual (authentication, the Python engine, background jobs) is in [Target architecture](./target-architecture).
 
 ## Context (C4 level 1)
 
@@ -25,18 +29,25 @@ flowchart TB
     FS["Flight surgeon"]
     MC["Mission Control"]
     RES["Researcher"]
-    AHI["Astronaut Health Intelligence Platform<br/>(static web app in the browser)"]
-    OSDR["NASA OSDR<br/>(offline import scripts)"]
+    AHI["Astronaut Health Intelligence Platform<br/>(web app in the browser)"]
+    API["AHI API (optional)<br/>FastAPI"]
+    OSDR["NASA OSDR"]
+    DONKI["NASA DONKI<br/>(CCMC)"]
+    CLAUDE["Claude API<br/>(assistant demo only)"]
     FILES["Local files<br/>(FHIR JSON, print)"]
     CREW --> AHI
     FS --> AHI
     MC --> AHI
     RES --> AHI
-    OSDR -. "imported at build time,<br/>not at runtime" .-> AHI
+    OSDR -. "panels imported at build time" .-> AHI
+    AHI -. "if reachable" .-> API
+    API --> DONKI
+    API --> OSDR
+    API -. "only with a key" .-> CLAUDE
     AHI -. "export" .-> FILES
 ```
 
-People use one web page. The only external system is NASA OSDR, and it is contacted by the import scripts during development, never by the running app. The same holds for the 3D anatomy: its source model is downloaded by the asset pipeline during development, and the app ships the built files.
+People use one web page. The browser never calls NASA or the Claude API directly: when the AHI API is reachable it does that on the app's behalf; otherwise the app uses what it ships (the OSDR panels imported at build time, the DONKI snapshot and the 3D anatomy built by the asset pipeline during development).
 
 ## Containers (C4 level 2)
 
@@ -52,8 +63,10 @@ flowchart LR
       ATLAS["Anatomy atlas<br/>public/anatomy/*.glb, manifest.json<br/>(lazy, per system)"] --> VIEW
       VIEW -. "only if the atlas<br/>is unavailable" .-> FB["Procedural fallback<br/>Web Workers, IndexedDB cache"]
       UI --> LS[("localStorage<br/>UI preferences")]
-      DATA["OSDR panels<br/>src/data/*.json (lazy)"] --> UI
+      DATA["OSDR panels and DONKI snapshot<br/>src/data (lazy)"] --> UI
+      UI --> CL["API client<br/>src/lib/api"]
     end
+    CL -. "optional" .-> API["AHI API<br/>backend/"]
     PIPE["Asset pipeline<br/>Blender, glTF Transform<br/>(development time)"] -. "npm run anatomy:build" .-> ATLAS
 ```
 
@@ -65,7 +78,10 @@ flowchart LR
 | UI | React 19, Tailwind CSS v4, Recharts | Ground view, Crew view, drawers and dialogs | [Frontend and state](./frontend) |
 | 3D viewer | three.js, react-three-fiber, drei, postprocessing | Anatomical atlas with selectable structures, status highlights, live heart beat and breathing; procedural fallback | [3D anatomy](./anatomy-3d) |
 | Anatomy atlas | Static GLB files (meshopt) and `manifest.json` | Third party reference anatomy (Z-Anatomy, CC BY-SA 4.0), built by the asset pipeline at development time | [3D anatomy assets](../data/anatomy-assets) |
-| OSDR panels | Static JSON | Real public lab data as reference | [Dataset catalog](../data/dataset-catalog) |
+| OSDR panels and DONKI snapshot | Static JSON | Real public data as reference and mission context | [Dataset catalog](../data/dataset-catalog), [NASA data sources](../data/sources) |
+| API client | TypeScript, types generated from OpenAPI | Probes the API, falls back to offline paths | [Backend and API](./backend#offline-demo-mode) |
+| AHI API (optional) | Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic | Registry, ingestion, observations, NASA connectors, assistant, analytics | [Backend and API](./backend) |
+| Database (with the API) | SQLite by default, PostgreSQL 17 with Docker Compose | Observations, registry | [Backend and API](./backend#storage-and-migrations) |
 
 ## Stack
 
@@ -79,7 +95,9 @@ flowchart LR
 | Charts | Recharts |
 | State | zustand |
 | Icons | lucide-react |
-| Tests | vitest |
+| Backend | Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, httpx, scikit-learn (experimental analytics), Anthropic SDK (assistant demo) |
+| Database | SQLite (default), PostgreSQL 17 (Docker Compose) |
+| Tests | vitest (web), pytest (backend) |
 | Lint | oxlint |
 | Documentation | VitePress (this portal) |
 

@@ -45,8 +45,12 @@ A NASA-STD-3001 define um limite de carreira: a dose efetiva total de um tripula
 | Dose acumulada pessoal | `RADIATION_DOSE` (mGy) | Integrada por astronauta, com um fator pessoal de blindagem | MODERATE acima de 50 mGy ("demo mission dose watch level"); orçamento de missão de demonstração de 100 mGy em 180 dias |
 
 ::: info As unidades são de dose absorvida
-O AHI mostra dose absorvida (mGy, µGy/h), enquanto os limites da NASA são de dose efetiva (mSv). Por isso, os níveis de observação da demonstração **não são comparáveis** com os limites de carreira ou de SPE da NASA, e o AHI não estima risco de saúde por radiação. A média simulada de 0,42 mGy por dia é descrita no código como da ordem de grandeza da ISS; ela não foi calibrada com nenhum dataset de dosimetria citado.
+O AHI mostra dose absorvida (mGy, µGy/h), enquanto os limites da NASA são de dose efetiva (mSv). Por isso, os níveis de observação da demonstração **não são comparáveis** com os limites de carreira ou de SPE da NASA, e o AHI não estima risco de saúde por radiação.
 :::
+
+### Perfis de missão e clima espacial
+
+A taxa de dose simulada agora segue o **perfil de missão** ativo: o perfil ISS é ajustado a uma medição publicada na ISS (DOSIS 3D), e os perfis Moon e Mars transit a medições publicadas na superfície lunar e no cruzeiro do MSL. A dose da missão aparece contra o limite de carreira de 600 mSv como uma **aproximação** (dose absorvida vezes a razão de qualidade de referência da mesma medição), e eventos reais do NASA DONKI alimentam um aviso de clima espacial (abrigo fora da magnetosfera depois de um evento de partículas solares ou de um flare classe X recente). Cada valor, sua fonte e os limites da aproximação: [Perfis de missão, radiação e clima espacial](/pt/intelligence/mission-profiles).
 
 ## Dióxido de carbono na cabine
 

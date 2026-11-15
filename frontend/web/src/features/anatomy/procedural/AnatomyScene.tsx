@@ -80,6 +80,9 @@ function regionMats(m: Mats): Record<BodyRegionId, { mats: HoloMaterial[]; opaci
     heart: { mats: [m.heart], opacity: 0.95, warnGain: 1, dim: 0.12 },
     lungs: { mats: [m.lungs, m.bronchi], opacity: 0.85, warnGain: 0.85, dim: 0.1 },
     kidneys: { mats: [m.kidneys], opacity: 0.92, warnGain: 1, dim: 0.12 },
+    // exam regions: the procedural fallback has no eye or ear mesh (label only)
+    eyes: { mats: [], opacity: 1, warnGain: 1, dim: 0.12 },
+    ears: { mats: [], opacity: 1, warnGain: 1, dim: 0.12 },
   }
 }
 

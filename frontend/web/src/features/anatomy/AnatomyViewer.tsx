@@ -14,6 +14,7 @@ import type { AtlasManifest } from './atlas/types'
 import { REQUIRED_STRUCTURE_IDS } from './atlas/types'
 import { AtlasViewer } from './viewer/AtlasViewer'
 import { useAnatomyDebug } from './viewer/atlasStore'
+import { useT } from '../../i18n'
 
 export interface AnatomyViewerProps {
   /** Fills its parent. Reads selection, region status and live vitals from useAppStore. */
@@ -38,7 +39,6 @@ export interface AnatomyViewerProps {
 // The procedural model is only downloaded when the atlas is unavailable.
 const ProceduralViewer = lazy(() => import('./procedural/ProceduralViewer').then((m) => ({ default: m.ProceduralViewer })))
 
-const FALLBACK_NOTICE = 'Reference atlas unavailable. Showing simplified model.'
 
 function Message({ className, text, busy }: { className?: string; text: string; busy?: boolean }) {
   return (
@@ -80,16 +80,17 @@ export function AnatomyViewer(props: AnatomyViewerProps) {
   const forced = useAnatomyDebug((s) => s.forceFallback)
   const { manifest, error } = useAtlasManifest()
   const [fatal, setFatal] = useState<string | null>(null)
-  const unavailable = <Message className={props.className} text="3D body view unavailable" />
+  const t = useT()
+  const unavailable = <Message className={props.className} text={t('anatomy.unavailable')} />
   const procedural = (
     <ViewerBoundary fallback={unavailable}>
-      <Suspense fallback={<Message className={props.className} text="Loading simplified model" busy />}>
-        <ProceduralViewer {...props} notice={FALLBACK_NOTICE} />
+      <Suspense fallback={<Message className={props.className} text={t('anatomy.loading.simplified')} busy />}>
+        <ProceduralViewer {...props} notice={t('anatomy.fallbackNotice')} />
       </Suspense>
     </ViewerBoundary>
   )
   if (forced || error || fatal || (manifest && !isUsable(manifest))) return procedural
-  if (!manifest) return <Message className={props.className} text="Loading reference anatomy" busy />
+  if (!manifest) return <Message className={props.className} text={t('anatomy.loading.reference')} busy />
   return (
     <ViewerBoundary fallback={procedural}>
       <AtlasViewer {...props} manifest={manifest} onFatal={setFatal} />

@@ -1,28 +1,30 @@
 import type { DataOrigin } from '../../types/domain'
 import { ORIGIN_META, OriginBadge } from './shared'
+import { useT } from '../../i18n'
+import { tx } from '../../i18n/rich'
 
 const ORDER: DataOrigin[] = ['REAL_PUBLIC', 'DERIVED', 'SIMULATED', 'MANUAL']
 
 export function OriginsTab() {
+  const t = useT()
   return (
     <div className="space-y-4">
       <p className="max-w-[760px] text-xs leading-relaxed text-ink-300">
-        Every record in AHI carries a <span className="font-mono text-[11px] text-ink-100">data_origin</span> label from the moment it is created. Categories are never
-        mixed without keeping the label, so any value on screen can be traced back to where it came from.
+        {tx('datasources.origins.intro', { code: <span className="font-mono text-[11px] text-ink-100">data_origin</span> })}
       </p>
       <div className="overflow-x-auto rounded-xl ring-1 ring-white/[0.07]">
         <table className="w-full min-w-[620px] border-collapse text-left text-xs">
-          <caption className="sr-only">Data origin categories</caption>
+          <caption className="sr-only">{t('datasources.origins.caption')}</caption>
           <thead>
             <tr className="bg-white/[0.03] text-[11px] text-ink-500">
               <th scope="col" className="px-3 py-2 font-semibold">
-                Label
+                {t('datasources.origins.colLabel')}
               </th>
               <th scope="col" className="px-3 py-2 font-semibold">
-                Meaning
+                {t('datasources.origins.colMeaning')}
               </th>
               <th scope="col" className="px-3 py-2 font-semibold">
-                Where you see it in AHI
+                {t('datasources.origins.colWhere')}
               </th>
             </tr>
           </thead>
@@ -40,9 +42,9 @@ export function OriginsTab() {
         </table>
       </div>
       <ul className="space-y-1.5 text-[11px] leading-relaxed text-ink-500">
-        <li>Missing data is never treated as normal: it shows as NO DATA or stale data, never as a filled in value.</li>
-        <li>Public data is never presented as live telemetry, and data from other people is never merged into the crew shown on the dashboard.</li>
-        <li>Animal, cell culture and ground analog studies are not treated as astronaut data.</li>
+        <li>{t('datasources.origins.rule1')}</li>
+        <li>{t('datasources.origins.rule2')}</li>
+        <li>{t('datasources.origins.rule3')}</li>
       </ul>
     </div>
   )

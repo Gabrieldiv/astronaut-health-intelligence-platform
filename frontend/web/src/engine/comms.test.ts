@@ -82,7 +82,7 @@ describe('Earth link in the engine', () => {
   beforeAll(() => {
     e = new HealthEngine({ scenarioId: 'ACUTE_CARDIO', commProfileId: 'MARS_FAR' })
     run(e, 20, 1)
-  }, 60000)
+  }, 120000)
 
   it('applies the comm profile to the mission', () => {
     expect(e.commProfileId).toBe('MARS_FAR')

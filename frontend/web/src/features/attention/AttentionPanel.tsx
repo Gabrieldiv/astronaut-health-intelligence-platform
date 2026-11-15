@@ -5,15 +5,23 @@ import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
 import type { BodyRegionId, MetricCode, Prediction, Recommendation, Status } from '../../types/domain'
-import { METRIC_CATALOG, REGION_LABELS } from '../../engine/catalog'
+import { METRIC_CATALOG } from '../../engine/catalog'
+import { t, translatedRecord, useT } from '../../i18n'
+import { tx } from '../../i18n/rich'
+import { metricLabel, regionLabel } from '../../i18n/catalog'
+import { lowerLabel } from './text'
 import { RiskGauge } from '../../components/RiskGauge'
 import { StatusIcon } from '../../components/Status'
 import { Badge, Button, PANEL_HEADER, PANEL_TITLE, SectionLabel } from '../../components/ui'
 import { WhatIfButton } from '../whatif'
 import { AutonomyBadge } from './AutonomyBadge'
 import { formatHours, formatUtcTime, relTime } from '../../components/format'
+import { EXAM_REGION_IDS } from '../anatomy/regions'
 import { BODY_REGIONS, focusTarget, useActions, useEscapeClearsStructure, usePendingActions, useSelectedStructure, useSignalLost } from '../shared/hooks'
 import { RegionDetail } from './RegionDetail'
+import { MultivariateNote } from './MultivariateNote'
+import { forHorizon, forecastMessage, historyNote, horizonText, useForecastHorizon } from './forecastHorizon'
+import { HorizonPicker } from './HorizonPicker'
 import { StructureDetail, StructureUnavailable } from './StructureDetail'
 
 export const DISCLAIMER = 'Decision support only. Not a diagnosis. Simulated data.'
@@ -21,6 +29,7 @@ export const DISCLAIMER = 'Decision support only. Not a diagnosis. Simulated dat
 function StatusCard({ astronautId }: { astronautId: string }) {
   const risk = useAppStore((s) => s.health[astronautId]?.risk)
   const signalLost = useSignalLost(astronautId)
+  const t = useT()
   if (!risk) return null
   const status: Status = signalLost && risk.risk_level === 'LOW' ? 'NO_DATA' : risk.risk_level
   const meta = STATUS_META[status]
@@ -35,7 +44,7 @@ function StatusCard({ astronautId }: { astronautId: string }) {
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] font-semibold tracking-[0.14em] text-ink-500 uppercase">Overall status</div>
+          <div className="text-[10px] font-semibold tracking-[0.14em] text-ink-500 uppercase">{t('attention.overallStatus')}</div>
           <div className="mt-1 flex items-center gap-2">
             <StatusIcon status={status} size={24} className={clsx(status === 'CRITICAL' && 'animate-breathe')} />
             <span className="text-[28px] leading-none font-bold tracking-tight" style={{ color: meta.color }}>
@@ -44,24 +53,22 @@ function StatusCard({ astronautId }: { astronautId: string }) {
           </div>
           <div className="mt-2 text-xs text-ink-300">
             {status === 'NO_DATA' ? (
-              <span>Core vitals missing. Status cannot be confirmed.</span>
+              <span>{t('attention.coreMissing')}</span>
             ) : (
-              <>
-                Level: <span className="font-semibold text-ink-100">{meta.label}</span>
-              </>
+              tx('attention.level', { level: <span className="font-semibold text-ink-100">{meta.label}</span> })
             )}
           </div>
         </div>
         <RiskGauge score={risk.risk_score} status={status} size={120} />
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/[0.06] pt-2.5 text-[11px] text-ink-500 present:hidden">
-        <span className={clsx('tabular', lowConf && 'font-semibold text-watch')} title="Lower when data quality is poor or data is missing">
-          Confidence {Math.round(risk.confidence * 100)}%{lowConf ? ' (low, check sensors)' : ''}
+        <span className={clsx('tabular', lowConf && 'font-semibold text-watch')} title={t('attention.confidenceTitle')}>
+          {t(lowConf ? 'attention.confidenceLow' : 'attention.confidence', { pct: Math.round(risk.confidence * 100) })}
         </span>
         <span aria-hidden>·</span>
-        <span title={risk.data_window}>Model {risk.model_version}</span>
+        <span title={risk.data_window}>{t('attention.model', { version: risk.model_version })}</span>
         <span aria-hidden>·</span>
-        <span className="tabular">Updated {formatUtcTime(risk.evaluated_at, false)} UTC</span>
+        <span className="tabular">{t('attention.updated', { time: formatUtcTime(risk.evaluated_at, false) })}</span>
       </div>
     </div>
   )
@@ -75,6 +82,8 @@ interface Issue {
   metric: MetricCode | null
   region: BodyRegionId | null
 }
+
+const isExamRegion = (r: string) => r === 'eyes' || r === 'ears'
 
 function Issues({ astronautId }: { astronautId: string }) {
   const { factors, regions, metrics } = useAppStore(
@@ -97,15 +106,16 @@ function Issues({ astronautId }: { astronautId: string }) {
       })
     }
     const missing = (Object.values(metrics ?? {}) as { metric: MetricCode; current: number | null; status: Status }[])
-      .filter((m) => m && (m.current == null || m.status === 'NO_DATA'))
+      // exam measures (eyes, ears) are periodic: 'no exam yet' is said by their region, not as a sensor problem
+      .filter((m) => m && (m.current == null || m.status === 'NO_DATA') && !isExamRegion(METRIC_CATALOG[m.metric].region))
       .map((m) => m.metric)
     if (missing.length) {
-      const names = missing.map((m) => METRIC_CATALOG[m].label.toLowerCase())
-      const list = names.length > 3 ? `${names.slice(0, 3).join(', ')} and ${names.length - 3} more` : names.join(', ')
+      const names = missing.map((m) => lowerLabel(metricLabel(m)))
+      const list = names.length > 3 ? t('attention.missingList', { list: names.slice(0, 3).join(', '), n: names.length - 3 }) : names.join(', ')
       const first = METRIC_CATALOG[missing[0]!].region
       out.unshift({
         key: 'missing',
-        label: `No live data for ${list}. Missing data is never treated as normal: check the sensor.`,
+        label: t('attention.missingLabel', { list }),
         status: 'NO_DATA',
         weight: null,
         metric: missing[0]!,
@@ -117,12 +127,12 @@ function Issues({ astronautId }: { astronautId: string }) {
       }
     }
     if (regions) {
-      for (const r of BODY_REGIONS) {
+      for (const r of [...BODY_REGIONS, ...EXAM_REGION_IDS]) {
         const rs = regions[r]
         if (!rs || rs.status === 'LOW' || rs.metrics.length === 0 || covered.has(r)) continue
         out.push({
           key: `r-${r}`,
-          label: `${REGION_LABELS[r].label}: ${rs.status === 'NO_DATA' ? 'no recent data. Missing data is not treated as normal.' : rs.summary}`,
+          label: `${regionLabel(r)}: ${rs.status === 'NO_DATA' && !isExamRegion(r) ? t('attention.regionNoData') : rs.summary}`,
           status: rs.status,
           weight: null,
           metric: null,
@@ -135,13 +145,14 @@ function Issues({ astronautId }: { astronautId: string }) {
 
   const [showAllIssues, setShowAllIssues] = useState(false)
   const shownIssues = showAllIssues ? issues : issues.slice(0, 3)
+  useT()
   return (
-    <section aria-label="Why">
-      <SectionLabel right={issues.length > 0 ? <span className="tabular text-[11px] text-ink-500">{issues.length}</span> : null}>Why</SectionLabel>
+    <section aria-label={t('attention.why')}>
+      <SectionLabel right={issues.length > 0 ? <span className="tabular text-[11px] text-ink-500">{issues.length}</span> : null}>{t('attention.why')}</SectionLabel>
       {issues.length === 0 ? (
         <div className="mt-2 flex items-center gap-2.5 rounded-xl bg-nominal/[0.06] px-3 py-2.5 text-[13px] text-ink-300 ring-1 ring-nominal/20">
           <StatusIcon status="LOW" size={16} />
-          Nothing stands out. All tracked signals are within your normal range.
+          {t('attention.nothingStandsOut')}
         </div>
       ) : (
         <ul className="mt-2 flex flex-col gap-1.5">
@@ -161,7 +172,7 @@ function Issues({ astronautId }: { astronautId: string }) {
                       <span className="h-1 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
                         <span className="block h-full rounded-full" style={{ width: `${Math.round(it.weight * 100)}%`, background: STATUS_META[it.status].color, opacity: 0.8 }} />
                       </span>
-                      <span className="tabular text-[10px] text-ink-500 present:hidden">{Math.round(it.weight * 100)}% of score</span>
+                      <span className="tabular text-[10px] text-ink-500 present:hidden">{t('attention.pctOfScore', { pct: Math.round(it.weight * 100) })}</span>
                     </span>
                   )}
                 </span>
@@ -173,19 +184,21 @@ function Issues({ astronautId }: { astronautId: string }) {
       )}
       {issues.length > 3 && (
         <button type="button" onClick={() => setShowAllIssues((v) => !v)} className="focus-ring mt-1.5 rounded px-2 text-[11px] font-semibold text-accent hover:underline">
-          {showAllIssues ? 'Show less' : 'Show ' + (issues.length - 3) + ' more'}
+          {showAllIssues ? t('attention.showLess') : t('attention.showMore', { n: issues.length - 3 })}
         </button>
       )}
+      <MultivariateNote astronautId={astronautId} />
     </section>
   )
 }
 
-const AUDIENCE_LABEL: Record<Recommendation['audience'], string> = { CREW: 'For crew', FLIGHT_SURGEON: 'Flight surgeon', MISSION_CONTROL: 'Mission control' }
-const PRIORITY_LABEL: Record<Recommendation['priority'], string> = { LOW: 'Low priority', MODERATE: 'Medium priority', HIGH: 'High priority', CRITICAL: 'Urgent' }
+const AUDIENCE_LABEL: Record<Recommendation['audience'], string> = translatedRecord(['CREW', 'FLIGHT_SURGEON', 'MISSION_CONTROL'] as const, (k) => t(`attention.audience.${k}`))
+const PRIORITY_LABEL: Record<Recommendation['priority'], string> = translatedRecord(['LOW', 'MODERATE', 'HIGH', 'CRITICAL'] as const, (k) => t(`attention.priority.${k}`))
 
 function ActionCard({ rec }: { rec: Recommendation }) {
   const { logIntervention, dismissRecommendation } = useActions()
   const meta = STATUS_META[rec.priority]
+  const t = useT()
   return (
     <li className="relative overflow-hidden rounded-xl bg-white/[0.035] p-3 ring-1 ring-white/[0.06]">
       <span className="absolute top-0 bottom-0 left-0 w-[3px]" style={{ background: meta.color }} aria-hidden />
@@ -208,13 +221,13 @@ function ActionCard({ rec }: { rec: Recommendation }) {
           <Button
             variant="primary"
             onClick={() => logIntervention({ astronautId: rec.astronautId, kind: rec.interventionKind!, recommendationId: rec.id })}
-            aria-label={`Mark done: ${rec.title}`}
+            aria-label={t('attention.markDoneAria', { title: rec.title })}
           >
-            <Check size={13} strokeWidth={3} /> Mark done
+            <Check size={13} strokeWidth={3} /> {t('attention.markDone')}
           </Button>
         )}
-        <Button variant="subtle" onClick={() => dismissRecommendation(rec.id)} aria-label={`Dismiss: ${rec.title}`}>
-          <X size={13} /> Dismiss
+        <Button variant="subtle" onClick={() => dismissRecommendation(rec.id)} aria-label={t('attention.dismissAria', { title: rec.title })}>
+          <X size={13} /> {t('attention.dismiss')}
         </Button>
         <span className="ml-auto">
           <WhatIfButton recommendation={rec} />
@@ -231,13 +244,14 @@ function Actions({ astronautId }: { astronautId: string }) {
   const [showAllActions, setShowAllActions] = useState(false)
   const shownActions = showAllActions ? pending : pending.slice(0, 2)
   const logged = useMemo(() => interventions.filter((i) => i.astronautId === astronautId).sort((a, b) => b.loggedAt - a.loggedAt), [interventions, astronautId])
+  const t = useT()
   return (
-    <section aria-label="Recommended actions" data-tour="actions">
-      <SectionLabel right={pending.length > 0 ? <span className="tabular text-[11px] text-ink-500">{pending.length} to do</span> : null}>Recommended actions</SectionLabel>
+    <section aria-label={t('attention.actions')} data-tour="actions">
+      <SectionLabel right={pending.length > 0 ? <span className="tabular text-[11px] text-ink-500">{t('attention.toDo', { n: pending.length })}</span> : null}>{t('attention.actions')}</SectionLabel>
       {pending.length === 0 ? (
         <div className="mt-2 flex items-center gap-2.5 rounded-xl bg-white/[0.03] px-3 py-2.5 text-[13px] text-ink-300 ring-1 ring-white/[0.05]">
           <ListChecks size={16} className="text-ink-500" aria-hidden />
-          No actions needed right now.
+          {t('attention.noActions')}
         </div>
       ) : (
         <ul className="mt-2 flex flex-col gap-2">
@@ -248,15 +262,15 @@ function Actions({ astronautId }: { astronautId: string }) {
       )}
       {pending.length > 2 && (
         <button type="button" onClick={() => setShowAllActions((v) => !v)} className="focus-ring mt-1.5 rounded px-2 text-[11px] font-semibold text-accent hover:underline">
-          {showAllActions ? 'Show less' : 'Show ' + (pending.length - 2) + ' more'}
+          {showAllActions ? t('attention.showLess') : t('attention.showMore', { n: pending.length - 2 })}
         </button>
       )}
       {logged.length > 0 && (
         <div className="mt-2 flex items-start gap-2 rounded-lg px-1 text-[11px] text-ink-500">
           <ClipboardList size={12} className="mt-0.5 shrink-0" aria-hidden />
           <span>
-            Last logged: <span className="text-ink-300">{logged[0]!.kind.replaceAll('_', ' ').toLowerCase()}</span>, {relTime(logged[0]!.loggedAt, simNow)}
-            {logged.length > 1 ? ` (${logged.length} total)` : ''}
+            {tx('attention.lastLogged', { kind: <span className="text-ink-300">{logged[0]!.kind.replaceAll('_', ' ').toLowerCase()}</span>, when: relTime(logged[0]!.loggedAt, simNow) })}
+            {logged.length > 1 ? ` ${t('attention.loggedTotal', { n: logged.length })}` : ''}
           </span>
         </div>
       )}
@@ -265,9 +279,8 @@ function Actions({ astronautId }: { astronautId: string }) {
 }
 
 function ForecastRow({ p, astronautId, className }: { p: Prediction; astronautId: string; className?: string }) {
-  const def = METRIC_CATALOG[p.metric]
   const exits = p.eligible && p.hoursToBandExit != null
-  const message = !p.eligible ? 'Not enough data to forecast yet' : exits ? `Projected to leave your normal range in ${formatHours(p.hoursToBandExit!)}` : `Stable over next ${p.horizonHours} h`
+  const message = forecastMessage(p, formatHours)
   const last = p.points[p.points.length - 1]
   const first = p.points[0]
   const rising = last && first ? last.v > first.v : false
@@ -287,13 +300,14 @@ function ForecastRow({ p, astronautId, className }: { p: Prediction; astronautId
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[13px] text-ink-100">
-            <span className="font-semibold">{def.label}.</span> <span className={clsx(exits ? 'text-watch' : 'text-ink-300')}>{message}</span>
+            <span className="font-semibold">{metricLabel(p.metric)}.</span> <span className={clsx(exits ? 'text-watch' : 'text-ink-300')}>{message}</span>
           </span>
           {p.eligible && (
             <span className="mt-0.5 block text-[10px] text-ink-500 present:hidden">
               {p.method} · {p.intervalLabel}
             </span>
           )}
+          {p.ineligibleReason === 'HISTORY_TOO_SHORT' && <span className="mt-0.5 block text-[10px] text-ink-500">{historyNote(p)}</span>}
         </span>
       </button>
     </li>
@@ -302,28 +316,33 @@ function ForecastRow({ p, astronautId, className }: { p: Prediction; astronautId
 
 function Forecasts({ astronautId }: { astronautId: string }) {
   const predictions = useAppStore((s) => s.health[astronautId]?.predictions)
+  const horizon = useForecastHorizon((s) => s.hours)
   const list = useMemo(() => {
-    const arr = Object.values(predictions ?? {}).filter((p): p is Prediction => !!p)
+    const arr = Object.values(predictions ?? {})
+      .map((p) => forHorizon(p, horizon))
+      .filter((p): p is Prediction => !!p)
     const rank = (p: Prediction) => (!p.eligible ? 2 : p.hoursToBandExit != null ? 0 : 1)
     return arr.sort((a, b) => rank(a) - rank(b) || (a.hoursToBandExit ?? 0) - (b.hoursToBandExit ?? 0))
-  }, [predictions])
+  }, [predictions, horizon])
   const exits = list.filter((p) => p.eligible && p.hoursToBandExit != null).length
   const [showAll, setShowAll] = useState(false)
   // Large screens (roomy) show every forecast: the extra rows are rendered but hidden by CSS elsewhere.
   const base = Math.max(3, exits)
+  const t = useT()
   return (
-    <section aria-label="Forecast">
+    <section aria-label={t('attention.forecast')}>
       <SectionLabel
         right={
           <span className="flex items-center gap-1 text-[11px] text-ink-500">
-            <Sparkles size={11} aria-hidden /> next hours
+            <Sparkles size={11} aria-hidden /> {t('attention.forecastNext', { horizon: horizonText(horizon) })}
           </span>
         }
       >
-        Forecast
+        {t('attention.forecast')}
       </SectionLabel>
+      <HorizonPicker size="xs" className="mt-1.5 w-fit" />
       {list.length === 0 ? (
-        <div className="mt-2 rounded-xl bg-white/[0.03] px-3 py-2.5 text-[13px] text-ink-500 ring-1 ring-white/[0.05]">Forecasts appear once enough data is collected.</div>
+        <div className="mt-2 rounded-xl bg-white/[0.03] px-3 py-2.5 text-[13px] text-ink-500 ring-1 ring-white/[0.05]">{t('attention.forecastEmpty')}</div>
       ) : (
         <>
           <ul className="mt-1 -mx-1 flex flex-col">
@@ -333,7 +352,7 @@ function Forecasts({ astronautId }: { astronautId: string }) {
           </ul>
           {list.length > base ? (
             <button type="button" onClick={() => setShowAll((v) => !v)} className="focus-ring mt-1 rounded px-2 text-[11px] font-semibold text-accent hover:underline roomy:hidden">
-              {showAll ? 'Show less' : `Show all ${list.length}`}
+              {showAll ? t('attention.showLess') : t('attention.showAll', { n: list.length })}
             </button>
           ) : null}
         </>
@@ -364,21 +383,22 @@ export function AttentionPanel({ className }: { className?: string }) {
   const region = useAppStore((s) => s.selectedRegion)
   const { structureId, structure, manifest, pending } = useSelectedStructure()
   useEscapeClearsStructure()
-  let title = 'What needs attention'
+  const t = useT()
+  let title = t('attention.title.overview')
   let body = <Overview astronautId={astronautId} />
   if (structure && manifest) {
-    title = 'Anatomy detail'
+    title = t('attention.title.anatomy')
     body = <StructureDetail astronautId={astronautId} structure={structure} manifest={manifest} />
   } else if (region) {
     // Also the fallback while the atlas loads or when it is unavailable: the region data never waits for anatomy.
-    title = 'Body system detail'
+    title = t('attention.title.region')
     body = <RegionDetail astronautId={astronautId} region={region} />
   } else if (structureId) {
-    title = 'Anatomy detail'
+    title = t('attention.title.anatomy')
     body = <StructureUnavailable loading={pending} />
   }
   return (
-    <aside aria-label="What needs attention" data-tour="attention" className={clsx('glass flex min-h-0 flex-col rounded-2xl', className)}>
+    <aside aria-label={t('attention.title.overview')} data-tour="attention" className={clsx('glass flex min-h-0 flex-col rounded-2xl', className)}>
       <header className={PANEL_HEADER}>
         <h2 className={PANEL_TITLE}>{title}</h2>
         <span className="text-[11px] leading-none font-semibold tracking-wide text-ink-300">{callsign}</span>
@@ -388,7 +408,7 @@ export function AttentionPanel({ className }: { className?: string }) {
       </div>
       <footer className="flex items-center gap-1.5 border-t border-white/[0.06] px-4 py-2 text-[10.5px] text-ink-500 present:py-1.5">
         <Info size={11} className="shrink-0" aria-hidden />
-        {DISCLAIMER}
+        {t('attention.disclaimer')}
       </footer>
     </aside>
   )

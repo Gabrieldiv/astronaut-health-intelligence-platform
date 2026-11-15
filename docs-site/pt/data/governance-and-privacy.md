@@ -24,14 +24,14 @@ Esta página reúne as regras de governança de dados da Astronaut Health Intell
 | 2 | Respeitar termos, licenças e restrições | Licença registrada no manifesto; quando a fonte não informa, fica `null` com "not stated". A anatomia 3D mantém a licença CC BY-SA 4.0 e a atribuição ([Licenças de terceiros](#third-party-licenses)) |
 | 3 | Não contornar controles de acesso do OSDR | Só arquivos tabulares processados e públicos; nenhum dado de acesso controlado foi pedido |
 | 4 | Usar pseudônimos nos dados de demonstração | Callsigns fictícios (ORION, LYRA, VEGA, ATLAS) |
-| 5 | Não registrar informação sensível desnecessária em logs | Não há backend nem logs de servidor; a auditoria vive na memória do navegador |
+| 5 | Não registrar informação sensível desnecessária em logs | A auditoria vive na memória do navegador; a AHI API opcional registra só metadados das requisições (método, caminho, status, tempo) |
 | 6 | Não tratar dados de animais como humanos | Missões de roedores e plantas do EDA são tratadas como dado de **ambiente**, nunca de tripulação |
 | 7 | Não apresentar estudos análogos como astronautas | Proposta de `metadata.population_type` com `ANALOG_PARTICIPANT` |
 | 8 | Versionar modelos, parâmetros e regras | Versões do motor, do modelo de risco, da baseline, da previsão e do catálogo de recomendações em `config.ts` |
 | 9 | Permitir rastrear de qual dado veio cada alerta | Cada alerta guarda regra, métrica e pessoa; a auditoria registra cada passo |
 | 10 | Exibir limitações e incerteza | Confiança no status, intervalo de 80% na previsão, limitações no model card |
 | 11 | Exigir validação humana para decisões de saúde | Itens HIGH e CRITICAL exigem revisão humana |
-| 12 | Usar IA generativa só para explicação controlada | Não há IA generativa hoje; a camada planejada segue as regras de [IA e análise](/pt/intelligence/ai-and-analytics) |
+| 12 | Usar IA generativa só para explicação controlada | <StatusBadge status="EXPERIMENTAL" /> só a demo opcional Ask AHI usa um modelo de linguagem, para explicar as saídas do motor ([IA e análise](/pt/intelligence/ai-and-analytics#language-model-the-ask-ahi-assistant)) |
 
 ## Pseudonimização
 
@@ -61,13 +61,16 @@ Os arquivos de anatomia levam o seu próprio `LICENSE.md`, o app mostra a atribu
 | Dado | Onde fica | Sai do navegador? |
 | --- | --- | --- |
 | Estado da simulação, alertas, auditoria, check-ins, mensagens | Memória do navegador (store zustand) | Não. Some ao recarregar |
-| Preferências (visão, modo apresentação, som de alerta) | `localStorage` | Não |
+| Preferências (visão, modo apresentação, sons, audiodescrição, modo do visualizador) | `localStorage` | Não. Não há conta nem rastreamento |
+| Registro pseudonimizado e observações canônicas enviadas à AHI API (opcional) | Banco da API (SQLite ou PostgreSQL) | Só se alguém enviar dados à API. O registro rejeita campos desconhecidos, como um nome real |
+| Pergunta e retrato compacto das saídas do motor (callsigns pseudonimizados, valores, status) no Ask AHI | Enviados à Claude API pela AHI API | Só com a API rodando e uma chave configurada. Em uma missão real isso precisa ficar a bordo ([Ask AHI](/pt/product/assistant#the-onboard-target)) |
+| Eventos de clima espacial do DONKI | Snapshot empacotado (`src/data/nasa/`) ou buscados pela API | Não. São dados públicos da NASA |
 | Atlas de anatomia 3D | Arquivos estáticos do app (`public/anatomy/`); geometria em cache na memória durante a sessão | Não. É anatomia de referência, sem dado pessoal |
 | Geometria do modelo procedural de fallback (só no build de produção, e só se o atlas falhar) | IndexedDB (`ahi-anatomy`) | Não |
 | Bundle FHIR exportado | Arquivo baixado pela pessoa | Só se a pessoa enviar o arquivo |
 | Painéis do OSDR | Empacotados no app (`src/data/`) | Não |
 
-O app não envia dados para servidor algum. As fontes tipográficas são carregadas do Google Fonts no `index.html`, o que gera uma requisição externa sem dados de saúde. Todo o resto, inclusive os arquivos de anatomia 3D, vem do próprio app (sem CDN).
+Sem a API, o app não envia dados para servidor algum. Com a API rodando, ele conversa só com ela, e é a API que consulta a NASA e, no Ask AHI, a Claude API. As fontes tipográficas são carregadas do Google Fonts no `index.html`, o que gera uma requisição externa sem dados de saúde. Todo o resto, inclusive os arquivos de anatomia 3D, vem do próprio app (sem CDN).
 
 ## Dados análogos, animais e astronautas
 
@@ -83,8 +86,8 @@ Estudos em solo que imitam o voo (HERA, repouso no leito, confinamento) são val
 | Item | Status |
 | --- | --- |
 | Autenticação e controle de acesso por papel | <StatusBadge status="PLANNED" /> |
-| Auditoria persistente e imutável | <StatusBadge status="PLANNED" /> |
-| TLS e gestão de segredos em ambiente publicado (não há backend) | <StatusBadge status="PLANNED" /> |
+| Auditoria persistente e imutável | <StatusBadge status="PLANNED" /> no backend ([Roadmap](/pt/resources/roadmap)) |
+| TLS e gestão de segredos em ambiente publicado | <StatusBadge status="PLANNED" /> (hoje a chave do assistente fica só em `backend/.env`, fora do git) |
 | Política de retenção de dados | <StatusBadge status="PLANNED" /> |
 | Revisão ética ou clínica formal | Não realizada |
 

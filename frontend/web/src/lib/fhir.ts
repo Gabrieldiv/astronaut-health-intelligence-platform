@@ -154,6 +154,7 @@ const DEVICE_STATUS: Record<Device['state'], FhirDevice['status']> = {
   DEGRADED: 'active',
   DATA_STALE: 'active',
   OFFLINE: 'inactive',
+  PAUSED: 'inactive',
 }
 
 function round(v: number, decimals: number): number {

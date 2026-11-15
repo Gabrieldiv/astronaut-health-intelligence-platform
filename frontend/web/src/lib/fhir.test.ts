@@ -23,8 +23,8 @@ function ms(metric: MetricState['metric'], current: number | null, unit: string,
 
 const astro = CREW[0]!
 const devices: Device[] = [
-  { id: 'BIO-AST-01', kind: 'BIO_MONITOR', name: 'Bio-Monitor shirt (sim)', assignedTo: astro.id, state: 'ONLINE', batteryPct: 80, signalPct: 90, lastSeenAt: T, data_origin: 'SIMULATED', metrics: ['HEART_RATE', 'SPO2'] },
-  { id: 'ENV-01', kind: 'ENV_SENSOR', name: 'Cabin sensor (sim)', assignedTo: null, state: 'ONLINE', batteryPct: null, signalPct: null, lastSeenAt: T, data_origin: 'SIMULATED', metrics: ['CO2'] },
+  { id: 'BIO-AST-01', kind: 'BIO_MONITOR', name: 'Bio-Monitor shirt', assignedTo: astro.id, state: 'ONLINE', batteryPct: 80, signalPct: 90, lastSeenAt: T, data_origin: 'SIMULATED', metrics: ['HEART_RATE', 'SPO2'] },
+  { id: 'ENV-01', kind: 'ENV_SENSOR', name: 'Cabin sensor', assignedTo: null, state: 'ONLINE', batteryPct: null, signalPct: null, lastSeenAt: T, data_origin: 'SIMULATED', metrics: ['CO2'] },
 ]
 const health = {
   [astro.id]: {

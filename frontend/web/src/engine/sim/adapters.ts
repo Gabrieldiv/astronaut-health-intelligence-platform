@@ -42,6 +42,10 @@ export interface DeviceAdapter {
   /** Event-only read over a past window (used to backfill daily metrics). */
   readEvents?(from: number, to: number): HealthObservation[]
   status(simNow: number): AdapterStatus
+  /** Sim time an operator paused the device, null while it runs. The engine skips read() while paused. */
+  readonly pausedAt: number | null
+  /** Pause or resume (operator action). On resume the device restarts at `t`: nothing is backfilled for the pause. */
+  setPaused(paused: boolean, t: number): void
 }
 
 /** What adapters can see of the simulated world. */
@@ -119,6 +123,7 @@ abstract class BaseAdapter implements DeviceAdapter {
   protected readonly world: SimWorld
   protected lastReadAt: number
   lastSeenAt: number
+  pausedAt: number | null = null
 
   constructor(world: SimWorld, o: { id: string; kind: AdapterKind; name: string; assignedTo: string | null; metrics: MetricCode[]; listed?: boolean; startAt: number }) {
     this.world = world
@@ -133,6 +138,17 @@ abstract class BaseAdapter implements DeviceAdapter {
   }
 
   abstract read(simNow: number): HealthObservation[]
+
+  setPaused(paused: boolean, t: number): void {
+    if (paused) {
+      if (this.pausedAt === null) this.pausedAt = t
+      return
+    }
+    if (this.pausedAt === null) return
+    this.pausedAt = null
+    // Restart from now: event devices must not replay the sessions or nights of the pause.
+    this.lastReadAt = Math.max(this.lastReadAt, t)
+  }
 
   status(simNow: number): AdapterStatus {
     const stale = simNow - this.lastSeenAt > 6 * MIN_MS
@@ -160,7 +176,7 @@ export class BioMonitorAdapter extends BaseAdapter {
     super(world, {
       id: `DEV-BIO-${astronautId}`,
       kind: 'BIO_MONITOR',
-      name: 'Bio-Monitor shirt (sim)',
+      name: 'Bio-Monitor shirt',
       assignedTo: astronautId,
       metrics: ['HEART_RATE', 'HRV_RMSSD', 'SPO2', 'RESPIRATORY_RATE', 'SKIN_TEMPERATURE', 'SYSTOLIC_BP', 'DIASTOLIC_BP'],
       startAt,
@@ -239,7 +255,7 @@ export class ActigraphyAdapter extends BaseAdapter {
     super(world, {
       id: `DEV-ACT-${astronautId}`,
       kind: 'ACTIGRAPHY',
-      name: 'Actigraphy watch (sim)',
+      name: 'Actigraphy watch',
       assignedTo: astronautId,
       metrics: ['ACTIVITY_LEVEL', 'SLEEP_DURATION', 'SLEEP_EFFICIENCY'],
       startAt,
@@ -289,9 +305,9 @@ export class ActigraphyAdapter extends BaseAdapter {
 // ---------------------------------------------------------------------------
 
 const EXERCISE_NAMES: Record<ExerciseDeviceKind, string> = {
-  EXERCISE_CEVIS: 'CEVIS cycle ergometer (sim)',
-  EXERCISE_ARED: 'ARED resistive exercise device (sim)',
-  EXERCISE_T2: 'T2 treadmill (sim)',
+  EXERCISE_CEVIS: 'CEVIS cycle ergometer',
+  EXERCISE_ARED: 'ARED resistive exercise device',
+  EXERCISE_T2: 'T2 treadmill',
 }
 
 export class ExerciseDeviceAdapter extends BaseAdapter {
@@ -340,7 +356,7 @@ export const EXERCISE_DEVICE_KINDS = EXERCISE_ROTATION
 
 export class ReactionTestAdapter extends BaseAdapter {
   constructor(world: SimWorld, astronautId: string, startAt: number) {
-    super(world, { id: `APP-RST-${astronautId}`, kind: 'COGNITIVE_TEST', name: 'Reaction self-test (sim)', assignedTo: astronautId, metrics: ['REACTION_TIME'], listed: false, startAt })
+    super(world, { id: `APP-RST-${astronautId}`, kind: 'COGNITIVE_TEST', name: 'Reaction self-test', assignedTo: astronautId, metrics: ['REACTION_TIME'], listed: false, startAt })
   }
 
   read(simNow: number): HealthObservation[] {
@@ -374,7 +390,7 @@ export class ReactionTestAdapter extends BaseAdapter {
 
 export class IntakeLogAdapter extends BaseAdapter {
   constructor(world: SimWorld, astronautId: string, startAt: number) {
-    super(world, { id: `APP-H2O-${astronautId}`, kind: 'INTAKE_LOG', name: 'Fluid intake log (sim)', assignedTo: astronautId, metrics: ['HYDRATION'], listed: false, startAt })
+    super(world, { id: `APP-H2O-${astronautId}`, kind: 'INTAKE_LOG', name: 'Fluid intake log', assignedTo: astronautId, metrics: ['HYDRATION'], listed: false, startAt })
   }
 
   read(simNow: number): HealthObservation[] {
@@ -395,7 +411,7 @@ export class IntakeLogAdapter extends BaseAdapter {
 
 export class EnvSensorAdapter extends BaseAdapter {
   constructor(world: SimWorld, startAt: number) {
-    super(world, { id: 'DEV-ENV-01', kind: 'ENV_SENSOR', name: 'Cabin environment sensor (sim)', assignedTo: null, metrics: ['CO2', 'CABIN_TEMPERATURE', 'RELATIVE_HUMIDITY'], startAt })
+    super(world, { id: 'DEV-ENV-01', kind: 'ENV_SENSOR', name: 'Cabin environment sensor', assignedTo: null, metrics: ['CO2', 'CABIN_TEMPERATURE', 'RELATIVE_HUMIDITY'], startAt })
   }
 
   read(simNow: number): HealthObservation[] {
@@ -413,7 +429,7 @@ export class EnvSensorAdapter extends BaseAdapter {
 
 export class AreaDosimeterAdapter extends BaseAdapter {
   constructor(world: SimWorld, startAt: number) {
-    super(world, { id: 'DEV-DOS-AREA', kind: 'DOSIMETER', name: 'Area radiation monitor (sim)', assignedTo: null, metrics: ['RADIATION_DOSE_RATE'], startAt })
+    super(world, { id: 'DEV-DOS-AREA', kind: 'DOSIMETER', name: 'Area radiation monitor', assignedTo: null, metrics: ['RADIATION_DOSE_RATE'], startAt })
   }
 
   read(simNow: number): HealthObservation[] {
@@ -427,7 +443,7 @@ export class AreaDosimeterAdapter extends BaseAdapter {
 
 export class PersonalDosimeterAdapter extends BaseAdapter {
   constructor(world: SimWorld, astronautId: string, startAt: number) {
-    super(world, { id: `DEV-DOS-${astronautId}`, kind: 'DOSIMETER', name: 'Personal dosimeter (sim)', assignedTo: astronautId, metrics: ['RADIATION_DOSE'], startAt })
+    super(world, { id: `DEV-DOS-${astronautId}`, kind: 'DOSIMETER', name: 'Personal dosimeter', assignedTo: astronautId, metrics: ['RADIATION_DOSE'], startAt })
   }
 
   read(simNow: number): HealthObservation[] {

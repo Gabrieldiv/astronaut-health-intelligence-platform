@@ -36,6 +36,8 @@ Hazard addressed: **distance from Earth**. Click the Earth link control in the t
 | Mars (closest) | about 4 min | about 8 min | Every question to Earth costs at least 8 min |
 | Mars (farthest) | about 22 min | about 44 min | The crew must decide on board first |
 
+Choosing a **mission profile** in the top bar sets the matching Earth link (ISS to ISS, Moon to Moon, Mars transit to Mars farthest); the link can still be changed by hand. Profiles, cited values and the space weather advisory: [Mission profiles](../intelligence/mission-profiles).
+
 Delays are approximate public figures for light time. The drawer explains the consequence in one sentence, for example "A question to Earth and its answer take at least 44 min. On-board steps come first; use the ground for review, not for urgent decisions."
 
 ### Messages

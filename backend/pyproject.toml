@@ -1,0 +1,15 @@
+[project]
+name = "ahi-api"
+version = "0.1.0"
+description = "AHI (Astronaut Health Intelligence) API. Decision support prototype, not a medical device."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::DeprecationWarning:app.*", "ignore:Using `httpx` with `starlette.testclient`"]
+
+[tool.ruff]
+line-length = 140
+target-version = "py312"

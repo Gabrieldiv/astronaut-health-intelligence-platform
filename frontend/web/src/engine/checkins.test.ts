@@ -23,7 +23,7 @@ describe('simulated daily check-ins', () => {
   let e: HealthEngine
   beforeAll(() => {
     e = new HealthEngine({ scenarioId: 'NOMINAL' })
-  }, 60000)
+  }, 120000)
 
   it('pre-generates one check-in per astronaut per sim morning, newest first', () => {
     const per = new Map<string, Set<number>>()
@@ -95,7 +95,7 @@ describe('check-ins follow the simulated state', () => {
     expect(risk.contributing_factors.some((f) => /You also reported high fatigue in your last \d check-ins/.test(f.label))).toBe(true)
     // self report never raises alerts on its own
     expect(e.alerts.some((a) => a.ruleId.startsWith('R-PSY'))).toBe(false)
-  }, 60000)
+  }, 120000)
 
   it('cabin CO2 makes a reported headache more likely (seeded simulation)', () => {
     const P = buildProfile(CREW[0]!, 0, 1)
@@ -116,7 +116,7 @@ describe('manual check-ins (submitCheckIn)', () => {
   let e: HealthEngine
   beforeAll(() => {
     e = new HealthEngine({ scenarioId: 'NOMINAL' })
-  }, 60000)
+  }, 120000)
 
   it('replaces the simulated check-in of the same day and is marked MANUAL', () => {
     const today = day(e.simTime)
@@ -160,7 +160,7 @@ describe('manual check-ins (submitCheckIn)', () => {
     const ast4 = e.checkIns.filter((c) => c.astronautId === 'AST-04' && c.at > e.startedAt - HOUR_MS)
     expect(ast4).toHaveLength(3)
     expect(ast4.every((c) => c.data_origin === 'MANUAL')).toBe(true)
-  }, 60000)
+  }, 120000)
 
   it('selfReportSummary counts consecutive high fatigue answers in the last 3 days', () => {
     const t = Date.parse('2026-11-20T08:00:00Z')

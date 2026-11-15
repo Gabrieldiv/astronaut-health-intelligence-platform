@@ -5,6 +5,8 @@ import { useAppStore } from '../../state/store'
 import { Popover } from '../../components/ui'
 import { SPEEDS, speedLabel } from '../../components/format'
 import { useActions } from '../shared/hooks'
+import { useT } from '../../i18n'
+import { scenarioDescription, scenarioName } from '../../i18n/catalog'
 
 /** Shared look of the segments inside the scenario player capsule (30 px tall inside a 36 px capsule). */
 const SEGMENT = 'focus-ring flex h-full shrink-0 items-center rounded-[9px] text-xs font-semibold transition-colors hover:bg-white/[0.07]'
@@ -17,6 +19,8 @@ function ScenarioPicker({ showWord, showName }: { showWord: boolean; showName: b
   const scenarioId = useAppStore((s) => s.clock.scenarioId)
   const { setScenario, reset } = useActions()
   const current = scenarios.find((s) => s.id === scenarioId)
+  const t = useT()
+  const name = current ? scenarioName(current) : scenarioId
   return (
     <div className="relative">
       <button
@@ -25,18 +29,18 @@ function ScenarioPicker({ showWord, showName }: { showWord: boolean; showName: b
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        aria-label={`Scenario: ${current?.name ?? scenarioId}. Choose a demo scenario`}
+        aria-label={t('player.aria', { name })}
         className={clsx(SEGMENT, 'gap-1.5 px-2.5', open && 'bg-white/[0.07]')}
-        title={`Scenario: ${current?.name ?? scenarioId}. Click to choose another demo scenario.`}
+        title={t('player.title', { name })}
       >
         <FlaskConical size={15} className="shrink-0 text-accent" aria-hidden />
-        {showWord && <span className="text-ink-500 whitespace-nowrap">Scenario</span>}
-        {showName && <span className="text-ink-100 whitespace-nowrap">{current?.name ?? scenarioId}</span>}
+        {showWord && <span className="text-ink-500 whitespace-nowrap">{t('player.word')}</span>}
+        {showName && <span className="text-ink-100 whitespace-nowrap">{name}</span>}
         <ChevronDown size={13} className={clsx('shrink-0 text-ink-500 transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
-      <Popover open={open} onClose={() => setOpen(false)} anchorRef={btn} label="Demo scenarios" align="left" className="w-[380px] p-2">
-        <div className="px-2 pt-1 pb-2 text-[11px] text-ink-500">Pick a scripted situation. Simulated data, for demonstration only.</div>
-        <ul role="listbox" aria-label="Scenarios" className="flex flex-col gap-1">
+      <Popover open={open} onClose={() => setOpen(false)} anchorRef={btn} label={t('player.popoverLabel')} align="left" className="w-[380px] p-2">
+        <div className="px-2 pt-1 pb-2 text-[11px] text-ink-500">{t('player.intro')}</div>
+        <ul role="listbox" aria-label={t('player.listLabel')} className="flex flex-col gap-1">
           {scenarios.map((sc) => {
             const sel = sc.id === scenarioId
             const target = sc.targetAstronautId ? crew.find((c) => c.id === sc.targetAstronautId) : null
@@ -60,10 +64,10 @@ function ScenarioPicker({ showWord, showName }: { showWord: boolean; showName: b
                   </span>
                   <span className="min-w-0">
                     <span className="flex items-center gap-2 text-[13px] font-semibold text-ink-100">
-                      {sc.name}
-                      <span className="text-[10px] font-medium text-ink-500">{target ? `affects ${target.callsign}` : 'affects whole crew'}</span>
+                      {scenarioName(sc)}
+                      <span className="text-[10px] font-medium text-ink-500">{target ? t('player.affects', { callsign: target.callsign }) : t('player.affectsAll')}</span>
                     </span>
-                    <span className="mt-0.5 block text-xs leading-snug text-ink-300">{sc.description}</span>
+                    <span className="mt-0.5 block text-xs leading-snug text-ink-300">{scenarioDescription(sc)}</span>
                   </span>
                 </button>
               </li>
@@ -71,7 +75,7 @@ function ScenarioPicker({ showWord, showName }: { showWord: boolean; showName: b
           })}
         </ul>
         <div className="mt-1 flex items-center justify-between gap-2 border-t border-white/[0.06] px-2 pt-2 pb-1">
-          <span className="text-[11px] text-ink-500">Restart from the beginning of this scenario.</span>
+          <span className="text-[11px] text-ink-500">{t('player.restartHint')}</span>
           <button
             type="button"
             onClick={() => {
@@ -80,7 +84,7 @@ function ScenarioPicker({ showWord, showName }: { showWord: boolean; showName: b
             }}
             className="focus-ring flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-ink-300 ring-1 ring-white/10 hover:bg-white/[0.06] hover:text-ink-100"
           >
-            <RotateCcw size={13} aria-hidden /> Restart
+            <RotateCcw size={13} aria-hidden /> {t('player.restart')}
           </button>
         </div>
       </Popover>
@@ -93,6 +97,7 @@ function SpeedPicker({ showIcon }: { showIcon: boolean }) {
   const btn = useRef<HTMLButtonElement>(null)
   const speed = useAppStore((s) => s.clock.speed)
   const { setSpeed } = useActions()
+  const t = useT()
   return (
     <div className="relative">
       <button
@@ -101,16 +106,16 @@ function SpeedPicker({ showIcon }: { showIcon: boolean }) {
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        aria-label={`Simulation speed: ${speedLabel(speed)}`}
+        aria-label={t('player.speedAria', { speed: speedLabel(speed) })}
         className={clsx(SEGMENT, 'gap-1.5 px-2 text-ink-100', open && 'bg-white/[0.07]')}
-        title="Simulation speed"
+        title={t('player.speed')}
       >
         {showIcon && <Gauge size={14} className="text-ink-500" aria-hidden />}
         <span className="tabular min-w-[52px] text-left whitespace-nowrap">{speedLabel(speed)}</span>
         <ChevronDown size={13} className={clsx('text-ink-500 transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
-      <Popover open={open} onClose={() => setOpen(false)} anchorRef={btn} label="Simulation speed" align="left" className="w-[240px] p-1.5">
-        <div className="px-2.5 pt-1.5 pb-1 text-[10px] font-semibold tracking-[0.14em] text-ink-500 uppercase">Simulation speed</div>
+      <Popover open={open} onClose={() => setOpen(false)} anchorRef={btn} label={t('player.speed')} align="left" className="w-[240px] p-1.5">
+        <div className="px-2.5 pt-1.5 pb-1 text-[10px] font-semibold tracking-[0.14em] text-ink-500 uppercase">{t('player.speed')}</div>
         {SPEEDS.map((sp) => (
           <button
             key={sp.value}
@@ -153,12 +158,13 @@ export function ScenarioControl({
 }) {
   const running = useAppStore((s) => s.clock.running)
   const { play, pause, reset } = useActions()
-  const playLabel = running ? 'Pause simulation (Space)' : 'Play simulation (Space)'
+  const t = useT()
+  const playLabel = running ? t('player.pause') : t('player.play')
   return (
     <div
       data-tour="scenario"
       role="group"
-      aria-label="Scenario player"
+      aria-label={t('player.playerAria')}
       className="flex h-9 shrink-0 items-center gap-0.5 rounded-xl bg-white/[0.035] p-[3px] ring-1 ring-white/[0.08]"
     >
       <ScenarioPicker showWord={showWord} showName={showName} />
@@ -174,7 +180,7 @@ export function ScenarioControl({
       </button>
       <SpeedPicker showIcon={showSpeedIcon} />
       {showRestart && (
-        <button type="button" aria-label="Restart scenario" title="Restart scenario" onClick={() => reset()} className={clsx(SEGMENT, 'w-[30px] justify-center text-ink-300 hover:text-ink-100')}>
+        <button type="button" aria-label={t('player.restartScenario')} title={t('player.restartScenario')} onClick={() => reset()} className={clsx(SEGMENT, 'w-[30px] justify-center text-ink-300 hover:text-ink-100')}>
           <RotateCcw size={14} aria-hidden />
         </button>
       )}

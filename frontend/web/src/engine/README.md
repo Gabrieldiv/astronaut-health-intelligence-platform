@@ -25,6 +25,8 @@ device adapters (sim/adapters.ts)  ->  canonical HealthObservation[] (data_origi
 | `series.ts` | Bounded history: last 2 h at 1 min, 5 days at 5 min; daily metrics keep 40 points. |
 | `baseline.ts` | Robust personal baseline and the fixed size reservoir. |
 | `anomaly.ts` | Streaming detection per metric (O(1) per sample). |
+| `cusum.ts` | Tabular CUSUM of the hourly mean z: small but steady drifts (Watch at most) (v5). |
+| `ml/` | Experimental, machine learning (v5): seeded Isolation Forest per astronaut on PCA whitened robust z, "Unusual combination" flag only when persistence agrees; never sets a status. |
 | `risk.ts` | Combined rules, risk score, confidence, headline, body regions. |
 | `forecast.ts` | Damped Holt projection with 80% interval. |
 | `recommendations.ts`, `alerts.ts` | Versioned recommendation catalog, dedupe, grouping, autonomy (onboard vs ground), alert lifecycle and escalation. |

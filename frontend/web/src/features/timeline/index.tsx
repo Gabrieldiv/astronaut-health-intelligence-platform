@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
-import { METRIC_CATALOG, REGION_LABELS } from '../../engine/catalog'
 import type { Alert, BodyRegionId, CheckIn, CommMessage, Intervention, MetricCode, StatusFrame, Status } from '../../types/domain'
 import { StatusDot, StatusIcon } from '../../components/Status'
 import { Popover } from '../../components/ui'
@@ -13,16 +12,51 @@ import { formatUtcDate, formatUtcTime, relTime } from '../../components/format'
 import { focusTarget } from '../shared/hooks'
 import { COMM_KIND_LABEL, useCommsUi } from '../comms/delay'
 import { INTERVENTION_LABEL, INTERVENTION_REGION } from './labels'
+import { t as tr, tp, translatedRecord, useLang, useT } from '../../i18n'
+import { metricLabel, regionLabel } from '../../i18n/catalog'
 
 export interface TimelineStripProps {
   className?: string
 }
 
 type RangeKey = '24h' | '72h' | 'all'
-const RANGES: { key: RangeKey; label: string; hours: number | null; title: string }[] = [
-  { key: '24h', label: '24 h', hours: 24, title: 'Last 24 hours' },
-  { key: '72h', label: '72 h', hours: 72, title: 'Last 72 hours' },
-  { key: 'all', label: 'All', hours: null, title: 'All available history' },
+// Labels and titles are getters: they follow the current language (src/i18n).
+const RANGES: { key: RangeKey; label: string; hours: number | null; title: string; inline: string }[] = [
+  {
+    key: '24h',
+    label: '24 h',
+    hours: 24,
+    get title() {
+      return tr('timeline.range.24h.title')
+    },
+    get inline() {
+      return tr('timeline.range.24h.inline')
+    },
+  },
+  {
+    key: '72h',
+    label: '72 h',
+    hours: 72,
+    get title() {
+      return tr('timeline.range.72h.title')
+    },
+    get inline() {
+      return tr('timeline.range.72h.inline')
+    },
+  },
+  {
+    key: 'all',
+    get label() {
+      return tr('timeline.range.all')
+    },
+    hours: null,
+    get title() {
+      return tr('timeline.range.all.title')
+    },
+    get inline() {
+      return tr('timeline.range.all.inline')
+    },
+  },
 ]
 
 const H = 3600000
@@ -143,9 +177,9 @@ function buildSegments(frames: StatusFrame[], laneIds: string[], from: number, t
 }
 
 function alertWhere(a: Alert): string {
-  if (a.metric) return METRIC_CATALOG[a.metric].label
-  if (a.region === 'environment') return 'Cabin environment'
-  if (a.region) return REGION_LABELS[a.region].label
+  if (a.metric) return metricLabel(a.metric)
+  if (a.region === 'environment') return tr('timeline.cabinEnvironment')
+  if (a.region) return regionLabel(a.region)
   return ''
 }
 
@@ -171,7 +205,7 @@ function buildMarkers(
       t: a.createdAt,
       laneId: lane(a.astronautId),
       title: a.title,
-      meta: `${callsign(a.astronautId)}${where ? ` · ${where}` : ''}${acked ? ` · Acknowledged by ${a.acknowledgedBy ?? 'crew'}` : a.resolvedAt != null ? ' · Resolved' : ' · Open'}`,
+      meta: `${callsign(a.astronautId)}${where ? ` · ${where}` : ''}${acked ? tr('timeline.meta.acknowledgedBy', { who: a.acknowledgedBy ?? tr('timeline.meta.crew') }) : a.resolvedAt != null ? tr('timeline.meta.resolved') : tr('timeline.meta.open')}`,
       status: a.severity,
       acked: acked || a.resolvedAt != null,
       target: { astronautId: a.astronautId, region: a.region, metric: a.metric },
@@ -184,8 +218,8 @@ function buildMarkers(
       kind: 'intervention',
       t: iv.loggedAt,
       laneId: lane(iv.astronautId),
-      title: `${INTERVENTION_LABEL[iv.kind]} logged`,
-      meta: `${callsign(laneIds.has(iv.astronautId) && iv.astronautId !== CABIN ? iv.astronautId : null)} · by ${iv.actor}${iv.note ? ` · ${iv.note}` : ''}`,
+      title: tr('timeline.interventionLogged', { name: INTERVENTION_LABEL[iv.kind] }),
+      meta: `${callsign(laneIds.has(iv.astronautId) && iv.astronautId !== CABIN ? iv.astronautId : null)}${tr('timeline.meta.by', { actor: iv.actor })}${iv.note ? ` · ${iv.note}` : ''}`,
       target: { astronautId: iv.astronautId, region: INTERVENTION_REGION[iv.kind] },
     })
   }
@@ -197,8 +231,14 @@ function buildMarkers(
       kind: 'checkin',
       t: c.at,
       laneId: lane(c.astronautId),
-      title: 'Daily check-in',
-      meta: `${callsign(c.astronautId)} · mood ${c.mood}/5, fatigue ${c.fatigue}/5, stress ${c.stress}/5 · ${manual ? 'typed by crew' : 'simulated'}`,
+      title: tr('timeline.dailyCheckin'),
+      meta: tr('timeline.meta.checkin', {
+        who: callsign(c.astronautId),
+        mood: c.mood,
+        fatigue: c.fatigue,
+        stress: c.stress,
+        origin: manual ? tr('timeline.meta.typedByCrew') : tr('timeline.meta.simulated'),
+      }),
       manual,
       target: { astronautId: c.astronautId, region: 'brain' },
     })
@@ -214,7 +254,7 @@ function buildMarkers(
       t2: m.arrivesAt,
       laneId: lane(m.astronautId),
       title: m.title || COMM_KIND_LABEL[m.kind],
-      meta: `${uplink ? 'From Earth' : 'To Earth'} · ${COMM_KIND_LABEL[m.kind]} · ${inTransit ? 'in transit' : 'delivered'}${m.data_origin === 'SIMULATED' ? ' · simulated' : ''}`,
+      meta: `${uplink ? tr('timeline.meta.fromEarth') : tr('timeline.meta.toEarth')} · ${COMM_KIND_LABEL[m.kind]} · ${inTransit ? tr('timeline.meta.inTransit') : tr('timeline.meta.delivered')}${m.data_origin === 'SIMULATED' ? tr('timeline.meta.simSuffix') : ''}`,
       inTransit,
       uplink,
       target: 'comms',
@@ -292,6 +332,7 @@ function Legend() {
   const [open, setOpen] = useState(false)
   const [side, setSide] = useState<'top' | 'bottom'>('top')
   const btn = useRef<HTMLButtonElement>(null)
+  useT()
   return (
     <div className="relative">
       <button
@@ -299,8 +340,8 @@ function Legend() {
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label="Timeline legend"
-        title="Timeline legend"
+        aria-label={tr('timeline.legend')}
+        title={tr('timeline.legend')}
         onClick={() => {
           // Open toward the side with more room (the strip may sit at the top or the bottom of the layout).
           const r = btn.current?.getBoundingClientRect()
@@ -311,8 +352,8 @@ function Legend() {
       >
         <Info size={12} aria-hidden />
       </button>
-      <Popover open={open} onClose={() => setOpen(false)} anchorRef={btn} label="Timeline legend" side={side} align="right" className="w-[300px] p-4">
-        <h3 className="text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">Lane color = status at that time</h3>
+      <Popover open={open} onClose={() => setOpen(false)} anchorRef={btn} label={tr('timeline.legend')} side={side} align="right" className="w-[300px] p-4">
+        <h3 className="text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">{tr('timeline.legend.laneColor')}</h3>
         <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-ink-300">
           {(['LOW', 'MODERATE', 'HIGH', 'CRITICAL', 'NO_DATA'] as Status[]).map((s) => (
             <li key={s} className="flex items-center gap-2">
@@ -325,25 +366,25 @@ function Legend() {
             </li>
           ))}
         </ul>
-        <h3 className="mt-3.5 text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">Markers</h3>
+        <h3 className="mt-3.5 text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">{tr('timeline.legend.markers')}</h3>
         <ul className="mt-2 flex flex-col gap-1.5 text-xs text-ink-300">
           <li className="flex items-center gap-2">
-            <MarkerSwatch kind="alert" status="HIGH" /> Alert (color = severity)
+            <MarkerSwatch kind="alert" status="HIGH" /> {tr('timeline.legend.alert')}
           </li>
           <li className="flex items-center gap-2">
-            <MarkerSwatch kind="intervention" /> Action logged by the crew
+            <MarkerSwatch kind="intervention" /> {tr('timeline.legend.intervention')}
           </li>
           <li className="flex items-center gap-2">
-            <MarkerSwatch kind="checkin" manual /> Daily check-in (grey if simulated)
+            <MarkerSwatch kind="checkin" manual /> {tr('timeline.legend.checkin')}
           </li>
           <li className="flex items-center gap-2">
-            <MarkerSwatch kind="comm" /> Message to Earth, sent to arrival
+            <MarkerSwatch kind="comm" /> {tr('timeline.legend.comm')}
           </li>
           <li className="flex items-center gap-2">
-            <MarkerSwatch kind="comm" uplink /> Reply from Earth (simulated)
+            <MarkerSwatch kind="comm" uplink /> {tr('timeline.legend.reply')}
           </li>
         </ul>
-        <p className="mt-3 text-[11px] leading-relaxed text-ink-500">Click a marker to jump to the related crew member and body system. With the timeline focused, use the arrow keys to step through markers and Enter to open one.</p>
+        <p className="mt-3 text-[11px] leading-relaxed text-ink-500">{tr('timeline.legend.help')}</p>
       </Popover>
     </div>
   )
@@ -381,11 +422,13 @@ export function TimelineStrip({ className }: TimelineStripProps) {
   const [hover, setHover] = useState<Hover | null>(null)
   const [kbIndex, setKbIndex] = useState<number | null>(null)
   const hatchId = 'tl-hatch'
+  useLang()
+  const cabinLabel = tr('timeline.cabin')
 
   const callsign = useMemo(() => {
     const map = new Map(crew.map((c) => [c.id, c.callsign]))
-    return (id: string | null) => (id ? (map.get(id) ?? (id === CABIN ? 'Cabin' : id)) : 'Cabin')
-  }, [crew])
+    return (id: string | null) => (id ? (map.get(id) ?? (id === CABIN ? cabinLabel : id)) : cabinLabel)
+  }, [crew, cabinLabel])
 
   // Time domain
   const from = useMemo(() => {
@@ -417,7 +460,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
       lanes.push({ id: c.id, label: c.callsign, color: c.color, cabin: false, y, h: unit })
       y += unit + gap
     }
-    lanes.push({ id: CABIN, label: 'Cabin', color: '#94a3b8', cabin: true, y, h: unit * 0.6 })
+    lanes.push({ id: CABIN, label: cabinLabel, color: '#94a3b8', cabin: true, y, h: unit * 0.6 })
     const pitch = unit + gap
     const markerSize = Math.min(13, Math.max(ribbon ? 5 : 8, unit + 3))
     // Labels are uppercase callsigns: the glyphs fit a lane pitch slightly smaller than the font size.
@@ -425,7 +468,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
     const fontSize = Math.min(12, Math.max(ribbon ? 9 : 11, pitch * 1.15))
     const labelW = ribbon ? 78 : fontSize >= 11 ? 76 : 64
     return { lanes, axisH, markerSize, fontSize, pitch, labelW, laneBottom: y + unit * 0.6 }
-  }, [h, crew, ribbon])
+  }, [h, crew, ribbon, cabinLabel])
   const LABEL_W = layout.labelW
 
   const plotW = Math.max(1, w - LABEL_W - PAD_R)
@@ -600,7 +643,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
   const tooltipMarker = active?.marker ?? null
   const levels = active && !tooltipMarker ? statusAt(active.t) : null
 
-  const rangeLabel = RANGES.find((r) => r.key === range)!.title
+  const rangeLabel = RANGES.find((r) => r.key === range)!.inline
   const empty = frames.length === 0
 
   return (
@@ -608,7 +651,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
     <section
       ref={rootRef}
       data-tour="timeline"
-      aria-label="Status timeline"
+      aria-label={tr('timeline.sectionAria')}
       className="tl-float glass relative flex h-full w-full items-stretch gap-2 rounded-2xl py-[3px] pr-2 pl-1 has-[[aria-expanded=true]]:z-30"
     >
       <div ref={trackRef} className="relative min-w-0 flex-1 self-stretch">
@@ -619,7 +662,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
               height={h}
               role="group"
               tabIndex={0}
-              aria-label={`Status timeline, ${rangeLabel.toLowerCase()}. ${markers.length} markers. Use arrow keys to step through markers and Enter to open one.`}
+              aria-label={tp('timeline.svgAria', markers.length, { range: rangeLabel })}
               className="focus-ring block cursor-crosshair rounded-xl"
               onPointerMove={onMove}
               onPointerLeave={() => setHover(null)}
@@ -647,7 +690,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
             </svg>
             {ribbon && (
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center gap-1 pl-2 text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase" style={{ width: LABEL_W - 4 }}>
-                Timeline <ChevronUp size={11} className="shrink-0 present:hidden" aria-hidden />
+                {tr('timeline.ribbon')} <ChevronUp size={11} className="shrink-0 present:hidden" aria-hidden />
               </div>
             )}
             {/* Callsign labels (buttons) */}
@@ -658,7 +701,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
                   type="button"
                   disabled={l.cabin}
                   onClick={() => focusTarget({ astronautId: l.id })}
-                  title={l.cabin ? 'Cabin environment' : `Show ${l.label}`}
+                  title={l.cabin ? tr('timeline.cabinEnvironment') : tr('timeline.show', { callsign: l.label })}
                   className={clsx(
                     'focus-ring pointer-events-auto absolute right-0 left-0 flex items-center gap-1.5 rounded px-1 text-left leading-none font-semibold tracking-wide transition-colors',
                     l.cabin ? 'cursor-default text-ink-500' : l.id === selectedId ? 'text-ink-100' : 'text-ink-500 hover:text-ink-100',
@@ -673,7 +716,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
             </div>
             {empty && (
               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[11px] text-ink-500" style={{ left: LABEL_W }}>
-                <span className="mx-auto rounded-md bg-space-900/80 px-2 py-0.5">Status history builds up as the simulation runs.</span>
+                <span className="mx-auto rounded-md bg-space-900/80 px-2 py-0.5">{tr('timeline.empty')}</span>
               </div>
             )}
           </>
@@ -681,7 +724,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
       </div>
 
       <div className={clsx('flex shrink-0 flex-col items-end justify-center gap-1', ribbon && 'hidden')}>
-        <div role="radiogroup" aria-label="Timeline range" className="flex rounded-md bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]">
+        <div role="radiogroup" aria-label={tr('timeline.rangeAria')} className="flex rounded-md bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]">
           {RANGES.map((r) => (
             <button
               key={r.key}
@@ -701,7 +744,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
         </div>
         {h >= 44 && (
           <div className="flex items-center gap-1">
-            <span className="tabular font-mono text-[10px] text-ink-500" title="Simulated UTC time">
+            <span className="tabular font-mono text-[10px] text-ink-500" title={tr('timeline.utcTitle')}>
               {formatUtcTime(to, false)} UTC
             </span>
             <Legend />
@@ -715,7 +758,7 @@ export function TimelineStrip({ className }: TimelineStripProps) {
   )
 }
 
-const KIND_LABEL: Record<MarkerKind, string> = { alert: 'Alert', intervention: 'Action logged', checkin: 'Check-in', comm: 'Earth link' }
+const KIND_LABEL: Record<MarkerKind, string> = translatedRecord(['alert', 'intervention', 'checkin', 'comm'] as const, (k) => tr(`timeline.kind.${k}`))
 
 function Tooltip({
   anchor,
@@ -748,7 +791,7 @@ function Tooltip({
             {marker.kind === 'alert' && marker.status ? (
               <span className="inline-flex items-center gap-1" style={{ color: STATUS_META[marker.status].color }}>
                 <StatusIcon status={marker.status} size={11} />
-                {STATUS_META[marker.status].label} alert
+                {tr('timeline.severityAlert', { status: STATUS_META[marker.status].label })}
               </span>
             ) : (
               <>
@@ -760,7 +803,7 @@ function Tooltip({
           <div className="mt-1 text-[13px] leading-snug font-semibold text-ink-100">{marker.title}</div>
           <div className="mt-0.5 leading-snug text-ink-300">{marker.meta}</div>
           <div className="tabular mt-1.5 text-[11px] text-ink-500">{timeText}</div>
-          <div className="mt-1 text-[11px] font-semibold text-accent">{marker.target === 'comms' ? 'Click to open the Earth link' : 'Click to view'}</div>
+          <div className="mt-1 text-[11px] font-semibold text-accent">{marker.target === 'comms' ? tr('timeline.openEarthLink') : tr('timeline.clickToView')}</div>
         </>
       ) : (
         <>
@@ -778,14 +821,14 @@ function Tooltip({
                         {STATUS_META[s].label}
                       </span>
                     ) : (
-                      <span className="text-ink-500">Not recorded</span>
+                      <span className="text-ink-500">{tr('timeline.notRecorded')}</span>
                     )}
                   </li>
                 )
               })}
             </ul>
           ) : (
-            <div className="mt-1 text-ink-500">No status recorded at this time.</div>
+            <div className="mt-1 text-ink-500">{tr('timeline.noStatus')}</div>
           )}
         </>
       )}
