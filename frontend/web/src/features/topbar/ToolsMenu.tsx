@@ -6,6 +6,7 @@ import { useDismiss } from '../../components/ui'
 import { MissionOverviewButton } from '../mission'
 import { HandoverReportButton } from '../report'
 import { DataSourcesButton } from '../datasources'
+import { AccessibilityMenuItem } from '../a11y'
 import { useActions } from '../shared/hooks'
 import { MENU_ITEM, MenuKey, MenuRow } from './menu'
 
@@ -116,8 +117,8 @@ export function ToolsMenu({ showLabel, withRestart, withView }: { showLabel: boo
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls="ahi-tools-menu"
-        aria-label="Tools: mission overview, shift handover, data and model, presentation mode, shortcuts"
-        title="Tools: mission overview, shift handover, data and model, presentation mode, shortcuts"
+        aria-label="Tools: mission overview, shift handover, data and model, presentation mode, accessibility and sound, shortcuts"
+        title="Tools: mission overview, shift handover, data and model, presentation mode, accessibility and sound, shortcuts"
         onClick={() => (open ? close(false) : openAt('first'))}
         onKeyDown={onButtonKey}
         className={clsx(
@@ -179,6 +180,7 @@ export function ToolsMenu({ showLabel, withRestart, withView }: { showLabel: boo
             right={<Switch on={presentation} />}
           />
         </button>
+        <AccessibilityMenuItem />
         <button type="button" role="menuitem" tabIndex={-1} aria-haspopup="dialog" onClick={() => setShortcutsOpen(true)} className={MENU_ITEM}>
           <MenuRow icon={<Keyboard size={15} />} label="Keyboard shortcuts" hint="All keys at a glance" right={<MenuKey k="?" />} />
         </button>

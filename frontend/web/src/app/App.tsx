@@ -6,7 +6,7 @@ import { CenterStage } from '../features/stage/CenterStage'
 import { AttentionPanel } from '../features/attention/AttentionPanel'
 import { VitalsStrip } from '../features/vitals/VitalsStrip'
 import { AlertsDrawer } from '../features/alerts/Alerts'
-import { useCriticalSound } from '../features/alerts/sound'
+import { A11yLayer, SkipLinks } from '../features/a11y'
 import { TimelineStrip } from '../features/timeline'
 import { CrewView } from '../features/crewview/CrewView'
 import { Tour } from '../features/tour/Tour'
@@ -35,7 +35,7 @@ if (import.meta.env.DEV) {
 function GroundView() {
   return (
     <>
-      <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[232px_minmax(0,1fr)_360px] xl:grid-cols-[256px_minmax(0,1fr)_392px] 2xl:grid-cols-[280px_minmax(0,1fr)_420px] roomy:grid-cols-[300px_minmax(0,1fr)_464px]">
+      <main id="main-content" aria-label="Crew health overview" className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[232px_minmax(0,1fr)_360px] xl:grid-cols-[256px_minmax(0,1fr)_392px] 2xl:grid-cols-[280px_minmax(0,1fr)_420px] roomy:grid-cols-[300px_minmax(0,1fr)_464px]">
         <CrewRail className="lg:min-h-0" />
         <div className="flex min-h-[520px] min-w-0 flex-col gap-3 lg:min-h-0">
           <CenterStage className="min-h-0 flex-1" />
@@ -53,7 +53,6 @@ function GroundView() {
 export default function App() {
   useEffect(() => startTicker(), [])
   useGlobalShortcuts()
-  useCriticalSound()
   const viewMode = useUiStore((s) => s.viewMode)
   const presentation = useUiStore((s) => s.presentation)
   useEffect(() => {
@@ -62,14 +61,13 @@ export default function App() {
   }, [presentation, viewMode])
   return (
     <div className="flex min-h-full flex-col gap-3 p-3 lg:h-full lg:min-h-0">
-      <a href="#attention" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:rounded-lg focus:bg-accent focus:px-3 focus:py-2 focus:text-space-950">
-        Skip to what needs attention
-      </a>
+      <SkipLinks />
       <TopBar />
       {viewMode === 'crew' ? <CrewView /> : <GroundView />}
       <AlertsDrawer />
       <ShortcutsOverlay />
       <Tour />
+      <A11yLayer />
     </div>
   )
 }
