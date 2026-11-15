@@ -27,6 +27,7 @@ import {
 } from '../shared/hooks'
 import { SYSTEM_INFO, contextOnlyText, contextOnlyTitle, sideLabel } from '../anatomy/atlas/health'
 import { CheckInButton } from '../checkin'
+import { ProfileButton } from '../profile/ProfileButton'
 import { examValueText } from '../anatomy/regions'
 import { ExamCardNote } from '../attention/ExamHistory'
 import { wearablePausedHeadline, useMetricPaused, useWearablePaused } from '../vitals/deviceMeta'
@@ -122,6 +123,7 @@ function Hero() {
           <span aria-hidden>·</span>
           <span>{t('crewview.missionDay', { n: astronaut.missionDay })}</span>
           {activity && <span className="rounded-md bg-white/[0.05] px-1.5 py-0.5 text-ink-300 ring-1 ring-white/[0.06]">{ACTIVITY_LABEL[activity]}</span>}
+          <ProfileButton astronautId={id} callsign={astronaut.callsign} />
         </div>
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-3.5 short:mt-3">

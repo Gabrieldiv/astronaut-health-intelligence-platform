@@ -13,6 +13,7 @@ code:
   - frontend/web/src/features/timeline/index.tsx
   - frontend/web/src/features/alerts/Alerts.tsx
   - frontend/web/src/features/crewview/CrewView.tsx
+  - frontend/web/src/features/profile/CrewProfileDialog.tsx
   - frontend/web/src/features/mission/MissionContext.tsx
   - frontend/web/src/features/attention/MeasuredBy.tsx
   - frontend/web/src/features/attention/HorizonPicker.tsx
@@ -120,6 +121,23 @@ Quatro astronautas, todos com identificadores pseudonimizados:
 | ATLAS | AST-04 | Mission Specialist (MS) |
 
 Cada cartão mostra o status em linguagem simples, a frequência cardíaca, o oxigênio no sangue e uma minicurva da frequência cardíaca das últimas 6 horas. Clique no cartão (ou aperte `1` a `4`) para selecionar a pessoa.
+
+### Perfil da tripulação {#crew-profile}
+
+Cada cartão tem um pequeno botão de pessoa ("Open profile of ORION"). O mesmo botão aparece no cabeçalho do palco 3D (Ground view) e ao lado do nome na Crew view, e a tecla `I` abre o perfil de quem está selecionado. Abre uma janela com todos os dados de uma pessoa, visual primeiro (ícone, cor e número primeiro, frases atrás de cada botão **Details**). O seletor no topo troca entre os quatro astronautas sem fechar a janela, `Esc` fecha e o foco volta ao botão que abriu.
+
+| Seção | O que mostra |
+| --- | --- |
+| Identidade | Indicativo, ID pseudonimizado, função, idade, sexo, dia da missão, missão e veículo, com o selo SIMULATED e um aviso de que os dados são simulados e pseudonimizados |
+| Hoje | Selo de status, pontuação de atenção, um segmento por indicador acompanhado, alertas abertos, a frase-resumo atrás de Details |
+| Linhas de base pessoais | Por métrica, um medidor de faixa com o normal da própria pessoa, o valor atual, o valor típico (mediana) e quantas leituras sustentam a linha de base, agrupadas em coração e circulação, respiração e oxigênio, sono e recuperação, atividade e exercício, mente e humor, exposição do ambiente |
+| Vestíveis e dispositivos | Dispositivos usados pela pessoa com estado, bateria, último contato e as métricas que alimentam |
+| Último check-in | Humor, cansaço, estresse e qualidade do sono em palavras simples, sintomas atrás de Details |
+| Exames de olhos e audição | Última sessão de exame e quando vence o próximo |
+| Radiação | Dose da missão contra o limite de carreira da NASA (600 mSv, NASA-STD-3001), com a citação |
+| Eventos recentes | Últimos alertas, ações registradas e linhas do registro que citam a pessoa |
+
+Uma seção sem dados diz "No data" de forma explícita: leitura ausente nunca aparece como normal e dose ausente nunca aparece como zero. **Print summary** imprime o perfil com o mesmo estilo de impressão do relatório de passagem de turno. Apoio à decisão, não é diagnóstico, e todos os dados são simulados.
 
 ### Status em linguagem simples
 
@@ -328,6 +346,7 @@ Um alerta CRITICAL também aparece como **faixa sobre o cabeçalho** do corpo, s
 | `V` | Alternar "Ground view" e "Crew view" |
 | `P` | Modo apresentação (também no "Tools") |
 | `A` | Abrir ou fechar os alertas |
+| `I` | Abrir ou fechar o perfil do membro da tripulação selecionado |
 | `Space` | Play ou pause da simulação |
 | `Esc` | Fechar um painel, ou voltar do detalhe do corpo ou da anatomia |
 | `?` | Mostrar a ajuda de atalhos |

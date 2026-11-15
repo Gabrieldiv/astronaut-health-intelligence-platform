@@ -10,6 +10,7 @@ code:
   - frontend/web/src/features/attention/StructureDetail.tsx
   - frontend/web/src/features/attention/RegionEvents.tsx
   - frontend/web/src/features/crewview/CrewView.tsx
+  - frontend/web/src/features/profile/CrewProfileDialog.tsx
   - frontend/web/src/features/mission/MissionContext.tsx
   - frontend/web/src/features/attention/MeasuredBy.tsx
   - frontend/web/src/features/attention/HorizonPicker.tsx
@@ -89,6 +90,23 @@ The left column has one card per astronaut (ORION, LYRA, VEGA, ATLAS) with:
 - a heart rate sparkline of the last 6 hours.
 
 Click a card, or press `1` to `4`, to select that astronaut. Everything else on the screen follows the selection.
+
+### Crew profile {#crew-profile}
+
+Each card has a small person button ("Open profile of ORION"). The same button sits in the 3D stage header (Ground view) and next to the name in the Crew view, and the `I` key opens the profile of the selected astronaut. It opens a dialog with all the data of one person, visual first (icon, color and number first, sentences behind each **Details** toggle). The switcher at the top moves between the four astronauts without closing it, `Esc` closes it and focus returns to the button that opened it.
+
+| Section | What it shows |
+| --- | --- |
+| Identity | Callsign, pseudonymized ID, role, age, sex, mission day, mission and vehicle, with the SIMULATED badge and a note that the data is simulated and pseudonymized |
+| Today | Status pill, attention score, one segment per tracked indicator, open alerts, the headline behind Details |
+| Personal baselines | Per metric, a band gauge with the person's own normal range, the current value, the typical value (median) and how many readings the baseline rests on, grouped as heart and circulation, breathing and oxygen, sleep and recovery, activity and exercise, mind and mood, environment exposure |
+| Wearables and devices | Devices worn by the person with state, battery, last contact and the metrics they feed |
+| Latest check-in | Mood, fatigue, stress and sleep quality in plain words, symptoms behind Details |
+| Eye and hearing exams | Latest exam session and when the next exam is due |
+| Radiation | Mission dose versus the NASA career limit (600 mSv, NASA-STD-3001), with the citation |
+| Recent events | Last alerts, logged actions and log lines that name the person |
+
+A section without data says "No data" explicitly: a missing reading is never shown as normal and a missing dose is never shown as zero. **Print summary** prints the profile with the same print stylesheet as the handover report. Decision support only, not a diagnosis, and all the data is simulated.
 
 ## 3D body and body system chips
 
@@ -248,6 +266,7 @@ A prominent **critical banner** also appears over the stage for the newest unack
 | `V` | Switch Ground / Crew view |
 | `P` | Presentation mode (also in Tools) |
 | `A` | Open or close alerts |
+| `I` | Open or close the profile of the selected crew member |
 | `Space` | Play or pause the simulation |
 | `Esc` | Close a panel, or back from body or anatomy detail |
 | `?` | Show the shortcuts help |
