@@ -41,6 +41,7 @@ python -m pytest
 | `ingestion` | `POST /observations` (202) | Canonical HealthObservation (PROJECT_MASTER 6.3). Idempotent by `observation_id`. |
 | `observations` | `GET /observations?subject_id=&metric_code=&data_origin=&start=&end=` | Ordered by `measured_at`, UTC. |
 | `nasa` | `GET /space-weather?days=30`, `GET /nasa/osdr/studies?q=` | Real public NASA data (REAL_PUBLIC), cached 15 min. |
+| `assistant` | `POST /assistant/chat` (server sent events), `GET /assistant/status` | Demo only: Claude API explains the engine snapshot. Needs `ANTHROPIC_API_KEY` in `.env`, else 503. See `docs/assistant-architecture.md`. |
 | `engine` | none yet | Seam for porting the TypeScript engine (see below). |
 
 ### Ingestion rules

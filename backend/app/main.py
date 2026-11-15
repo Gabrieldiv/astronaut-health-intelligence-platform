@@ -13,6 +13,9 @@ from app.core.config import APP_VERSION, Settings, get_settings
 from app.core.logging import RequestLogMiddleware, configure_logging
 from app.db.migrate import upgrade_head
 from app.db.session import Database
+from app.modules.assistant.provider import AnthropicProvider, AssistantProvider
+from app.modules.assistant.ratelimit import RateLimiter
+from app.modules.assistant.router import router as assistant_router
 from app.modules.health.router import router as health_router
 from app.modules.ingestion.router import router as ingestion_router
 from app.modules.nasa.donki import DonkiClient
@@ -23,6 +26,20 @@ from app.modules.registry.router import router as registry_router
 
 API_PREFIX = "/api/v1"
 USER_AGENT = f"AHI-hackathon-prototype/{APP_VERSION} (decision support research demo)"
+
+
+def build_assistant(settings: Settings) -> AssistantProvider | None:
+    """Cloud assistant for the demo, or None (endpoint answers 503) when no API key is set."""
+    if not settings.assistant_configured or settings.anthropic_api_key is None:
+        return None
+    return AnthropicProvider.from_key(
+        settings.anthropic_api_key.get_secret_value().strip(),
+        timeout=settings.assistant_timeout_seconds,
+        model=settings.assistant_model,
+        max_tokens=settings.assistant_max_tokens,
+        effort=settings.assistant_effort,
+        refusal_fallback=settings.assistant_refusal_fallback,
+    )
 
 
 def create_app(settings: Settings | None = None, *, migrate: bool | None = None) -> FastAPI:
@@ -43,6 +60,9 @@ def create_app(settings: Settings | None = None, *, migrate: bool | None = None)
             logging.getLogger("ahi").info("api started", extra={"database": db.engine.dialect.name, "version": APP_VERSION})
             yield
         db.engine.dispose()
+        close = getattr(app.state.assistant, "aclose", None)
+        if close is not None:
+            await close()
 
     app = FastAPI(
         title="AHI API",
@@ -52,6 +72,8 @@ def create_app(settings: Settings | None = None, *, migrate: bool | None = None)
     )
     app.state.db = db
     app.state.settings = settings
+    app.state.assistant = build_assistant(settings)
+    app.state.assistant_limiter = RateLimiter(settings.assistant_rate_limit_per_minute, settings.assistant_rate_limit_per_hour)
     app.add_middleware(RequestLogMiddleware)
     app.add_middleware(
         CORSMiddleware,
@@ -59,6 +81,6 @@ def create_app(settings: Settings | None = None, *, migrate: bool | None = None)
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*"],
     )
-    for r in (health_router, registry_router, ingestion_router, observations_router, nasa_router):
+    for r in (health_router, registry_router, ingestion_router, observations_router, nasa_router, assistant_router):
         app.include_router(r, prefix=API_PREFIX)
     return app
