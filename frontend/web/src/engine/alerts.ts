@@ -18,13 +18,13 @@ import type { RuleHit } from './risk'
 import { MIN_MS } from './text'
 
 /** Alert title and detail with their structured forms (engine/msg.ts). */
-function alertText(hit: RuleHit, subjectName: (id: string | null) => string): { title: string; detail: string; titleMsg: EngineMsg; detailMsg: EngineMsg } {
+function alertText(hit: RuleHit, subjectName: (id: string | null) => string): { title: string; detail: string; titleMsg: EngineMsg; detailMsg?: EngineMsg } {
   const ruleTitle = hit.titleMsg ?? ruleTitleMsg(hit.ruleId)
   const titleMsg = hit.subjectId ? msg('alert.titleFor', { name: subjectName(hit.subjectId), title: ruleTitle }) : ruleTitle
-  const detailMsg = msg('alert.detail', { label: hit.labelMsg ?? hit.label })
+  const detailMsg = hit.labelMsg ? msg('alert.detail', { label: hit.labelMsg }) : undefined
   const title = hit.subjectId ? `${subjectName(hit.subjectId)}: ${hit.title}` : hit.title
   const detail = `${hit.label}. Decision support only, not a diagnosis.`
-  return { title: said(title, titleMsg), detail: said(detail, detailMsg), titleMsg, detailMsg }
+  return { title: said(title, titleMsg), detail: detailMsg ? said(detail, detailMsg) : detail, titleMsg, detailMsg }
 }
 
 export interface AlertChange {

@@ -220,10 +220,11 @@ export function recTitleMsg(ruleId: string): EngineMsg {
 }
 
 /** Rationale (`label. why` plus the mission profile sentence) with its structured form. */
-function rationaleOf(hit: RuleHit, tpl: RecTemplate, profileId: MissionProfileId | undefined): { text: string; msg: EngineMsg } {
+function rationaleOf(hit: RuleHit, tpl: RecTemplate, profileId: MissionProfileId | undefined): { text: string; msg?: EngineMsg } {
   const text = withProfileContext(`${hit.label}. ${tpl.why}`, hit.ruleId, profileId)
   const extra = profileId ? PROFILE_CONTEXT[profileId]?.[hit.ruleId] : undefined
-  const label = hit.labelMsg ?? hit.label
+  if (!hit.labelMsg) return { text }
+  const label = hit.labelMsg
   const why = { key: `eng.rec.${hit.ruleId}.why`, en: tpl.why }
   const m = extra
     ? msg('rec.rationaleCtx', { label, why, extra: { key: `eng.profileCtx.${profileId}.${hit.ruleId}`, en: extra } })
@@ -238,10 +239,11 @@ export function earliestReplyMs(ctx: CommContext): number {
 
 const ONBOARD_FIRST_STEP = 'Crew medical officer: start the onboard assessment protocol now'
 
-function onboardRationaleMsg(hit: RuleHit, ctx: CommContext, now: number): EngineMsg {
+function onboardRationaleMsg(hit: RuleHit, ctx: CommContext, now: number): EngineMsg | undefined {
+  if (!hit.labelMsg) return undefined
   const earliest = earliestReplyMs(ctx)
   return msg('rec.onboardRationale', {
-    label: hit.labelMsg ?? hit.label,
+    label: hit.labelMsg,
     oneWay: { durationMs: ctx.profile.oneWayDelaySec * 1000 },
     profile: { key: `commProfile.${ctx.profile.id}.label`, en: ctx.profile.label },
     earliest: { durationMs: earliest },
@@ -251,7 +253,9 @@ function onboardRationaleMsg(hit: RuleHit, ctx: CommContext, now: number): Engin
 }
 
 function onboardRationale(hit: RuleHit, ctx: CommContext, now: number): string {
-  return said(onboardRationaleEnglish(hit, ctx, now), onboardRationaleMsg(hit, ctx, now))
+  const english = onboardRationaleEnglish(hit, ctx, now)
+  const m = onboardRationaleMsg(hit, ctx, now)
+  return m ? said(english, m) : english
 }
 
 function onboardRationaleEnglish(hit: RuleHit, ctx: CommContext, now: number): string {

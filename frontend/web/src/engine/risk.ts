@@ -301,7 +301,7 @@ export function topHit(hits: RuleHit[]): RuleHit | null {
 }
 
 /** Structured twin of headlineFor (same branches), for translation. */
-export function headlineMsgFor(level: RiskLevel, top: RuleHit | null, noDataCount: number): EngineMsg {
+export function headlineMsgFor(level: RiskLevel, top: RuleHit | null, noDataCount: number): EngineMsg | undefined {
   if (!top) return msg(noDataCount > 0 ? 'head.missing' : 'head.normal')
   let tail: string
   if (top.kind === 'DATA_QUALITY') tail = 'sensor'
@@ -310,12 +310,14 @@ export function headlineMsgFor(level: RiskLevel, top: RuleHit | null, noDataCoun
   else if (level === 'CRITICAL') tail = 'medicalNow'
   else if (level === 'HIGH') tail = 'surgeon'
   else tail = 'watch'
-  return msg('head.so', { phrase: top.phraseMsg ?? top.phrase, tail: msg(`tail.${tail}`) })
+  return top.phraseMsg ? msg('head.so', { phrase: top.phraseMsg, tail: msg(`tail.${tail}`) }) : undefined
 }
 
 /** One calm, plain-English sentence for the crew. */
 export function headlineFor(level: RiskLevel, top: RuleHit | null, noDataCount: number): string {
-  return said(headlineEnglish(level, top, noDataCount), headlineMsgFor(level, top, noDataCount))
+  const english = headlineEnglish(level, top, noDataCount)
+  const m = headlineMsgFor(level, top, noDataCount)
+  return m ? said(english, m) : english
 }
 
 function headlineEnglish(level: RiskLevel, top: RuleHit | null, noDataCount: number): string {
@@ -426,30 +428,33 @@ export function buildRegions(metrics: Partial<Record<MetricCode, MetricState>>, 
     }
     const status = worstStatus(statuses)
     const issues: string[] = []
-    const issueMsgs: EngineParam[] = []
-    for (const h of combined.sort((a, b) => levelRank(b.level) - levelRank(a.level))) issues.push(h.phrase), issueMsgs.push(h.phraseMsg ?? h.phrase)
+    const issueMsgs: (EngineParam | null)[] = []
+    for (const h of combined.sort((a, b) => levelRank(b.level) - levelRank(a.level))) issues.push(h.phrase), issueMsgs.push(h.phraseMsg ?? null)
     const flagged = codes
       .map((c) => assessments[c])
       .filter((a): a is MetricAssessment => !!a && !a.noData && a.level !== 'LOW' && !!a.phrase)
       .sort((a, b) => levelRank(b.level) - levelRank(a.level))
-    for (const a of flagged) issues.push(a.phrase!), issueMsgs.push(a.phraseMsg ?? a.phrase!)
+    for (const a of flagged) issues.push(a.phrase!), issueMsgs.push(a.phraseMsg ?? null)
     const noData = codes.filter((c) => metrics[c]!.status === 'NO_DATA')
     let summary: string
     if (status === 'NO_DATA') summary = `No data: ${noData.map((c) => METRIC_CATALOG[c].label.toLowerCase()).join(', ')} not being received.`
     else if (issues.length === 0) summary = noData.length ? `Within your normal range, but no data for ${noData.map((c) => METRIC_CATALOG[c].label.toLowerCase()).join(', ')}.` : 'Within your normal range.'
     else summary = issues.slice(0, 2).map((s) => `${s}.`).join(' ')
     const lower: EngineParam = { list: noData.map((c): EngineParam => ({ metric: c, form: 'lower' })), comma: true }
-    const summaryMsg: EngineMsg =
+    const top2 = issueMsgs.slice(0, 2)
+    const summaryMsg: EngineMsg | undefined =
       status === 'NO_DATA'
         ? msg('region.noData', { list: lower })
         : issues.length === 0
           ? noData.length
             ? msg('region.normalButNoData', { list: lower })
             : msg('region.normal')
-          : issueMsgs.length >= 2
-            ? msg('sent2', { a: issueMsgs[0]!, b: issueMsgs[1]! })
-            : msg('sent1', { a: issueMsgs[0]! })
-    out[region] = { region, status, metrics: codes, summary: said(summary, summaryMsg), summaryMsg }
+          : top2.some((x) => x === null)
+            ? undefined
+            : top2.length >= 2
+              ? msg('sent2', { a: top2[0]!, b: top2[1]! })
+              : msg('sent1', { a: top2[0]! })
+    out[region] = summaryMsg ? { region, status, metrics: codes, summary: said(summary, summaryMsg), summaryMsg } : { region, status, metrics: codes, summary }
   }
   return out
 }
