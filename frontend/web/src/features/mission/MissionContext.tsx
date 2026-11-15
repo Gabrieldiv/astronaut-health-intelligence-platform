@@ -1,0 +1,564 @@
+import clsx from 'clsx'
+import { BookOpen, ExternalLink, Globe, Hourglass, Info, Moon, Orbit, Radiation, Rocket, Satellite, ShieldAlert, Sun, Weight } from 'lucide-react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useShallow } from 'zustand/react/shallow'
+import { autonomyGuidance } from '../../engine/comms'
+import {
+  HAZARD_LABEL,
+  MISSION_PROFILE_ORDER,
+  MISSION_SOURCES,
+  NASA_CAREER_EFFECTIVE_DOSE_LIMIT,
+  eventLabel,
+  missionDoseExposure,
+  missionProfile,
+  referenceMissionDose,
+  type HazardLevel,
+  type MissionProfile,
+  type MissionSourceId,
+  type SpaceWeatherAdvisory,
+} from '../../engine/missions'
+import { STATUS_META } from '../../lib/status'
+import { useAppStore } from '../../state/store'
+import type { MissionProfileId } from '../../types/domain'
+import { Badge } from '../../components/ui'
+import { formatUtcDate, formatUtcTime } from '../../components/format'
+import { Modal } from './Modal'
+import { useSpaceWeatherAdvisory, useSpaceWeatherUi } from './spaceWeather'
+
+const PROFILE_ICON: Record<MissionProfileId, typeof Rocket> = {
+  LAUNCH: Rocket,
+  ISS: Satellite,
+  MOON: Moon,
+  MARS_TRANSIT: Orbit,
+}
+
+const HAZARD_LEVEL_META: Record<HazardLevel, { label: string; cls: string }> = {
+  DOMINANT: { label: 'Dominant', cls: 'bg-warning/15 text-orange-200 ring-orange-300/30' },
+  PRESENT: { label: 'Present', cls: 'bg-white/[0.06] text-ink-300 ring-white/10' },
+  MINOR: { label: 'Minor', cls: 'bg-white/[0.03] text-ink-500 ring-white/[0.06]' },
+}
+
+function fmtDelay(sec: number): string {
+  if (sec < 0.01) return 'under 0.01 s'
+  if (sec < 60) return `${sec < 10 ? sec.toFixed(1) : Math.round(sec)} s`
+  return `${Math.round(sec / 60)} min`
+}
+
+function fmtMSv(v: number): string {
+  return v < 10 ? v.toFixed(1) : Math.round(v).toLocaleString('en-US')
+}
+
+function fmtRetrieved(iso: string | null): string {
+  if (!iso) return 'not retrieved'
+  const t = Date.parse(iso)
+  return `${formatUtcDate(t)} ${formatUtcTime(t, false)} UTC`
+}
+
+/** Inline citation: short source names linking to the published source. */
+export function Cite({ ids, prefix = 'Source' }: { ids: MissionSourceId[]; prefix?: string }) {
+  if (ids.length === 0) return null
+  return (
+    <span className="text-[10px] text-ink-500">
+      {prefix}:{' '}
+      {ids.map((id, i) => {
+        const s = MISSION_SOURCES[id]
+        return (
+          <span key={id}>
+            {i > 0 && '; '}
+            <a href={s.url} target="_blank" rel="noreferrer" className="underline decoration-white/20 underline-offset-2 hover:text-ink-100" title={`${s.title}. ${s.publisher}.`}>
+              {s.short}
+            </a>
+          </span>
+        )
+      })}
+    </span>
+  )
+}
+
+function Section({ title, icon, right, children }: { title: string; icon: ReactNode; right?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="rounded-xl bg-white/[0.025] p-4 ring-1 ring-white/[0.06]">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">
+          <span className="text-accent" aria-hidden>
+            {icon}
+          </span>
+          {title}
+        </h3>
+        {right}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function Fact({ label, value, sub }: { label: string; value: string; sub: ReactNode }) {
+  return (
+    <div className="rounded-lg bg-white/[0.03] px-3 py-2 ring-1 ring-white/[0.05]">
+      <div className="text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{label}</div>
+      <div className="mt-0.5 text-[13px] font-semibold text-ink-100">{value}</div>
+      <div className="mt-0.5 leading-snug">{sub}</div>
+    </div>
+  )
+}
+
+/** Progress toward the career limit. Neutral accent: words carry the meaning, not color. */
+function LimitBar({ fraction, projected }: { fraction: number | null; projected?: number | null }) {
+  const now = Math.min(100, Math.max(0, (fraction ?? 0) * 100))
+  const proj = projected == null ? null : Math.min(100, Math.max(0, projected * 100))
+  return (
+    <div className="relative mt-1.5 h-2 overflow-hidden rounded-full bg-white/[0.06]" aria-hidden>
+      {proj !== null && <div className="absolute inset-y-0 left-0 rounded-full bg-accent/20" style={{ width: `${proj}%` }} />}
+      <div className="absolute inset-y-0 left-0 rounded-full bg-accent/80" style={{ width: `${Math.max(now, now > 0 ? 0.8 : 0)}%` }} />
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Space weather advisory
+// ---------------------------------------------------------------------------
+
+export function SpaceWeatherCard({ advisory, compact = false }: { advisory: SpaceWeatherAdvisory; compact?: boolean }) {
+  const status = useSpaceWeatherUi((s) => s.status)
+  const level = advisory.level
+  const color = STATUS_META[level].color
+  const alarming = advisory.kind === 'SHELTER'
+  const Icon = alarming ? ShieldAlert : Sun
+  return (
+    <div
+      className={clsx('rounded-xl p-3.5 ring-1', alarming ? 'bg-warning/[0.08] ring-orange-300/35' : 'bg-white/[0.03] ring-white/[0.07]')}
+      role={alarming ? 'alert' : undefined}
+      data-advisory={advisory.kind}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <Icon size={15} style={{ color }} aria-hidden />
+        <span className="text-[13px] font-semibold text-ink-100">
+          {advisory.kind === 'SHELTER' && <span className="sr-only">Recommendation: </span>}
+          {status === 'loading' && advisory.kind === 'NO_DATA' ? 'Loading space weather...' : advisory.title}
+        </span>
+        <span className="ml-auto flex items-center gap-1.5">
+          {advisory.autonomy === 'ONBOARD' && (
+            <Badge tone="accent" title="The crew can do this on board right now, without waiting for Earth.">
+              Act on board now
+            </Badge>
+          )}
+          <Badge tone="neutral" className="text-sky-200" title="Real public data from NASA DONKI (context, not crew telemetry).">
+            REAL_PUBLIC
+          </Badge>
+        </span>
+      </div>
+      <p className="mt-1.5 text-xs leading-relaxed text-ink-300">{advisory.body}</p>
+      {!compact && advisory.triggers.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {advisory.triggers.slice(0, 4).map((e) => (
+            <li key={e.id} className="flex flex-wrap items-center gap-x-2 text-[11px] text-ink-300">
+              <span className="font-semibold text-ink-100">{eventLabel(e)}</span>
+              <span className="tabular text-ink-500">started {fmtRetrieved(e.startTime)}</span>
+              <a href={e.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline">
+                DONKI event <ExternalLink size={10} aria-hidden />
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-ink-500">
+        <span>
+          {advisory.source}
+          {advisory.mode === 'snapshot' ? ' (bundled snapshot)' : advisory.mode === 'live' ? ' (live)' : ''}, {advisory.retrievedAt ? `retrieved ${fmtRetrieved(advisory.retrievedAt)}` : 'no data retrieved yet'}
+        </span>
+        <a href={advisory.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline decoration-white/20 underline-offset-2 hover:text-ink-100">
+          {advisory.triggers.length > 0 ? 'Open the DONKI event' : 'Open DONKI'} <ExternalLink size={10} aria-hidden />
+        </a>
+        {status === 'error' && <span className="text-orange-200">Could not load DONKI data.</span>}
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Profile picker
+// ---------------------------------------------------------------------------
+
+function ProfilePicker({ value, onChange }: { value: MissionProfileId; onChange: (id: MissionProfileId) => void }) {
+  return (
+    <div role="radiogroup" aria-label="Mission profile" className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      {MISSION_PROFILE_ORDER.map((id) => {
+        const p = missionProfile(id)
+        const Icon = PROFILE_ICON[id]
+        const on = id === value
+        const rate = p.radiation.doseEquivalentMSvPerDay?.value
+        return (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(id)}
+            className={clsx(
+              'focus-ring flex flex-col items-start gap-1 rounded-xl px-3 py-2.5 text-left transition-colors',
+              on ? 'bg-accent/[0.12] ring-1 ring-accent/45' : 'bg-white/[0.03] ring-1 ring-white/[0.07] hover:bg-white/[0.06]',
+            )}
+          >
+            <span className={clsx('flex items-center gap-1.5 text-[13px] font-semibold', on ? 'text-accent' : 'text-ink-100')}>
+              <Icon size={14} aria-hidden />
+              {p.label}
+            </span>
+            <span className="tabular text-[11px] text-ink-300">{rate != null ? `${rate.toFixed(rate < 1 ? 2 : 1)} mSv/day` : 'Radiation negligible'}</span>
+            <span className="tabular text-[11px] text-ink-500">
+              Delay {p.oneWayDelaySec.value.label.toLowerCase()} · {p.duration.value.label.replace(/ \(.*\)$/, '')}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Longer and farther: comparison across profiles
+// ---------------------------------------------------------------------------
+
+function ExposureComparison({ active }: { active: MissionProfileId }) {
+  const rows = MISSION_PROFILE_ORDER.map((id) => {
+    const p = missionProfile(id)
+    const ref = referenceMissionDose(id)
+    return { id, p, mSv: ref.mSv, days: ref.days }
+  })
+  const limit = NASA_CAREER_EFFECTIVE_DOSE_LIMIT.value
+  const max = Math.max(limit, ...rows.map((r) => r.mSv ?? 0))
+  return (
+    <div>
+      <p className="text-xs leading-relaxed text-ink-300">
+        Dose is <strong className="text-ink-100">rate x time</strong>. Deep space has a higher daily rate (no magnetic field) and the trips are longer, so the mission dose grows quickly. The bars use the published reference rate times a typical duration; the dashed line is the NASA career limit.
+      </p>
+      <ul className="mt-3 space-y-2" aria-label="Typical mission dose by profile">
+        {rows.map((r) => (
+          <li key={r.id} className="grid grid-cols-[110px_1fr_auto] items-center gap-2 text-[11px]">
+            <span className={clsx('truncate font-semibold', r.id === active ? 'text-accent' : 'text-ink-300')}>{r.p.shortLabel}</span>
+            <span className="relative h-3 rounded-full bg-white/[0.04]">
+              <span className={clsx('absolute inset-y-0 left-0 rounded-full', r.id === active ? 'bg-accent/80' : 'bg-ink-300/45')} style={{ width: `${r.mSv == null ? 0 : Math.max(0.6, (r.mSv / max) * 100)}%` }} />
+              <span className="absolute inset-y-[-3px] border-l border-dashed border-ink-100/60" style={{ left: `${(limit / max) * 100}%` }} aria-hidden />
+            </span>
+            <span className="tabular w-[150px] text-right text-ink-300">
+              {r.mSv == null ? 'negligible' : `~${fmtMSv(r.mSv)} mSv`}
+              <span className="text-ink-500"> / {r.days < 1 ? `${Math.round(r.days * 1440)} min` : `${Math.round(r.days)} d`}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[10px] leading-relaxed text-ink-500">
+        A Mars round trip doubles the transit: about 0.66 Sv for the transit legs alone, above the 600 mSv career limit (Zeitlin et al. 2013). Dose equivalent from instruments is used as an approximation of NASA effective dose. Projections for discussion, not a dose assessment.
+      </p>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Radiation: reference, simulated reading, mission dose vs career limit
+// ---------------------------------------------------------------------------
+
+function RadiationSection({ p }: { p: MissionProfile }) {
+  const { crew, health, missionDays, rateNow } = useAppStore(
+    useShallow((s) => ({ crew: s.crew, health: s.health, missionDays: s.missionDays, rateNow: s.environment.metrics.RADIATION_DOSE_RATE?.current ?? null })),
+  )
+  const r = p.radiation
+  const limit = NASA_CAREER_EFFECTIVE_DOSE_LIMIT
+  const exposures = crew.map((c) => {
+    const dose = health[c.id]?.metrics.RADIATION_DOSE?.current ?? missionDays[c.id]?.at(-1)?.cumulativeDoseMgy ?? null
+    return { c, e: dose == null ? null : missionDoseExposure(p.id, dose) }
+  })
+  const proj = missionDoseExposure(p.id, 0)
+  return (
+    <Section title="Radiation" icon={<Radiation size={12} />} right={<Badge tone="sim">Simulated dosimeters</Badge>}>
+      <p className="text-xs leading-relaxed text-ink-300">{r.plain}</p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <Fact
+          label="Reference dose rate"
+          value={r.doseEquivalentMSvPerDay ? `${r.doseEquivalentMSvPerDay.value} mSv/day` : 'Negligible'}
+          sub={
+            r.absorbedUGyPerHour ? (
+              <>
+                <span className="text-[10px] text-ink-500">
+                  Absorbed {r.absorbedUGyPerHour.value.toFixed(1)} µGy/h. {r.measuredWhere}{' '}
+                </span>
+                <Cite ids={[...new Set([...(r.doseEquivalentMSvPerDay?.sources ?? []), ...r.absorbedUGyPerHour.sources])]} />
+              </>
+            ) : (
+              <span className="text-[10px] text-ink-500">{r.measuredWhere}</span>
+            )
+          }
+        />
+        <Fact
+          label="Dosimeter now (simulated)"
+          value={rateNow == null ? 'No data' : `${rateNow.toFixed(rateNow < 1 ? 2 : 1)} µGy/h`}
+          sub={<span className="text-[10px] text-ink-500">Area monitor, SIMULATED. Follows the reference rate of this profile.</span>}
+        />
+        <Fact
+          label="Typical mission dose"
+          value={proj.projectedMissionMSv == null ? 'Negligible' : `~${fmtMSv(proj.projectedMissionMSv)} mSv`}
+          sub={
+            <span className="text-[10px] text-ink-500">
+              {proj.projectedCareerFraction == null
+                ? 'No measurable mission dose for this phase.'
+                : `${Math.round(proj.projectedCareerFraction * 100)}% of the career limit over ${p.duration.value.label.toLowerCase()}.`}
+            </span>
+          }
+        />
+      </div>
+      {r.effectiveMSvPerDayRange && (
+        <p className="mt-2 text-[11px] text-ink-500">
+          Typical effective dose on ISS missions: {r.effectiveMSvPerDayRange.value[0]} to {r.effectiveMSvPerDayRange.value[1]} mSv per day or more. <Cite ids={r.effectiveMSvPerDayRange.sources} />
+        </p>
+      )}
+
+      <div className="mt-4 text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">This mission so far vs the NASA career limit</div>
+      <ul className="mt-1.5 space-y-2">
+        {exposures.map(({ c, e }) => (
+          <li key={c.id} className="text-[11px]">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5 font-semibold text-ink-100">
+                <span className="h-2 w-2 rounded-full" style={{ background: c.color }} aria-hidden />
+                {c.callsign}
+              </span>
+              <span className="tabular text-ink-300">
+                {e == null ? 'No data' : e.effectiveMSv == null ? `${e.absorbedMGy.toFixed(2)} mGy absorbed, negligible` : `~${fmtMSv(e.effectiveMSv)} mSv of ${limit.value} mSv (${((e.careerFraction ?? 0) * 100).toFixed(1)}%)`}
+              </span>
+            </div>
+            <LimitBar fraction={e?.careerFraction ?? null} />
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 flex gap-1.5 text-[10px] leading-relaxed text-ink-500">
+        <Info size={11} className="mt-0.5 shrink-0" aria-hidden />
+        <span>
+          <strong className="font-semibold text-ink-300">Official NASA standard:</strong> {limit.standard}: career effective dose below {limit.value} mSv, the same for all ages and sexes. <Cite ids={limit.sources} />. The mission estimate is simulated absorbed dose times the
+          dose equivalent to absorbed dose ratio of the reference measurement; it approximates, and is not, the NASA effective dose calculation. Prior missions of each astronaut are not included.
+        </span>
+      </p>
+    </Section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Distance and autonomy
+// ---------------------------------------------------------------------------
+
+function DistanceSection({ p }: { p: MissionProfile }) {
+  const link = useAppStore(useShallow((s) => s.commProfiles.find((c) => c.id === s.commProfileId) ?? null))
+  const guide = autonomyGuidance(link?.oneWayDelaySec ?? 0)
+  const d = p.distanceKm.value
+  const delay = p.oneWayDelaySec.value
+  return (
+    <Section title="Distance and autonomy" icon={<Globe size={12} />}>
+      <div className="grid gap-2 sm:grid-cols-3">
+        <Fact label="Distance from Earth" value={d.label} sub={<Cite ids={p.distanceKm.sources} />} />
+        <Fact
+          label="One way delay"
+          value={delay.min === delay.max ? fmtDelay(delay.max) : `${fmtDelay(delay.min)} to ${fmtDelay(delay.max)}`}
+          sub={
+            <>
+              <span className="text-[10px] text-ink-500">{p.oneWayDelaySec.note} </span>
+              <Cite ids={p.oneWayDelaySec.sources} prefix={p.oneWayDelaySec.derived ? 'Derived from' : 'Source'} />
+            </>
+          }
+        />
+        <Fact
+          label="Earth link in the demo"
+          value={link ? `${link.label}, ${fmtDelay(link.oneWayDelaySec)}` : 'Unknown'}
+          sub={<span className="text-[10px] text-ink-500">Change it in the Earth link panel. Simulated messages.</span>}
+        />
+      </div>
+      <div className={clsx('mt-3 rounded-lg px-3 py-2.5 ring-1', guide.mode === 'CREW_FIRST' ? 'bg-accent/[0.07] ring-accent/30' : 'bg-white/[0.03] ring-white/[0.06]')}>
+        <div className="flex items-center gap-2 text-[13px] font-semibold text-ink-100">
+          <Hourglass size={13} className="text-accent" aria-hidden />
+          {guide.title}
+        </div>
+        <p className="mt-1 text-xs leading-relaxed text-ink-300">{guide.body}</p>
+        <p className="mt-1 text-[11px] text-ink-500">{p.autonomy}</p>
+      </div>
+    </Section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Dialog
+// ---------------------------------------------------------------------------
+
+export function MissionContextDialog({ onClose }: { onClose: () => void }) {
+  const { profileId, setMissionProfile, scenarioName } = useAppStore(
+    useShallow((s) => ({ profileId: s.missionProfileId, setMissionProfile: s.setMissionProfile, scenarioName: s.scenarios.find((x) => x.id === s.clock.scenarioId)?.name ?? '' })),
+  )
+  const advisory = useSpaceWeatherAdvisory()
+  const p = missionProfile(profileId)
+  const Icon = PROFILE_ICON[profileId]
+  const usedSources = useMemo(() => {
+    const ids = new Set<MissionSourceId>()
+    const add = (xs: MissionSourceId[] | undefined) => xs?.forEach((x) => ids.add(x))
+    add(p.radiation.absorbedUGyPerHour?.sources)
+    add(p.radiation.doseEquivalentMSvPerDay?.sources)
+    add(p.radiation.effectiveMSvPerDayRange?.sources)
+    add(p.gravity.sources)
+    add(p.distanceKm.sources)
+    add(p.oneWayDelaySec.sources)
+    add(p.duration.sources)
+    add(NASA_CAREER_EFFECTIVE_DOSE_LIMIT.sources)
+    add(['NASA_HRP_5_HAZARDS', 'NOAA_SWPC_FLARES', 'NASA_DONKI'])
+    return [...ids].map((id) => MISSION_SOURCES[id])
+  }, [p])
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      size="lg"
+      title="Mission context"
+      icon={<Icon size={17} className="text-accent" aria-hidden />}
+      subtitle={<span>{p.label}: {p.summary}</span>}
+      headerExtra={<Badge tone="sim">Simulated crew data</Badge>}
+      footer={
+        <div className="flex items-start gap-1.5 text-[11px] leading-relaxed text-ink-500">
+          <Info size={12} className="mt-0.5 shrink-0" aria-hidden />
+          <span>
+            <strong className="font-semibold text-ink-300">Decision support, not a diagnosis.</strong> Reference values come from the cited publications; crew readings are simulated. Changing the mission restarts the simulation and keeps the scenario ({scenarioName}).
+          </span>
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        <ProfilePicker value={profileId} onChange={setMissionProfile} />
+
+        <SpaceWeatherCard advisory={advisory} />
+
+        <Section title="What this environment does to the body" icon={<Weight size={12} />}>
+          <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-ink-300 marker:text-ink-500">
+            {p.bodyEffects.map((b) => (
+              <li key={b}>{b}</li>
+            ))}
+          </ul>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <Fact label="Gravity" value={p.gravity.value.label} sub={<Cite ids={p.gravity.sources} />} />
+            <Fact label="Typical duration" value={p.duration.value.label} sub={<Cite ids={p.duration.sources} />} />
+          </div>
+          <div className="mt-3 text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">Spaceflight hazards in this context</div>
+          <ul className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
+            {p.hazards.map((h) => (
+              <li key={h.id} className="flex items-start gap-2 rounded-lg bg-white/[0.025] px-2.5 py-1.5 text-[11px]">
+                <span className={clsx('mt-px shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase ring-1', HAZARD_LEVEL_META[h.level].cls)}>{HAZARD_LEVEL_META[h.level].label}</span>
+                <span className="leading-snug text-ink-300">
+                  <strong className="font-semibold text-ink-100">{HAZARD_LABEL[h.id].label}.</strong> {h.why}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[10px] text-ink-500">
+            The five spaceflight hazards follow NASA&apos;s Human Research Program; acceleration and vibration are launch loads. Levels are a qualitative reading for this demo. <Cite ids={['NASA_HRP_5_HAZARDS']} />
+          </p>
+          <div className="mt-3 text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">Countermeasures for this environment</div>
+          <ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs leading-relaxed text-ink-300 marker:text-ink-500">
+            {p.countermeasures.map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+        </Section>
+
+        <RadiationSection p={p} />
+
+        <DistanceSection p={p} />
+
+        <Section title="Longer and farther means more risk" icon={<Orbit size={12} />}>
+          <ExposureComparison active={profileId} />
+        </Section>
+
+        <details className="rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]">
+          <summary className="focus-ring flex cursor-pointer items-center gap-2 text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">
+            <BookOpen size={12} className="text-accent" aria-hidden /> Sources ({usedSources.length})
+          </summary>
+          <ul className="mt-2 space-y-1.5">
+            {usedSources.map((s) => (
+              <li key={s.id} className="text-[11px] leading-snug text-ink-300">
+                <a href={s.url} target="_blank" rel="noreferrer" className="font-semibold text-ink-100 underline decoration-white/20 underline-offset-2 hover:text-accent">
+                  {s.short}
+                </a>
+                {s.officialStandard && <span className="ml-1.5 rounded bg-accent/10 px-1 py-px text-[9px] font-bold text-accent uppercase">Official standard</span>}
+                <span className="text-ink-500">. {s.title}. {s.publisher}, {s.year}.</span>
+                <div className="text-[10px] text-ink-500 italic">&ldquo;{s.quote}&rdquo;</div>
+              </li>
+            ))}
+          </ul>
+        </details>
+      </div>
+    </Modal>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Top bar control
+// ---------------------------------------------------------------------------
+
+/**
+ * Mission profile selector for the top bar. Shows the active profile and opens the mission
+ * context dialog (profile picker, body effects, dose vs the NASA career limit, autonomy, space
+ * weather). A dot flags a space weather advisory for the active profile.
+ */
+export function MissionProfileControl({ showLabel = true }: { showLabel?: boolean }) {
+  const [open, setOpen] = useState(false)
+  const profileId = useAppStore((s) => s.missionProfileId)
+  const load = useSpaceWeatherUi((s) => s.load)
+  const advisory = useSpaceWeatherAdvisory()
+  useEffect(() => {
+    load()
+  }, [load])
+  const p = missionProfile(profileId)
+  const Icon = PROFILE_ICON[profileId]
+  const flagged = advisory.kind === 'SHELTER' || advisory.kind === 'MONITOR' || advisory.kind === 'PRE_LAUNCH'
+  const flagColor = flagged ? STATUS_META[advisory.level].color : null
+  const label = `Mission profile: ${p.label}.${flagged ? ` Space weather: ${advisory.title}.` : ''} Open mission context`
+  return (
+    <>
+      <button
+        type="button"
+        data-tour="mission-profile"
+        aria-haspopup="dialog"
+        aria-label={label}
+        title={`${p.label}. ${p.summary} Click for the mission context.`}
+        onClick={() => setOpen(true)}
+        className={clsx(
+          'focus-ring relative flex h-9 shrink-0 items-center gap-1.5 rounded-xl text-xs font-semibold whitespace-nowrap text-ink-300 ring-1 ring-white/[0.08] transition-colors hover:bg-white/[0.06] hover:text-ink-100',
+          showLabel ? 'px-2.5' : 'w-9 justify-center',
+        )}
+      >
+        <Icon size={14} className="text-accent" aria-hidden />
+        {showLabel && <span>{p.shortLabel}</span>}
+        {flagColor && (
+          <span className={clsx('absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-space-900', advisory.kind === 'SHELTER' && 'animate-pulse')} style={{ background: flagColor }} aria-hidden />
+        )}
+      </button>
+      {open && <MissionContextDialog onClose={() => setOpen(false)} />}
+    </>
+  )
+}
+
+/** One line mission context for other views (mission overview). */
+export function MissionContextStrip() {
+  const profileId = useAppStore((s) => s.missionProfileId)
+  const p = missionProfile(profileId)
+  const Icon = PROFILE_ICON[profileId]
+  const rate = p.radiation.doseEquivalentMSvPerDay
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl bg-white/[0.03] px-3.5 py-2.5 text-[11px] text-ink-300 ring-1 ring-white/[0.06]">
+      <span className="flex items-center gap-1.5 text-[13px] font-semibold text-ink-100">
+        <Icon size={14} className="text-accent" aria-hidden /> {p.label}
+      </span>
+      <span>
+        Radiation: <strong className="text-ink-100">{rate ? `${rate.value} mSv/day` : 'negligible'}</strong>
+      </span>
+      <span>
+        Gravity: <strong className="text-ink-100">{p.gravity.value.label}</strong>
+      </span>
+      <span>
+        Delay: <strong className="text-ink-100">{p.oneWayDelaySec.value.label}</strong>
+      </span>
+      <span className="ml-auto text-ink-500">Details and profile choice: mission button in the top bar.</span>
+    </div>
+  )
+}

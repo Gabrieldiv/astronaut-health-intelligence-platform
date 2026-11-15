@@ -11,6 +11,7 @@ import { StatusIcon } from '../../components/Status'
 import { Sparkline } from '../../components/Sparkline'
 import { fmtNum } from '../../components/format'
 import { Modal, TOPBAR_BUTTON } from './Modal'
+import { MissionContextStrip } from './MissionContext'
 import { MENU_ITEM, MenuRow } from '../topbar/menu'
 
 const ACCENT = '#5eead4'
@@ -579,6 +580,7 @@ function MissionOverview({ onClose }: { onClose: () => void }) {
         </div>
       }
     >
+      <MissionContextStrip />
       {lastDay > 0 && (
         <div className="mb-4">
           <div className="tabular flex items-center justify-between text-[11px] text-ink-500">
