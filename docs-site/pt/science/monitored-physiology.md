@@ -23,13 +23,13 @@ Todo valor fisiológico do AHI vem de um simulador (`data_origin: SIMULATED`). O
 
 | Sistema do corpo | Códigos de métrica do AHI | Fonte simulada no AHI | Origem | Status |
 | --- | --- | --- | --- | --- |
-| Cardiovascular | `HEART_RATE`, `HRV_RMSSD`, `SYSTOLIC_BP`, `DIASTOLIC_BP` | "Bio-Monitor shirt (sim)" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
-| Respiratório | `SPO2`, `RESPIRATORY_RATE` | "Bio-Monitor shirt (sim)" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
-| Térmico | `SKIN_TEMPERATURE` | "Bio-Monitor shirt (sim)" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
-| Sono e ritmo circadiano | `SLEEP_DURATION`, `SLEEP_EFFICIENCY`, `ACTIVITY_LEVEL` | "Actigraphy watch (sim)" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
-| Musculoesquelético | `EXERCISE_LOAD` | Sessões em CEVIS, ARED e T2 (sim) | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
-| Saúde comportamental e cognição | `MOOD`, `PERCEIVED_FATIGUE`, `STRESS`, `REACTION_TIME` | Check-in diário e "Reaction self-test (sim)" | SIMULATED ou MANUAL | <StatusBadge status="IMPLEMENTED" /> |
-| Hidratação | `HYDRATION` | "Fluid intake log (sim)" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Cardiovascular | `HEART_RATE`, `HRV_RMSSD`, `SYSTOLIC_BP`, `DIASTOLIC_BP` | "Bio-Monitor shirt" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Respiratório | `SPO2`, `RESPIRATORY_RATE` | "Bio-Monitor shirt" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Térmico | `SKIN_TEMPERATURE` | "Bio-Monitor shirt" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Sono e ritmo circadiano | `SLEEP_DURATION`, `SLEEP_EFFICIENCY`, `ACTIVITY_LEVEL` | "Actigraphy watch" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Musculoesquelético | `EXERCISE_LOAD` | Sessões em CEVIS, ARED e T2 | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Saúde comportamental e cognição | `MOOD`, `PERCEIVED_FATIGUE`, `STRESS`, `REACTION_TIME` | Check-in diário e "Reaction self-test" | SIMULATED ou MANUAL | <StatusBadge status="IMPLEMENTED" /> |
+| Hidratação | `HYDRATION` | "Fluid intake log" | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
 | Densidade óssea, volume muscular | nenhum | sem fonte | não se aplica | <StatusBadge status="NOT_IMPLEMENTED" /> |
 | Olhos (SANS) | nenhum | sem fonte | não se aplica | <StatusBadge status="PLANNED" /> roadmap |
 

@@ -133,21 +133,30 @@ Proposed `metadata.population_type` values: `ISS_ASTRONAUT`, `COMMERCIAL_ASTRONA
 
 Same `HealthObservation` with `subject_id: "CABIN"`, the payload mission as `mission_id` (for example `RR-18`), `source_reference.repository: "NASA EDA"`, and `metadata.eda_column` (for example `CO2_ppm_ISS`) plus a note such as "ISS cabin during payload mission RR-18".
 
-### Ingestion batch (planned backend)
+### Ingestion batch (backend) {#ingestion-batch-planned-backend}
 
-For when the backend exists (`POST /api/v1/observations`, product spec section 10.2, <StatusBadge status="PLANNED" />). Today data enters as static JSON.
+`POST /api/v1/observations` on the [AHI API](../architecture/backend#ingestion-rules) (<StatusBadge status="IMPLEMENTED" />) takes a batch of canonical observations, validated as a whole, and answers `202` with `accepted_count`, `duplicate_count`, `rejected_count` and the rejected ids. Each observation carries its own provenance:
 
 ```json
 {
-  "subject_id": "AST-01",
-  "mission_id": "MISSION-001",
-  "source_id": "SIM-ASTROSKIN-001",
-  "data_origin": "SIMULATED",
   "observations": [
-    { "metric_code": "HEART_RATE", "value": 82, "unit": "bpm", "measured_at": "2026-11-13T14:30:00Z", "quality_status": "VALID" }
+    {
+      "observation_id": "OBS-AST-01-HR-0001",
+      "subject_id": "AST-01",
+      "mission_id": "MISSION-001",
+      "device_id": "DEV-BIO-AST-01",
+      "metric_code": "HEART_RATE",
+      "value": 82,
+      "unit": "bpm",
+      "measured_at": "2026-11-13T14:30:00Z",
+      "data_origin": "SIMULATED",
+      "quality": { "status": "VALID" }
+    }
   ]
 }
 ```
+
+The web app does not send its simulated stream to the API today; the engine runs on the readings in the browser. The endpoint is ready for a real adapter or an import job.
 
 ### Dataset manifest
 

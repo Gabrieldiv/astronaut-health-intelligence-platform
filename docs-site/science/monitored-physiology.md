@@ -23,15 +23,16 @@ Every physiological value in AHI comes from a simulator (`data_origin: SIMULATED
 
 | Body system | AHI metric codes | Simulated source in AHI | Origin | Status |
 | --- | --- | --- | --- | --- |
-| Cardiovascular | `HEART_RATE`, `HRV_RMSSD`, `SYSTOLIC_BP`, `DIASTOLIC_BP` | Bio-Monitor shirt (sim) | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
-| Respiratory | `SPO2`, `RESPIRATORY_RATE` | Bio-Monitor shirt (sim) | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
-| Thermal | `SKIN_TEMPERATURE` | Bio-Monitor shirt (sim) | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
-| Sleep and circadian rhythm | `SLEEP_DURATION`, `SLEEP_EFFICIENCY`, `ACTIVITY_LEVEL` | Actigraphy watch (sim) | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
-| Musculoskeletal | `EXERCISE_LOAD` | CEVIS, ARED and T2 sessions (sim) | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Cardiovascular | `HEART_RATE`, `HRV_RMSSD`, `SYSTOLIC_BP`, `DIASTOLIC_BP` | Bio-Monitor shirt | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Respiratory | `SPO2`, `RESPIRATORY_RATE` | Bio-Monitor shirt | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Thermal | `SKIN_TEMPERATURE` | Bio-Monitor shirt | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Sleep and circadian rhythm | `SLEEP_DURATION`, `SLEEP_EFFICIENCY`, `ACTIVITY_LEVEL` | Actigraphy watch | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Musculoskeletal | `EXERCISE_LOAD` | CEVIS, ARED and T2 sessions | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
 | Behavioral health and cognition | `MOOD`, `PERCEIVED_FATIGUE`, `STRESS`, `REACTION_TIME` | Daily check-in and reaction self-test | SIMULATED or MANUAL | <StatusBadge status="IMPLEMENTED" /> |
-| Hydration | `HYDRATION` | Fluid intake log (sim) | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Hydration | `HYDRATION` | Fluid intake log | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
 | Bone density, muscle volume | none | no source | not applicable | <StatusBadge status="NOT_IMPLEMENTED" /> |
-| Eyes (SANS) | none | no source | not applicable | <StatusBadge status="PLANNED" /> roadmap |
+| Eyes (SANS) | `RETINAL_THICKNESS`, `CHOROIDAL_FOLDS`, `OPTIC_NERVE_SHEATH_DIAMETER`, `VISUAL_ACUITY` | Periodic simulated eye exams (OCT, ocular ultrasound, visual acuity) | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
+| Hearing and noise | `HEARING_THRESHOLD_HIGH`, `HEARING_THRESHOLD_LOW`, `NOISE_EXPOSURE`, `NOISE_DOSE` | Periodic simulated hearing tests, one crew worn noise reading per day | SIMULATED | <StatusBadge status="IMPLEMENTED" /> |
 
 Units, cadence and body region for each code are in the [Data Dictionary](/data/data-dictionary). Status for every metric is computed against the astronaut's own normal range ([Personal Baseline](/intelligence/personal-baseline)); a few fixed values act as a demo safety net ([Thresholds & Limitations](/intelligence/thresholds)).
 
@@ -105,13 +106,15 @@ Units, cadence and body region for each code are in the [Data Dictionary](/data/
 
 **Limitations.** The hydration index is a demo score, not a physiological measurement. AHI has no urine or blood chemistry for the simulated crew.
 
-## Eyes and SANS (not monitored)
+## Eyes and SANS
 
 **Why it matters.** Spaceflight Associated Neuro-ocular Syndrome (SANS) is a set of eye and brain findings that develops in long duration spaceflight: optic disc edema, chorioretinal folds, globe flattening and hyperopic shifts in refractive error.[^r5][^r22] NASA's Human Research Roadmap states that 70% of crew members experience one or more of these hallmark signs and tracks SANS as an active risk.[^r5] A 2023 clinical update estimated that about 66% of long duration astronauts show the earliest indication of SANS.[^r23] The leading hypothesis links SANS to the headward fluid shift of microgravity, which NASA's Fluid Shifts study investigated with non invasive tools.[^r24]
 
 **How it is measured on missions.** Medical surveillance includes pre, in and post flight assessment with optical coherence tomography (OCT), ocular ultrasound, ophthalmic imaging and visual acuity tests, plus brain and eye MRI before flight and soon after return.[^r5] Artemis II Standard Measures includes MRI scans to examine eye and brain health.[^r27]
 
-**What AHI does today.** Nothing. No eye monitoring device feeds the platform. The eyes in the 3D body are reference anatomy: they can be selected, but they are "context only" and never show a status. Adding imaging derived eye indicators is roadmap work: see the [Roadmap](/resources/roadmap).
+**What AHI does today.** Periodic **simulated** eye exams on NASA's published schedule (pre-flight baseline, then flight day 30, flight day 90 and 30 days before return) compare retinal thickness, choroidal folds, optic nerve sheath diameter and visual acuity with the same eye before flight. A retinal thickening beyond the published 19.4 µm test to test variability is a Watch. Hearing tests and daily noise follow the same pattern. Details, criteria and sources: [Eye Health and Hearing](/intelligence/eye-and-hearing).
+
+**Limitations.** The exam values are simulated; some change levels are demo configuration. No fundoscopy, Amsler grid or MRI.
 
 ::: tip How the platform uses this
 - Personal normal ranges per activity context: [Personal Baseline](/intelligence/personal-baseline).

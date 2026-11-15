@@ -17,7 +17,12 @@ tests:
   - frontend/web/src/features/anatomy/atlas/health.test.ts
   - frontend/web/src/features/anatomy/atlas/manifest.contract.test.ts
   - frontend/web/src/state/selection.test.ts
-verified: 2026-11-14
+  - frontend/web/src/features/anatomy/viewer/zoom.test.ts
+  - frontend/web/src/features/anatomy/viewer/interaction.test.ts
+  - frontend/web/src/features/anatomy/viewer/retry.test.ts
+  - frontend/web/src/features/anatomy/viewer/scan.test.ts
+  - frontend/web/src/features/anatomy/a11y/keyboardNav.test.ts
+verified: 2026-11-15
 ---
 
 # 3D Anatomy Rendering
@@ -205,11 +210,27 @@ Tissue colors are a reference anatomy look, not a status encoding. Materials are
 
 ### Navigation and preset views
 
-- **Orbit** (rotate, zoom, bounded pan) with damping. The orbit target never leaves the body.
+- **Orbit** (rotate, bounded pan) with damping. The orbit target never leaves the body.
+- **Zoom to the pointer**: the mouse wheel, a trackpad and a two finger pinch zoom toward the point under the pointer (or between the fingers), so what you aim at stays under the cursor while it grows; rotating afterwards pivots around the zoomed area. The distance limits are kept. Custom code in `viewer/zoom.ts` replaces the default orbit dolly; middle button drag zoom is no longer available.
 - **Preset views**: Front, Back, Left and Right (the body's own left and right), with an animated transition.
 - **Reset**: frames the whole body again and clears the selection.
 - **Idle rotation**: the body turns slowly after 5 seconds without interaction, and stops while something is selected or hovered.
 - Whole body shots are fitted to the free height between the top margin and the controls, and fitted again when the container resizes.
+
+### Monitor and Explore modes {#monitor-and-explore}
+
+A compact button in the viewer controls switches between two modes. The choice is remembered per device (`localStorage` key `ahi.anatomy.interactionMode`; blocked storage falls back to Monitor).
+
+| Mode | What reacts to hover and click | Other structures |
+| --- | --- | --- |
+| **Monitor** (default) | Only structures that report under a monitored body region | Context only anatomy is drawn quieter (desaturated, dimmer) and the pointer passes through it, so a click reaches the monitored organ behind |
+| **Explore** | Every structure | Context only structures open the "Context only" card, for anatomical reference |
+
+Monitor keeps the demo focused on what is measured; Explore keeps the atlas useful for learning.
+
+### Keyboard body navigator {#keyboard-body-navigator}
+
+The canvas is reachable with `Tab` as the **body navigator** (`aria-roledescription="body navigator"`). `Up` and `Down` move between monitored regions, `Left` and `Right` between the structures of the region, `Home` and `End` jump to the first or last, `Enter` selects and `Esc` clears. Every move is announced in an `aria-live` region, for example "Heart region. Status: Nominal."; a region without readings is announced as "no data". Pointer use is unchanged. See also [Accessibility](../product/accessibility).
 
 ### Selection
 
@@ -250,11 +271,17 @@ Status colors are the same `STATUS_META` colors used everywhere in the app ([Des
 
 - When a region status changes, a short **scan pulse** (an expanding wavefront in the status color) starts from that region. It does not fire on first load or when switching crew member.
 - Whole body systems (skin, muscles, skeleton) glow less than single organs, because hundreds of structures light up at once.
-- Context only structures (digestive organs, glands, nerves, eyes and others) never show a status color.
+- Context only structures (digestive organs, glands, nerves and others) never show a status color.
 
-::: info Eyes
-The eyes are two atlas structures (`eye-left`, `eye-right`). They can be selected, but they are context only: no eye monitoring device feeds this prototype, so they have no status. SANS tracking from periodic exams is on the [roadmap](../resources/roadmap).
+::: info Eyes and ears
+The eyes are two atlas structures (`eye-left`, `eye-right`) and report under the **eyes** region, fed by periodic simulated eye exams (SANS monitoring). The atlas has no ear geometry (the inner ear is excluded for license reasons), so two small status colored rings on the sides of the head mark the **ears** region (hearing tests and noise). The rings are visual only; the ears are selected from their chip, label or the keyboard navigator. Details: [Eye health and hearing](../intelligence/eye-and-hearing).
 :::
+
+### Body scan {#body-scan}
+
+A bright band of light sweeps the body from head to feet every 6.5 s (the sweep itself takes 2.4 s), then rests. It is drawn by the shared tissue shader with two uniforms, so it adds **no draw call and no extra pass**. Any point of the body is crossed once per cycle, far below three flashes per second, and the band fades in and out. With `prefers-reduced-motion` the sweep is slow and dim.
+
+Measured by the team on the same integrated GPU as below (AMD Radeon Vega 8): no frame rate loss and the same 119 draw calls with the scan on. This is one observation on one machine, not a benchmark.
 
 ## Live physiology
 
@@ -321,7 +348,7 @@ A 3D failure must never break the dashboard.
 | Manifest still loading | Message "Loading reference anatomy" |
 | Manifest missing, malformed, or without the required structures | Procedural model, with the notice "Reference atlas unavailable. Showing simplified model." |
 | A system that holds a required structure fails to load | Same fallback |
-| An optional system fails to load | The body stays; that layer toggle is disabled and marked "n/a" |
+| An optional system fails to load | Each file is tried up to 4 times, waiting 0.6, 1.8 and 5.4 s between tries; the layer shows "try 2", "try 3" while it retries. If every try fails the body stays and that layer shows **retry**: it stays clickable and starts a new download |
 | The atlas viewer throws while rendering | The error boundary shows the procedural model |
 | The procedural model also fails | Message "3D body view unavailable"; the rest of the dashboard keeps working |
 
@@ -338,7 +365,7 @@ The procedural viewer is a separate lazy chunk, downloaded only when it is neede
 - The kidneys are simple procedural shapes and sit behind the intestines when seen from the front; selecting the kidneys region flies the camera to the back.
 - Hover is disabled on touch devices (a tap selects).
 - The low quality tier is one way: once the performance monitor has reported a decline the viewer stays in `low` until it is remounted.
-- The rendering itself has no automated tests. The data layer has: manifest contract, health mapping and selection ([Testing strategy](../engineering/testing)). Visual states are checked by hand on the lab page.
+- The rendering itself has no unit tests. The data layer and the viewer logic have: manifest contract, health mapping, selection, zoom math, interaction modes, retry policy, scan timing and keyboard navigation ([Testing strategy](../engineering/testing)). Visual states are checked by hand on the lab page.
 
 Asset limitations (decimation, grouping, missing structures) are listed in [3D anatomy assets](../data/anatomy-assets#limitations). All platform limitations: [Limitations and known issues](../validation/limitations).
 
@@ -351,7 +378,7 @@ Asset limitations (decimation, grouping, missing structures) are listed in [3D a
 
 ## Status
 
-<StatusBadge status="IMPLEMENTED" /> Atlas viewer, structure selection, health mapping, per system lazy loading and the procedural fallback. <StatusBadge status="PLANNED" /> Female reference model, textures and eye monitoring ([Feature status matrix](../overview/feature-status#user-interface)).
+<StatusBadge status="IMPLEMENTED" /> Atlas viewer, structure selection, health mapping, per system lazy loading with retry, zoom to pointer, Monitor and Explore modes, keyboard body navigator, body scan, eye and ear regions and the procedural fallback. <StatusBadge status="PLANNED" /> Female reference model, textures and a BodyParts3D kidney ([Feature status matrix](../overview/feature-status#user-interface)).
 
 ## Next steps
 
