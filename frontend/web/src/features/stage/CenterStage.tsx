@@ -12,6 +12,7 @@ import { PANEL_HEADER, PANEL_TITLE } from '../../components/ui'
 import { SIGNAL_LOST_HEADLINE, useAstronaut, useSelectedStructure, useSignalLost } from '../shared/hooks'
 import { regionStructureCount } from '../anatomy/atlas/health'
 import { CheckInButton } from '../checkin'
+import { WEARABLE_PAUSED_HEADLINE, useWearablePaused } from '../vitals/deviceMeta'
 
 // three.js and the anatomy scene load as a separate chunk so the dashboard paints first.
 const AnatomyViewer = lazy(() => import('../anatomy').then((m) => ({ default: m.AnatomyViewer })))
@@ -54,6 +55,7 @@ function Headline() {
     useShallow((s) => ({ level: s.health[id]?.risk.risk_level, headline: s.health[id]?.risk.headline, activity: s.health[id]?.activity })),
   )
   const signalLost = useSignalLost(id)
+  const wearablePaused = useWearablePaused(id)
   const override = signalLost && (level == null || level === 'LOW')
   const status: Status = override ? 'NO_DATA' : (level ?? 'NO_DATA')
   if (!astronaut) return null
@@ -79,7 +81,7 @@ function Headline() {
           aria-live="polite"
           className="line-clamp-2 max-w-[720px] text-[19px] leading-snug font-medium text-balance text-ink-100 [text-shadow:0_2px_12px_rgba(4,7,13,0.9)] short:text-[17px]"
         >
-          {override ? SIGNAL_LOST_HEADLINE : (headline ?? 'Waiting for data.')}
+          {override ? (wearablePaused ? WEARABLE_PAUSED_HEADLINE : SIGNAL_LOST_HEADLINE) : (headline ?? 'Waiting for data.')}
         </p>
       </div>
     </div>

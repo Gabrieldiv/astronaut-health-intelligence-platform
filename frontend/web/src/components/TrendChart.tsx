@@ -60,7 +60,16 @@ const H = 3600000
 function relLabel(t: number, now: number): string {
   const h = Math.round((t - now) / H)
   if (h === 0) return 'Now'
+  // Long forecast horizons (7 or 15 days) read better in days.
+  if (Math.abs(h) >= 48 && h % 24 === 0) return h < 0 ? `${-h / 24} d ago` : `+${h / 24} d`
   return h < 0 ? `${-h} h ago` : `+${h} h`
+}
+
+/** Tick step: from the history window, widened when a long forecast stretches the axis. */
+function tickStep(windowHours: number, spanHours: number): number {
+  const byWindow = windowHours <= 6 ? 2 * H : windowHours <= 24 ? 6 * H : 24 * H
+  const bySpan = spanHours <= 36 ? 0 : spanHours <= 120 ? 24 * H : spanHours <= 240 ? 48 * H : 96 * H
+  return Math.max(byWindow, bySpan)
 }
 
 /**
@@ -123,7 +132,7 @@ export function TrendChart({
     hi += pad
     const end = rows[rows.length - 1]!.t
     const ticks: number[] = []
-    const step = windowHours <= 6 ? 2 * H : windowHours <= 24 ? 6 * H : 24 * H
+    const step = tickStep(windowHours, (end - from) / H)
     for (let t = now; t >= from; t -= step) ticks.unshift(t)
     for (let t = now + step; t <= end; t += step) ticks.push(t)
     return { rows, now, from, end, lo, hi, ticks, hasFc: fcPts.length > 0 }

@@ -74,7 +74,14 @@ export type DeviceKind =
   | 'ENV_SENSOR' // cabin CO2 / temperature / humidity (simulated)
   | 'DOSIMETER' // radiation (simulated)
 
-export type DeviceState = 'ONLINE' | 'DEGRADED' | 'DATA_STALE' | 'OFFLINE'
+export type DeviceState =
+  | 'ONLINE'
+  | 'DEGRADED'
+  | 'DATA_STALE'
+  | 'OFFLINE'
+  // Additive (v4): monitoring paused by an operator. The device emits nothing and its metrics
+  // read NO_DATA ("Paused by operator"): never normal, and never reported as a sensor failure.
+  | 'PAUSED'
 
 // ---------------------------------------------------------------------------
 // Catalog
@@ -149,7 +156,7 @@ export interface HealthObservation {
 export interface Device {
   id: string
   kind: DeviceKind
-  name: string // e.g. "Bio-Monitor shirt (sim)"
+  name: string // e.g. "Bio-Monitor shirt" (origin is in data_origin)
   assignedTo: string | null // astronaut id or null for cabin devices
   state: DeviceState
   batteryPct: number | null
@@ -159,6 +166,8 @@ export interface Device {
   metrics: MetricCode[]
   /** Additive (engine v1): plain-language device status, e.g. "No data since 08:22 UTC". */
   detail?: string
+  /** Additive (v4): sim epoch ms when an operator paused the device, null when not paused. */
+  pausedAt?: number | null
 }
 
 /** Compact time-series point used for charts/history. t = sim epoch ms. */
@@ -262,7 +271,16 @@ export interface Prediction {
   hoursToBandExit: number | null
   eligible: boolean // false => show "insufficient data"
   disclaimer: string
+  /** Additive (v4): why eligible is false. HISTORY_TOO_SHORT = not enough history for the horizon. */
+  ineligibleReason?: 'INSUFFICIENT_DATA' | 'HISTORY_TOO_SHORT'
+  /** Additive (v4): hours of history available when the projection was made. */
+  historyHours?: number
+  /** Additive (v4): the same projection for each horizon the user can pick (see FORECAST_HORIZONS). */
+  byHorizon?: Partial<Record<ForecastHorizonHours, Prediction>>
 }
+
+/** Additive (v4): forecast horizons the user can pick, in hours (24 h, 36 h, 72 h, 7 days, 15 days). */
+export type ForecastHorizonHours = 24 | 36 | 72 | 168 | 360
 
 export interface Recommendation {
   id: string
@@ -344,6 +362,9 @@ export interface AuditEvent {
     | 'COMM_RECEIVED'
     | 'COMM_PROFILE_CHANGED'
     | 'CHECKIN_RECORDED'
+    // Additive (v4)
+    | 'DEVICE_PAUSED'
+    | 'DEVICE_RESUMED'
   detail: string
 }
 
@@ -451,6 +472,11 @@ export interface AppState extends AppStateV2 {
   acknowledgeAlert: (alertId: string, actor?: string) => void
   logIntervention: (input: { astronautId: string; kind: InterventionKind; recommendationId?: string; note?: string }) => void
   dismissRecommendation: (id: string) => void
+  /**
+   * Additive (v4): pause or resume monitoring of one device (operator action, written to the
+   * audit trail). A paused device emits nothing; its metrics become NO_DATA "Paused by operator".
+   */
+  setDevicePaused: (deviceId: string, paused: boolean, actor?: string) => void
   /** Advance simulation by dtRealMs (called by the ticker). */
   /** Advance the simulation synchronously by simMs and publish (used by the guided demo). */
   fastForward: (simMs: number) => void

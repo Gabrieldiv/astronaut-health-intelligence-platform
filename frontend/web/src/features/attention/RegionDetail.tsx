@@ -15,13 +15,18 @@ import { ORIGIN_LABEL, QUALITY_LABEL, deltaVsNormal, fmtMetric } from '../../com
 import { REGION_ICON } from '../stage/CenterStage'
 import { regionMetricsFromCatalog, useActions, useChartEvents } from '../shared/hooks'
 import { RegionAlertsJump, RegionEvents } from './RegionEvents'
+import { MeasuredBy } from './MeasuredBy'
+import { forHorizon, historyNote, useForecastHorizon } from './forecastHorizon'
+import { HorizonPicker } from './HorizonPicker'
 
 const WINDOWS = [6, 24, 72] as const
 
 function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: string; metric: MetricCode; expanded: boolean; onToggle: () => void }) {
   const ms = useAppStore((s) => s.health[astronautId]?.metrics[metric])
   const history = useAppStore((s) => s.history[astronautId]?.[metric])
-  const prediction = useAppStore((s) => s.health[astronautId]?.predictions[metric])
+  const basePrediction = useAppStore((s) => s.health[astronautId]?.predictions[metric])
+  const horizon = useForecastHorizon((s) => s.hours)
+  const prediction = forHorizon(basePrediction, horizon)
   const [win, setWin] = useState<(typeof WINDOWS)[number]>(24)
   const def = METRIC_CATALOG[metric]
   const region = def.region === 'environment' ? null : def.region
@@ -114,6 +119,17 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
             <EventLegend events={events} />
             <span>Gaps mean no data</span>
           </div>
+          {basePrediction && (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[10px] font-semibold tracking-[0.14em] text-ink-500 uppercase">Forecast</span>
+              <HorizonPicker size="xs" />
+            </div>
+          )}
+          {prediction && !prediction.eligible && (
+            <p className="mt-1 text-[11px] text-ink-300" role="status">
+              {prediction.ineligibleReason === 'HISTORY_TOO_SHORT' ? `Not enough history for this horizon. ${historyNote(prediction)}` : 'Not enough data to forecast yet.'}
+            </p>
+          )}
           {prediction?.eligible && <p className="mt-1 text-[10px] text-ink-500 present:hidden">{prediction.method}. {prediction.disclaimer}</p>}
         </div>
       )}
@@ -191,6 +207,7 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
           ))}
         </ul>
       )}
+      <MeasuredBy astronautId={astronautId} metrics={metrics} />
       <RegionEvents astronautId={astronautId} region={region} />
     </div>
   )

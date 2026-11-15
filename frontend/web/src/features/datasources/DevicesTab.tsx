@@ -43,7 +43,7 @@ const REAL_PATH: Record<DeviceKind, { counterpart: string; path: string }> = {
   },
 }
 
-const STATE_LABEL: Record<DeviceState, string> = { ONLINE: 'Online', DEGRADED: 'Degraded', DATA_STALE: 'Data stale', OFFLINE: 'Offline' }
+const STATE_LABEL: Record<DeviceState, string> = { ONLINE: 'Online', DEGRADED: 'Degraded', DATA_STALE: 'Data stale', OFFLINE: 'Offline', PAUSED: 'Paused by operator' }
 
 export function DevicesTab() {
   const devices = useAppStore((s) => s.devices)
