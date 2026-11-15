@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-14T12:17:47.455Z",
+  "generatedAt": "2026-11-15T05:40:42.825Z",
   "engineVersion": "ahi-engine 2.0.0",
   "nominal": {
     "simulatedHours": 72,
@@ -59,7 +59,7 @@
       "scenarioId": "PROGRESSIVE_FATIGUE",
       "target": "AST-02",
       "timeToFirstAlertMin": 1905,
-      "timeToHighMin": 2010,
+      "timeToHighMin": 1980,
       "timeToCriticalMin": null,
       "peakLevel": "HIGH",
       "firstAlertRule": "R-FAT-01",
