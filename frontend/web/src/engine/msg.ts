@@ -14,7 +14,13 @@ const registry = new Map<string, EngineMsg>()
 
 /** Records `msg` as the structured form of `english` and returns `english` unchanged. */
 export function said(english: string, msg: EngineMsg): string {
-  if (registry.size >= MAX_ENTRIES && !registry.has(english)) {
+  // Re-inserting moves the sentence to the newest end, so text the engine keeps producing is
+  // never the one forgotten first.
+  if (registry.delete(english)) {
+    registry.set(english, msg)
+    return english
+  }
+  if (registry.size >= MAX_ENTRIES) {
     let drop = MAX_ENTRIES / 2
     for (const k of registry.keys()) {
       registry.delete(k)

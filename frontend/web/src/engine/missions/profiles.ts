@@ -356,3 +356,29 @@ export const HAZARD_LABEL: Record<HazardId, { label: string; nasa: boolean }> = 
   ACCELERATION: { label: 'Acceleration', nasa: false },
   VIBRATION_NOISE: { label: 'Vibration and noise', nasa: false },
 }
+
+/**
+ * Translatable texts of a profile, keyed by field (src/i18n/engineText.ts renders them in the
+ * selected language; the English here stays the source). Numbers, sources and notes of values
+ * that are not shown on screen are not included.
+ */
+export function missionProfileTexts(p: MissionProfile): Record<string, string> {
+  const out: Record<string, string> = {
+    label: p.label,
+    shortLabel: p.shortLabel,
+    vehicle: p.vehicle,
+    summary: p.summary,
+    plain: p.radiation.plain,
+    measuredWhere: p.radiation.measuredWhere,
+    gravity: p.gravity.value.label,
+    distance: p.distanceKm.value.label,
+    delay: p.oneWayDelaySec.value.label,
+    duration: p.duration.value.label,
+    autonomy: p.autonomy,
+  }
+  if (p.oneWayDelaySec.note) out.delayNote = p.oneWayDelaySec.note
+  p.bodyEffects.forEach((b, i) => (out[`body.${i}`] = b))
+  p.countermeasures.forEach((c, i) => (out[`cm.${i}`] = c))
+  for (const h of p.hazards) out[`hazard.${h.id}`] = h.why
+  return out
+}

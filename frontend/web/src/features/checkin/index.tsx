@@ -6,7 +6,7 @@ import type { CheckIn } from '../../types/domain'
 import { Badge, Button, IconButton } from '../../components/ui'
 import { formatUtcTime, relTime } from '../../components/format'
 import { Modal } from '../mission/Modal'
-import { t, tp, useT, type MessageKey } from '../../i18n'
+import { t, tOr, tp, useT, type MessageKey } from '../../i18n'
 
 export interface CheckInButtonProps {
   astronautId: string
@@ -38,7 +38,7 @@ const NONE = 'none'
 
 const symptomKey = (sym: string) => sym.replace(/ /g, '_')
 const symptomLabel = (sym: string) => t(`checkin.symptom.${symptomKey(sym)}` as MessageKey)
-const symptomInline = (sym: string) => t(`checkin.symptomInline.${symptomKey(sym)}` as MessageKey)
+const symptomInline = (sym: string) => tOr(`checkin.symptomInline.${symptomKey(sym)}`, sym)
 
 const DAY = 86400000
 

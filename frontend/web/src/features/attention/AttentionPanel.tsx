@@ -74,7 +74,7 @@ function StatusCard({ astronautId }: { astronautId: string }) {
           {t(lowConf ? 'attention.confidenceLow' : 'attention.confidence', { pct: Math.round(risk.confidence * 100) })}
         </span>
         <span aria-hidden>·</span>
-        <span title={risk.data_window}>{t('attention.model', { version: risk.model_version })}</span>
+        <span title={engineText('other', risk.data_window)}>{t('attention.model', { version: risk.model_version })}</span>
         <span aria-hidden>·</span>
         <span className="tabular">{t('attention.updated', { time: formatUtcTime(risk.evaluated_at, false) })}</span>
       </div>
@@ -403,7 +403,7 @@ function ForecastRow({ p, astronautId, className }: { p: Prediction; astronautId
       </button>
       <Details className="px-3 pb-1 pl-[50px]">
         {message}
-        {p.eligible && ` ${p.method} · ${p.intervalLabel}.`}
+        {p.eligible && ` ${engineText('forecast', p.method, p.methodMsg)} · ${engineText('forecast', p.intervalLabel, p.intervalLabelMsg)}.`}
         {p.ineligibleReason === 'HISTORY_TOO_SHORT' && ` ${historyNote(p)}`}
       </Details>
     </li>

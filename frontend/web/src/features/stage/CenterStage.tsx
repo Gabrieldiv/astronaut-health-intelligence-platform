@@ -148,7 +148,7 @@ function RegionChip({
       type="button"
       aria-pressed={selected}
       aria-label={`${label.label}, ${label.system}. ${monitored ? meta.crewLabel : t('stage.notMonitored')}. ${summary ? engineText('regionSummary', summary) : ''}${structureName ? t('stage.selectedStructure', { name: structureName }) : ''}`}
-      title={`${label.label}: ${summary || label.description}${atlasCount ? t('stage.atlasCount', { n: atlasCount }) : ''}`}
+      title={`${label.label}: ${summary ? engineText('regionSummary', summary) : label.description}${atlasCount ? t('stage.atlasCount', { n: atlasCount }) : ''}`}
       onClick={() => {
         // With a structure selected inside this region the click widens the selection to the
         // whole region (selectRegion clears the structure) instead of toggling the region off.

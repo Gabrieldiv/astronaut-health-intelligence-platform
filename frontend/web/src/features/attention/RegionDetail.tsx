@@ -157,7 +157,7 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
               {prediction.ineligibleReason === 'HISTORY_TOO_SHORT' ? t('attention.historyShortNote', { note: historyNote(prediction) }) : t('attention.notEnoughData')}
             </p>
           )}
-          {prediction?.eligible && <p className="mt-1 text-[10px] text-ink-500 present:hidden">{prediction.method}. {prediction.disclaimer}</p>}
+          {prediction?.eligible && <p className="mt-1 text-[10px] text-ink-500 present:hidden">{engineText('forecast', prediction.method, prediction.methodMsg)}. {engineText('forecast', prediction.disclaimer, prediction.disclaimerMsg)}</p>}
         </div>
       )}
     </li>

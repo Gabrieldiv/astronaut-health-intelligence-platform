@@ -13,11 +13,12 @@
  * - A caller that only has the English text still gets a translation: the engine remembers each
  *   English sentence it produced together with its message (msgForEnglish).
  */
-import type { Alert, EngineMsg, EngineParam, Recommendation } from '../types/domain'
+import type { Alert, EngineMsg, EngineParam, MissionProfileId, Recommendation } from '../types/domain'
 import { METRIC_CATALOG } from '../engine/catalog'
+import { HAZARD_LABEL, missionProfile, type HazardId, type MissionProfile } from '../engine/missions/profiles'
 import { msgForEnglish } from '../engine/msg'
 import { fmtDuration, fmtValue, inlineLabel, sentenceLabel } from '../engine/text'
-import { formatFixed, getBcp47, getLang, isMessageKey, t } from '.'
+import { formatFixed, getBcp47, getLang, isMessageKey, t, tOr, useI18n } from '.'
 import { metricLabel, metricShort } from './catalog'
 import { isPseudoLocale, pseudo } from './pseudo'
 
@@ -144,9 +145,11 @@ export function renderEngineMsg(m: EngineMsg, opts: { english?: boolean } = {}):
 }
 
 function localize(english: string, m: EngineMsg | null | undefined): string {
-  if (isPseudoLocale()) return pseudo(english)
+  const msg = m ?? (getLang() === 'en' && !isPseudoLocale() ? undefined : msgForEnglish(english))
+  // Pseudo locale: only text the engine can translate gets brackets, so a sentence without a
+  // structured message still shows up as plain English in the sweep.
+  if (isPseudoLocale()) return msg ? pseudo(english) : english
   if (getLang() === 'en') return english
-  const msg = m ?? msgForEnglish(english)
   if (!msg) return english
   const out = renderEngineMsg(msg)
   return out === null ? english : capFirst(out)
@@ -176,3 +179,61 @@ export function alertTitle(alert: Alert): string {
 export function alertDetail(alert: Alert): string {
   return localize(alert.detail, alert.detailMsg)
 }
+
+// ---------------------------------------------------------------------------
+// Mission profile texts (src/engine/missions/profiles.ts): keys `eng.mp.<id>.<field>`
+// ---------------------------------------------------------------------------
+
+const profileCache = new Map<MissionProfileId, { messages: unknown; pseudo: boolean; p: MissionProfile }>()
+
+/**
+ * The mission profile with its plain texts (label, summary, body effects, hazards, countermeasures,
+ * autonomy, value labels) in the current language. Numbers, sources and ids are unchanged. English
+ * returns the engine object itself.
+ */
+export function localMissionProfile(id: MissionProfileId): MissionProfile {
+  const p = missionProfile(id)
+  const ps = isPseudoLocale()
+  if (getLang() === 'en' && !ps) return p
+  const messages = useI18n.getState().messages
+  const hit = profileCache.get(p.id)
+  if (hit && hit.messages === messages && hit.pseudo === ps) return hit.p
+  const tr = (field: string, en: string) => (ps ? pseudo(en) : tOr(`eng.mp.${p.id}.${field}`, en))
+  const out: MissionProfile = {
+    ...p,
+    label: tr('label', p.label),
+    shortLabel: tr('shortLabel', p.shortLabel),
+    vehicle: tr('vehicle', p.vehicle),
+    summary: tr('summary', p.summary),
+    bodyEffects: p.bodyEffects.map((b, i) => tr(`body.${i}`, b)),
+    radiation: { ...p.radiation, plain: tr('plain', p.radiation.plain), measuredWhere: tr('measuredWhere', p.radiation.measuredWhere) },
+    gravity: { ...p.gravity, value: { ...p.gravity.value, label: tr('gravity', p.gravity.value.label) } },
+    distanceKm: { ...p.distanceKm, value: { ...p.distanceKm.value, label: tr('distance', p.distanceKm.value.label) } },
+    oneWayDelaySec: {
+      ...p.oneWayDelaySec,
+      value: { ...p.oneWayDelaySec.value, label: tr('delay', p.oneWayDelaySec.value.label) },
+      note: p.oneWayDelaySec.note ? tr('delayNote', p.oneWayDelaySec.note) : p.oneWayDelaySec.note,
+    },
+    duration: { ...p.duration, value: { ...p.duration.value, label: tr('duration', p.duration.value.label) } },
+    hazards: p.hazards.map((h) => ({ ...h, why: tr(`hazard.${h.id}`, h.why) })),
+    countermeasures: p.countermeasures.map((c, i) => tr(`cm.${i}`, c)),
+    autonomy: tr('autonomy', p.autonomy),
+  }
+  profileCache.set(p.id, { messages, pseudo: ps, p: out })
+  return out
+}
+
+/** Hazard names in the current language, same shape as HAZARD_LABEL (read at render time). */
+export const LOCAL_HAZARD_LABEL = Object.fromEntries(
+  (Object.keys(HAZARD_LABEL) as HazardId[]).map((id) => [
+    id,
+    {
+      get label() {
+        const en = HAZARD_LABEL[id].label
+        if (isPseudoLocale()) return pseudo(en)
+        return getLang() === 'en' ? en : tOr(`eng.hazard.${id}`, en)
+      },
+      nasa: HAZARD_LABEL[id].nasa,
+    },
+  ]),
+) as Record<HazardId, { readonly label: string; nasa: boolean }>
