@@ -20,6 +20,7 @@ import { primaryStructures, unionBox } from './layers'
 import { ACCENT, TissueBank } from './tissueMaterials'
 import type { RegionKey, TissueMaterial } from './tissueMaterials'
 import { DEFAULT_INTERACTION_MODE, isInteractive } from './interaction'
+import { SCAN_TIMING, SCAN_TIMING_REDUCED, scanState } from './scan'
 import type { InteractionMode } from './interaction'
 
 interface Entry {
@@ -116,6 +117,12 @@ export class AtlasRuntime {
   /** Set whenever shadows have to be rendered again (layers, selection, new geometry). */
   shadowsDirty = true
   structureCount = 0
+  /**
+   * Measurement switch for the frame rate gate scripts (dev handle window.__ahiRuntime). It is not
+   * a user setting: the body scan always runs in the product.
+   */
+  scanEnabled = true
+  private readonly reducedMotion: MediaQueryList | null = typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null
 
   private readonly manifest: AtlasManifest
   private readonly model: LayerModel
@@ -389,11 +396,13 @@ export class AtlasRuntime {
     const g = this.bank.globals
     g.uTime.value = f.t
 
-    // intro scan band once the first geometry is in
+    // body scan: a band of light sweeps head to feet on a cycle, from the moment the first geometry is in
     if (this.entries.size) {
       if (this.revealStart < 0) this.revealStart = f.t
-      const top = this.manifest.bounds.max[1]
-      g.uReveal.value = Math.min(top + 5, this.manifest.bounds.min[1] - 0.05 + (f.t - this.revealStart) * (top / 1.25))
+      const timing = this.reducedMotion?.matches ? SCAN_TIMING_REDUCED : SCAN_TIMING
+      const scan = scanState(f.t - this.revealStart, this.manifest.bounds.max[1], this.manifest.bounds.min[1], timing)
+      g.uReveal.value = scan.y
+      g.uScanAmp.value = this.scanEnabled ? scan.amp : 0
     }
 
     // scan pulse wavefront(s)

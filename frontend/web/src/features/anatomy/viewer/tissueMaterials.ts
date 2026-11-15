@@ -8,7 +8,7 @@
  * - selection and hover: cyan rim and a soft lift
  * - ghost: see through x-ray look for everything that is not the current selection
  * - scan pulse: a spherical wavefront when a region status changes
- * - intro scan: a band of light sweeps up the body once at load
+ * - body scan: a bright band of light sweeps from head to feet every few seconds (see scan.ts)
  * - quiet: context only structures are muted in Monitor mode (see interaction.ts)
  *
  * Uniforms are shared by reference: one write per region per frame updates every material.
@@ -71,7 +71,10 @@ export const REGION_KEYS: RegionKey[] = ['brain', 'heart', 'lungs', 'kidneys', '
 
 export interface GlobalUniforms {
   uTime: IUniform<number>
+  /** Height (world Y) of the body scan line. */
   uReveal: IUniform<number>
+  /** Strength of the body scan band (0 = off). */
+  uScanAmp: IUniform<number>
   uAccent: IUniform<Color>
   uPulseCenter: IUniform<Vector3>
   uPulseRadius: IUniform<number>
@@ -166,6 +169,7 @@ gl_Position = projectionMatrix * mvPosition;
 const FRAG_DECL = /* glsl */ `
 varying vec3 vAhiWorld;
 uniform float uReveal;
+uniform float uScanAmp;
 uniform vec3 uAccent;
 uniform vec3 uPulseCenter;
 uniform float uPulseRadius;
@@ -204,8 +208,16 @@ const FRAG_BODY = /* glsl */ `
   // scan pulse wavefront
   float ahiBand = exp(-pow((distance(vAhiWorld, uPulseCenter) - uPulseRadius) / 0.03, 2.0));
   outgoingLight += uPulseColor * (ahiBand * uPulseAmp);
-  // intro scan: a thin band of light sweeps up the body once (no discard: it would defeat early depth rejection)
-  outgoingLight += uAccent * (1.3 * exp(-pow((uReveal - vAhiWorld.y) / 0.012, 2.0)));
+  // body scan: a hot core line (it blooms) with a soft holographic trail above it, sweeping down
+  // (no discard: it would defeat early depth rejection)
+  float ahiScanD = vAhiWorld.y - uReveal;
+  float ahiScanCore = exp(-pow(ahiScanD / 0.016, 2.0));
+  float ahiScanTrail = exp(-max(ahiScanD, 0.0) / 0.2) * smoothstep(-0.02, 0.0, ahiScanD);
+  outgoingLight += uAccent * (uScanAmp * (3.2 * ahiScanCore + ahiScanTrail * (0.22 + 1.1 * ahiFres)));
+  #ifdef AHI_SKIN
+    // the translucent skin lights up as a holographic sheet where the band passes
+    diffuseColor.a = max(diffuseColor.a, uScanAmp * (0.9 * ahiScanCore + 0.4 * ahiScanTrail * (0.3 + 0.7 * ahiFres)));
+  #endif
 }
 `
 
@@ -225,7 +237,8 @@ function patch(m: MeshStandardMaterial | MeshPhysicalMaterial, uniforms: Record<
 function createGlobals(): GlobalUniforms {
   return {
     uTime: { value: 0 },
-    uReveal: { value: -1 },
+    uReveal: { value: -100 },
+    uScanAmp: { value: 0 },
     uAccent: { value: new Color(ACCENT) },
     uPulseCenter: { value: new Vector3() },
     uPulseRadius: { value: 0 },
