@@ -204,7 +204,7 @@ export const MISSION_SOURCES: Record<MissionSourceId, MissionSource> = {
     title: 'Space Weather Database Of Notifications, Knowledge, Information (DONKI)',
     publisher: 'NASA Community Coordinated Modeling Center, Goddard',
     year: 2026,
-    url: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/',
+    url: 'https://ccmc.gsfc.nasa.gov/DONKI/',
     quote: 'Catalog of solar flares, solar energetic particle events, CMEs and geomagnetic storms.',
   },
 }

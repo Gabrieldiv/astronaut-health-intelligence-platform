@@ -146,13 +146,13 @@ const ev = (o: Partial<SpaceWeatherEvent>): SpaceWeatherEvent => ({
   peakTime: null,
   classType: null,
   kpIndex: null,
-  link: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/FLR/1/',
+  link: 'https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/1/',
   ...o,
 })
 const snap = (events: SpaceWeatherEvent[], retrievedAt = NOW): SpaceWeatherSnapshot => ({
   data_origin: 'REAL_PUBLIC',
   source: 'NASA DONKI (CCMC)',
-  sourceUrl: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/',
+  sourceUrl: 'https://ccmc.gsfc.nasa.gov/DONKI/',
   retrievedAt,
   window: { start: '2026-11-07T00:00:00Z', end: NOW },
   events,
@@ -160,8 +160,8 @@ const snap = (events: SpaceWeatherEvent[], retrievedAt = NOW): SpaceWeatherSnaps
 })
 
 describe('space weather advisory', () => {
-  const sep = ev({ id: '2026-11-13T06:00:00-SEP-001', kind: 'SEP', startTime: '2026-11-13T06:00:00Z', link: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/SEP/42/' })
-  const xFlare = ev({ id: '2026-11-14T01:00:00-FLR-001', classType: 'X1.2', startTime: '2026-11-14T01:00:00Z', link: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/FLR/43/' })
+  const sep = ev({ id: '2026-11-13T06:00:00-SEP-001', kind: 'SEP', startTime: '2026-11-13T06:00:00Z', link: 'https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/42/' })
+  const xFlare = ev({ id: '2026-11-14T01:00:00-FLR-001', classType: 'X1.2', startTime: '2026-11-14T01:00:00Z', link: 'https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/43/' })
   const mFlare = ev({ id: 'M', classType: 'M5.0' })
   const oldSep = ev({ id: 'OLD', kind: 'SEP', startTime: '2026-11-01T00:00:00Z' })
   const cme = ev({ id: 'CME', kind: 'CME' })

@@ -44,7 +44,7 @@ export interface SpaceWeatherAdvisory {
   eventCount: number
 }
 
-const DONKI_HOME = 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/'
+const DONKI_HOME = 'https://ccmc.gsfc.nasa.gov/DONKI/'
 
 function isStrongFlare(e: SpaceWeatherEvent): boolean {
   if (e.kind !== 'SOLAR_FLARE' || !e.classType) return false
