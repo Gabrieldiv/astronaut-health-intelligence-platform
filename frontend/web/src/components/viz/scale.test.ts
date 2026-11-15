@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MetricState } from '../../types/domain'
-import { gaugeScale, limitFraction, metricChange } from './scale'
+import { changeBarWidth, delayClockFraction, gaugeScale, limitFraction, metricChange } from './scale'
 
 const ms = (current: number | null, status: MetricState['status'] = 'LOW', ready = true): MetricState => ({
   metric: 'HRV_RMSSD',
@@ -62,5 +62,25 @@ describe('limitFraction', () => {
     expect(limitFraction(900, 600)).toBe(1)
     expect(limitFraction(null, 600)).toBeNull()
     expect(limitFraction(10, 0)).toBeNull()
+  })
+})
+
+describe('changeBarWidth', () => {
+  it('scales a 25% change to a full side and keeps unknowns empty', () => {
+    expect(changeBarWidth(5, 100)).toBeCloseTo(0.2)
+    expect(changeBarWidth(-50, 100)).toBe(1)
+    expect(changeBarWidth(0, 100)).toBe(0)
+    expect(changeBarWidth(1, 0)).toBe(1)
+    expect(changeBarWidth(null, 100)).toBeNull()
+  })
+})
+
+describe('delayClockFraction', () => {
+  it('fills the dial over one hour of one way delay', () => {
+    expect(delayClockFraction(0)).toBe(0)
+    expect(delayClockFraction(1.3)).toBeCloseTo(1.3 / 3600)
+    expect(delayClockFraction(1800)).toBeCloseTo(0.5)
+    expect(delayClockFraction(99999)).toBe(1)
+    expect(delayClockFraction(Number.NaN)).toBe(0)
   })
 })

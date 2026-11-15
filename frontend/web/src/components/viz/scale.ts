@@ -69,6 +69,23 @@ export function metricChange(ms: MetricState | undefined): MetricChange {
   return { direction: pct === 0 ? 'flat' : raw > 0 ? 'up' : 'down', pct, inBand }
 }
 
+/**
+ * Half-width 0..1 of a diverging change bar: a 25% change from baseline fills one side. A zero
+ * or missing baseline (presence measures such as folds) shows any change as a full side.
+ */
+export function changeBarWidth(change: number | null, baseline: number | null): number | null {
+  if (change == null || !Number.isFinite(change)) return null
+  if (change === 0) return 0
+  if (baseline == null || baseline === 0) return 1
+  return clamp01(Math.abs(change / baseline) / 0.25)
+}
+
+/** Delay clock dial: one hour of one way delay fills it (clamped). */
+export function delayClockFraction(seconds: number): number {
+  if (!Number.isFinite(seconds) || seconds <= 0) return 0
+  return clamp01(seconds / 3600)
+}
+
 /** Fraction 0..1 of a limit (null when unknown); values over the limit stay at 1. */
 export function limitFraction(value: number | null | undefined, limit: number): number | null {
   if (value == null || !Number.isFinite(value) || !(limit > 0)) return null

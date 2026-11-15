@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { BookOpen, ExternalLink, Globe, Hourglass, Info, Moon, Orbit, Radiation, Rocket, Satellite, ShieldAlert, Sun, Weight } from 'lucide-react'
+import { Activity, AudioWaveform, BookOpen, Box, ExternalLink, Gauge, Globe, Hourglass, Info, Moon, Orbit, Radiation, Rocket, Satellite, ShieldAlert, Sun, Users, Weight, type LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { autonomyGuidance } from '../../engine/comms'
@@ -12,6 +12,7 @@ import {
   missionDoseExposure,
   missionProfile,
   referenceMissionDose,
+  type HazardId,
   type HazardLevel,
   type MissionProfile,
   type MissionSourceId,
@@ -23,6 +24,10 @@ import type { MissionProfileId } from '../../types/domain'
 import { Badge } from '../../components/ui'
 import { formatUtcDate, formatUtcTime } from '../../components/format'
 import { Modal } from './Modal'
+import { Details } from '../../components/viz/Details'
+import { DelayClock } from '../../components/viz/DelayClock'
+import { limitFraction } from '../../components/viz/scale'
+import { engineText } from '../../i18n/engineText'
 import { useSpaceWeatherAdvisory, useSpaceWeatherUi } from './spaceWeather'
 import { formatFixed, getBcp47, getLang, t, useT } from '../../i18n'
 import { tx } from '../../i18n/rich'
@@ -33,6 +38,16 @@ const PROFILE_ICON: Record<MissionProfileId, typeof Rocket> = {
   ISS: Satellite,
   MOON: Moon,
   MARS_TRANSIT: Orbit,
+}
+
+const HAZARD_ICON: Record<HazardId, LucideIcon> = {
+  RADIATION: Radiation,
+  ISOLATION: Users,
+  DISTANCE: Globe,
+  GRAVITY: Weight,
+  CLOSED_ENV: Box,
+  ACCELERATION: Gauge,
+  VIBRATION_NOISE: AudioWaveform,
 }
 
 const HAZARD_LEVEL_META: Record<HazardLevel, { readonly label: string; cls: string }> = {
@@ -153,7 +168,14 @@ export function SpaceWeatherCard({ advisory, compact = false }: { advisory: Spac
         <Icon size={15} style={{ color }} aria-hidden />
         <span className="text-[13px] font-semibold text-ink-100">
           {advisory.kind === 'SHELTER' && <span className="sr-only">{t('mission.ctx.recommendationSr')}</span>}
-          {status === 'loading' && advisory.kind === 'NO_DATA' ? t('mission.ctx.loadingWeather') : advisory.title}
+          {status === 'loading' && advisory.kind === 'NO_DATA' ? t('mission.ctx.loadingWeather') : engineText('mission', advisory.title)}
+        </span>
+        <span
+          className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold', level === 'NO_DATA' && 'border border-dashed')}
+          style={{ color, background: `color-mix(in srgb, ${color} 13%, transparent)`, borderColor: color }}
+        >
+          <Activity size={11} aria-hidden />
+          {STATUS_META[level].crewLabel}
         </span>
         <span className="ml-auto flex items-center gap-1.5">
           {advisory.autonomy === 'ONBOARD' && (
@@ -166,7 +188,7 @@ export function SpaceWeatherCard({ advisory, compact = false }: { advisory: Spac
           </Badge>
         </span>
       </div>
-      <p className="mt-1.5 text-xs leading-relaxed text-ink-300">{advisory.body}</p>
+      <Details className="mt-1.5">{engineText('mission', advisory.body)}</Details>
       {!compact && advisory.triggers.length > 0 && (
         <ul className="mt-2 space-y-1">
           {advisory.triggers.slice(0, 4).map((e) => (
@@ -276,6 +298,48 @@ function ExposureComparison({ active }: { active: MissionProfileId }) {
 // Radiation: reference, simulated reading, mission dose vs career limit
 // ---------------------------------------------------------------------------
 
+/**
+ * Mission dose as progress toward the NASA career limit (600 mSv, cited): the highest dose so far
+ * in the crew (solid) and the typical projection for the whole mission (soft).
+ */
+function DoseProgress({ p, exposures }: { p: MissionProfile; exposures: { e: ReturnType<typeof missionDoseExposure> | null }[] }) {
+  const t = useT()
+  const limit = NASA_CAREER_EFFECTIVE_DOSE_LIMIT
+  const sofarMSv = exposures.reduce<number | null>((m, x) => (x.e?.effectiveMSv == null ? m : Math.max(m ?? 0, x.e.effectiveMSv)), null)
+  const proj = missionDoseExposure(p.id, 0)
+  const now = limitFraction(sofarMSv, limit.value)
+  const projected = limitFraction(proj.projectedMissionMSv, limit.value)
+  const pct = (f: number | null) => (f == null ? t('visual.dose.unknown') : `${formatFixed(f * 100, f < 0.1 ? 1 : 0)}%`)
+  return (
+    <div
+      role="img"
+      aria-label={t('visual.dose.aria', { sofar: sofarMSv == null ? t('visual.dose.unknown') : `${fmtMSv(sofarMSv)} mSv`, projected: proj.projectedMissionMSv == null ? t('visual.dose.unknown') : `${fmtMSv(proj.projectedMissionMSv)} mSv`, limit: limit.value })}
+      className="rounded-lg bg-white/[0.03] px-3 py-2.5 ring-1 ring-white/[0.05]"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{t('visual.dose.title')}</span>
+        <span className="tabular text-[20px] leading-none font-bold text-ink-100">{pct(projected)}</span>
+      </div>
+      <div className="relative mt-2 h-3 overflow-hidden rounded-full bg-white/[0.06]" aria-hidden>
+        {projected != null && <div className="absolute inset-y-0 left-0 rounded-full bg-accent/25" style={{ width: `${Math.max(projected * 100, 0.8)}%` }} />}
+        {now != null && <div className="absolute inset-y-0 left-0 rounded-full bg-accent/85" style={{ width: `${Math.max(now * 100, now > 0 ? 0.8 : 0)}%` }} />}
+      </div>
+      <div className="tabular mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10.5px] text-ink-500" aria-hidden>
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-2 w-3 rounded-sm bg-accent/85" /> {t('visual.dose.sofar')} {pct(now)}
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-2 w-3 rounded-sm bg-accent/25" /> {t('visual.dose.projected')} {pct(projected)}
+        </span>
+        <span className="ml-auto">{t('visual.dose.limit', { limit: limit.value })}</span>
+      </div>
+      <div className="mt-1 text-[10px] text-ink-500">
+        <Cite ids={limit.sources} />
+      </div>
+    </div>
+  )
+}
+
 function RadiationSection({ p }: { p: MissionProfile }) {
   const { crew, health, missionDays, rateNow } = useAppStore(
     useShallow((s) => ({ crew: s.crew, health: s.health, missionDays: s.missionDays, rateNow: s.environment.metrics.RADIATION_DOSE_RATE?.current ?? null })),
@@ -289,7 +353,8 @@ function RadiationSection({ p }: { p: MissionProfile }) {
   const proj = missionDoseExposure(p.id, 0)
   return (
     <Section title={t('mission.ctx.radiation')} icon={<Radiation size={12} />} right={<Badge tone="sim">{t('mission.ctx.simDosimeters')}</Badge>}>
-      <p className="text-xs leading-relaxed text-ink-300">{r.plain}</p>
+      <DoseProgress p={p} exposures={exposures} />
+      <Details className="mt-2">{r.plain}</Details>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <Fact
           label={t('mission.ctx.refRate')}
@@ -390,13 +455,21 @@ function DistanceSection({ p }: { p: MissionProfile }) {
           sub={<span className="text-[10px] text-ink-500">{t('mission.ctx.changeLink')}</span>}
         />
       </div>
-      <div className={clsx('mt-3 rounded-lg px-3 py-2.5 ring-1', guide.mode === 'CREW_FIRST' ? 'bg-accent/[0.07] ring-accent/30' : 'bg-white/[0.03] ring-white/[0.06]')}>
-        <div className="flex items-center gap-2 text-[13px] font-semibold text-ink-100">
-          <Hourglass size={13} className="text-accent" aria-hidden />
-          {guide.title}
+      <div className={clsx('mt-3 flex items-center gap-3 rounded-lg px-3 py-2.5 ring-1', guide.mode === 'CREW_FIRST' ? 'bg-accent/[0.07] ring-accent/30' : 'bg-white/[0.03] ring-white/[0.06]')}>
+        <DelayClock seconds={link?.oneWayDelaySec ?? 0} label={`${t('visual.delay.title')}: ${fmtDelay(link?.oneWayDelaySec ?? 0)} ${t('visual.delay.oneWay')}`} />
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{t('visual.delay.title')}</div>
+          <div className="tabular text-[18px] leading-tight font-bold text-ink-100">
+            {fmtDelay(link?.oneWayDelaySec ?? 0)} <span className="text-[11px] font-normal text-ink-500">{t('visual.delay.oneWay')}</span>
+          </div>
+          <div className="mt-0.5 flex items-center gap-1.5 text-[12px] font-semibold text-ink-100">
+            <Hourglass size={12} className="shrink-0 text-accent" aria-hidden />
+            {engineText('mission', guide.title)}
+          </div>
+          <Details className="mt-1">
+            {engineText('mission', guide.body)} {p.autonomy}
+          </Details>
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-ink-300">{guide.body}</p>
-        <p className="mt-1 text-[11px] text-ink-500">{p.autonomy}</p>
       </div>
     </Section>
   )
@@ -454,35 +527,43 @@ export function MissionContextDialog({ onClose }: { onClose: () => void }) {
         <SpaceWeatherCard advisory={advisory} />
 
         <Section title={t('mission.ctx.bodyEffects')} icon={<Weight size={12} />}>
-          <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-ink-300 marker:text-ink-500">
-            {p.bodyEffects.map((b) => (
-              <li key={b}>{b}</li>
-            ))}
-          </ul>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             <Fact label={t('mission.ctx.gravity')} value={p.gravity.value.label} sub={<Cite ids={p.gravity.sources} />} />
             <Fact label={t('mission.ctx.typicalDuration')} value={p.duration.value.label} sub={<Cite ids={p.duration.sources} />} />
           </div>
           <div className="mt-3 text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{t('mission.ctx.hazardsTitle')}</div>
           <ul className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
             {p.hazards.map((h) => (
-              <li key={h.id} className="flex items-start gap-2 rounded-lg bg-white/[0.025] px-2.5 py-1.5 text-[11px]">
-                <span className={clsx('mt-px shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase ring-1', HAZARD_LEVEL_META[h.level].cls)}>{HAZARD_LEVEL_META[h.level].label}</span>
-                <span className="leading-snug text-ink-300">
-                  <strong className="font-semibold text-ink-100">{HAZARD_LABEL[h.id].label}.</strong> {h.why}
+              <li key={h.id} className="rounded-lg bg-white/[0.025] px-2.5 py-1.5 text-[11px]">
+                <span className="flex items-center gap-2">
+                  {(() => {
+                    const HIcon = HAZARD_ICON[h.id]
+                    return <HIcon size={15} className={h.level === 'DOMINANT' ? 'shrink-0 text-orange-200' : 'shrink-0 text-ink-300'} aria-hidden />
+                  })()}
+                  <strong className="min-w-0 flex-1 truncate font-semibold text-ink-100">{HAZARD_LABEL[h.id].label}</strong>
+                  <span className={clsx('shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase ring-1', HAZARD_LEVEL_META[h.level].cls)}>{HAZARD_LEVEL_META[h.level].label}</span>
                 </span>
+                <Details className="pl-[23px]">{h.why}</Details>
               </li>
             ))}
           </ul>
+          <Details className="mt-2" label={t('mission.ctx.bodyEffects')}>
+            <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-ink-300 marker:text-ink-500">
+              {p.bodyEffects.map((b) => (
+                <li key={b}>{b}</li>
+              ))}
+            </ul>
+          </Details>
           <p className="mt-2 text-[10px] text-ink-500">
             {tx('mission.ctx.hazardsNote', { cite: <Cite ids={['NASA_HRP_5_HAZARDS']} /> })}
           </p>
-          <div className="mt-3 text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{t('mission.ctx.countermeasures')}</div>
-          <ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs leading-relaxed text-ink-300 marker:text-ink-500">
-            {p.countermeasures.map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ul>
+          <Details className="mt-3" label={t('mission.ctx.countermeasures')}>
+            <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-ink-300 marker:text-ink-500">
+              {p.countermeasures.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+          </Details>
         </Section>
 
         <RadiationSection p={p} />

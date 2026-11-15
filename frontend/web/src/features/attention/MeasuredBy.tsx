@@ -6,6 +6,8 @@ import { tp, useT } from '../../i18n'
 import { metricLabel } from '../../i18n/catalog'
 import { lowerLabel } from './text'
 import { Badge, SectionLabel } from '../../components/ui'
+import { Details } from '../../components/viz/Details'
+import { engineText } from '../../i18n/engineText'
 import { ORIGIN_LABEL, relTime } from '../../components/format'
 import { DEVICE_KIND_LABEL } from '../topbar/ProvenancePopover'
 import { DEVICE_STATE_META, useDevicesForMetrics } from '../vitals/deviceMeta'
@@ -18,32 +20,30 @@ function DeviceCard({ d, metrics, now }: { d: Device; metrics: MetricCode[]; now
   const attention = d.state !== 'ONLINE'
   const t = useT()
   return (
-    <li className={clsx('rounded-xl px-3 py-2.5', attention ? 'border border-dashed border-white/15' : 'bg-white/[0.03] ring-1 ring-white/[0.06]')}>
-      <div className="flex items-start justify-between gap-2">
-        <span className="min-w-0">
-          <span className="block truncate text-[13px] font-semibold text-ink-100">{d.name}</span>
-          <span className="block truncate text-[11px] text-ink-500">
-            {DEVICE_KIND_LABEL[d.kind]}
-            {d.assignedTo ? '' : ` · ${t('attention.shared')}`}
-          </span>
+    <li className={clsx('rounded-lg px-2.5 py-1.5', attention ? 'border border-dashed border-white/15' : 'bg-white/[0.03] ring-1 ring-white/[0.06]')}>
+      <div className="flex items-center gap-2">
+        <Icon size={13} aria-hidden className="shrink-0" style={{ color: meta.color }} />
+        <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-ink-100" title={DEVICE_KIND_LABEL[d.kind]}>
+          {d.name}
         </span>
-        <span className="flex shrink-0 items-center gap-1 text-[11px] font-semibold" style={{ color: meta.color }}>
-          <Icon size={13} aria-hidden /> {meta.label}
-        </span>
-      </div>
-      <div className="tabular mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-500">
-        <span className={clsx('flex items-center gap-1', lowBattery && 'text-watch')} title={t('attention.battery')}>
+        <span className="sr-only">{meta.label}</span>
+        <span className={clsx('tabular flex shrink-0 items-center gap-0.5 text-[11px]', lowBattery ? 'text-watch' : 'text-ink-500')} title={t('attention.battery')}>
           {lowBattery ? <BatteryLow size={12} aria-hidden /> : <Battery size={12} aria-hidden />}
           <span className="sr-only">{t('attention.battery')}</span>
           {d.batteryPct == null ? t('attention.notAvailable') : `${Math.round(d.batteryPct)}%`}
         </span>
-        <span>{t('attention.lastSeen', { when: relTime(d.lastSeenAt, now) })}</span>
         <Badge tone="sim" icon={<FlaskConical size={10} aria-hidden />} title={t('attention.dataOrigin')}>
           {ORIGIN_LABEL[d.data_origin]}
         </Badge>
       </div>
-      {feeds.length > 0 && <div className="mt-1 text-[11px] text-ink-500">{t('attention.here', { list: feeds.map((m) => lowerLabel(metricLabel(m))).join(', ') })}</div>}
-      {d.state !== 'ONLINE' && d.detail && <div className="mt-1 text-[11px] text-ink-300">{d.detail}</div>}
+      <Details className="pl-[21px]">
+        <span className="block">
+          {meta.label} · {DEVICE_KIND_LABEL[d.kind]}
+          {d.assignedTo ? '' : ` · ${t('attention.shared')}`} · {t('attention.lastSeen', { when: relTime(d.lastSeenAt, now) })}
+        </span>
+        {feeds.length > 0 && <span className="block">{t('attention.here', { list: feeds.map((m) => lowerLabel(metricLabel(m))).join(', ') })}</span>}
+        {d.state !== 'ONLINE' && d.detail && <span className="block">{engineText('other', d.detail, d.id)}</span>}
+      </Details>
     </li>
   )
 }
@@ -64,7 +64,7 @@ export function MeasuredBy({ astronautId, metrics }: { astronautId: string; metr
     <section aria-label={t('attention.measuredBy')}>
       <SectionLabel right={<span className="tabular text-[11px] text-ink-500">{tp('attention.devices', devices.length)}</span>}>{t('attention.measuredBy')}</SectionLabel>
       {devices.length > 0 ? (
-        <ul className="mt-2 flex flex-col gap-1.5">
+        <ul className="mt-2 flex flex-col gap-1">
           {devices.map((d) => (
             <DeviceCard key={d.id} d={d} metrics={metrics} now={now} />
           ))}

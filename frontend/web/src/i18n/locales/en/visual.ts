@@ -32,19 +32,15 @@ const visual = {
   'visual.forecastStays': 'Stays normal',
   'visual.forecastNoData': 'Not enough data',
   'visual.forecastAria': '{metric}: {trend}, expected {range}. {message}',
-  'visual.examChangeAria': '{measure}, {side}: {change}',
+  'visual.earlierExams': 'Earlier exams ({n})',
   'visual.dose.title': 'Mission dose',
-  'visual.dose.ofLimit': '{pct}% of the {limit} mSv career limit',
+  'visual.dose.limit': 'NASA career limit {limit} mSv',
   'visual.dose.sofar': 'So far',
   'visual.dose.projected': 'Projected for the mission',
   'visual.dose.aria': 'Mission dose so far {sofar}, projected {projected}, of a {limit} mSv career limit',
   'visual.dose.unknown': 'not available',
   'visual.delay.title': 'Message delay',
   'visual.delay.oneWay': 'one way',
-  'visual.delay.rule': 'Above about 1 minute one way, the crew acts on board first and ground reviews later.',
-  'visual.delay.ruleOnboard': 'Crew acts on board first',
-  'visual.delay.ruleLive': 'Live consult with ground possible',
-  'visual.weather.title': 'Space weather',
 }
 
 export default visual

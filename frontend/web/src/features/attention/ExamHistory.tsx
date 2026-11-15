@@ -16,6 +16,8 @@ import { EXAM_DEVICE } from '../../engine/exams'
 import { fmtDuration } from '../../engine/text'
 import { StatusDot, StatusPill } from '../../components/Status'
 import { Badge } from '../../components/ui'
+import { ChangeBar } from '../../components/viz/ChangeBar'
+import { Details } from '../../components/viz/Details'
 import { ORIGIN_LABEL } from '../../components/format'
 import { examChangeText } from '../anatomy/regions'
 import { formatFixed, t, useT } from '../../i18n'
@@ -83,12 +85,14 @@ export function ExamCardNote({ astronautId, region }: { astronautId: string; reg
 function ResultCell({ r }: { r: ExamMeasureResult | undefined }) {
   if (!r) return <td className="px-1.5 py-1 text-ink-500">{t('attention.exam.notMeasured')}</td>
   const meta = STATUS_META[r.status]
+  const color = r.status === 'LOW' ? '#5eead4' : meta.color
   return (
     <td className="px-1.5 py-1 align-top" title={r.note}>
       <span className="flex items-center gap-1.5">
         <StatusDot status={r.status} size={7} />
         <span className="tabular text-ink-100">{fmtValue(r.metric, r.value)}</span>
       </span>
+      <ChangeBar change={r.change} baseline={r.baseline} color={color} className="mt-1 block pl-[13px]" />
       <span className="tabular block pl-[13px] text-[10px]" style={{ color: r.status === 'LOW' ? '#a9b6cf' : r.status === 'NO_DATA' ? undefined : meta.color }}>
         {examChangeText(r)}
       </span>
@@ -216,14 +220,27 @@ export function ExamHistory({ astronautId, region }: { astronautId: string; regi
           <span className="font-semibold text-nodata">{t('attention.exam.noExamYet')}</span> {t(region === 'eyes' ? 'attention.exam.noEyeExam' : 'attention.exam.noHearingTest')}
         </p>
       )}
-      <ul className="flex flex-col gap-2" aria-label={t('attention.exam.newestFirst', { title })}>
-        {sessions.map((s) => (
-          <SessionCard key={s.id} s={s} region={region} />
-        ))}
-        {[...ex.baselineSessions].reverse().map((s) => (
-          <SessionCard key={s.id} s={s} region={region} />
-        ))}
-      </ul>
+      {(() => {
+        // Newest exam up front; earlier ones and the pre-flight baseline behind a disclosure.
+        const all = [...sessions, ...[...ex.baselineSessions].reverse()]
+        const [latest, ...earlier] = all
+        return (
+          <>
+            <ul className="flex flex-col gap-2" aria-label={t('attention.exam.newestFirst', { title })}>
+              {latest && <SessionCard s={latest} region={region} />}
+            </ul>
+            {earlier.length > 0 && (
+              <Details label={t('visual.earlierExams', { n: earlier.length })}>
+                <ul className="mt-1 flex flex-col gap-2">
+                  {earlier.map((s) => (
+                    <SessionCard key={s.id} s={s} region={region} />
+                  ))}
+                </ul>
+              </Details>
+            )}
+          </>
+        )
+      })()}
       {region === 'ears' && (
         <div className="flex flex-col gap-1.5">
           <h3 className="text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">{t('attention.exam.noiseTitle', { n: EXAMS.noise.keepDays })}</h3>
