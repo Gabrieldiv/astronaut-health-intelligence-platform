@@ -1,0 +1,78 @@
+\section{Limitations and Ethics}
+\label{sec:limitations-ethics}
+
+AHI is a monitoring, prediction and decision support platform. It is \textbf{not a medical device}, is not certified and has not been validated on real crews. It does not diagnose, does not recommend medication or treatment, and does not replace the flight surgeon, mission control or established medical protocols. These limits are part of the product and are stated on every screen. This section collects the limitations of the approach and the ethical rules that govern it.
+
+\subsection{Scientific Limitations}
+\label{subsec:scientific-limitations}
+
+\begin{itemize}
+\item \textbf{The hardware premise is an assumption.} The report assumes that data come from ISS equipment. The project has no access to these devices or to their data, and their exact output formats were not verified. Some devices, such as the Dry-EEG Headband, are research hardware used during specific investigations and not by every crew member.
+\item \textbf{Astronaut data are scarce.} Crews are small, public continuous telemetry does not exist, and labeled outcomes are rare. Learned models can be trained and validated only with authorized data, and models trained on simulated data are not used for crew decisions.
+\item \textbf{Thresholds and weights are configuration.} No fixed number in AHI is an official NASA limit. Every parameter must be grounded in a cited standard or reviewed by a flight surgeon before operational use.
+\item \textbf{Predictions differ in precision.} Sleep and fatigue have frequent data; bone, immune and metabolic changes depend on periodic samples and examinations, so their predictions are slow and uncertain.
+\item \textbf{The risk score is not a probability} until a learned model is calibrated on real events.
+\item \textbf{Activity context may be wrong.} If the context is taken from the schedule, a deviation from the schedule compares a value with the wrong baseline.
+\item \textbf{Intervention effects are uncertain.} The comparison with and without intervention is only as good as the evidence for its effect sizes.
+\item \textbf{Self report is not a clinical instrument.} AHI makes no psychiatric or psychological assessment and uses self report only as an indicator of risk.
+\item \textbf{Correlation is not causation.} Signals that move together are reported as co-occurrence and not as cause. This applies in particular to noise exposure and hearing thresholds, since low frequency shifts on the ISS are not typically caused by noise \cite{coste2024hearing}.
+\item \textbf{The career dose is only as good as its inputs.} It depends on the dose of previous missions in the medical record, on dosimeters that report effective dose and on an estimate between readouts. AHI follows the published limit and does not estimate radiation health risk.
+\item \textbf{Public data have limits.} The Inspiration4 panels describe four people on a three day flight with no in-flight samples, and the cabin data of the Environmental Data Application describe the cabin during payload missions and not a crew.
+\end{itemize}
+
+\subsection{Technical Limitations}
+\label{subsec:technical-limitations}
+
+\begin{itemize}
+\item \textbf{Device integration depends on access.} No open interface of ISS equipment is assumed. Each adapter depends on documentation and permission that the project does not have.
+\item \textbf{On board computing is limited.} Learned models may need to be trained on the ground, and the local language and speech models must be small enough for the on board computers, so their explanations and answers may be simpler than those that the Claude API produces in the demonstrator.
+\item \textbf{The contingency for language features is not demonstrated.} The demonstrator simulates the AI with the Claude API, which needs the internet. Without a connection, the contingency plan relies on a local model, whose quality has still to be shown (\ref{sec:results}).
+\item \textbf{Space weather data come from an external service.} DONKI is reached through the NASA Open APIs by the ground node only, depends on an API key and on the availability of the service, and is not the official forecast source for operations. The on board dose rate trigger covers its absence.
+\item \textbf{Speech and translation can fail.} Speech recognition is harder in a noisy cabin and with accents, and a translation can shift the meaning of a medical term. Every spoken answer is also written, and status words come from one glossary per language, but errors remain possible.
+\item \textbf{Inclusion features are not validated.} The writing rules, the translations and the accessibility features are based on published standards and studies \cite{w3c_wcag21,plain_language_guide,budescu2009uncertainty}. The project has not reviewed the translations with native speakers, has not audited WCAG conformance and has not tested the features with blind, low vision or dyslexic users; these are requirements before operational use.
+\item \textbf{The communication link is imperfect.} Delay, loss of signal and limited bandwidth affect synchronization, and the store and forward queue reduces but does not remove their effect.
+\item \textbf{The language model can be wrong.} Guardrails check numbers, citations and wording, but they cannot guarantee a correct explanation, which is why the structured result is always available.
+\item \textbf{Hardware changes.} Devices are replaced over time, and each change needs a new adapter and a new validation.
+\end{itemize}
+
+\subsection{Privacy}
+\label{subsec:privacy}
+
+Crew health data are personal and sensitive, and AHI is designed around that. Access is role based, data are encrypted in transit and at rest, identifiers are pseudonymized outside the medical roles, and the audit trail is persistent and tamper evident (\ref{sec:software-architecture}). Researchers receive de-identified extracts. The FHIR export carries pseudonymized identifiers only. The demonstrator uses simulated data only, so sending its texts to the Claude API exposes no crew data. With real crew data, a language model reached through the internet would receive data outside the mission systems: even with structured, pseudonymized inputs, such use would require an agreement with the crew and the medical authority, and the local model of the contingency plan avoids it (\ref{sec:artificial-intelligence}). Access is granted by role and every action is recorded with its author. Voice features add a risk of their own: spoken health information can be heard by others in a shared module, so audio is designed for a headset, private data are not read aloud on a speaker without an explicit choice, and recorded audio is not kept after transcription.
+
+Populations are never mixed. Data from long duration astronauts, commercial astronauts on a short flight, analog participants and non human studies are different populations. Analog results are never presented as astronaut results, and fields that a source does not state are recorded as not stated and never imputed.
+
+\subsection{Risks}
+\label{subsec:risks}
+
+The main risks of the use or misuse of a tool like AHI, and their mitigations, are listed in \ref{tab:risks}. The mitigations reduce the risks but do not remove them. The table was prepared by the authors and not through a formal hazard analysis.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Principal risks and mitigations.}
+\label{tab:risks}
+\footnotesize
+\begin{tabular}{p{4.0cm}p{5.6cm}p{4.4cm}}
+\hline
+\textbf{Risk} & \textbf{Mitigation} & \textbf{Residual limit} \\
+\hline
+Missing data read as normal & A no data status with a different shape and color; confidence falls; tests assert it & Applies only to the monitored signals \\
+The score read as a probability & The interface describes it as an operational level until a model is calibrated & A number invites over-reading \\
+False reassurance when nothing is flagged & No status means within the personal normal only & Slow adaptation can move the baseline \\
+Over-reliance on automation & Human review required for high and critical items; no autonomous decision & Alert fatigue must be measured \\
+Configuration values taken as official limits & Every fixed number is labeled with its source or as configuration & Numbers can be quoted out of context \\
+Correlation read as cause & Combined rules report co-occurrence & Users may still infer a cause \\
+Diagnostic or prescriptive wording & Plain status words; a catalog without medication; guardrails on generated text & Wording needs clinical review \\
+Generated text hiding uncertainty & Grounding checks, labels on generated text, structured result always available & No check is complete \\
+Simulated data mistaken for real & A visible simulated badge and the origin on every record & Depends on the reader \\
+Assistant used as a doctor & Plain refusal of diagnosis and medication, offer to contact the flight surgeon, role scope & Users may still over-trust a fluent answer \\
+Translation changes the urgency of a status & One glossary per language; English always available & Glossary not yet reviewed by native speakers \\
+Shelter recommendation missed or late & Two independent triggers, one fully on board; tests with the link down & Depends on the radiation monitors \\
+Access beyond the role & Role checks in every screen, API and the assistant; recorded emergency access & Misconfigured roles \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+The ethical rules of the project are the following. Decision support is for people, and every high or critical item requires human review. Plain language comes first and no diagnostic wording is used. The platform must be usable by every crew member, whatever their language or disability. Missing data is never shown as normal. Origin, quality and source are recorded for every record, and models, parameters and rules are versioned, so that every alert can be traced to its data and its rule or model. Limitations and uncertainty are shown to the user. No operational claim is made before validation on real, appropriately consented data.

@@ -1,0 +1,135 @@
+\section{Scientific Foundation}
+\label{sec:scientific-foundation}
+
+This section summarizes the public scientific material that shaped the design of AHI. It explains which health risks the platform is built around, which indicators it follows and why, and which published studies support those choices. It is scientific context for the design. It is not medical guidance, and it is not evidence that the platform detects any real condition (\ref{sec:limitations-ethics}).
+
+\subsection{Spaceflight Challenges}
+\label{subsec:spaceflight-challenges}
+
+The NASA Human Research Program (HRP) groups the health threats of human spaceflight into five hazards: space radiation, isolation and confinement, distance from Earth, gravity fields, and hostile or closed environments \cite{nasa_hrp_five_hazards}. NASA notes that these hazards do not act alone, since they can feed off one another and exacerbate effects on the human body \cite{nasa_hrp_five_hazards}. AHI adopts this framework to decide what to monitor, as summarized in \ref{tab:hazards}.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{The five HRP hazards and the data AHI uses for each one.}
+\label{tab:hazards}
+\small
+\begin{tabular}{p{3.2cm}p{5.6cm}p{5.4cm}}
+\hline
+\textbf{Hazard} & \textbf{What the public sources describe} & \textbf{What AHI represents} \\
+\hline
+Space radiation & Galactic cosmic rays, solar particle events and trapped particles \cite{nasa_srag_space_radiation}; one of the most hazardous aspects of spaceflight \cite{nasa_hrp_five_hazards} & Area radiation monitors and personal dosimeters: dose rate, mission dose and career dose; space weather notifications \\
+Isolation and confinement & Can reduce cognitive and behavioral functioning \cite{nasa_behavioral_health_risk} & Self report of mood, stress and workload; sleep; cognition tests \\
+Distance from Earth & Communication delay up to 20 minutes one way to Mars, and a need for crew self-sufficiency \cite{nasa_hrp_distance_from_earth}; about 4 to 24 minutes depending on planetary positions \cite{nasa_space_communications_seven_things} & Communication delay of the mission profile; autonomy of each recommendation; on board first steps \\
+Gravity fields & Bone mineral density loss of 1\% to 1.5\% per month, headward fluid shift, effects on the eyes \cite{nasa_hrp_gravity_fields} & CEVIS, ARED and T2 performance; heart rate and blood pressure; ultrasound and periodic examinations \\
+Hostile or closed environments & Temperature, pressure, lighting, noise and microbes inside a closed ecosystem \cite{nasa_hrp_five_hazards} & CO\textsubscript{2}, volatile organic compounds, combustion products, noise, temperature, humidity, water and microbial monitoring \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\medskip\noindent\textbf{Radiation.} Outside Earth's atmosphere and magnetic field, crews are exposed to galactic cosmic rays, solar particle events and trapped radiation. In low Earth orbit, flights cross the South Atlantic Anomaly six or seven times a day \cite{nasa_srag_space_radiation}. NASA links space radiation to increased lifetime cancer risk, central nervous system effects and degenerative disease \cite{nasa_why_space_radiation_matters}. NASA-STD-3001 sets a career effective dose limit below 600~mSv and a solar particle event limit below 250~mSv \cite{nasa_ochmo_tb020_radiation}. These limits are expressed as effective dose. AHI compares a dosimeter value with them only when the value is reported as effective dose, and it does not estimate radiation health risk.
+
+\medskip\noindent\textbf{Closed environment.} In a spacecraft carbon dioxide depends on scrubbing equipment. The NASA-STD-3001 technical brief reports headaches among ISS crew and links CO\textsubscript{2} level to them, and it limits the average one hour CO\textsubscript{2} partial pressure in the habitable volume to 3~mmHg \cite{nasa_ochmo_tb004_co2}. AHI uses this standard as the cited limit for its cabin CO\textsubscript{2} rule.
+
+\medskip\noindent\textbf{Noise.} A closed spacecraft is noisy: fans, pumps and life support run day and night. NASA-STD-3001 sets acoustic limits to preclude noise-related hearing loss and interference with communication, sleep and alarms, and it requires that noise exposure be monitored and quantified for each crew member \cite{nasa_ochmo_tb035_acoustics}. The 24 hour noise exposure at the ear of a crew member is limited to a noise dose of at most 100, equivalent to an 8 hour time-weighted average of 85~dBA \cite{nasa_ochmo_tb035_acoustics}. On the ISS, crew-worn acoustic dosimeters showed that NASA noise exposure limits were exceeded in 41\% of the dosimetry measurements made since 2008, without accounting for the effect of hearing protection \cite{limardo2021noise}. AHI uses the NASA-STD-3001 noise dose as the cited limit for its personal noise exposure rule.
+
+\medskip\noindent\textbf{Gravity.} Microgravity unloads bones and muscles and shifts body fluids toward the head \cite{nasa_hrp_gravity_fields}. The cardiovascular system is strongly gravity dependent, and its altered function causes problems after flight \cite{hughson2018heart}. These effects motivate monitoring exercise and cardiovascular signals against each person's own normal.
+
+\medskip\noindent\textbf{Distance and autonomy.} The longer the distance, the longer the wait for help. The Mars delay cited above means a question to Earth and its answer can take close to 50 minutes at the greatest distance \cite{nasa_space_communications_seven_things}. This is why AHI places on board steps first when the Earth link is long. \ref{subsec:mission-scenarios} compares how these hazards change from launch to the ISS, the Moon and Mars.
+
+\subsection{Mission Scenarios}
+\label{subsec:mission-scenarios}
+
+The five hazards are present in every mission, but their weight changes with where the crew goes and for how long. NASA contrasts a three-day trip to the Moon with a journey of roughly three years for Mars, during which the crew would live in three-eighths of Earth's gravity for up to two years \cite{nasa_hrp_five_hazards}. Radiation follows the same direction: as crews travel farther from the protective shields of the Earth, they are exposed to the full radiation spectrum, and beyond low Earth orbit space radiation may place them at significant risk for radiation sickness \cite{nasa_why_space_radiation_matters}. The longer and the farther the mission, the larger the accumulated exposure and the longer the crew must manage alone.
+
+AHI considers four scenarios: \textbf{launch}, which is a phase of every mission rather than a destination, and three destinations, the \textbf{ISS} in low Earth orbit, the \textbf{Moon} and a journey to \textbf{Mars}. \ref{tab:mission-scenarios} summarizes what the public sources describe for each one and what AHI does in it.
+
+\begin{itemize}
+\item \textbf{Launch and the other dynamic phases.} During launch the dominant hazards are mechanical. A NASA-STD-3001 technical brief lists, for sustained acceleration, limited movement and breathing and possible unconsciousness; for transient acceleration, mostly traumatic injuries, vertebral injuries being the most common; and for whole-body vibration, fatigue, discomfort, degraded vision and reduced fine motor control \cite{nasa_ochmo_tb024_occupant}. The same brief notes that G loading is expected to peak at 3.8~Gx nominally on ascent and even higher during re-entry, that back and leg pain and incontinence have been experienced on the launch pad, and it cites the requirement that the time on the back with feet elevated in launch configuration not exceed 3 hours and 15 minutes [V2 6113]. NASA-STD-3001 also requires that vehicle and crew acceleration parameters be collected during ascent, abort, entry, descent, landing, postlanding and extravehicular activity, to correlate them with any injuries [V2 6111] \cite{nasa_ochmo_tb024_occupant}.
+\item \textbf{ISS.} The station flies inside the magnetic field of the Earth, but crosses the South Atlantic Anomaly six or seven times a day \cite{nasa_srag_space_radiation}. A dose equivalent of 731~\textmu Sv per day measured inside the ISS is used as a reference in the lunar study below \cite{zhang2020lunar}. For spacecraft close to Earth, the communication delay is almost negligible \cite{nasa_space_communications_seven_things}. The ISS is the reference scenario of this report and the basis of its hardware premise (\ref{sec:hardware-sensors}).
+\item \textbf{Moon.} The Moon has neither a substantial atmosphere nor a global magnetic field, so the crew is exposed to galactic cosmic rays, to sporadic solar particle events and to neutrons and gamma rays produced in the lunar soil. The Chang'E~4 lander measured an average dose equivalent of 1369~\textmu Sv per day on the lunar surface, and its authors estimate the daily dose from galactic cosmic rays to be about 2.6 times the dose inside the ISS \cite{zhang2020lunar}. The link to Earth can be interrupted: during Artemis~II, the Orion spacecraft lost contact for about 40 minutes behind the Moon \cite{ctv_artemis2_blackout}.
+\item \textbf{Mars.} During the 253-day cruise of the Curiosity rover to Mars, an on board detector measured the radiation inside the spacecraft; from these data, the dose equivalent of even the shortest round trip with current propulsion and comparable shielding was estimated at 0.66~$\pm$~0.12~Sv \cite{zeitlin2013mars}. This is a dose equivalent and not the effective dose of the NASA career limit (\ref{subsec:spaceflight-challenges}), so it is not a comparison with the limit, but it shows the scale of the exposure. The communication delay is about 4 to 24 minutes one way \cite{nasa_space_communications_seven_things}, and the crew must be largely self-sufficient \cite{nasa_hrp_distance_from_earth}.
+\end{itemize}
+
+The radiation values above come from different instruments, shielding and solar conditions, so they show the direction of the risk and not a precise ranking. AHI uses them only as context and never as limits; the only radiation limits it applies are those of NASA-STD-3001 (\ref{subsec:spaceflight-challenges}).
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Mission scenarios considered by AHI.}
+\label{tab:mission-scenarios}
+\footnotesize
+\begin{tabular}{p{1.7cm}p{4.3cm}p{3.6cm}p{4.6cm}}
+\hline
+\textbf{Scenario} & \textbf{Main risks in the public sources} & \textbf{Radiation and link to Earth} & \textbf{Focus of AHI} \\
+\hline
+Launch (and entry, landing) & Sustained and transient acceleration, vibration, time in launch orientation \cite{nasa_ochmo_tb024_occupant} & Short phase; mechanical hazards dominate & Records the phase on the timeline, the time in launch orientation and a check-in after launch and after landing; imports the acceleration record after flight; never acts on the vehicle \\
+ISS (low Earth orbit) & The five hazards over long stays; inside the magnetic field of the Earth & 731~\textmu Sv per day measured inside the ISS \cite{zhang2020lunar}; almost negligible delay & Reference scenario: all devices of \ref{sec:hardware-sensors}, ground support available \\
+Moon & Radiation without a magnetic field, reduced gravity, surface activity & 1369~\textmu Sv per day on the surface \cite{zhang2020lunar}; blackouts behind the Moon \cite{ctv_artemis2_blackout} & Shelter rule including surface activity; smaller device set; operation during blackouts \\
+Mars & Roughly three years, reduced gravity, isolation, self-sufficiency \cite{nasa_hrp_five_hazards} & 0.66~Sv dose equivalent for a round trip \cite{zeitlin2013mars}; 4 to 24 minutes one way & Maximum on board autonomy, career dose projection, on board steps for every high item \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\subsection{Health Indicators}
+\label{subsec:health-indicators}
+
+AHI follows indicators grouped by body system, plus the cabin environment. \ref{tab:indicators} lists the systems, how each is measured on real missions according to public sources, and what AHI uses.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Monitored systems, measurement on real missions and AHI use.}
+\label{tab:indicators}
+\small
+\begin{tabular}{p{2.6cm}p{6.4cm}p{5.2cm}}
+\hline
+\textbf{System} & \textbf{Measurement on real missions (public sources)} & \textbf{In AHI} \\
+\hline
+Cardiovascular & Bio-Monitor smart shirt records heart electrical activity, blood pressure and physical activity \cite{canadian_space_agency_biomonitor}; ISS monitoring includes blood pressure, ECG and heart rate \cite{nasa_jsc_exercise_countermeasures} & Heart rate, heart rate variability, blood pressure, ECG \\
+Respiratory & Bio-Monitor records breathing rate and blood oxygen saturation \cite{canadian_space_agency_biomonitor}; a crew wearable vest records heart rate and breathing during sleep \cite{nasa_wearable_tech_iss} & Blood oxygen, breathing rate and volume \\
+Thermal & Bio-Monitor records skin temperature; core temperature needs dedicated devices such as the T-Mini headband \cite{nasa_wearable_tech_iss} & Skin temperature \\
+Sleep and activity & Wrist actigraphy (Actiwatch Spectrum) tracks motion and light to estimate sleep \cite{nasa_wearable_tech_iss} & Sleep duration, efficiency and stages, activity, light \\
+Musculoskeletal & Exercise on CEVIS, treadmills and ARED \cite{nasa_jsc_exercise_countermeasures}; bone density by densitometry before and after flight \cite{lang2004bone} & Exercise performance against the personal baseline; examination results \\
+Behavior and cognition & Standard Measures include cognition tests \cite{nasa_standard_measures}; the Cognition battery has 10 tests \cite{basner2015cognition} & Self report and cognition test results \\
+Hydration & Periodic fluid samples \cite{nasa_standard_measures}, not a continuous sensor & Urinalysis, blood chemistry and reported intake \\
+Vision & Vision screening (visual acuity, Amsler grid, survey), retinal photography, optical coherence tomography and ocular ultrasound before, during and after flight \cite{brunstetter2023brief} & Structured eye examination results as point measurements; visual symptoms reported by the crew \\
+Hearing & On-Orbit Hearing Assessment for crew members on orbit for more than 30 days \cite{coste2024hearing}; crew-worn acoustic dosimetry \cite{limardo2021noise} & Hearing thresholds by frequency and ear; personal noise exposure \\
+Bone density & Densitometry before and after flight \cite{lang2004bone} & Examination results as point measurements \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+Three points about this table matter for how the platform works.
+
+\begin{itemize}
+\item \textbf{Real telemetry is not public.} NASA publishes how crews are monitored, but no continuous physiological telemetry of astronauts is available to the public. Data from the devices are a design premise of AHI (\ref{sec:hardware-sensors}).
+\item \textbf{Some risks are measured only by periodic exams.} Bone density, muscle volume and the eye findings of spaceflight associated neuro-ocular syndrome are assessed by examinations and not continuously \cite{lang2004bone,nasa_hrr_sans}. AHI receives their results as point measurements.
+\item \textbf{Some indicators are weaker than others.} Self report is not a validated clinical instrument, and estimated values such as sleep stages are marked as estimates.
+\end{itemize}
+
+\subsection{Supporting Scientific Studies}
+\label{subsec:supporting-studies}
+
+The studies below support the choice of indicators and the decision to compare each person with their own normal. Each is cited only for the statement it supports. None of them is evidence about the performance of AHI.
+
+\medskip\noindent\textbf{Cardiovascular.} Hughson et al. review how the extraterrestrial environment affects the cardiovascular system, including postflight problems, a possible late cardiovascular risk from radiation, and exercise as a countermeasure \cite{hughson2018heart}. In the NASA Twins Study, a longitudinal before, during and after design with a matched ground control, the flight twin showed carotid artery changes among other findings \cite{garrettbakelman2019twins}.
+
+\medskip\noindent\textbf{Sleep.} In a study of 64 Space Shuttle and 21 ISS astronauts, sleep measured by wrist actigraphy was short in flight, at about 6.09 hours per night on ISS missions, and also during preflight training \cite{barger2014sleep}. The authors compare flight with each person's own ground intervals, which is the same logic as the personal baseline in AHI.
+
+\medskip\noindent\textbf{Bone, muscle and exercise.} Lang et al. measured areal bone mineral density loss of 0.9\% per month at the spine and 1.4\% to 1.5\% per month at the hip in 14 ISS crew members \cite{lang2004bone}. Trappe et al. found a 13\% average decrease in calf muscle volume in 9 crew members after about six months, despite an exercise program that varied between individuals \cite{trappe2009exercise}. Resistive exercise with adequate nutrition maintained bone in most regions in one study \cite{smith2012bone}, while a later study found only partial protection and no prevention of trabecular loss at the hip \cite{sibonga2019resistive}. Vico and Hargens link skeletal changes with fluid shifts, the vascular system and metabolism \cite{vico2018skeletal}. Because exercise regimens differ between people, AHI judges exercise performance against each person's own usual sessions.
+
+\medskip\noindent\textbf{Bed rest as a ground analog.} LeBlanc et al. review the skeletal data from the U.S. and Russian space programs together with ground-based disuse studies, in which volunteers remain in bed rest as an analog of spaceflight \cite{leblanc2007skeletal}. The review covers bone mineral density measured by X-ray absorptiometry and CT, bone related hormones and biochemical markers of bone turnover, and calcium excretion and balance. Its central point for this project is that bed rest studies give information complementary to the spaceflight data and allow countermeasures to bone loss to be tested on the ground \cite{leblanc2007skeletal}. The same review notes that many questions remain about bone loss, bone recovery and the factors that affect them \cite{leblanc2007skeletal}. Bed rest is an analog and not a replacement for flight data: it does not reproduce radiation, the closed environment or the other spaceflight hazards. AHI follows bone through exercise data and periodic examination results.
+
+\medskip\noindent\textbf{Cognition and behavior.} The Cognition test battery was developed and validated for astronauts, and its validation shows that practice effects differ between tests, which makes normative data important \cite{basner2015cognition}. NASA states that isolation and confinement can reduce cognitive and behavioral functioning \cite{nasa_behavioral_health_risk}. AHI uses the results of cognition tests and self report as indicators and does not interpret them clinically.
+
+\medskip\noindent\textbf{Eyes.} Spaceflight associated neuro-ocular syndrome (SANS) comprises findings such as optic disc edema and globe flattening \cite{lee2020sans}. NASA's Human Research Roadmap reports that 70\% of crew members experience one or more hallmark signs \cite{nasa_hrr_sans}, and a 2023 clinical update estimates about 66\% of long duration astronauts show the earliest indication \cite{brunstetter2023sans}. The leading hypothesis links SANS to the headward fluid shift \cite{nasa_fluid_shifts_study}. A NASA briefing for astronaut candidates adds that 18\% of ISS crew members develop clinically concerning SANS, that cases are typically asymptomatic unless blurred vision develops, that there is currently no evidence of permanent vision loss in any astronaut, and that severity is related to mission duration \cite{brunstetter2023brief}. Because most cases have no symptoms, SANS is followed with scheduled examinations: the same briefing lists vision screening (visual acuity, Amsler grid and a survey), retinal photography, optical coherence tomography (OCT) and ocular ultrasound before flight, around flight days 30 and 90, 30 days before return and after flight, with MRI and a comprehensive eye examination only on the ground, and it describes OCT as the most critical tool to detect and monitor SANS, on board the ISS since 2013 \cite{brunstetter2023brief}. NASA follows these changes with optical coherence tomography on board: in one study, the same Spectralis system used before flight was used on the ISS around flight days 10, 30, 60, 90, 120 and 150 \cite{macias2020ocular}. AHI places structured eye examination results on the timeline and does not interpret images.
+
+\medskip\noindent\textbf{Hearing.} Hearing loss is part of the acoustics risk followed by NASA \cite{nasa_ochmo_tb035_acoustics}. Crew members on orbit for more than 30 days perform the On-Orbit Hearing Assessment, which flight surgeons on the ground review for significant changes. A NASA poster reports a low frequency hearing threshold shift in 40\% of these tests and in 60\% of crew members, and notes that such low frequency changes are not typically caused by noise exposure \cite{coste2024hearing}. AHI therefore follows exposure and hearing thresholds side by side, compares each result with the person's own preflight audiogram, and reports any link between them as co-occurrence, never as cause.
+
+\medskip\noindent\textbf{Mission monitoring.} NASA Standard Measures and Artemis~II Standard Measures list the standardized measures collected before, during and after missions \cite{nasa_standard_measures,nasa_artemis_ii_standard_measures}. Astroskin, the technology behind the Bio-Monitor, was developed under Canadian Space Agency contracts \cite{csa_wireless_body_sensors}. In testing with 16 crew members in the HERA analog, 24 hour monitoring showed lessons on data loss and Bluetooth connectivity, with no comparison against laboratory standard devices \cite{toscano2017astroskin}. This is the reason AHI treats missing data as \texttt{NO\_DATA} and never as normal.
+
+\medskip\noindent\textbf{Scope of the evidence.} The sources above justify what AHI monitors and why a personal baseline is appropriate. They do not by themselves justify numeric thresholds. Every fixed threshold in AHI must cite a standard, such as NASA-STD-3001, or be reviewed by a flight surgeon, and none is presented as an official NASA limit without a source (\ref{sec:future-work}).

@@ -13,6 +13,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import type { AnatomySystemId, AtlasManifest, AtlasSystemFile } from '../atlas/types'
 import { systemFileUrl } from '../atlas/manifest'
+import { ATLAS_RETRY, RetryError, errorReason, withRetry } from './retry'
+import type { RetryPolicy } from './retry'
 
 /** One drawable piece of a structure: geometry in GLB node space plus its node to atlas matrix. */
 export interface StructurePart {
@@ -34,10 +36,20 @@ export interface FileProgress {
   loaded: number
   total: number
   status: 'loading' | 'ready' | 'error'
+  /** Current try (1 based) while loading, number of tries made once failed. */
+  attempt?: number
+  /** Plain reason of the last failure (kept while a retry is pending, and once failed). */
+  reason?: string
+}
+
+interface AtlasProgressState {
+  files: Partial<Record<AnatomySystemId, FileProgress>>
+  /** Bumped by retryAtlasFiles(): viewers load their missing systems again. */
+  retryNonce: number
 }
 
 /** Download progress per system file (shared by every viewer instance). */
-export const useAtlasProgress = create<{ files: Partial<Record<AnatomySystemId, FileProgress>> }>(() => ({ files: {} }))
+export const useAtlasProgress = create<AtlasProgressState>(() => ({ files: {}, retryNonce: 0 }))
 
 function setProgress(system: AnatomySystemId, p: FileProgress) {
   useAtlasProgress.setState((s) => ({ files: { ...s.files, [system]: p } }))
@@ -50,7 +62,7 @@ const cache = new Map<string, Promise<SystemAsset>>()
 
 async function fetchBytes(url: string, onProgress: (loaded: number) => void): Promise<ArrayBuffer> {
   const res = await fetch(url)
-  if (!res.ok) throw new Error(`Atlas file request failed (${res.status}): ${url}`)
+  if (!res.ok) throw new Error(`server answered ${res.status} for ${url}`)
   if (!res.body) {
     const buf = await res.arrayBuffer()
     onProgress(buf.byteLength)
@@ -96,13 +108,13 @@ function structureIdOf(o: Object3D, ids: Set<string>): string | null {
   return null
 }
 
-async function parseSystem(manifest: AtlasManifest, file: AtlasSystemFile): Promise<SystemAsset> {
+async function parseSystem(manifest: AtlasManifest, file: AtlasSystemFile, attempt: number, reason?: string): Promise<SystemAsset> {
   const t0 = performance.now()
   const url = systemFileUrl(file)
   const total = Math.max(1, file.bytes)
-  setProgress(file.id, { loaded: 0, total, status: 'loading' })
-  const buf = await fetchBytes(url, (loaded) => setProgress(file.id, { loaded: Math.min(loaded, total), total, status: 'loading' }))
-  if (!isGlb(buf)) throw new Error(`Atlas file is not a GLB: ${url}`)
+  setProgress(file.id, { loaded: 0, total, status: 'loading', attempt, reason })
+  const buf = await fetchBytes(url, (loaded) => setProgress(file.id, { loaded: Math.min(loaded, total), total, status: 'loading', attempt, reason }))
+  if (!isGlb(buf)) throw new Error(`not a 3D model file (the server sent something else): ${url}`)
   const loader = new GLTFLoader()
   loader.setMeshoptDecoder(MeshoptDecoder)
   const gltf = await loader.parseAsync(buf, '')
@@ -133,30 +145,57 @@ async function parseSystem(manifest: AtlasManifest, file: AtlasSystemFile): Prom
     const missing = [...ids].filter((id) => !parts.has(id))
     if (missing.length) console.warn(`[anatomy] ${file.file}: ${missing.length} manifest structures have no mesh node`, missing.slice(0, 12))
   }
-  if (parts.size === 0) throw new Error(`Atlas file has no known structure: ${url}`)
+  if (parts.size === 0) throw new Error(`no known structure in ${url}`)
   setProgress(file.id, { loaded: total, total, status: 'ready' })
   const asset: SystemAsset = { system: file.id, parts, triangles: Math.round(triangles), bytes: buf.byteLength, ms: performance.now() - t0 }
   loadStats.push({ system: asset.system, bytes: asset.bytes, ms: asset.ms, triangles: asset.triangles })
   return asset
 }
 
-/** Loads one system file (cached). Rejects when the file is missing or invalid. */
-export function loadSystem(manifest: AtlasManifest, file: AtlasSystemFile): Promise<SystemAsset> {
+/**
+ * Loads one system file (cached). A failed try (network error, interrupted download, dev server
+ * restart) is retried with backoff (ATLAS_RETRY). Rejects with a RetryError once every try
+ * failed; the cache entry is then dropped, so the next call (or retryAtlasFile) starts over.
+ */
+export function loadSystem(manifest: AtlasManifest, file: AtlasSystemFile, policy: RetryPolicy = ATLAS_RETRY): Promise<SystemAsset> {
   const url = systemFileUrl(file)
   const hit = cache.get(url)
   if (hit) return hit
-  const p = parseSystem(manifest, file)
+  const total = Math.max(1, file.bytes)
+  let reason: string | undefined
+  const p = withRetry((attempt) => parseSystem(manifest, file, attempt, reason), policy, {
+    onRetry: (failed, error, delay) => {
+      reason = errorReason(error)
+      setProgress(file.id, { loaded: 0, total, status: 'loading', attempt: failed + 1, reason })
+      if (import.meta.env.DEV) console.warn(`[anatomy] ${file.file}: try ${failed} of ${policy.attempts} failed (${reason}), retrying in ${delay} ms`)
+    },
+  })
   cache.set(url, p)
-  p.catch(() => {
+  p.catch((error: unknown) => {
     if (cache.get(url) === p) cache.delete(url)
-    setProgress(file.id, { loaded: 0, total: Math.max(1, file.bytes), status: 'error' })
+    const attempts = error instanceof RetryError ? error.attempts : policy.attempts
+    setProgress(file.id, { loaded: 0, total, status: 'error', attempt: attempts, reason: errorReason(error) })
+    if (import.meta.env.DEV) console.warn(`[anatomy] ${file.file}: not loaded after ${attempts} tries (${errorReason(error)})`, error instanceof RetryError ? error.lastError : error)
   })
   return p
+}
+
+/**
+ * The user asked for a failed system again: every viewer that shows it loads it again (a fresh
+ * series of tries). The file shows as loading right away, so the control gives instant feedback.
+ * The caller makes sure the system is visible (a hidden system is not loaded).
+ */
+export function retryAtlasFile(system: AnatomySystemId) {
+  useAtlasProgress.setState((s) => {
+    const f = s.files[system]
+    const files = f?.status === 'error' ? { ...s.files, [system]: { ...f, loaded: 0, status: 'loading' as const, attempt: 1 } } : s.files
+    return { files, retryNonce: s.retryNonce + 1 }
+  })
 }
 
 /** Frees every cached geometry (GPU buffers are released by the renderers that used them). */
 export function disposeAtlasCache() {
   for (const p of cache.values()) void p.then((a) => a.parts.forEach((list) => list.forEach((part) => part.geometry.dispose()))).catch(() => undefined)
   cache.clear()
-  useAtlasProgress.setState({ files: {} })
+  useAtlasProgress.setState({ files: {}, retryNonce: 0 })
 }

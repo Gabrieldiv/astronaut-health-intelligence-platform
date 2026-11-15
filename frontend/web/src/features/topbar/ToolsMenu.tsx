@@ -6,8 +6,11 @@ import { useDismiss } from '../../components/ui'
 import { MissionOverviewButton } from '../mission'
 import { HandoverReportButton } from '../report'
 import { DataSourcesButton } from '../datasources'
+import { AccessibilityMenuItem } from '../a11y'
 import { useActions } from '../shared/hooks'
 import { MENU_ITEM, MenuKey, MenuRow } from './menu'
+import { LanguageMenuItems } from './LanguageMenu'
+import { useT } from '../../i18n'
 
 const ITEM_SELECTOR = '[role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]'
 
@@ -46,6 +49,7 @@ export function ToolsMenu({ showLabel, withRestart, withView }: { showLabel: boo
   const viewMode = useUiStore((s) => s.viewMode)
   const setViewMode = useUiStore((s) => s.setViewMode)
   const { reset } = useActions()
+  const t = useT()
 
   const items = () => [...(menu.current?.querySelectorAll<HTMLElement>(ITEM_SELECTOR) ?? [])]
 
@@ -104,7 +108,8 @@ export function ToolsMenu({ showLabel, withRestart, withView }: { showLabel: boo
   // Any activated item closes the menu. Focus goes back to the button first, so dialogs opened by
   // the item return focus there when they close.
   const onMenuClick = (e: ReactMouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest(ITEM_SELECTOR)) close(true)
+    const item = (e.target as HTMLElement).closest(ITEM_SELECTOR)
+    if (item && !item.hasAttribute('data-keep-open')) close(true)
   }
 
   return (
@@ -116,8 +121,8 @@ export function ToolsMenu({ showLabel, withRestart, withView }: { showLabel: boo
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls="ahi-tools-menu"
-        aria-label="Tools: mission overview, shift handover, data and model, presentation mode, shortcuts"
-        title="Tools: mission overview, shift handover, data and model, presentation mode, shortcuts"
+        aria-label={t('tools.buttonAria')}
+        title={t('tools.buttonAria')}
         onClick={() => (open ? close(false) : openAt('first'))}
         onKeyDown={onButtonKey}
         className={clsx(
@@ -127,34 +132,34 @@ export function ToolsMenu({ showLabel, withRestart, withView }: { showLabel: boo
         )}
       >
         <Wrench size={15} className="text-accent" aria-hidden />
-        {showLabel && <span className="whitespace-nowrap">Tools</span>}
+        {showLabel && <span className="whitespace-nowrap">{t('tools.label')}</span>}
         <ChevronDown size={13} className={clsx('text-ink-500 transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
       <div
         ref={menu}
         id="ahi-tools-menu"
         role="menu"
-        aria-label="Tools"
+        aria-label={t('tools.label')}
         aria-hidden={!open}
         onKeyDown={onMenuKey}
         onClick={onMenuClick}
         className={clsx('glass-strong animate-fade-in absolute top-full right-0 z-50 mt-2 w-[320px] flex-col rounded-2xl p-1.5', open ? 'flex' : 'hidden')}
       >
-        <GroupLabel>Mission tools</GroupLabel>
+        <GroupLabel>{t('tools.group.mission')}</GroupLabel>
         <MissionOverviewButton variant="menuitem" />
         <HandoverReportButton variant="menuitem" />
         <DataSourcesButton variant="menuitem" />
         {(withRestart || withView) && <Separator />}
         {withRestart && (
           <button type="button" role="menuitem" tabIndex={-1} onClick={() => reset()} className={MENU_ITEM}>
-            <MenuRow icon={<RotateCcw size={15} />} label="Restart scenario" hint="Start the current scenario again" />
+            <MenuRow icon={<RotateCcw size={15} />} label={t('tools.restart')} hint={t('tools.restartHint')} />
           </button>
         )}
         {withView &&
           (
             [
-              { id: 'ground', label: 'Ground view', hint: 'Flight surgeon and mission control, whole crew', icon: LayoutDashboard },
-              { id: 'crew', label: 'Crew view', hint: 'One astronaut, plain language', icon: UserRound },
+              { id: 'ground', label: t('tools.groundView'), hint: t('tools.groundViewHint'), icon: LayoutDashboard },
+              { id: 'crew', label: t('tools.crewView'), hint: t('tools.crewViewHint'), icon: UserRound },
             ] as const
           ).map((v) => (
             <button
@@ -170,17 +175,19 @@ export function ToolsMenu({ showLabel, withRestart, withView }: { showLabel: boo
             </button>
           ))}
         <Separator />
-        <GroupLabel>Display</GroupLabel>
+        <GroupLabel>{t('tools.group.display')}</GroupLabel>
         <button type="button" role="menuitemcheckbox" aria-checked={presentation} tabIndex={-1} onClick={togglePresentation} className={MENU_ITEM}>
           <MenuRow
             icon={<Presentation size={15} />}
-            label="Presentation mode"
-            hint={presentation ? 'On: larger text, fewer details' : 'Larger text, fewer details (P)'}
+            label={t('tools.presentation')}
+            hint={presentation ? t('tools.presentationOn') : t('tools.presentationOff')}
             right={<Switch on={presentation} />}
           />
         </button>
+        <AccessibilityMenuItem />
+        <LanguageMenuItems />
         <button type="button" role="menuitem" tabIndex={-1} aria-haspopup="dialog" onClick={() => setShortcutsOpen(true)} className={MENU_ITEM}>
-          <MenuRow icon={<Keyboard size={15} />} label="Keyboard shortcuts" hint="All keys at a glance" right={<MenuKey k="?" />} />
+          <MenuRow icon={<Keyboard size={15} />} label={t('tools.shortcuts')} hint={t('tools.shortcutsHint')} right={<MenuKey k="?" />} />
         </button>
       </div>
     </div>

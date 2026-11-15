@@ -1,0 +1,52 @@
+\section{Introduction}
+\label{sec:introduction}
+
+\subsection{Problem Statement}
+\label{subsec:problem-statement}
+
+Human space exploration introduces significant challenges to astronaut health and performance, particularly during long-duration missions beyond low Earth orbit. Unlike terrestrial environments, space missions expose crew members to a combination of environmental and operational stressors, including space radiation, isolation and confinement, altered gravity, distance from Earth, and hostile or closed environments. These conditions can contribute to physiological and behavioral changes, increasing the complexity of maintaining crew health throughout a mission \cite{nasa_human_spaceflight_risks}.
+
+The effects of these hazards may involve multiple physiological systems. Exposure to microgravity, for example, is associated with cardiovascular adaptations and musculoskeletal changes, including bone loss. Spaceflight-related stressors may also affect immune function, sensorimotor performance, sleep, and behavioral health. The interaction between these factors makes astronaut health a multidimensional concern that requires continuous observation and the interpretation of multiple health indicators over time \cite{nasa_human_research_program,nasa_human_health_countermeasures}.
+
+Although NASA and its international partners have established medical monitoring procedures, research programs, and technologies for collecting astronaut health information, the effective interpretation of health-related data remains an important operational consideration. Existing approaches include wearable physiological monitoring systems, medical assessments, exercise monitoring, and longitudinal health surveillance. For example, the Bio-Monitor system combines wearable technologies to collect physiological measurements aboard the International Space Station, while NASA's Lifetime Surveillance of Astronaut Health program analyzes medical and exposure data to investigate acute and long-term health outcomes \cite{canadian_space_agency_biomonitor,nasa_lsah}.
+
+The challenge becomes particularly relevant during exploration missions in which communication delays, limited medical resources, and operational constraints may increase crew autonomy. Astronauts may need to assess their health status and recognize potentially relevant changes while performing mission activities. Consequently, health monitoring software must do more than display isolated measurements: it should support the organization, visualization, and interpretation of health indicators in a way that facilitates awareness of individual health conditions and potential changes over time.
+
+This problem is also the central motivation of the 2026 NASA Space Apps Challenge, under the challenge \textit{Create Health Monitoring Software for Astronauts on Space Missions}. The challenge calls for the development of software capable of gathering health indicators and enabling astronauts to evaluate and act upon their health status during space missions \cite{nasa_health_monitoring_challenge_2026}.
+
+In this context, the engineering problem addressed by this project is the development of an integrated software approach capable of consolidating heterogeneous health-related information, establishing individual reference patterns, identifying relevant deviations, and presenting analytical findings in an understandable and traceable manner. The challenge involves not only data integration, but also the distinction between normal individual variability and potentially significant changes, while preserving data quality, scientific context, and the limitations of automated analysis.
+
+Therefore, there is an opportunity to investigate how data integration, statistical analysis, anomaly detection, and artificial intelligence-assisted interpretation can be combined into a unified astronaut health monitoring platform. Addressing this problem is the primary motivation behind the development of the \textbf{Astronaut Health Intelligence (AHI)}.
+
+\subsection{Objectives}
+\label{subsec:objectives}
+The primary objective of the \textbf{Astronaut Health Intelligence (AHI)} project is to design a software platform for predictive astronaut health monitoring during space missions, integrating heterogeneous health-related data and applying analytical methods to identify relevant patterns, detect potential anomalies, and support the interpretation of individual health conditions over time.
+
+To achieve this objective, the project establishes the following specific objectives:
+
+\begin{enumerate}
+\item \textbf{Identify and integrate relevant data sources:} define the International Space Station equipment, wearable, medical, exercise and environmental, that serves as the data source of the platform, and organize publicly available NASA research datasets that ground and test the analysis.
+
+\item \textbf{Establish a standardized health data model:} define a structured representation for health indicators, observations, data sources, and individual historical records, ensuring consistency, traceability, and interoperability across different data categories.
+
+\item \textbf{Implement health monitoring and visualization capabilities:} provide an interface for presenting health indicators, historical measurements, individual baselines, and relevant variations over time.
+
+\item \textbf{Develop anomaly detection mechanisms:} investigate and implement statistical and computational methods capable of identifying deviations from individual reference patterns and highlighting potentially relevant changes in health-related indicators.
+
+\item \textbf{Develop predictive risk assessment:} analyze temporal patterns and relationships between health indicators across ten health dimensions, to forecast trends and estimate risks for the following 24 to 72 hours.
+
+\item \textbf{Recommend interventions:} turn identified risks into non-prescriptive recommendations on exercise, nutrition, sleep, well-being and medical follow-up, each with its evidence, autonomy and follow-up.
+
+\item \textbf{Integrate AI-assisted contextual interpretation:} include a Large Language Model (LLM) to explain analytical findings using curated scientific knowledge and reliable reference sources, while maintaining transparency regarding the origin and limitations of generated information, and offer a health assistant that answers questions by text and voice.
+
+\item \textbf{Treat the internet as useful, not essential:} use internet services when a connection exists, as the demonstrator does with the Claude API to simulate the AI language features, and keep monitoring, alerts, recommendations, explanations and the assistant working on board when there is no connection, through an on board backend and a contingency plan with a local language model (\ref{subsec:offline-llm}).
+
+\item \textbf{Protect the crew from radiation:} follow the career radiation dose of each astronaut against the limit published in NASA-STD-3001, and recommend preparing the radiation shelter when a solar particle event is reported or detected.
+
+\item \textbf{Make the platform global and inclusive:} offer the interface in English, Portuguese, Spanish, Japanese and German, control access by role, and support blind and low vision users, people with dyslexia and astronauts busy with a task through audio description and voice.
+
+\item \textbf{Evaluate the proposed platform:} define a staged evaluation, from simulated scenarios to the replay of real public data and an operational shadow mode, with every data origin identified.
+
+\end{enumerate}
+
+Through these objectives, AHI aims to demonstrate the feasibility of combining heterogeneous health data, analytical techniques, and AI-assisted interpretation into a unified software approach for astronaut health monitoring. The resulting platform is intended to support health awareness and informed assessment rather than provide medical diagnoses or replace qualified medical personnel.

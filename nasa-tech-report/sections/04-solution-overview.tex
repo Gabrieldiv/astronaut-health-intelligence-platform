@@ -1,0 +1,145 @@
+\section{Solution Overview}
+\label{sec:solution-overview}
+
+This section describes AHI as a whole in its final scope: the value it offers, how it is organized, who uses it and what it deliberately does not do. The following sections give the details: the equipment (\ref{sec:hardware-sensors}), the analysis (\ref{sec:analytical-methodology}), the role of artificial intelligence (\ref{sec:artificial-intelligence}) and the architecture (\ref{sec:software-architecture}).
+
+\subsection{Value Proposition}
+\label{subsec:value-proposition}
+
+The guiding idea of AHI is to move \textbf{from health monitoring to predictive health protection}. AHI is an intelligent platform that integrates physiological, behavioral and environmental data to monitor the health of astronauts continuously, anticipate risks and recommend interventions, contributing to safer and more sustainable space missions. It is not one more vital signs display. It is designed to answer five questions about each crew member:
+
+\begin{enumerate}
+\item What is the current condition?
+\item How is that condition evolving?
+\item Is there a risk of developing a problem?
+\item What could happen if no action is taken?
+\item Which actions could reduce that risk?
+\end{enumerate}
+
+Three ideas distinguish the approach:
+
+\begin{itemize}
+\item \textbf{Predictive, not reactive.} The platform does not wait for severe symptoms. It identifies trends of deterioration and estimates future risk from the individual history and from scientific knowledge.
+\item \textbf{Personalized.} Each astronaut has a personal history, physiology and baseline. AHI compares each person with their own normal instead of applying the same fixed limits to everyone.
+\item \textbf{Autonomous decision support.} On missions far from Earth, the ability to identify risks, show the evidence and suggest actions on board matters more as the communication delay grows (\ref{subsec:mission-scenarios}). AHI supports the decisions of the crew and of the flight surgeon and never replaces them.
+\end{itemize}
+
+\subsection{Three Levels of Analysis}
+\label{subsec:three-levels}
+
+The platform works on three levels, summarized in \ref{tab:levels}. Each level builds on the one before it.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{The three levels of analysis of AHI.}
+\label{tab:levels}
+\small
+\begin{tabular}{p{3.6cm}p{1.6cm}p{4.6cm}p{4.2cm}}
+\hline
+\textbf{Level} & \textbf{Time} & \textbf{Examples} & \textbf{Result} \\
+\hline
+1. Real-time health monitoring & Present & Heart rate above the personal pattern, falling oxygen saturation, altered blood pressure, short sleep, high CO\textsubscript{2} & Anomaly detection and immediate alerts \\
+2. Predictive health analytics & Future & Accumulated fatigue, cardiovascular deconditioning, loss of strength, worsening sleep & Risk estimates before a condition becomes critical \\
+3. Prescriptive health intelligence & Action & Adjust training, rest and recovery, hydration plan, medical follow-up & Recommended interventions to reduce the predicted risk \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\subsection{Ten Health Dimensions}
+\label{subsec:health-dimensions}
+
+To avoid a narrow view limited to heart rate and blood pressure, AHI organizes monitoring into ten health dimensions: cardiovascular; respiratory and oxygenation; muscle and bone; immune; neurological and sensorimotor; vision; hearing; sleep and circadian rhythm; psychological and behavioral; and metabolic, renal and nutritional. Each dimension has its own indicators, analyses and risks, described in \ref{sec:analytical-methodology}. Most dimensions are followed with frequent data. The immune and the metabolic, renal and nutritional dimensions depend largely on samples and laboratory analysis, and vision and hearing depend on examinations made at set points of the flight, so these dimensions are followed periodically. Vision and hearing are monitored as two independent dimensions: they concern different organs, are measured by different examinations, follow different risks and have their own baselines, so a change in one says nothing about the other. Both are often left out of physiological monitoring platforms, yet both matter for safety: the eye changes of spaceflight associated neuro-ocular syndrome are common on long flights \cite{nasa_hrr_sans}, and hearing affects communication, alarms and sleep. Hearing also links three views that are usually analyzed apart: the environment (how much noise the crew member is exposed to), physiology (how hearing thresholds evolve) and performance (communication, sleep and tasks).
+
+\subsection{Hazards as the Axis of Risk}
+\label{subsec:hazard-axis}
+
+NASA groups the threats to human health in spaceflight into five hazards \cite{nasa_hrp_five_hazards}. AHI uses them as the central axis of its risk analysis, as shown in \ref{tab:hazard-monitoring}.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{The five hazards of human spaceflight and what AHI follows for each.}
+\label{tab:hazard-monitoring}
+\small
+\begin{tabular}{p{3.0cm}p{5.4cm}p{5.6cm}}
+\hline
+\textbf{Hazard} & \textbf{What can happen} & \textbf{What AHI follows} \\
+\hline
+Space radiation & Cell damage, cancer risk, cardiovascular and neurological effects & Mission and career dose against the NASA-STD-3001 career limit, space weather notifications, radiation shelter recommendation \\
+Isolation and confinement & Stress, psychological changes, sleep problems & Mood, sleep, stress and team interaction \\
+Distance from Earth & Difficulty of obtaining immediate medical care & Medical autonomy, alert severity and forecast of deterioration \\
+Gravity fields & Bone and muscle loss, cardiovascular and vestibular changes & Strength, exercise, blood pressure, heart rate, balance \\
+Hostile or closed environments & Exposure to CO\textsubscript{2}, contaminants, noise and microbes & CO\textsubscript{2}, air quality, personal noise exposure and hearing, temperature, humidity and immune indicators \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+The hazards should not be analyzed in isolation, since they can feed off one another \cite{nasa_hrp_five_hazards}. A typical chain is the following: an astronaut starts to sleep less, sleep quality worsens, physiological recovery indicators change, exercise performance declines, and prolonged stress may influence the immune response. Each signal may look acceptable on its own. AHI is designed to recognize when several apparently independent indicators begin to point to the same deterioration, and this is where its analytical and artificial intelligence layers add the most value.
+
+\subsection{From Launch to Mars}
+\label{subsec:mission-profiles}
+
+The weight of each hazard depends on the mission. \ref{subsec:mission-scenarios} describes four scenarios: launch, the ISS, the Moon and Mars. AHI represents the destination as a \textbf{mission profile} (ISS, Moon or Mars) and launch, entry and landing as \textbf{mission phases} on the timeline. The profile sets the communication delay shown with every message to the ground (\ref{subsec:data-flow}), the radiation projection of the career dose (\ref{sec:analytical-methodology}), the devices expected on board, and how much each recommendation must be possible without Earth. In practice, the farther the destination, the more the platform assumes that the crew acts alone: on the ISS the flight surgeon is close, while for Mars every high priority item has on board first steps. During launch and the other dynamic phases, AHI records and never commands: the vehicle and its abort systems are outside its scope. The demonstrator implements the profile for the communication delay, with the ISS, the Moon and Mars at its closest and farthest distances (\ref{fig:mars-comms}).
+
+\subsection{Users}
+\label{subsec:users}
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Users of AHI and what each needs.}
+\label{tab:users}
+\small
+\begin{tabular}{p{3.6cm}p{10.4cm}}
+\hline
+\textbf{User} & \textbf{Need} \\
+\hline
+Crew member & A plain view of their own status, the actions they can take on board and a quick daily check-in \\
+Crew medical officer & A view of the whole crew, alerts by priority and the evidence behind each one \\
+Flight surgeon & Trends, forecasts and recommendations to review, approve or reject, with the full history \\
+Mission control & The health status of the crew as an operational factor for planning \\
+Researcher & Traceable data with origin and quality, for retrospective analysis \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+Access is controlled by role (Role-Based Access Control, RBAC), and every user authenticates before seeing health data. A crew member sees their own data, the crew medical officer sees the crew, and the flight surgeon reviews and approves recommendations; the roles and their permissions are detailed in \ref{subsec:security}. The clinical workflow depends on this separation: a recommendation that needs ground review can only be approved by a user with the flight surgeon role, and every decision is recorded with its author.
+
+\subsection{Main Modules}
+\label{subsec:main-modules}
+
+AHI is organized into six modules, detailed in \ref{sec:software-architecture}:
+
+\begin{enumerate}
+\item \textbf{Device integration:} one adapter per device that converts native data into canonical observations.
+\item \textbf{Health data platform:} storage of current and historical data with origin, quality and audit.
+\item \textbf{Analytics and prediction engine:} baselines, anomaly detection, risk models and forecasts.
+\item \textbf{Recommendation engine:} interventions linked to the identified risks, with evidence and follow-up.
+\item \textbf{Explanation and assistant layer:} a language model turns structured results into plain explanations and answers questions by text and voice, under strict guardrails. The demonstrator uses the Claude API to simulate this layer; without a connection, the contingency plan uses a local model on board (\ref{sec:artificial-intelligence}).
+\item \textbf{Dashboards and review:} the crew, crew health, predictive and recommendation screens, and the flight surgeon review workflow, in five languages and with audio description.
+\end{enumerate}
+
+\subsection{Global and Inclusive by Design}
+\label{subsec:inclusive}
+
+Space exploration is international, and so are its crews: crew members and flight surgeons do not share one first language, and a health tool is only useful if every one of them can understand it quickly, including people with a disability. AHI therefore treats inclusion as a requirement of the product. Three features carry it, specified in \ref{sec:global-access}: plain language explanations of the statistical results and a health assistant by text and voice; the interface in English, Portuguese, Spanish, Japanese and German; and audio description, so that blind and low vision users, people with dyslexia and astronauts busy with a task can operate the platform without looking at a screen.
+
+\subsection{What AHI Does Not Do}
+\label{subsec:not-in-scope}
+
+Some limits are part of the design and not missing features:
+
+\begin{itemize}
+\item \textbf{It does not diagnose.} AHI identifies risk indicators and requests appropriate evaluation. It does not name diseases. In particular it does not diagnose depression or anxiety from facial expressions, messages or heart rate.
+\item \textbf{It does not prescribe medication or treatment.} Recommendations are operational actions and requests for review, never drugs or doses.
+\item \textbf{It does not replace the flight surgeon or mission protocols.} High and critical items always require human review.
+\item \textbf{It does not present a forecast as a certainty.} Every prediction carries its uncertainty and is never presented as the certainty that a disease will occur.
+\item \textbf{It does not invent official limits.} Status comes from personal baselines. Any fixed threshold must come from a cited standard or from review by a flight surgeon.
+\item \textbf{It does not treat missing data as normal.} An absent or stale signal is reported as no data.
+\item \textbf{It does not need the internet to work.} Internet access is welcome but not essential. When a connection exists, AHI uses it: the demonstrator, a web application, simulates the AI language features with the Claude API, and space weather notifications come from the NASA Open APIs. Without a connection, an on board backend and a contingency plan keep monitoring, alerts, recommendations, explanations and the assistant working (\ref{subsec:offline-llm}).
+\item \textbf{It is not a flight control system.} It does not act on the vehicle or on launch, abort, entry or landing decisions; during these phases it records and never commands (\ref{subsec:mission-profiles}).
+\end{itemize}

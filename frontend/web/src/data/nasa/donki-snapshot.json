@@ -1,0 +1,958 @@
+{
+  "data_origin": "REAL_PUBLIC",
+  "source": "NASA DONKI (CCMC)",
+  "sourceUrl": "https://ccmc.gsfc.nasa.gov/DONKI/",
+  "retrievedAt": "2026-11-15T04:06:06Z",
+  "window": {
+    "start": "2026-10-16T00:00:00Z",
+    "end": "2026-11-15T04:06:06Z"
+  },
+  "events": [
+    {
+      "id": "2026-11-14T22:15:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-14T22:15:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49557/-1"
+    },
+    {
+      "id": "2026-11-14T21:16:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-11-14T21:16:00Z",
+      "peakTime": "2026-11-14T21:27:00Z",
+      "classType": "C2.8",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49559/-1"
+    },
+    {
+      "id": "2026-11-14T16:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-14T16:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49565/-1"
+    },
+    {
+      "id": "2026-11-14T14:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-14T14:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49554/-1"
+    },
+    {
+      "id": "2026-11-14T04:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-14T04:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49551/-1"
+    },
+    {
+      "id": "2026-11-14T01:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-14T01:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49549/-1"
+    },
+    {
+      "id": "2026-11-13T21:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-13T21:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49547/-1"
+    },
+    {
+      "id": "2026-11-13T16:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-13T16:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49546/-1"
+    },
+    {
+      "id": "2026-11-13T09:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-13T09:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49537/-1"
+    },
+    {
+      "id": "2026-11-13T03:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-13T03:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49529/-1"
+    },
+    {
+      "id": "2026-11-13T01:26:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-13T01:26:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49525/-1"
+    },
+    {
+      "id": "2026-11-12T21:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-12T21:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49523/-1"
+    },
+    {
+      "id": "2026-11-12T01:53:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-12T01:53:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49508/-1"
+    },
+    {
+      "id": "2026-11-11T23:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-11T23:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49505/-1"
+    },
+    {
+      "id": "2026-11-11T21:06:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-11-11T21:06:00Z",
+      "peakTime": "2026-11-11T21:21:00Z",
+      "classType": "M1.7",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49504/-1"
+    },
+    {
+      "id": "2026-11-10T05:30:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-10T05:30:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49479/-1"
+    },
+    {
+      "id": "2026-11-10T02:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-10T02:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49475/-1"
+    },
+    {
+      "id": "2026-11-10T02:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-10T02:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49484/-1"
+    },
+    {
+      "id": "2026-11-09T18:15:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-09T18:15:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49468/-1"
+    },
+    {
+      "id": "2026-11-09T10:53:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-09T10:53:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49470/-1"
+    },
+    {
+      "id": "2026-11-09T09:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-09T09:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49466/-1"
+    },
+    {
+      "id": "2026-11-08T18:15:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-11-08T18:15:00Z",
+      "peakTime": "2026-11-08T18:27:00Z",
+      "classType": "M1.1",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49461/-1"
+    },
+    {
+      "id": "2026-11-08T15:29:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-11-08T15:29:00Z",
+      "peakTime": "2026-11-08T15:37:00Z",
+      "classType": "M1.1",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49456/-1"
+    },
+    {
+      "id": "2026-11-08T08:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-08T08:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49459/-1"
+    },
+    {
+      "id": "2026-11-08T07:33:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-11-08T07:33:00Z",
+      "peakTime": "2026-11-08T07:46:00Z",
+      "classType": "M1.7",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49453/-1"
+    },
+    {
+      "id": "2026-11-08T00:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-08T00:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49454/-1"
+    },
+    {
+      "id": "2026-11-07T18:30:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-07T18:30:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49451/-1"
+    },
+    {
+      "id": "2026-11-07T18:21:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-11-07T18:21:00Z",
+      "peakTime": "2026-11-07T18:42:00Z",
+      "classType": "M1.9",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49448/-1"
+    },
+    {
+      "id": "2026-11-07T17:11:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-11-07T17:11:00Z",
+      "peakTime": "2026-11-07T17:17:00Z",
+      "classType": "M1.4",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49442/-1"
+    },
+    {
+      "id": "2026-11-07T12:26:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-11-07T12:26:00Z",
+      "peakTime": "2026-11-07T12:43:00Z",
+      "classType": "M1.2",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49433/-1"
+    },
+    {
+      "id": "2026-11-07T10:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-07T10:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49437/-1"
+    },
+    {
+      "id": "2026-11-07T09:36:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-07T09:36:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49434/-1"
+    },
+    {
+      "id": "2026-11-07T06:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-07T06:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49445/-1"
+    },
+    {
+      "id": "2026-11-06T20:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-06T20:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49431/-1"
+    },
+    {
+      "id": "2026-11-06T16:15:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-06T16:15:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49426/-1"
+    },
+    {
+      "id": "2026-11-06T13:15:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-06T13:15:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49416/-1"
+    },
+    {
+      "id": "2026-11-06T10:53:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-06T10:53:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49405/-1"
+    },
+    {
+      "id": "2026-11-06T01:26:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-06T01:26:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49403/-1"
+    },
+    {
+      "id": "2026-11-05T21:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-05T21:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49398/-1"
+    },
+    {
+      "id": "2026-11-05T20:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-05T20:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49394/-1"
+    },
+    {
+      "id": "2026-11-05T18:21:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-11-05T18:21:00Z",
+      "peakTime": "2026-11-05T18:33:00Z",
+      "classType": "M3.5",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49391/-1"
+    },
+    {
+      "id": "2026-11-05T11:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-05T11:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49389/-1"
+    },
+    {
+      "id": "2026-11-05T04:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-05T04:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49386/-1"
+    },
+    {
+      "id": "2026-11-04T02:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-04T02:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49382/-1"
+    },
+    {
+      "id": "2026-11-03T09:36:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-03T09:36:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49370/-1"
+    },
+    {
+      "id": "2026-11-01T19:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-01T19:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49361/-1"
+    },
+    {
+      "id": "2026-11-01T19:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-01T19:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49358/-1"
+    },
+    {
+      "id": "2026-11-01T00:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-11-01T00:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49353/-1"
+    },
+    {
+      "id": "2026-10-31T18:00:00-GST-001",
+      "kind": "GEOMAGNETIC_STORM",
+      "startTime": "2026-10-31T18:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": 6.0,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/GST/49348/-1"
+    },
+    {
+      "id": "2026-10-31T05:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-31T05:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49343/-1"
+    },
+    {
+      "id": "2026-10-30T12:36:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-30T12:36:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49341/-1"
+    },
+    {
+      "id": "2026-10-29T10:36:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-29T10:36:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49324/-1"
+    },
+    {
+      "id": "2026-10-28T11:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-28T11:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49304/-1"
+    },
+    {
+      "id": "2026-10-28T00:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-28T00:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49301/-1"
+    },
+    {
+      "id": "2026-10-27T12:53:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-27T12:53:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49293/-1"
+    },
+    {
+      "id": "2026-10-27T06:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-27T06:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49286/-1"
+    },
+    {
+      "id": "2026-10-26T20:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-26T20:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49282/-1"
+    },
+    {
+      "id": "2026-10-26T18:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-26T18:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49276/-1"
+    },
+    {
+      "id": "2026-10-26T18:17:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-10-26T18:17:00Z",
+      "peakTime": "2026-10-26T18:40:00Z",
+      "classType": "C2.8",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49278/-1"
+    },
+    {
+      "id": "2026-10-26T09:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-26T09:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49249/-1"
+    },
+    {
+      "id": "2026-10-26T09:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-26T09:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49254/-1"
+    },
+    {
+      "id": "2026-10-26T08:21:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-10-26T08:21:00Z",
+      "peakTime": "2026-10-26T08:38:00Z",
+      "classType": "C1.9",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49256/-1"
+    },
+    {
+      "id": "2026-10-26T02:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-26T02:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49272/-1"
+    },
+    {
+      "id": "2026-10-26T01:26:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-26T01:26:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49270/-1"
+    },
+    {
+      "id": "2026-10-26T00:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-26T00:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49268/-1"
+    },
+    {
+      "id": "2026-10-25T19:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-25T19:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49246/-1"
+    },
+    {
+      "id": "2026-10-25T09:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-25T09:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49244/-1"
+    },
+    {
+      "id": "2026-10-25T05:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-25T05:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49237/-1"
+    },
+    {
+      "id": "2026-10-25T03:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-25T03:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49233/-1"
+    },
+    {
+      "id": "2026-10-24T22:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-24T22:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49241/-1"
+    },
+    {
+      "id": "2026-10-24T21:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-24T21:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49229/-1"
+    },
+    {
+      "id": "2026-10-24T20:36:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-24T20:36:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49226/-1"
+    },
+    {
+      "id": "2026-10-24T18:08:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-24T18:08:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49239/-1"
+    },
+    {
+      "id": "2026-10-24T18:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-24T18:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49231/-1"
+    },
+    {
+      "id": "2026-10-24T15:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-24T15:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49223/-1"
+    },
+    {
+      "id": "2026-10-23T16:36:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-23T16:36:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49220/-1"
+    },
+    {
+      "id": "2026-10-23T10:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-23T10:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49218/-1"
+    },
+    {
+      "id": "2026-10-23T04:18:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-23T04:18:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49212/-1"
+    },
+    {
+      "id": "2026-10-23T03:43:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-10-23T03:43:00Z",
+      "peakTime": "2026-10-23T03:55:00Z",
+      "classType": "C1.3",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49214/-1"
+    },
+    {
+      "id": "2026-10-22T22:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-22T22:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49210/-1"
+    },
+    {
+      "id": "2026-10-22T20:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-22T20:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49208/-1"
+    },
+    {
+      "id": "2026-10-21T20:36:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-21T20:36:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49197/-1"
+    },
+    {
+      "id": "2026-10-21T13:38:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-21T13:38:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49191/-1"
+    },
+    {
+      "id": "2026-10-21T08:53:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-21T08:53:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49185/-1"
+    },
+    {
+      "id": "2026-10-20T14:23:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-20T14:23:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49183/-1"
+    },
+    {
+      "id": "2026-10-20T09:09:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-20T09:09:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49175/-1"
+    },
+    {
+      "id": "2026-10-20T07:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-20T07:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49178/-1"
+    },
+    {
+      "id": "2026-10-20T01:26:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-20T01:26:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49173/-1"
+    },
+    {
+      "id": "2026-10-19T19:15:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-19T19:15:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49170/-1"
+    },
+    {
+      "id": "2026-10-19T14:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-19T14:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49167/-1"
+    },
+    {
+      "id": "2026-10-19T08:54:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-10-19T08:54:00Z",
+      "peakTime": "2026-10-19T09:03:00Z",
+      "classType": "M1.6",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49165/-1"
+    },
+    {
+      "id": "2026-10-18T23:15:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-18T23:15:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49162/-1"
+    },
+    {
+      "id": "2026-10-18T21:30:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-18T21:30:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49160/-1"
+    },
+    {
+      "id": "2026-10-17T18:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-17T18:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49157/-1"
+    },
+    {
+      "id": "2026-10-17T17:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-17T17:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49155/-1"
+    },
+    {
+      "id": "2026-10-17T02:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-17T02:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49150/-1"
+    },
+    {
+      "id": "2026-10-16T20:24:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-16T20:24:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49148/-1"
+    },
+    {
+      "id": "2026-10-16T17:00:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-16T17:00:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49146/-1"
+    },
+    {
+      "id": "2026-10-16T15:38:00-FLR-001",
+      "kind": "SOLAR_FLARE",
+      "startTime": "2026-10-16T15:38:00Z",
+      "peakTime": "2026-10-16T15:42:00Z",
+      "classType": "M1.3",
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49134/-1"
+    },
+    {
+      "id": "2026-10-16T15:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-16T15:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49143/-1"
+    },
+    {
+      "id": "2026-10-16T12:38:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-16T12:38:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49137/-1"
+    },
+    {
+      "id": "2026-10-16T11:48:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-16T11:48:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49139/-1"
+    },
+    {
+      "id": "2026-10-16T08:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-16T08:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49135/-1"
+    },
+    {
+      "id": "2026-10-16T07:12:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-16T07:12:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49127/-1"
+    },
+    {
+      "id": "2026-10-16T06:09:00-CME-001",
+      "kind": "CME",
+      "startTime": "2026-10-16T06:09:00Z",
+      "peakTime": null,
+      "classType": null,
+      "kpIndex": null,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/49132/-1"
+    }
+  ],
+  "mode": "snapshot"
+}

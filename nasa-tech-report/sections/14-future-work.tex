@@ -1,0 +1,50 @@
+\section{Future Work}
+\label{sec:future-work}
+
+The items below extend AHI beyond the scope described in this report. They are plans in rough order of priority and not commitments.
+
+\subsection{Validation}
+\label{subsec:future-validation}
+
+\begin{enumerate}
+\item Retrospective replay of real ISS cabin periods and of public laboratory and analog data, as the first test of the engine outside simulated data (\ref{sec:results}).
+\item Operational shadow mode with authorized crew data, with alerts and recommendations reviewed by flight surgeons, to obtain labeled cases.
+\item A citable source for every threshold, with document, section and version, and review of thresholds, wording and the recommendation catalog by flight surgeons.
+\item A usability study with crew members and flight surgeons, with tasks taken from the user journeys, in the five languages, and a formal accessibility audit with blind, low vision and dyslexic users.
+\item Training and evaluation of the local language model and of the speech models on the on board hardware, compared with the Claude API used in the demonstrator on the same reference cases.
+\item Prospective clinical validation, which is outside the scope of a project of this kind and would need a medical sponsor.
+\end{enumerate}
+
+\subsection{Data and Devices}
+\label{subsec:future-real-data}
+
+\begin{enumerate}
+\item A table that relates each metric to the real device that measures it, to the NASA Standard Measure and to the HRP hazard, confirmed against the interface documentation of each device.
+\item Further ISS hardware described in public sources and not part of the current premise, such as the T-Mini core temperature headband and the Wearable Monitoring vest \cite{nasa_wearable_tech_iss}, and the new teal CEVIS ergometer \cite{nasa_jsc_exercise_countermeasures}.
+\item Access to historical data through the Life Sciences Data Archive and the NASA Life Sciences Portal \cite{nasa_lsda,nasa_nlsp}, with formal requests where required.
+\item Real radiation data from RadLab once its coverage, units and format can be checked \cite{osdr_radlab}.
+\end{enumerate}
+
+\subsection{Missions Beyond Low Earth Orbit}
+\label{subsec:future-platform}
+
+The mission scenarios of \ref{subsec:mission-scenarios} show that the risks grow with the duration of the mission and its distance from Earth. The steps below extend AHI from the ISS to those scenarios.
+
+\begin{enumerate}
+\item Integration of the dynamic phases: the acceleration records required by NASA-STD-3001 for ascent, entry and landing \cite{nasa_ochmo_tb024_occupant}, imported after flight and placed on the timeline next to the check-ins after launch and after landing.
+\item Adaptation to Artemis and lunar missions, whose Standard Measures differ from those of the ISS \cite{nasa_artemis_ii_standard_measures}, with smaller devices and less on board computing.
+\item Longer autonomy for Mars missions, with communication delays of up to about 24 minutes one way \cite{nasa_space_communications_seven_things}: a larger on board model set, a flight approved version of the local language and speech models, and on board steps for every high item.
+\item Space weather beyond low Earth orbit, where the magnetic field of the Earth no longer protects the crew: integration of the space weather support of the mission alongside DONKI, and shelter planning that accounts for extravehicular activity on the lunar surface.
+\item Bandwidth aware synchronization, with priorities so that alerts and summaries reach Earth before raw data.
+\end{enumerate}
+
+\subsection{Analytics}
+\label{subsec:future-analytics}
+
+\begin{enumerate}
+\item Activity recognition from sensors instead of the schedule, which would remove the assumption of a correct activity context.
+\item Sequence models for multivariate forecasting once long histories exist.
+\item Learning of intervention effects from the follow-up of logged interventions, within protocols approved by the medical team.
+\item Integration of bone examination results, so that bone loss can be followed as point measurements on the timeline in the same way as the eye and hearing examinations \cite{lang2004bone}.
+\item More languages for the interface and the assistant, chosen with the partner agencies of each mission, and sign language video for deaf users on the ground.
+\end{enumerate}

@@ -34,6 +34,8 @@ Perigo tratado: **Distance from Earth**. Quanto mais longe, mais a tripulação 
 
 ### Perfis de comunicação
 
+Escolher um **perfil de missão** na barra superior define o link correspondente (ISS para ISS, Moon para Moon, Mars transit para Mars farthest); o link ainda pode ser trocado à mão. Perfis, valores citados e o aviso de clima espacial: [Perfis de missão](/pt/intelligence/mission-profiles).
+
 Escolha o perfil em "Distance from Earth", na gaveta "Earth link" (botão na barra superior): "ISS (low Earth orbit)", "Moon", "Mars (closest)" ou "Mars (farthest)". O selo mostra o atraso só de ida e quantas mensagens estão em trânsito. Os atrasos de cada perfil e o modelo de mensagens estão em [Autorrelato e link com a Terra](/pt/intelligence/self-report-and-earth-link#earth-link).
 
 ### Botões e mensagens

@@ -1,0 +1,87 @@
+import clsx from 'clsx'
+import { Battery, BatteryLow, Cpu, FlaskConical, Info } from 'lucide-react'
+import { useAppStore } from '../../state/store'
+import type { Device, MetricCode } from '../../types/domain'
+import { tp, useT } from '../../i18n'
+import { metricLabel } from '../../i18n/catalog'
+import { lowerLabel } from './text'
+import { Badge, SectionLabel } from '../../components/ui'
+import { Details } from '../../components/viz/Details'
+import { engineText } from '../../i18n/engineText'
+import { ORIGIN_LABEL, relTime } from '../../components/format'
+import { DEVICE_KIND_LABEL } from '../topbar/ProvenancePopover'
+import { DEVICE_STATE_META, useDevicesForMetrics } from '../vitals/deviceMeta'
+
+function DeviceCard({ d, metrics, now }: { d: Device; metrics: MetricCode[]; now: number }) {
+  const meta = DEVICE_STATE_META[d.state]
+  const Icon = meta.icon
+  const feeds = d.metrics.filter((m) => metrics.includes(m))
+  const lowBattery = d.batteryPct != null && d.batteryPct < 20
+  const attention = d.state !== 'ONLINE'
+  const t = useT()
+  return (
+    <li className={clsx('rounded-lg px-2.5 py-1.5', attention ? 'border border-dashed border-white/15' : 'bg-white/[0.03] ring-1 ring-white/[0.06]')}>
+      <div className="flex items-center gap-2">
+        <Icon size={13} aria-hidden className="shrink-0" style={{ color: meta.color }} />
+        <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-ink-100" title={DEVICE_KIND_LABEL[d.kind]}>
+          {d.name}
+        </span>
+        <span className="sr-only">{meta.label}</span>
+        <span className={clsx('tabular flex shrink-0 items-center gap-0.5 text-[11px]', lowBattery ? 'text-watch' : 'text-ink-500')} title={t('attention.battery')}>
+          {lowBattery ? <BatteryLow size={12} aria-hidden /> : <Battery size={12} aria-hidden />}
+          <span className="sr-only">{t('attention.battery')}</span>
+          {d.batteryPct == null ? t('attention.notAvailable') : `${Math.round(d.batteryPct)}%`}
+        </span>
+        <Badge tone="sim" icon={<FlaskConical size={10} aria-hidden />} title={t('attention.dataOrigin')}>
+          {ORIGIN_LABEL[d.data_origin]}
+        </Badge>
+      </div>
+      <Details className="pl-[21px]">
+        <span className="block">
+          {meta.label} · {DEVICE_KIND_LABEL[d.kind]}
+          {d.assignedTo ? '' : ` · ${t('attention.shared')}`} · {t('attention.lastSeen', { when: relTime(d.lastSeenAt, now) })}
+        </span>
+        {feeds.length > 0 && <span className="block">{t('attention.here', { list: feeds.map((m) => lowerLabel(metricLabel(m))).join(', ') })}</span>}
+        {d.state !== 'ONLINE' && d.detail && <span className="block">{engineText('other', d.detail, d.id)}</span>}
+      </Details>
+    </li>
+  )
+}
+
+/**
+ * "Measured by": the devices that feed the metrics of a body region (or of the region a selected
+ * structure is monitored with), with their state, battery, last contact and data origin.
+ * Metrics that come from the crew app (check-ins, self tests, intake log) are named as such.
+ */
+export function MeasuredBy({ astronautId, metrics }: { astronautId: string; metrics: MetricCode[] }) {
+  const devices = useDevicesForMetrics(astronautId, metrics)
+  const now = useAppStore((s) => Math.floor(s.clock.simNow / 30000) * 30000)
+  const t = useT()
+  if (metrics.length === 0) return null
+  const covered = new Set(devices.flatMap((d) => d.metrics))
+  const fromApp = metrics.filter((m) => !covered.has(m))
+  return (
+    <section aria-label={t('attention.measuredBy')}>
+      <SectionLabel right={<span className="tabular text-[11px] text-ink-500">{tp('attention.devices', devices.length)}</span>}>{t('attention.measuredBy')}</SectionLabel>
+      {devices.length > 0 ? (
+        <ul className="mt-2 flex flex-col gap-1">
+          {devices.map((d) => (
+            <DeviceCard key={d.id} d={d} metrics={metrics} now={now} />
+          ))}
+        </ul>
+      ) : (
+        <div className="mt-2 flex items-center gap-2 rounded-xl bg-white/[0.03] px-3 py-2.5 text-[12px] text-ink-300 ring-1 ring-white/[0.05]">
+          <Cpu size={14} className="shrink-0 text-ink-500" aria-hidden /> {t('attention.noDevice')}
+        </div>
+      )}
+      {fromApp.length > 0 && (
+        <p className="mt-1.5 flex items-start gap-1.5 text-[11px] leading-relaxed text-ink-500">
+          <Info size={12} className="mt-0.5 shrink-0" aria-hidden />
+          <span>
+            {t('attention.fromApp', { list: fromApp.map((m) => metricLabel(m)).join(', ') })}
+          </span>
+        </p>
+      )}
+    </section>
+  )
+}

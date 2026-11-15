@@ -4,42 +4,46 @@ import { useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } f
 import { useAppStore } from '../../state/store'
 import { RISK_ORDER, STATUS_META } from '../../lib/status'
 import type { Alert, AuditEvent, RiskLevel } from '../../types/domain'
-import { METRIC_CATALOG, REGION_LABELS } from '../../engine/catalog'
+import { METRIC_CATALOG } from '../../engine/catalog'
 import { StatusIcon, StatusPill } from '../../components/Status'
 import { Button, Drawer } from '../../components/ui'
 import { formatUtcTime, relTime } from '../../components/format'
 import { useUiStore } from '../../app/uiStore'
 import { focusTarget } from '../shared/hooks'
-import { playAlertTone, primeAlertAudio } from './sound'
+import { useA11yStore } from '../a11y/settings'
+import { playEarcon, primeAudio } from '../a11y/earcons'
+import { t, translatedRecord, useT } from '../../i18n'
+import { metricLabel, regionLabel, regionSystem } from '../../i18n/catalog'
+import { alertDetail, alertTitle } from '../../i18n/engineText'
 
 function useCallsign() {
   const crew = useAppStore((s) => s.crew)
-  return (id: string | null) => (id ? (crew.find((c) => c.id === id)?.callsign ?? id) : 'Cabin')
+  return (id: string | null) => (id ? (crew.find((c) => c.id === id)?.callsign ?? id) : t('alerts.cabin'))
 }
 
 function where(a: Alert): string | null {
-  if (a.metric) return METRIC_CATALOG[a.metric].label
-  if (a.region && a.region !== 'environment') return REGION_LABELS[a.region].label
-  if (a.region === 'environment') return 'Cabin environment'
+  if (a.metric) return metricLabel(a.metric)
+  if (a.region && a.region !== 'environment') return regionLabel(a.region)
+  if (a.region === 'environment') return t('alerts.cabinEnvironment')
   return null
 }
 
 /** Body system the alert belongs to (used to group the drawer). */
 function systemOf(a: Alert): string {
   const region = a.region ?? (a.metric ? METRIC_CATALOG[a.metric].region : null)
-  if (region === 'environment') return 'Cabin environment'
-  if (region) return REGION_LABELS[region].system
-  return 'General'
+  if (region === 'environment') return t('alerts.cabinEnvironment')
+  if (region) return regionSystem(region)
+  return t('alerts.general')
 }
 
 const isOpenAlert = (a: Alert) => a.acknowledgedAt == null && a.resolvedAt == null
 
 function minutesText(ms: number): string {
   const min = Math.max(0, Math.round(ms / 60000))
-  if (min < 60) return `${min} min`
+  if (min < 60) return t('alerts.min', { n: min })
   const h = Math.floor(min / 60)
   const m = min % 60
-  return m ? `${h} h ${m} min` : `${h} h`
+  return m ? t('alerts.hMin', { h, m }) : t('alerts.h', { h })
 }
 
 /** "Unacknowledged for 6 min. Escalated." or null when it is fresh and not escalated. */
@@ -47,15 +51,15 @@ export function escalationText(a: Alert, now: number): string | null {
   if (!isOpenAlert(a)) return null
   const level = a.escalationLevel ?? 0
   const age = now - a.createdAt
-  if (level > 0) return `Unacknowledged for ${minutesText(age)}. Escalated${level > 1 ? ` (level ${level})` : ''}.`
-  if (age >= 2 * 60000) return `Unacknowledged for ${minutesText(age)}.`
+  if (level > 0) return level > 1 ? t('alerts.unackedEscalatedLevel', { time: minutesText(age), level }) : t('alerts.unackedEscalated', { time: minutesText(age) })
+  if (age >= 2 * 60000) return t('alerts.unacked', { time: minutesText(age) })
   return null
 }
 
 function EscalatedBadge({ level }: { level: number }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-md bg-critical/15 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-rose-200 uppercase ring-1 ring-critical/40">
-      <Siren size={10} aria-hidden /> Escalated{level > 1 ? ` x${level}` : ''}
+      <Siren size={10} aria-hidden /> {t('alerts.escalated')}{level > 1 ? ` x${level}` : ''}
     </span>
   )
 }
@@ -78,7 +82,7 @@ function AlertItem({ alert, now, callsign, showWho = true }: { alert: Alert; now
           <StatusPill status={alert.severity} variant="technical" size="sm" />
           {!acked && level > 0 && <EscalatedBadge level={level} />}
         </span>
-        <span className="tabular text-[11px] text-ink-500" title={`${formatUtcTime(alert.createdAt)} UTC (sim)`}>
+        <span className="tabular text-[11px] text-ink-500" title={t('alerts.timeTitle', { time: formatUtcTime(alert.createdAt) })}>
           {relTime(alert.createdAt, now)} · {formatUtcTime(alert.createdAt, false)}
         </span>
       </div>
@@ -93,20 +97,20 @@ function AlertItem({ alert, now, callsign, showWho = true }: { alert: Alert; now
           )}
         </div>
       )}
-      <div className={clsx('mt-0.5 text-[14px] leading-snug font-semibold', acked ? 'text-ink-300' : 'text-ink-100')}>{alert.title}</div>
-      {!acked && <p className="mt-1 text-xs leading-relaxed text-ink-300">{alert.detail}</p>}
+      <div className={clsx('mt-0.5 text-[14px] leading-snug font-semibold', acked ? 'text-ink-300' : 'text-ink-100')}>{alertTitle(alert)}</div>
+      {!acked && <p className="mt-1 text-xs leading-relaxed text-ink-300">{alertDetail(alert)}</p>}
       {esc && <p className={clsx('mt-1 text-xs font-semibold', level > 0 ? 'text-rose-200' : 'text-watch')}>{esc}</p>}
       {acked ? (
         <div className="mt-1.5 flex items-center gap-1 text-[11px] text-ink-500">
           <Check size={12} aria-hidden />{' '}
           {alert.acknowledgedAt != null
-            ? `Acknowledged by ${alert.acknowledgedBy ?? 'crew'} ${relTime(alert.acknowledgedAt, now)}`
-            : `Resolved, back in normal range ${relTime(alert.resolvedAt!, now)}`}
+            ? t('alerts.ackedBy', { who: alert.acknowledgedBy ?? t('alerts.crew'), when: relTime(alert.acknowledgedAt, now) })
+            : t('alerts.resolved', { when: relTime(alert.resolvedAt!, now) })}
         </div>
       ) : (
         <div className="mt-2.5 flex gap-2">
           <Button variant="primary" onClick={() => acknowledgeAlert(alert.id)}>
-            <Check size={13} strokeWidth={3} /> Acknowledge
+            <Check size={13} strokeWidth={3} /> {t('alerts.acknowledge')}
           </Button>
           <Button
             variant="ghost"
@@ -115,7 +119,7 @@ function AlertItem({ alert, now, callsign, showWho = true }: { alert: Alert; now
               setAlertsOpen(false)
             }}
           >
-            <Eye size={13} /> View
+            <Eye size={13} /> {t('alerts.view')}
           </Button>
         </div>
       )}
@@ -174,34 +178,39 @@ function AlertGroup({ group, now, callsign }: { group: Group; now: number; calls
   )
 }
 
+/** Shortcut to the alert sound preference (the full settings live in Tools, Accessibility and sound). */
 function SoundToggle() {
-  const soundOn = useUiStore((s) => s.soundOn)
-  const setSoundOn = useUiStore((s) => s.setSoundOn)
+  const soundOn = useA11yStore((s) => s.soundOn)
+  const setPrefs = useA11yStore((s) => s.setPrefs)
+  const setSettingsOpen = useA11yStore((s) => s.setSettingsOpen)
+  const t = useT()
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={soundOn}
-      onClick={() => {
-        const next = !soundOn
-        setSoundOn(next)
-        if (next) {
-          primeAlertAudio()
-          playAlertTone()
-        }
-      }}
-      className={clsx(
-        'focus-ring flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs ring-1 transition-colors',
-        soundOn ? 'bg-accent/[0.07] text-ink-100 ring-accent/30' : 'bg-white/[0.03] text-ink-300 ring-white/[0.06] hover:bg-white/[0.05]',
-      )}
-    >
-      {soundOn ? <Volume2 size={15} className="text-accent" aria-hidden /> : <VolumeX size={15} className="text-ink-500" aria-hidden />}
-      <span className="flex-1">Sound for new critical alerts</span>
-      <span className={clsx('relative h-[18px] w-8 rounded-full transition-colors', soundOn ? 'bg-accent' : 'bg-white/15')} aria-hidden>
-        <span className={clsx('absolute top-[2px] h-[14px] w-[14px] rounded-full bg-white shadow transition-all', soundOn ? 'left-[16px]' : 'left-[2px]')} />
-      </span>
-      <span className="sr-only">{soundOn ? 'On' : 'Off'}</span>
-    </button>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={soundOn}
+        onClick={() => {
+          const next = !soundOn
+          setPrefs({ soundOn: next })
+          if (next) void primeAudio().then(() => playEarcon('CRITICAL'))
+        }}
+        className={clsx(
+          'focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs ring-1 transition-colors',
+          soundOn ? 'bg-accent/[0.07] text-ink-100 ring-accent/30' : 'bg-white/[0.03] text-ink-300 ring-white/[0.06] hover:bg-white/[0.05]',
+        )}
+      >
+        {soundOn ? <Volume2 size={15} className="text-accent" aria-hidden /> : <VolumeX size={15} className="text-ink-500" aria-hidden />}
+        <span className="flex-1">{t('alerts.sound')}</span>
+        <span className={clsx('relative h-[18px] w-8 shrink-0 rounded-full transition-colors', soundOn ? 'bg-accent' : 'bg-white/15')} aria-hidden>
+          <span className={clsx('absolute top-[2px] h-[14px] w-[14px] rounded-full bg-white shadow transition-all', soundOn ? 'left-[16px]' : 'left-[2px]')} />
+        </span>
+        <span className="sr-only">{soundOn ? t('alerts.on') : t('alerts.off')}</span>
+      </button>
+      <Button variant="subtle" onClick={() => setSettingsOpen(true)} aria-haspopup="dialog">
+        {t('alerts.settings')}
+      </Button>
+    </div>
   )
 }
 
@@ -209,18 +218,23 @@ type AuditAction = AuditEvent['action']
 type ShownAction = Exclude<AuditAction, 'RULE_EVALUATED'>
 
 /** Plain labels for the activity log. RULE_EVALUATED is engine bookkeeping and never shown. */
-const AUDIT_LABEL: Record<ShownAction, string> = {
-  ALERT_ACK: 'Alert acknowledged',
-  INTERVENTION_LOGGED: 'Action logged',
-  SCENARIO_CHANGED: 'Scenario changed',
-  RECOMMENDATION_UPDATED: 'Recommendation updated',
-  ALERT_ESCALATED: 'Alert escalated',
-  // Both directions use these (crew to Earth and Earth to crew); the detail line says which.
-  COMM_SENT: 'Message sent',
-  COMM_RECEIVED: 'Message received',
-  COMM_PROFILE_CHANGED: 'Earth link changed',
-  CHECKIN_RECORDED: 'Check-in recorded',
-}
+// COMM_SENT and COMM_RECEIVED cover both directions (crew to Earth and Earth to crew); the detail line says which.
+const AUDIT_LABEL: Record<ShownAction, string> = translatedRecord(
+  [
+    'ALERT_ACK',
+    'INTERVENTION_LOGGED',
+    'SCENARIO_CHANGED',
+    'RECOMMENDATION_UPDATED',
+    'ALERT_ESCALATED',
+    'COMM_SENT',
+    'COMM_RECEIVED',
+    'COMM_PROFILE_CHANGED',
+    'CHECKIN_RECORDED',
+    'DEVICE_PAUSED',
+    'DEVICE_RESUMED',
+  ] as const,
+  (k) => t(`alerts.audit.${k}`),
+)
 
 const AUDIT_DOT: Partial<Record<AuditAction, string>> = {
   ALERT_ACK: 'bg-nominal',
@@ -235,15 +249,12 @@ const AUDIT_DOT: Partial<Record<AuditAction, string>> = {
 function ActivityLog({ now }: { now: number }) {
   const audit = useAppStore((s) => s.audit)
   const items = useMemo(() => audit.filter((a) => a.action !== 'RULE_EVALUATED').sort((a, b) => b.at - a.at), [audit])
+  const t = useT()
   if (items.length === 0) {
-    return (
-      <p className="rounded-xl bg-white/[0.03] px-3 py-3 text-[13px] text-ink-500 ring-1 ring-white/[0.06]">
-        Acknowledged alerts, logged actions, check-ins and messages to Earth will appear here.
-      </p>
-    )
+    return <p className="rounded-xl bg-white/[0.03] px-3 py-3 text-[13px] text-ink-500 ring-1 ring-white/[0.06]">{t('alerts.logEmpty')}</p>
   }
   return (
-    <ol className="flex flex-col" aria-label="Activity log, newest first">
+    <ol className="flex flex-col" aria-label={t('alerts.logAria')}>
       {items.map((a, i) => (
         <li key={a.id} className="relative flex gap-3 pb-3 last:pb-0">
           {i < items.length - 1 && <span className="absolute top-3.5 bottom-0 left-[4px] w-px bg-white/[0.08]" aria-hidden />}
@@ -251,12 +262,12 @@ function ActivityLog({ now }: { now: number }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
               <span className="text-[13px] font-semibold text-ink-100">{AUDIT_LABEL[a.action as ShownAction] ?? a.action}</span>
-              <span className="tabular shrink-0 text-[11px] text-ink-500" title={`${formatUtcTime(a.at)} UTC (sim)`}>
+              <span className="tabular shrink-0 text-[11px] text-ink-500" title={t('alerts.timeTitle', { time: formatUtcTime(a.at) })}>
                 {formatUtcTime(a.at, false)} · {relTime(a.at, now)}
               </span>
             </div>
             {a.detail && <p className="mt-0.5 text-xs leading-snug break-words text-ink-300">{a.detail}</p>}
-            {a.actor && <p className="mt-0.5 text-[11px] text-ink-500">by {a.actor}</p>}
+            {a.actor && <p className="mt-0.5 text-[11px] text-ink-500">{t('alerts.by', { actor: a.actor })}</p>}
           </div>
         </li>
       ))}
@@ -269,9 +280,10 @@ type DrawerTab = 'open' | 'history'
 /** Open / History tabs (WAI-ARIA tabs: arrows, Home and End move between them). */
 function DrawerTabs({ tab, setTab, openCount }: { tab: DrawerTab; setTab: (t: DrawerTab) => void; openCount: number }) {
   const refs = useRef<Record<DrawerTab, HTMLButtonElement | null>>({ open: null, history: null })
+  const t = useT()
   const tabs: { id: DrawerTab; label: string }[] = [
-    { id: 'open', label: `Open (${openCount})` },
-    { id: 'history', label: 'History' },
+    { id: 'open', label: t('alerts.tabOpen', { n: openCount }) },
+    { id: 'history', label: t('alerts.tabHistory') },
   ]
   const onKey = (e: ReactKeyboardEvent) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') return
@@ -283,29 +295,29 @@ function DrawerTabs({ tab, setTab, openCount }: { tab: DrawerTab; setTab: (t: Dr
     refs.current[next]?.focus()
   }
   return (
-    <div role="tablist" aria-label="Alerts" onKeyDown={onKey} className="mt-4 flex h-9 items-center gap-0.5 rounded-xl bg-white/[0.035] p-[3px] ring-1 ring-white/[0.08]">
-      {tabs.map((t) => {
-        const sel = tab === t.id
+    <div role="tablist" aria-label={t('alerts.title')} onKeyDown={onKey} className="mt-4 flex h-9 items-center gap-0.5 rounded-xl bg-white/[0.035] p-[3px] ring-1 ring-white/[0.08]">
+      {tabs.map((tb) => {
+        const sel = tab === tb.id
         return (
           <button
-            key={t.id}
+            key={tb.id}
             ref={(el) => {
-              refs.current[t.id] = el
+              refs.current[tb.id] = el
             }}
             type="button"
             role="tab"
-            id={`alerts-tab-${t.id}`}
+            id={`alerts-tab-${tb.id}`}
             aria-selected={sel}
-            aria-controls={`alerts-panel-${t.id}`}
+            aria-controls={`alerts-panel-${tb.id}`}
             tabIndex={sel ? 0 : -1}
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(tb.id)}
             className={clsx(
               'focus-ring flex h-full flex-1 items-center justify-center gap-1.5 rounded-[9px] text-xs font-semibold whitespace-nowrap transition-all',
               sel ? 'bg-accent/[0.14] text-accent shadow-[inset_0_0_0_1px_rgba(94,234,212,0.35)]' : 'text-ink-500 hover:text-ink-100',
             )}
           >
-            {t.id === 'history' ? <History size={13} aria-hidden /> : <BellRing size={13} aria-hidden />}
-            {t.label}
+            {tb.id === 'history' ? <History size={13} aria-hidden /> : <BellRing size={13} aria-hidden />}
+            {tb.label}
           </button>
         )
       })}
@@ -327,18 +339,19 @@ export function AlertsDrawer() {
     return { groups: groupAlerts(openList), openCount: openList.length, ackedList: sorted.filter((a) => !isOpenAlert(a)) }
   }, [alerts])
   const ack = useAppStore((s) => s.acknowledgeAlert)
+  const t = useT()
   return (
     <Drawer
       open={open}
       onClose={() => setAlertsOpen(false)}
-      title="Alerts"
+      title={t('alerts.title')}
       icon={<BellRing size={17} className="text-accent" aria-hidden />}
       footer={
         <div className="flex items-center justify-between gap-2 text-[11px] text-ink-500">
-          <span>Decision support only. Not a diagnosis. Simulated data.</span>
+          <span>{t('alerts.disclaimer')}</span>
           {tab === 'open' && openCount > 1 && (
             <Button variant="subtle" onClick={() => groups.forEach((g) => g.items.forEach((a) => ack(a.id)))}>
-              Acknowledge all
+              {t('alerts.ackAll')}
             </Button>
           )}
         </div>
@@ -349,12 +362,12 @@ export function AlertsDrawer() {
       {tab === 'open' ? (
         <div role="tabpanel" id="alerts-panel-open" aria-labelledby="alerts-tab-open">
           <div className="mt-4 mb-2 flex items-center justify-between text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">
-            <span>Open ({openCount})</span>
-            {groups.length > 1 && <span className="tracking-normal normal-case">by crew member and body system</span>}
+            <span>{t('alerts.openHeading', { n: openCount })}</span>
+            {groups.length > 1 && <span className="tracking-normal normal-case">{t('alerts.grouping')}</span>}
           </div>
           {openCount === 0 ? (
             <div className="flex items-center gap-2.5 rounded-xl bg-nominal/[0.06] px-3 py-3 text-[13px] text-ink-300 ring-1 ring-nominal/20">
-              <StatusIcon status="LOW" size={16} /> No open alerts.
+              <StatusIcon status="LOW" size={16} /> {t('alerts.noOpen')}
             </div>
           ) : (
             <ul className="flex flex-col gap-3">
@@ -371,7 +384,7 @@ export function AlertsDrawer() {
                 onClick={() => setShowAcked((v) => !v)}
                 className="focus-ring flex w-full items-center justify-between rounded-lg py-1 text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase hover:text-ink-300"
               >
-                Acknowledged or resolved ({ackedList.length})
+                {t('alerts.ackedOrResolved', { n: ackedList.length })}
                 <ChevronDown size={14} className={clsx('transition-transform', showAcked && 'rotate-180')} aria-hidden />
               </button>
               {showAcked && (
@@ -387,8 +400,8 @@ export function AlertsDrawer() {
       ) : (
         <div role="tabpanel" id="alerts-panel-history" aria-labelledby="alerts-tab-history">
           <div className="mt-4 mb-3 flex items-center justify-between text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">
-            <span>Activity log</span>
-            <span className="tracking-normal normal-case">newest first</span>
+            <span>{t('alerts.activityLog')}</span>
+            <span className="tracking-normal normal-case">{t('alerts.newestFirst')}</span>
           </div>
           <ActivityLog now={now} />
         </div>
@@ -420,6 +433,7 @@ export function CriticalBanner({ className, overlay = false }: { className?: str
   const level = top.escalationLevel ?? 0
   const escalated = level > 0
   const esc = escalationText(top, now)
+  const crit = STATUS_META.CRITICAL
   return (
     <div
       data-tour="banner"
@@ -444,23 +458,23 @@ export function CriticalBanner({ className, overlay = false }: { className?: str
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-bold tracking-[0.14em] text-rose-200 uppercase">
-          Critical · Act now · {callsign(top.astronautId)}
+          {crit.label} · {crit.crewLabel} · {callsign(top.astronautId)}
           {loc && <span className="font-medium tracking-normal normal-case text-rose-200/80">{loc}</span>}
           {escalated && <EscalatedBadge level={level} />}
-          {count > 1 && <span className="rounded bg-white/10 px-1.5 font-semibold tracking-normal text-white normal-case">+{count - 1} more</span>}
+          {count > 1 && <span className="rounded bg-white/10 px-1.5 font-semibold tracking-normal text-white normal-case">{t('alerts.more', { n: count - 1 })}</span>}
         </div>
-        <div className="truncate text-[15px] font-semibold text-white">{top.title}</div>
-        <div className={clsx('truncate text-xs', esc ? 'font-semibold text-rose-100' : 'text-rose-100/80')}>{esc ?? top.detail}</div>
+        <div className="truncate text-[15px] font-semibold text-white">{alertTitle(top)}</div>
+        <div className={clsx('truncate text-xs', esc ? 'font-semibold text-rose-100' : 'text-rose-100/80')}>{esc ?? alertDetail(top)}</div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Button variant="ghost" className="text-white ring-white/25" onClick={() => focusTarget({ astronautId: top.astronautId, region: top.region, metric: top.metric })}>
-          <Eye size={13} /> View
+          <Eye size={13} /> {t('alerts.view')}
         </Button>
         <Button variant="danger" onClick={() => acknowledgeAlert(top.id)}>
-          <Check size={13} strokeWidth={3} /> Acknowledge
+          <Check size={13} strokeWidth={3} /> {t('alerts.acknowledge')}
         </Button>
         {!escalated && (
-          <button type="button" aria-label="Hide banner (alert stays open)" title="Hide banner (alert stays open)" onClick={() => hideBanner(top.id)} className="focus-ring rounded-lg p-1 text-rose-200/70 hover:text-white">
+          <button type="button" aria-label={t('alerts.hideBanner')} title={t('alerts.hideBanner')} onClick={() => hideBanner(top.id)} className="focus-ring rounded-lg p-1 text-rose-200/70 hover:text-white">
             <X size={15} />
           </button>
         )}

@@ -1,0 +1,20 @@
+/** Mission backdrops of the 3D stage (src/features/mission/backdrops). */
+export default {
+  'backdrop.name.LAUNCH': 'Launch and ascent',
+  'backdrop.name.ISS': 'ISS, low Earth orbit',
+  'backdrop.name.MOON': 'Moon, Artemis class',
+  'backdrop.name.MARS_TRANSIT': 'Mars transit, deep space',
+  'backdrop.fact.upToG': 'Up to {g} g',
+  'backdrop.fact.poweredMin': '{n} min powered flight',
+  'backdrop.fact.altitude': '{km} km up',
+  'backdrop.fact.weightless': 'Weightless',
+  'backdrop.fact.dose': '{v} mSv/day',
+  'backdrop.fact.gravity': '{g} g',
+  'backdrop.fact.distance': '{km} km from Earth',
+  'backdrop.fact.delaySec': 'Delay {s} s',
+  'backdrop.fact.delayMin': 'Delay {min} to {max} min',
+  'backdrop.label.ship': 'Ship, day {day} of {total}',
+  'backdrop.orbit': 'Orbit {min} min',
+  'backdrop.gauge': 'Peak {g} g',
+  'backdrop.gaugeTitle': 'Reference peak load of the ascent from the cited profile, not a live reading.',
+}

@@ -5,6 +5,7 @@ import type { Status } from '../../types/domain'
 import { STATUS_META } from '../../lib/status'
 import { STATUS_SHAPE } from './Labels'
 import type { LabelRegistry } from './Labels'
+import { useT } from '../../i18n'
 
 const ORDER: Status[] = ['LOW', 'MODERATE', 'HIGH', 'CRITICAL', 'NO_DATA']
 
@@ -16,6 +17,7 @@ export function StatusLegend({ labelScale = 1, defaultOpen, bottom, registry }: 
   const [open, setOpen] = useState<boolean | null>(defaultOpen ?? null)
   const ref = useRef<HTMLDivElement>(null)
   const ls = labelScale
+  const t = useT()
   useEffect(() => {
     if (open !== null) return
     const w = ref.current?.parentElement?.clientWidth ?? 0
@@ -42,13 +44,13 @@ export function StatusLegend({ labelScale = 1, defaultOpen, bottom, registry }: 
               <span key={s} className="block rounded-full" style={{ width: 4 * ls, height: 4 * ls, background: STATUS_META[s].color }} />
             ))}
           </span>
-          Status
+          {t('anatomy.legend.status')}
           <svg aria-hidden viewBox="0 0 10 10" width={8 * ls} height={8 * ls} className={clsx('ml-auto transition-transform', open ? 'rotate-180' : '')}>
             <path d="M2 6.5 5 3.5 8 6.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
         {open && (
-          <ul className="border-t border-white/5" style={{ padding: `${4 * ls}px ${9 * ls}px ${7 * ls}px`, fontSize: 11 * ls }} aria-label="Status legend">
+          <ul className="border-t border-white/5" style={{ padding: `${4 * ls}px ${9 * ls}px ${7 * ls}px`, fontSize: 11 * ls }} aria-label={t('anatomy.legend.aria')}>
             {ORDER.map((s) => {
               const Icon = STATUS_SHAPE[s]
               const meta = STATUS_META[s]
@@ -63,7 +65,10 @@ export function StatusLegend({ labelScale = 1, defaultOpen, bottom, registry }: 
               )
             })}
             <li className="mt-1 border-t border-white/5 text-slate-500" style={{ paddingTop: 4 * ls, fontSize: 9.5 * ls }}>
-              Vs personal baseline. Simulated data.
+              {t('anatomy.legend.baseline')}
+            </li>
+            <li className="text-slate-500" style={{ fontSize: 9.5 * ls }}>
+              {t('anatomy.legend.exams')}
             </li>
           </ul>
         )}

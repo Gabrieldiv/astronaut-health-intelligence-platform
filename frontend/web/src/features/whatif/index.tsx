@@ -8,6 +8,9 @@ import { Badge, Button, SectionLabel } from '../../components/ui'
 import { downsample, fmtMetric, formatUtcTime } from '../../components/format'
 import { Modal } from '../mission/Modal'
 import { INTERVENTION_LABEL } from '../timeline/labels'
+import { getLang, t as tr, useT } from '../../i18n'
+import { metricLabel } from '../../i18n/catalog'
+import { recTitle } from '../../i18n/engineText'
 
 export interface WhatIfButtonProps {
   recommendation: Recommendation
@@ -27,8 +30,8 @@ interface Row {
 
 function relLabel(t: number, now: number): string {
   const h = Math.round((t - now) / H)
-  if (h === 0) return 'Now'
-  return h < 0 ? `${-h} h ago` : `+${h} h`
+  if (h === 0) return tr('whatif.now')
+  return h < 0 ? tr('whatif.hAgo', { n: -h }) : tr('whatif.hAhead', { n: h })
 }
 
 function lastValue(points: TimePoint[]): number | null {
@@ -76,7 +79,7 @@ function ComparisonChart({ cmp, history }: { cmp: InterventionComparison; histor
   }, [cmp, history, def])
   const d = def.decimals
   return (
-    <div className="h-[260px] w-full" role="img" aria-label={`${def.label}: projected trajectory with and without the action over the next ${cmp.horizonHours} hours`}>
+    <div className="h-[260px] w-full" role="img" aria-label={tr('whatif.chartAria', { metric: metricLabel(cmp.metric), n: cmp.horizonHours })}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={model.rows} margin={{ top: 12, right: 12, bottom: 0, left: 0 }}>
           <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -102,14 +105,14 @@ function ComparisonChart({ cmp, history }: { cmp: InterventionComparison; histor
               strokeOpacity={0.22}
               strokeDasharray="3 4"
               ifOverflow="extendDomain"
-              label={{ value: 'Personal normal', position: 'insideTopLeft', fill: ACCENT, fontSize: 10, opacity: 0.8 }}
+              label={{ value: tr('whatif.personalNormal'), position: 'insideTopLeft', fill: ACCENT, fontSize: 10, opacity: 0.8 }}
             />
           )}
           <ReferenceArea x1={model.now} x2={model.end} fill="rgba(255,255,255,0.025)" />
-          <ReferenceLine x={model.now} stroke="rgba(232,238,252,0.45)" strokeDasharray="2 3" label={{ value: 'Now', position: 'top', fill: '#e8eefc', fontSize: 10 }} />
-          <Line dataKey="hist" stroke="#7d8ba6" strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={false} name="Recent" />
-          <Line dataKey="without" stroke={WITHOUT} strokeWidth={2} strokeDasharray="6 5" dot={false} isAnimationActive={false} connectNulls name="Without action" />
-          <Line dataKey="with" stroke={ACCENT} strokeWidth={2.4} dot={false} isAnimationActive={false} connectNulls name="With action" activeDot={{ r: 4, strokeWidth: 2, stroke: '#0a1120' }} />
+          <ReferenceLine x={model.now} stroke="rgba(232,238,252,0.45)" strokeDasharray="2 3" label={{ value: tr('whatif.now'), position: 'top', fill: '#e8eefc', fontSize: 10 }} />
+          <Line dataKey="hist" stroke="#7d8ba6" strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={false} name={tr('whatif.recent')} />
+          <Line dataKey="without" stroke={WITHOUT} strokeWidth={2} strokeDasharray="6 5" dot={false} isAnimationActive={false} connectNulls name={tr('whatif.without')} />
+          <Line dataKey="with" stroke={ACCENT} strokeWidth={2.4} dot={false} isAnimationActive={false} connectNulls name={tr('whatif.with')} activeDot={{ r: 4, strokeWidth: 2, stroke: '#0a1120' }} />
           <Tooltip
             cursor={{ stroke: 'rgba(232,238,252,0.25)' }}
             isAnimationActive={false}
@@ -121,15 +124,15 @@ function ComparisonChart({ cmp, history }: { cmp: InterventionComparison; histor
                   <div className="text-ink-500">
                     {relLabel(r.t, model.now)} · {formatUtcTime(r.t, false)} UTC
                   </div>
-                  {r.hist != null && <div className="tabular mt-0.5 text-ink-300">Recorded {fmtMetric(cmp.metric, r.hist)} {def.unit}</div>}
+                  {r.hist != null && <div className="tabular mt-0.5 text-ink-300">{tr('whatif.recorded', { value: fmtMetric(cmp.metric, r.hist), unit: def.unit })}</div>}
                   {r.without != null && (
                     <div className="tabular mt-0.5 text-ink-300">
-                      Without action <span className="font-semibold text-ink-100">{fmtMetric(cmp.metric, r.without)}</span> {def.unit}
+                      {tr('whatif.without')} <span className="font-semibold text-ink-100">{fmtMetric(cmp.metric, r.without)}</span> {def.unit}
                     </div>
                   )}
                   {r.with != null && (
                     <div className="tabular mt-0.5 text-accent">
-                      With action <span className="font-semibold">{fmtMetric(cmp.metric, r.with)}</span> {def.unit}
+                      {tr('whatif.with')} <span className="font-semibold">{fmtMetric(cmp.metric, r.with)}</span> {def.unit}
                     </div>
                   )}
                 </div>
@@ -149,30 +152,30 @@ function LegendRow() {
         <svg width="22" height="6" aria-hidden>
           <line x1="0" x2="22" y1="3" y2="3" stroke={WITHOUT} strokeWidth="2" strokeDasharray="5 4" />
         </svg>
-        Without action
+        {tr('whatif.without')}
       </span>
       <span className="flex items-center gap-1.5">
         <svg width="22" height="6" aria-hidden>
           <line x1="0" x2="22" y1="3" y2="3" stroke={ACCENT} strokeWidth="2.4" />
         </svg>
-        With action
+        {tr('whatif.with')}
       </span>
       <span className="flex items-center gap-1.5">
         <span className="h-2.5 w-4 rounded-sm bg-accent/15 ring-1 ring-accent/30" aria-hidden />
-        Personal normal
+        {tr('whatif.personalNormal')}
       </span>
       <span className="flex items-center gap-1.5">
         <svg width="22" height="6" aria-hidden>
           <line x1="0" x2="22" y1="3" y2="3" stroke="#7d8ba6" strokeWidth="1.5" />
         </svg>
-        Recent readings
+        {tr('whatif.recentReadings')}
       </span>
     </div>
   )
 }
 
 function WhatIfModal({ rec, onClose }: { rec: Recommendation; onClose: () => void }) {
-  const callsign = useAppStore((s) => s.crew.find((c) => c.id === rec.astronautId)?.callsign ?? (rec.astronautId === 'CABIN' ? 'Cabin' : rec.astronautId))
+  const callsign = useAppStore((s) => s.crew.find((c) => c.id === rec.astronautId)?.callsign ?? (rec.astronautId === 'CABIN' ? tr('whatif.cabin') : rec.astronautId))
   const [version, setVersion] = useState(0)
   // Snapshot on open (and on refresh): a projection is a point-in-time discussion aid.
   const cmp = useMemo<InterventionComparison | null>(() => {
@@ -188,26 +191,27 @@ function WhatIfModal({ rec, onClose }: { rec: Recommendation; onClose: () => voi
   const endWithout = cmp ? lastValue(cmp.without) : null
   const endWith = cmp ? lastValue(cmp.with) : null
   const kindLabel = INTERVENTION_LABEL[rec.interventionKind!]
+  useT()
 
   return (
     <Modal
       open
       onClose={onClose}
       size="lg"
-      title={`What if: ${kindLabel.toLowerCase()}`}
+      title={tr('whatif.title', { action: getLang() === 'de' ? kindLabel : kindLabel.toLowerCase() })}
       icon={<GitCompareArrows size={17} className="text-accent" aria-hidden />}
       subtitle={
         <span>
-          {callsign} · {rec.title}
-          {cmp && def ? ` · ${def.label}, next ${cmp.horizonHours} h` : ''}
+          {callsign} · {recTitle(rec)}
+          {cmp && def ? tr('whatif.subtitleMetric', { metric: metricLabel(cmp.metric), n: cmp.horizonHours }) : ''}
         </span>
       }
-      headerExtra={<Badge tone="sim">Simulated</Badge>}
+      headerExtra={<Badge tone="sim">{tr('whatif.simulated')}</Badge>}
       footer={
         <div className="flex items-center justify-between gap-3">
-          <span className="text-[11px] text-ink-500">Decision support only. Not a diagnosis. Discuss with the crew medical officer.</span>
+          <span className="text-[11px] text-ink-500">{tr('whatif.footer')}</span>
           <Button variant="subtle" onClick={() => setVersion((v) => v + 1)}>
-            <RefreshCw size={13} aria-hidden /> Recompute from now
+            <RefreshCw size={13} aria-hidden /> {tr('whatif.recompute')}
           </Button>
         </div>
       }
@@ -215,7 +219,7 @@ function WhatIfModal({ rec, onClose }: { rec: Recommendation; onClose: () => voi
       <div role="note" className="flex items-start gap-2.5 rounded-xl bg-amber-400/[0.08] px-3.5 py-3 ring-1 ring-amber-300/30">
         <FlaskConical size={17} className="mt-0.5 shrink-0 text-amber-200" aria-hidden />
         <div>
-          <p className="text-[13.5px] leading-snug font-semibold text-amber-100">Simulation for discussion only. Not evidence of clinical efficacy.</p>
+          <p className="text-[13.5px] leading-snug font-semibold text-amber-100">{tr('whatif.disclaimer')}</p>
           {cmp?.disclaimer && cmp.disclaimer.trim() !== 'Simulation for discussion only. Not evidence of clinical efficacy.' && <p className="mt-0.5 text-xs leading-relaxed text-amber-100/75">{cmp.disclaimer}</p>}
         </div>
       </div>
@@ -223,15 +227,15 @@ function WhatIfModal({ rec, onClose }: { rec: Recommendation; onClose: () => voi
       {!cmp || !def ? (
         <div className="mt-4 flex flex-col items-center gap-2 rounded-xl border border-dashed border-white/15 px-6 py-12 text-center">
           <TriangleAlert size={22} className="text-ink-500" aria-hidden />
-          <div className="text-sm font-semibold text-ink-100">No comparison available for this action</div>
+          <div className="text-sm font-semibold text-ink-100">{tr('whatif.noneTitle')}</div>
           <p className="max-w-md text-xs leading-relaxed text-ink-500">
-            The simulator could not project a with and without trajectory for {callsign} right now. This happens when recent data is missing or the action has no modeled effect. The recommendation itself still stands.
+            {tr('whatif.noneBody', { callsign })}
           </p>
         </div>
       ) : (
         <>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-            <SectionLabel>{def.label}</SectionLabel>
+            <SectionLabel>{metricLabel(cmp.metric)}</SectionLabel>
             <LegendRow />
           </div>
           <div className="mt-2">
@@ -239,16 +243,16 @@ function WhatIfModal({ rec, onClose }: { rec: Recommendation; onClose: () => voi
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
             <div className="rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.06]">
-              <SectionLabel>In {cmp.horizonHours} hours</SectionLabel>
+              <SectionLabel>{tr('whatif.inHours', { n: cmp.horizonHours })}</SectionLabel>
               <dl className="mt-2 grid grid-cols-2 gap-3">
                 <div>
-                  <dt className="text-[11px] text-ink-500">Without action</dt>
+                  <dt className="text-[11px] text-ink-500">{tr('whatif.without')}</dt>
                   <dd className="tabular mt-0.5 text-xl font-semibold text-ink-100">
                     {fmtMetric(cmp.metric, endWithout)} <span className="text-xs font-normal text-ink-500">{def.unit}</span>
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] text-accent">With action</dt>
+                  <dt className="text-[11px] text-accent">{tr('whatif.with')}</dt>
                   <dd className="tabular mt-0.5 text-xl font-semibold text-accent">
                     {fmtMetric(cmp.metric, endWith)} <span className="text-xs font-normal text-ink-500">{def.unit}</span>
                   </dd>
@@ -256,14 +260,14 @@ function WhatIfModal({ rec, onClose }: { rec: Recommendation; onClose: () => voi
               </dl>
               {cmp.band && (
                 <p className="mt-2 text-xs leading-relaxed text-ink-300">
-                  Personal normal range: {fmtMetric(cmp.metric, cmp.band.low)} to {fmtMetric(cmp.metric, cmp.band.high)} {def.unit}.
+                  {tr('whatif.normalRange', { low: fmtMetric(cmp.metric, cmp.band.low), high: fmtMetric(cmp.metric, cmp.band.high), unit: def.unit })}
                 </p>
               )}
             </div>
             <div className="rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.06]">
               <SectionLabel>
                 <span className="flex items-center gap-1.5">
-                  <ListChecks size={12} aria-hidden /> Assumptions
+                  <ListChecks size={12} aria-hidden /> {tr('whatif.assumptions')}
                 </span>
               </SectionLabel>
               {cmp.assumptions.length ? (
@@ -273,7 +277,7 @@ function WhatIfModal({ rec, onClose }: { rec: Recommendation; onClose: () => voi
                   ))}
                 </ul>
               ) : (
-                <p className="mt-2 text-xs text-ink-500">No assumptions listed by the simulator.</p>
+                <p className="mt-2 text-xs text-ink-500">{tr('whatif.noAssumptions')}</p>
               )}
             </div>
           </div>
@@ -294,10 +298,10 @@ export function WhatIfButton({ recommendation }: WhatIfButtonProps) {
         data-tour="whatif"
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}
-        aria-label={`Compare with and without: ${recommendation.title}`}
-        title="Compare the projected trajectory with and without this action (simulation)"
+        aria-label={tr('whatif.compareAria', { title: recTitle(recommendation) })}
+        title={tr('whatif.compareTitle')}
       >
-        <GitCompareArrows size={13} aria-hidden /> Compare
+        <GitCompareArrows size={13} aria-hidden /> {tr('whatif.compare')}
       </Button>
       {open && <WhatIfModal rec={recommendation} onClose={() => setOpen(false)} />}
     </>

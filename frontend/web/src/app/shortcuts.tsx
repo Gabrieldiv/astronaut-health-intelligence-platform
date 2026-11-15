@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import { useAppStore } from '../state/store'
 import { Kbd } from '../components/ui'
 import { useUiStore } from './uiStore'
+import { useT, type MessageKey } from '../i18n'
 
 /**
  * Global keyboard shortcuts. Ignored while typing in a field and when a modifier key is held.
@@ -75,15 +76,15 @@ export function useGlobalShortcuts() {
   }, [])
 }
 
-const SHORTCUTS: { keys: string[]; label: string }[] = [
-  { keys: ['1', '2', '3', '4'], label: 'Select crew member' },
-  { keys: ['V'], label: 'Switch Ground / Crew view' },
-  { keys: ['P'], label: 'Presentation mode (also in Tools)' },
-  { keys: ['A'], label: 'Open or close alerts' },
-  { keys: ['Space'], label: 'Play or pause the simulation' },
-  { keys: ['Esc'], label: 'Close a panel, or back from body detail' },
-  { keys: ['?'], label: 'Show this help' },
-  { keys: ['←', '→'], label: 'Previous / next step in the guided demo' },
+const SHORTCUTS: { keys: string[]; label: MessageKey }[] = [
+  { keys: ['1', '2', '3', '4'], label: 'shortcuts.selectCrew' },
+  { keys: ['V'], label: 'shortcuts.switchView' },
+  { keys: ['P'], label: 'shortcuts.presentation' },
+  { keys: ['A'], label: 'shortcuts.alerts' },
+  { keys: ['Space'], label: 'shortcuts.play' },
+  { keys: ['Esc'], label: 'shortcuts.esc' },
+  { keys: ['?'], label: 'shortcuts.help' },
+  { keys: ['←', '→'], label: 'shortcuts.tour' },
 ]
 
 export function ShortcutsOverlay() {
@@ -104,32 +105,33 @@ export function ShortcutsOverlay() {
       if (opener && opener !== document.body && document.contains(opener)) opener.focus()
     }
   }, [open, setOpen])
+  const t = useT()
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-(--z-command) flex items-center justify-center p-4">
       <div className="animate-fade-in absolute inset-0 bg-space-950/60 backdrop-blur-[2px]" onClick={() => setOpen(false)} aria-hidden />
-      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" className="glass-strong animate-drop-in relative w-[min(440px,100%)] rounded-2xl p-5 outline-none">
+      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t('shortcuts.title')} className="glass-strong animate-drop-in relative w-[min(440px,100%)] rounded-2xl p-5 outline-none">
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-base font-semibold text-ink-100">
-            <Keyboard size={17} className="text-accent" aria-hidden /> Keyboard shortcuts
+            <Keyboard size={17} className="text-accent" aria-hidden /> {t('shortcuts.title')}
           </h2>
-          <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="focus-ring rounded-lg p-1 text-ink-500 hover:text-ink-100">
+          <button type="button" aria-label={t('common.close')} onClick={() => setOpen(false)} className="focus-ring rounded-lg p-1 text-ink-500 hover:text-ink-100">
             <X size={16} />
           </button>
         </div>
         <ul className="mt-4 flex flex-col gap-1">
           {SHORTCUTS.map((s) => (
             <li key={s.label} className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-[13px] text-ink-300 odd:bg-white/[0.025]">
-              <span>{s.label}</span>
+              <span>{t(s.label)}</span>
               <span className="flex shrink-0 gap-1">
                 {s.keys.map((k) => (
-                  <Kbd key={k}>{k}</Kbd>
+                  <Kbd key={k}>{k === 'Space' ? t('shortcuts.key.space') : k}</Kbd>
                 ))}
               </span>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[11px] text-ink-500">Shortcuts are ignored while you type in a field.</p>
+        <p className="mt-3 text-[11px] text-ink-500">{t('shortcuts.typingNote')}</p>
       </div>
     </div>
   )

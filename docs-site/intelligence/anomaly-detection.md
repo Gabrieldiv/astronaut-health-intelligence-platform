@@ -1,17 +1,23 @@
 ---
 title: Anomaly Detection
-description: Streaming anomaly detection in the Astronaut Health Intelligence Platform, with robust z-score, EWMA drift, daily persistence windows, data quality checks and fixed demo thresholds.
+description: Streaming anomaly detection in the Astronaut Health Intelligence Platform, with robust z-score, EWMA drift, CUSUM, daily persistence windows, data quality checks, fixed demo thresholds and an experimental multivariate detector.
 status: IMPLEMENTED
 origin: DERIVED
 code:
   - frontend/web/src/engine/anomaly.ts
   - frontend/web/src/engine/stats.ts
   - frontend/web/src/engine/series.ts
+  - frontend/web/src/engine/cusum.ts
+  - frontend/web/src/engine/ml/multivariate.ts
+  - frontend/web/src/engine/ml/isolationForest.ts
   - frontend/web/src/engine/config.ts
 tests:
   - frontend/web/src/engine/anomaly.test.ts
   - frontend/web/src/engine/stats.test.ts
-verified: 2026-11-14
+  - frontend/web/src/engine/cusum.test.ts
+  - frontend/web/src/engine/ml/multivariate.test.ts
+  - frontend/web/src/engine/ml/engineMultivariate.test.ts
+verified: 2026-11-15
 ---
 
 # Anomaly Detection
@@ -73,6 +79,21 @@ D_t     = D_t-1 + alpha_t (z_t - D_t-1)
 
 **Interpretation.** A drift of 1.0 means the recent average sits about one robust SD on the bad side of normal. The time requirement (persistence) avoids reacting to a single bad hour. The half-life formula keeps the smoothing correct when samples are irregular.
 
+### CUSUM: small but steady drift {#cusum}
+
+EWMA needs a drift of about one robust SD for 3 h. A smaller shift that never stops (for example resting heart rate creeping up a few beats per minute over a day) can stay under it. A **tabular CUSUM** (cumulative sum) catches it. The per sample z is clamped to plus or minus 4 and averaged per hour, so the statistic does not depend on the sampling cadence and one spike cannot fake a drift:
+
+```text
+S_up   = min(16, max(0, S_up   + m - k))
+S_down = min(16, max(0, S_down - m - k))        m = hourly mean z, k = 0.5
+```
+
+| Condition | Level |
+| --- | --- |
+| The side in the metric's bad direction reaches h = 8, accumulating for at least 12 h | MODERATE (Watch), "small but steady drift" |
+
+CUSUM never raises a metric above MODERATE on its own. `k = 0.5` means hourly means under half a robust SD never accumulate; the cap of 16 bounds how long the flag takes to clear once the shift ends. While CUSUM signals, the shifted values are kept out of the baseline (the same idea as the drift gate). All values are demo configuration in `config.ts` (`CUSUM`), version `Tabular CUSUM on hourly mean robust z v1`.
+
 ### Daily persistence
 
 Daily metrics (sleep, exercise sessions, reaction tests, check-in answers) cannot drift minute by minute, so they use runs of consecutive values outside the band (badZ of at least 2):
@@ -111,6 +132,29 @@ Missing data never looks normal: the metric becomes `NO_DATA` and its body regio
 | Self report | R-PSY-01 (mood), R-PSY-02 (fatigue), R-PSY-03 (stress), R-PSY-04 (symptoms) |
 | Combined | R-CARD-01, R-FAT-01, R-ENV-CO2-02 ([Risk assessment](./risk-assessment#combined-rules)) |
 
+## Unusual combination (experimental) {#unusual-combination-experimental}
+
+<StatusBadge status="EXPERIMENTAL" /> Experimental, machine learning.
+
+Every rule above looks at one metric. Some situations show up first as an **unusual mix**: heart rate a little high while breathing rate is a little low, each within its own band. A per astronaut **Isolation Forest** (Liu, Ting and Zhou 2008[^if1]) learns which combinations are usual for that person.
+
+| Step | Detail |
+| --- | --- |
+| Features | The robust z of 7 vitals against the person's own baseline of the current context: heart rate, HRV, SpO₂, breathing rate, systolic and diastolic blood pressure, skin temperature |
+| Training window | The astronaut's own last 5 days, one vector per 5 sim minutes (the same span as the baseline), admitted with the baseline gates (no large z, no active drift), so an ongoing problem does not become "usual" |
+| Decorrelation | PCA whitening fitted on the same window |
+| Model | 100 trees, 256 samples per tree, seeded (deterministic); written in TypeScript and run in the browser; retrained at most every 6 sim hours and only when a baseline changed |
+| Personal threshold | The larger of 0.6 and the 99.5th percentile of the person's training scores |
+| Flag | Score above the threshold for 30 sim minutes **and** at least 2 contributing signals whose EWMA drift points the same way |
+
+**Guard rails.** The detector **never changes a status or the risk score**. It only adds an "Unusual combination" note in the Why area of the attention panel, with the top 3 contributing signals, the model version (`ahi-iforest-ts v1 (experimental, PCA whitened)`) and the words "Experimental, machine learning", and writes an informational audit entry. Missing inputs give `NO_DATA`, never "typical". All parameters are demo configuration (`MULTIVARIATE` in `config.ts`).
+
+**Observed on the simulated scenarios** (one run by the team, simulated data, not a validation): no flag on nominal days; the acute cardiovascular scenario flagged after about 45 min; the cabin CO2 scenario flagged 3 of the 4 crew; progressive fatigue flagged after about 48 h. The unit tests check the nominal and acute cases.
+
+**Server parity path.** `POST /api/v1/analytics/multivariate` in the [backend](../architecture/backend) runs the same idea with scikit-learn (PCA whitening, seeded `IsolationForest`, same range aware scoring) for batch scoring and model comparison. The app uses the browser detector, which works offline.
+
+[^if1]: Liu F. T., Ting K. M., Zhou Z.-H. 2008. Isolation Forest. *Proceedings of the 8th IEEE International Conference on Data Mining*, 413-422. <https://doi.org/10.1109/ICDM.2008.17>
+
 ## Outputs
 
 | Output | Content |
@@ -121,14 +165,14 @@ Missing data never looks normal: the metric becomes `NO_DATA` and its body regio
 
 ## Limitations
 
-- Univariate: each metric is checked on its own; relationships are handled only by the three combined rules.
+- The status rules are univariate: each metric is checked on its own; relationships are handled by the three combined rules and, informationally, by the experimental multivariate note.
 - Thresholds on z and drift durations are demo configuration tuned on simulated data (see [Results](../validation/results)).
 - Activity context comes from the schedule; a mislabeled context would compare against the wrong bucket.
-- No IQR rule, no CUSUM and no multivariate detector ([Methods status](./overview#methods-status)).
+- No IQR rule ([Methods status](./overview#methods-status)). The multivariate detector has only been tried on simulated data.
 
 ## Status
 
-<StatusBadge status="IMPLEMENTED" /> Covered by `anomaly.test.ts` (LOW on normal data, acute jump to CRITICAL, spike filtered by the 3 reading median, EWMA drift with persistence, `NO_DATA` for missing data, questionable cap, context aware exercise baseline, daily persistence) and `stats.test.ts` (robust z, EWMA alpha and step tracking). Spec requirement: US-018.
+<StatusBadge status="IMPLEMENTED" /> Covered by `anomaly.test.ts` (LOW on normal data, acute jump to CRITICAL, spike filtered by the 3 reading median, EWMA drift with persistence, `NO_DATA` for missing data, questionable cap, context aware exercise baseline, daily persistence) `stats.test.ts` (robust z, EWMA alpha and step tracking), `cusum.test.ts` (allowance, accumulation, cadence independence, cap, spike clamp, a small resting heart rate drift under the EWMA rule) and the multivariate tests (nominal quiet, acute flag without touching the risk score, `NO_DATA` when the shirt stops). Spec requirements: US-018, US-019.
 
 ## Next steps
 

@@ -74,7 +74,7 @@ All fixed numbers: [Thresholds and limitations](../intelligence/thresholds).
 | Acute cardio event | First alert, HIGH and CRITICAL at 7 min |
 | Sensor failure | First alert at 14 min, peak MODERATE by design |
 | Cabin CO2 rise | First alert at 90 min, HIGH at 140 min |
-| Progressive fatigue | First alert at 31.8 h, HIGH at 33.5 h |
+| Progressive fatigue | First alert at 31.8 h, HIGH at 33.0 h |
 | Exercise performance decline | First alert at 27.5 h, HIGH at 75.5 h |
 
 Full tables, method and caveats: [Results and evidence](./results). The evaluation uses the same simulator that generated the data: it shows internal consistency, not real world performance.

@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { X } from 'lucide-react'
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
+import { t } from '../i18n'
 
 /**
  * Shared panel header row: same height, padding and type for every top level panel
@@ -234,7 +235,7 @@ export function Drawer({
   }, [open, onClose])
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-[60]">
+    <div className="fixed inset-0 z-(--z-drawer)">
       <div className="animate-fade-in absolute inset-0 bg-space-950/55 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
@@ -249,7 +250,7 @@ export function Drawer({
             {icon}
             {title}
           </h2>
-          <IconButton label="Close" onClick={onClose} size="sm">
+          <IconButton label={t('common.close')} onClick={onClose} size="sm">
             <X size={16} />
           </IconButton>
         </header>
@@ -284,7 +285,7 @@ export function FloatingPopover({
   prefer?: 'bottom' | 'top'
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState<{ left: number; top: number; side: 'top' | 'bottom' } | null>(null)
+  const [pos, setPos] = useState<{ left: number; top: number; side: 'top' | 'bottom'; raised: boolean } | null>(null)
   useDismiss(open, onClose, [ref, anchorRef])
   useLayoutEffect(() => {
     if (!open) {
@@ -302,7 +303,8 @@ export function FloatingPopover({
       const roomAbove = a.top
       const side: 'top' | 'bottom' = prefer === 'top' ? (roomAbove >= h + 12 || roomAbove > roomBelow ? 'top' : 'bottom') : roomBelow >= h + 12 || roomBelow > roomAbove ? 'bottom' : 'top'
       const top = side === 'bottom' ? Math.min(a.bottom + 8, vh - h - 8) : Math.max(8, a.top - h - 8)
-      setPos({ left, top, side })
+      // Opened from inside a drawer or dialog: sit on that layer; otherwise stay below any dialog.
+      setPos({ left, top, side, raised: !!anchorRef.current?.closest('[aria-modal="true"]') })
     }
     place()
     const raf = requestAnimationFrame(place)
@@ -322,7 +324,7 @@ export function FloatingPopover({
       aria-label={label}
       // Portal content still bubbles through the React tree: keep clicks from reaching the trigger's parents.
       onClick={(e) => e.stopPropagation()}
-      className={clsx('glass-strong animate-fade-in fixed z-[80] rounded-2xl', className)}
+      className={clsx('glass-strong animate-fade-in fixed rounded-2xl', pos?.raised ? 'z-(--z-raised)' : 'z-(--z-popover)', className)}
       style={{ width, left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}
     >
       {children}

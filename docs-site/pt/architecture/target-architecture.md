@@ -1,15 +1,17 @@
 ---
 title: Arquitetura alvo
-description: Desenho conceitual do backend da Astronaut Health Intelligence Platform (monólito modular com FastAPI, PostgreSQL, API de ingestão e RBAC). Nada disto está implementado.
+description: Arquitetura alvo da Astronaut Health Intelligence Platform segundo o documento mestre (monólito modular com FastAPI e PostgreSQL), mostrando o que já existe no backend e o que segue conceitual (serviços do motor, jobs, controle de acesso por perfil).
 status: CONCEPTUAL
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Arquitetura alvo
 
-::: warning ATENÇÃO: CONCEITUAL
-**Nada nesta página está implementado.** Ela descreve o desenho alvo do documento mestre (`PROJECT_MASTER.md`, seções 7 e 10). Hoje a Astronaut Health Intelligence Platform (AHI) roda inteira no navegador, sem backend, API, banco de dados ou autenticação. Veja a [arquitetura atual](/pt/architecture/overview).
+::: warning Parcialmente implementado
+Esta página é o **desenho alvo** do documento mestre (`PROJECT_MASTER.md`, seções 7 e 10). Parte dele já existe na [AHI API](/pt/architecture/backend): o monólito modular, ingestão, observações, cadastro, conectores NASA, SQLite ou PostgreSQL com Alembic e Docker Compose. Ainda conceitual: os serviços do motor no servidor, jobs em segundo plano, Redis, autenticação e controle de acesso por perfil. O sistema em execução está em [Visão geral da arquitetura](/pt/architecture/overview).
 :::
+
+A Astronaut Health Intelligence Platform (AHI) foi feita primeiro no navegador, para a demo do hackathon funcionar offline, e seus contratos (`HealthObservation` canônico, interface de adapters, `data_origin`, regras versionadas) foram escolhidos para que o servidor entrasse sem mudar as regras do motor nem a interface. Foi assim que o backend entrou.
 
 ## Decisão: monólito modular
 
@@ -22,15 +24,15 @@ O documento mestre define, para o MVP com backend, um **monólito modular com pr
 | Camada | Tecnologia prevista | Status |
 | --- | --- | --- |
 | Frontend | React + TypeScript + Vite (já existe) | <StatusBadge status="IMPLEMENTED" /> |
-| API | Python + FastAPI, schemas Pydantic | <StatusBadge status="PLANNED" /> |
-| Persistência | SQLAlchemy + Alembic, PostgreSQL (TimescaleDB opcional) | <StatusBadge status="PLANNED" /> |
-| Cache e jobs | Redis; Celery, RQ ou worker asyncio | <StatusBadge status="PLANNED" /> |
+| API | Python + FastAPI, schemas Pydantic | <StatusBadge status="IMPLEMENTED" /> [Backend e API](/pt/architecture/backend) |
+| Persistência | SQLAlchemy + Alembic, PostgreSQL (TimescaleDB opcional) | <StatusBadge status="IMPLEMENTED" /> PostgreSQL 17 com Docker Compose, SQLite por padrão; sem TimescaleDB |
+| Cache e jobs | Redis; Celery, RQ ou worker asyncio | <StatusBadge status="PLANNED" /> (só um cache em processo de 15 min para os dados da NASA) |
 | Streaming | Redpanda ou Kafka, só no futuro | <StatusBadge status="PLANNED" /> |
-| Ciência de dados | pandas, NumPy, SciPy; scikit-learn, XGBoost e SHAP depois | <StatusBadge status="CONCEPTUAL" /> |
+| Ciência de dados | pandas, NumPy, SciPy; scikit-learn, XGBoost e SHAP depois | <StatusBadge status="EXPERIMENTAL" /> NumPy e Isolation Forest do scikit-learn no endpoint de análise; XGBoost e SHAP não implementados ([IA e análise](/pt/intelligence/ai-and-analytics)) |
 | Interoperabilidade | HL7 FHIR R4 para exportação e importação | <StatusBadge status="IMPLEMENTED" /> só a exportação em arquivo; importação <StatusBadge status="PLANNED" /> |
-| Testes | pytest, httpx, Playwright | <StatusBadge status="PLANNED" /> |
-| Observabilidade | OpenTelemetry e logs estruturados | <StatusBadge status="PLANNED" /> |
-| Deploy | Docker Compose no MVP | <StatusBadge status="PLANNED" /> |
+| Testes | pytest, httpx, Playwright | <StatusBadge status="IMPLEMENTED" /> pytest com HTTP simulado; vitest para o motor |
+| Observabilidade | OpenTelemetry e logs estruturados | <StatusBadge status="IMPLEMENTED" /> logs estruturados de requisição; <StatusBadge status="PLANNED" /> OpenTelemetry |
+| Deploy | Docker Compose no MVP | <StatusBadge status="IMPLEMENTED" /> `docker-compose.yml` (PostgreSQL e a API) |
 
 ## Contexto alvo
 
@@ -127,24 +129,25 @@ sequenceDiagram
     DB-->>UI: resumo
 ```
 
-*Conceitual (não implementado).*
+*Parcialmente implementado: ingestão, validação e persistência existem; o job do motor no servidor não.*
 
 ## API alvo
 
-Base local prevista: `http://localhost:8000/api/v1`. <StatusBadge status="PLANNED" />
+Base local: `http://localhost:8000/api/v1`.
 
-| Método | Rota | Descrição |
-| --- | --- | --- |
-| POST | `/observations` | Ingestão de observações em lote (`202 Accepted`) |
-| POST | `/datasets/import` | Cria um job de importação |
-| GET | `/datasets`, `/data-sources` | Lista datasets e fontes |
-| POST, GET | `/astronauts` | Cria e lista astronautas pseudonimizados |
-| GET | `/astronauts/{id}/health`, `/history`, `/baseline`, `/anomalies`, `/risks`, `/predictions`, `/recommendations` | Leituras por astronauta |
-| POST | `/alerts/{id}/acknowledge` | Reconhecer alerta |
-| POST | `/interventions` | Registrar intervenção |
-| POST | `/scenarios/{scenario_id}/run` | Executar simulação |
-| GET | `/devices`, `/devices/{id}/status` | Dispositivos |
-| GET | `/health/ready`, `/health/live` | Prontidão e vida |
+| Método | Rota | Descrição | Status |
+| --- | --- | --- | --- |
+| POST | `/observations` | Ingestão de observações em lote (`202 Accepted`) | <StatusBadge status="IMPLEMENTED" /> |
+| GET | `/observations` | Consulta as observações de um sujeito | <StatusBadge status="IMPLEMENTED" /> |
+| POST | `/datasets/import` | Cria um job de importação | <StatusBadge status="PLANNED" /> |
+| GET | `/datasets`, `/data-sources` | Lista datasets e fontes | <StatusBadge status="PLANNED" /> |
+| POST, GET | `/astronauts`, `/missions`, `/devices` | Cadastro pseudonimizado | <StatusBadge status="IMPLEMENTED" /> |
+| GET | `/astronauts/{id}/health`, `/history`, `/baseline`, `/anomalies`, `/risks`, `/predictions`, `/recommendations` | Leituras por astronauta | <StatusBadge status="PLANNED" /> (precisa do motor em Python) |
+| POST | `/alerts/{id}/acknowledge` | Reconhecer alerta | <StatusBadge status="PLANNED" /> |
+| POST | `/interventions` | Registrar intervenção | <StatusBadge status="PLANNED" /> |
+| POST | `/scenarios/{scenario_id}/run` | Executar simulação | <StatusBadge status="PLANNED" /> |
+| GET | `/devices/{id}/status` | Status do dispositivo | <StatusBadge status="PLANNED" /> |
+| GET | `/health`, `/health/ready`, `/health/live` | Status, prontidão e vida | <StatusBadge status="IMPLEMENTED" /> |
 
 O formato do lote de ingestão está em [Pipeline e qualidade](/pt/data/pipeline-and-quality#esquemas-de-entrega).
 
@@ -161,7 +164,7 @@ O ponto de encaixe é o **contrato de adapters**. No navegador, cada adapter Typ
 
 Adapters previstos: `AstroskinSimulatorAdapter`, `ActiwatchSimulatorAdapter`, `ExerciseEquipmentSimulatorAdapter`, `EnvironmentalSensorSimulatorAdapter`, `OsdrDatasetImportAdapter`, `EdaFileImportAdapter` e `RadLabImportAdapter`.
 
-O motor TypeScript seria portado ou reimplementado no backend; o contrato `HealthObservation` e as regras documentadas continuariam as mesmas.
+O motor TypeScript seria portado para o backend módulo a módulo; o contrato `HealthObservation` e as regras documentadas continuariam as mesmas. O ponto de encaixe (protocolo `HealthEngine`) já existe em `backend/app/modules/engine`.
 
 ## Requisitos não funcionais alvo
 

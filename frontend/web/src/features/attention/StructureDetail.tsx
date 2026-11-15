@@ -2,18 +2,18 @@ import { ArrowRight, BookOpen, ChevronLeft, Info, Layers } from 'lucide-react'
 import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
-import type { BodyRegionId, Status } from '../../types/domain'
-import { REGION_LABELS } from '../../engine/catalog'
-import { StatusPill } from '../../components/Status'
+import type { BodyRegionId, MetricCode, Status } from '../../types/domain'
+import { tp, useT } from '../../i18n'
+import { regionDescription, regionLabel, regionSystem } from '../../i18n/catalog'
 import { Badge, IconButton, SectionLabel } from '../../components/ui'
 import { REGION_ICON } from '../stage/CenterStage'
 import { structureById } from '../anatomy/atlas/manifest'
 import type { AtlasManifest, AtlasStructure } from '../anatomy/atlas/types'
 import {
-  CONTEXT_ONLY_TEXT,
-  CONTEXT_ONLY_TITLE,
+  contextOnlyText,
+  contextOnlyTitle,
   ORIGIN_INFO,
-  REFERENCE_MODEL_NOTE,
+  referenceModelNote,
   REGION_RELATION,
   SYSTEM_INFO,
   atlasCoverage,
@@ -21,16 +21,21 @@ import {
   sideLabel,
 } from '../anatomy/atlas/health'
 import { RegionDetail } from './RegionDetail'
+import { FeedAwareStatusPill } from './FeedStatus'
+import { regionMetricsFromCatalog } from '../shared/hooks'
+import { engineText } from '../../i18n/engineText'
+import { Details } from '../../components/viz/Details'
 
 function BackRow() {
   const selectStructure = useAppStore((s) => s.selectStructure)
+  const t = useT()
   return (
     <div className="flex items-center gap-2">
       {/* selectStructure(null) clears the structure, its region and the open metric in one update. */}
-      <IconButton label="Back to overview (clear selection)" size="sm" onClick={() => selectStructure(null)}>
+      <IconButton label={t('attention.structure.back')} size="sm" onClick={() => selectStructure(null)}>
         <ChevronLeft size={16} />
       </IconButton>
-      <span className="text-xs text-ink-500">Overview</span>
+      <span className="text-xs text-ink-500">{t('attention.overview')}</span>
     </div>
   )
 }
@@ -45,7 +50,8 @@ function StructureCard({ structure, manifest }: { structure: AtlasStructure; man
   const coverage = useMemo(() => atlasCoverage(manifest, structure), [manifest, structure])
   const parent = structureById(manifest, structure.parent)
   const Icon = region ? REGION_ICON[region] : BookOpen
-  const count = `${coverage.systemCount} ${coverage.systemCount === 1 ? 'structure' : 'structures'} in the atlas`
+  const t = useT()
+  const count = tp('attention.structure.count', coverage.systemCount)
   return (
     <div className="rounded-xl bg-white/[0.035] p-3.5 ring-1 ring-white/[0.07] short:p-3">
       <div className="flex items-start gap-3">
@@ -53,7 +59,7 @@ function StructureCard({ structure, manifest }: { structure: AtlasStructure; man
           <Icon size={19} className={region ? 'text-accent' : 'text-ink-300'} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-semibold tracking-[0.14em] text-ink-500 uppercase">Selected structure</div>
+          <div className="text-[10px] font-semibold tracking-[0.14em] text-ink-500 uppercase">{t('attention.structure.selected')}</div>
           <h3 className="text-lg leading-tight font-semibold [overflow-wrap:anywhere] text-ink-100">{structure.name}</h3>
           <div className="mt-0.5 text-xs text-ink-300">
             {system.label}
@@ -61,16 +67,16 @@ function StructureCard({ structure, manifest }: { structure: AtlasStructure; man
           </div>
         </div>
         {!region && (
-          <Badge tone="muted" title={CONTEXT_ONLY_TEXT}>
-            {CONTEXT_ONLY_TITLE}
+          <Badge tone="muted" title={contextOnlyText()}>
+            {contextOnlyTitle()}
           </Badge>
         )}
       </div>
       <dl className="mt-3 flex flex-col gap-1.5 border-t border-white/[0.06] pt-2.5 text-xs short:mt-2.5 short:pt-2">
         <div className="flex items-center justify-between gap-3">
-          <dt className="shrink-0 text-ink-500">Reference anatomy</dt>
+          <dt className="shrink-0 text-ink-500">{t('attention.structure.reference')}</dt>
           <dd className="min-w-0">
-            <Badge tone="neutral" title={`${origin.detail} ${REFERENCE_MODEL_NOTE}`}>
+            <Badge tone="neutral" title={`${origin.detail} ${referenceModelNote()}`}>
               {origin.label}
             </Badge>
           </dd>
@@ -84,13 +90,13 @@ function StructureCard({ structure, manifest }: { structure: AtlasStructure; man
         </div>
         {parent && (
           <div className="flex items-baseline justify-between gap-3">
-            <dt className="shrink-0 text-ink-500">Part of</dt>
+            <dt className="shrink-0 text-ink-500">{t('attention.structure.partOf')}</dt>
             <dd className="min-w-0 text-right">
               <button
                 type="button"
                 onClick={() => selectStructure(parent.id, regionOfStructure(parent))}
                 className="focus-ring rounded font-semibold text-accent hover:underline"
-                aria-label={`Select ${parent.name}`}
+                aria-label={t('attention.structure.select', { name: parent.name })}
               >
                 {parent.name}
               </button>
@@ -101,10 +107,10 @@ function StructureCard({ structure, manifest }: { structure: AtlasStructure; man
       <details className="group mt-2 text-[11px] text-ink-500 present:hidden short:hidden">
         <summary className="focus-ring inline-flex cursor-pointer list-none items-center gap-1 rounded hover:text-ink-300 [&::-webkit-details-marker]:hidden">
           <Info size={11} aria-hidden />
-          About this reference model
+          {t('attention.structure.about')}
         </summary>
         <p className="mt-1 leading-relaxed">
-          {origin.detail} {REFERENCE_MODEL_NOTE}
+          {origin.detail} {referenceModelNote()}
         </p>
       </details>
     </div>
@@ -113,35 +119,37 @@ function StructureCard({ structure, manifest }: { structure: AtlasStructure; man
 
 /** The region a structure is monitored with: name, status of that region and the way to open it. */
 function MonitoredWith({ astronautId, region, structure, manifest }: { astronautId: string; region: BodyRegionId; structure: AtlasStructure; manifest: AtlasManifest }) {
-  const { status, summary } = useAppStore(
+  const { status, summary, metricsKey } = useAppStore(
     useShallow((s) => {
       const r = s.health[astronautId]?.regions[region]
-      return { status: (r?.status ?? 'NO_DATA') as Status, summary: r?.summary ?? '' }
+      return { status: (r?.status ?? 'NO_DATA') as Status, summary: r?.summary ?? '', metricsKey: (r?.metrics ?? []).join(',') }
     }),
   )
+  const metrics = useMemo(() => (metricsKey ? (metricsKey.split(',') as MetricCode[]) : regionMetricsFromCatalog(region)), [metricsKey, region])
   const selectRegion = useAppStore((s) => s.selectRegion)
-  const label = REGION_LABELS[region]
+  const t = useT()
+  const label = { label: regionLabel(region), system: regionSystem(region), description: regionDescription(region) }
   const relation = REGION_RELATION[region]
   const coverage = useMemo(() => atlasCoverage(manifest, structure), [manifest, structure])
   const Icon = REGION_ICON[region]
   return (
-    <section aria-label={`Monitored with ${label.label}`}>
+    <section aria-label={t('attention.structure.monitoredWithAria', { region: label.label })}>
       <SectionLabel
         right={
           <button
             type="button"
             onClick={() => selectRegion(region)}
-            aria-label={`View the whole ${label.label} region, ${coverage.monitoredCount} structures. Clears the selected structure.`}
-            title="Select the whole region in the 3D body and clear this structure"
+            aria-label={t('attention.structure.wholeAria', { region: label.label, n: coverage.monitoredCount })}
+            title={t('attention.structure.wholeTitle')}
             className="focus-ring flex items-center gap-1 rounded px-1 text-[11px] font-semibold text-accent hover:underline"
           >
-            Whole region
+            {t('attention.structure.whole')}
             <span className="tabular font-normal text-ink-500">({coverage.monitoredCount})</span>
             <ArrowRight size={12} aria-hidden />
           </button>
         }
       >
-        Monitored with
+        {t('attention.structure.monitoredWith')}
       </SectionLabel>
       <div className="mt-2 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
@@ -151,15 +159,12 @@ function MonitoredWith({ astronautId, region, structure, manifest }: { astronaut
             <div className="truncate text-[11px] text-ink-500">{label.system}</div>
           </div>
         </div>
-        <StatusPill status={status} />
+        <FeedAwareStatusPill astronautId={astronautId} metrics={metrics} status={status} />
       </div>
-      <p className="mt-2 text-[14px] leading-snug text-ink-100">{summary || (status === 'NO_DATA' ? 'No recent data for this system. Missing data is never treated as normal.' : label.description)}</p>
-      <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-relaxed text-ink-500">
-        <Info size={12} className="mt-0.5 shrink-0" aria-hidden />
-        <span>
-          {relation.basis} {relation.caveat}
-        </span>
-      </p>
+      <p className="mt-2 text-[13px] leading-snug text-ink-100">{summary ? engineText('regionSummary', summary, region) : status === 'NO_DATA' ? t('attention.structure.noRecent') : label.description}</p>
+      <Details className="mt-1.5">
+        {relation.basis} {relation.caveat}
+      </Details>
     </section>
   )
 }
@@ -167,17 +172,18 @@ function MonitoredWith({ astronautId, region, structure, manifest }: { astronaut
 /** Calm explanation for structures nothing monitors. Never a status, never a warning color. */
 function ContextOnlyCard({ structure }: { structure: AtlasStructure }) {
   const system = SYSTEM_INFO[structure.system] ?? SYSTEM_INFO.other
+  const t = useT()
   return (
-    <section aria-label="Context only" className="rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.07]">
+    <section aria-label={t('attention.structure.contextAria')} className="rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.07]">
       <div className="flex items-center gap-2 text-[14px] font-semibold text-ink-100">
         <BookOpen size={15} className="shrink-0 text-ink-300" aria-hidden />
-        {CONTEXT_ONLY_TITLE}: not monitored
+        {t('attention.structure.notMonitored', { title: contextOnlyTitle() })}
       </div>
-      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-300">{CONTEXT_ONLY_TEXT}</p>
+      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-300">{contextOnlyText()}</p>
       <p className="mt-2 text-xs leading-relaxed text-ink-500">
         {system.description} {system.monitoring}
       </p>
-      <p className="mt-2 border-t border-white/[0.06] pt-2 text-xs leading-relaxed text-ink-500">No status is shown here because nothing is measured. That is not the same as normal.</p>
+      <p className="mt-2 border-t border-white/[0.06] pt-2 text-xs leading-relaxed text-ink-500">{t('attention.structure.noStatus')}</p>
     </section>
   )
 }
@@ -207,11 +213,12 @@ export function StructureDetail({ astronautId, structure, manifest }: { astronau
 
 /** Shown when a structure id is selected but the atlas cannot describe it (still loading, or unavailable). */
 export function StructureUnavailable({ loading }: { loading: boolean }) {
+  const t = useT()
   return (
     <div className="flex flex-col gap-4">
       <BackRow />
       <div className="rounded-xl bg-white/[0.03] px-3 py-3 text-[13px] leading-relaxed text-ink-300 ring-1 ring-white/[0.06]" role="status">
-        {loading ? 'Loading the anatomy reference...' : 'The anatomy reference is not available, so this structure cannot be described. Body systems stay available from the chips beside the body.'}
+        {loading ? t('attention.structure.loading') : t('attention.structure.unavailable')}
       </div>
     </div>
   )

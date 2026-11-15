@@ -15,7 +15,7 @@
  * Pure TypeScript: the engine calls process(now) and reads `messages` (newest first, bounded).
  */
 import type { CommMessage, CommProfile, DataOrigin, RiskLevel } from '../types/domain'
-import { COMMS } from './config'
+import { AUTONOMY, COMMS } from './config'
 import { hash01 } from './random'
 import { fmtClock, fmtDuration } from './text'
 
@@ -182,6 +182,51 @@ export class CommManager {
       if (!progressed) break
     }
     return events
+  }
+}
+
+export type AutonomyMode = 'NEAR_REAL_TIME' | 'DELAYED' | 'CREW_FIRST'
+
+export interface AutonomyGuidance {
+  mode: AutonomyMode
+  /** Earliest possible Earth answer to a question sent now: 2 x one way delay + minimum review (ms). */
+  earliestReplyMs: number
+  title: string
+  body: string
+}
+
+/**
+ * What the Earth link delay means for who decides (hazard: Distance from Earth).
+ * Thresholds are AUTONOMY demo configuration; the delay comes from the comm profile.
+ */
+export function autonomyGuidance(oneWayDelaySec: number, reviewMinMin: number = COMMS.reviewMinMin): AutonomyGuidance {
+  const oneWay = Math.max(0, Number.isFinite(oneWayDelaySec) ? oneWayDelaySec : 0)
+  const earliestReplyMs = Math.round((2 * oneWay + reviewMinMin * 60) * 1000)
+  const rtSec = 2 * oneWay
+  const rt = rtSec < 60 ? `${rtSec < 10 ? rtSec.toFixed(1) : Math.round(rtSec)} s` : fmtDuration(rtSec * 1000)
+  if (oneWay < AUTONOMY.nearRealTimeMaxSec) {
+    return {
+      mode: 'NEAR_REAL_TIME',
+      earliestReplyMs,
+      title: 'Ground support in near real time',
+      body: 'The crew can ask Mission Control and the flight surgeon before acting; the answer is limited by review time, not by distance.',
+    }
+  }
+  if (oneWay < AUTONOMY.crewFirstMinSec) {
+    return {
+      mode: 'DELAYED',
+      earliestReplyMs,
+      title: 'Short delay, help is far',
+      body: `A question and its answer take about ${rt} of light time. The ground can still support decisions, but the crew handles the first minutes on board.`,
+    }
+  }
+  return {
+    mode: 'CREW_FIRST',
+    earliestReplyMs,
+    title: 'Crew acts first, Earth reviews later',
+    body:
+      `Every question to Earth costs at least ${rt} of light time plus review time (earliest answer about ${fmtDuration(earliestReplyMs)}). ` +
+      'For anything urgent the crew follows on board procedures without waiting; the crew medical officer leads and the ground reviews when the reply arrives.',
   }
 }
 

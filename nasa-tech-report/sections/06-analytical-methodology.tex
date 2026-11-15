@@ -1,0 +1,214 @@
+\section{Analytical Methodology}
+\label{sec:analytical-methodology}
+
+This section describes what AHI measures and how it turns the measurements into status, predictions and recommendations. The analysis follows the three levels of \ref{sec:solution-overview}: real-time monitoring, predictive analytics and prescriptive intelligence. It starts with explainable statistics and explicit rules, and adds machine learning models only where enough real data exist to train and evaluate them (\ref{sec:artificial-intelligence}).
+
+All numeric parameters in this section, such as band widths, level cutoffs, weights and time windows, are \textbf{configuration}. They are kept in one versioned configuration, they are not official NASA limits or clinical thresholds, and each must be grounded in a cited source or reviewed by a flight surgeon before operational use.
+
+\subsection{Health Dimensions}
+\label{subsec:dimensions}
+
+AHI organizes monitoring into ten dimensions. For each one, \ref{tab:dimensions} lists what is measured, what is analyzed and which risks the analysis helps to identify. The sources are the ISS devices of \ref{sec:hardware-sensors}.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{The ten health dimensions of AHI.}
+\label{tab:dimensions}
+\scriptsize
+\begin{tabular}{p{2.3cm}p{4.0cm}p{4.2cm}p{3.5cm}}
+\hline
+\textbf{Dimension} & \textbf{What is measured} & \textbf{What is analyzed} & \textbf{Risks it helps identify} \\
+\hline
+Cardiovascular & Heart rate, heart rate variability, blood pressure, ECG and rhythm, oxygen saturation, vascular findings from ultrasound & Persistent heart rate changes, variability below the personal pattern, pressure changes, deconditioning, rhythm changes, exercise response & Cardiovascular adaptation, orthostatic intolerance, circulatory changes \\
+Respiratory and oxygenation & Breathing rate and volume, oxygen saturation, breathing during sleep and exercise, CO\textsubscript{2} exposure & Persistent fall in saturation, abnormal rise in breathing rate, link between air quality and physiology & Hypoxia, exposure to elevated CO\textsubscript{2} and contaminants \\
+Muscle and bone & Strength, endurance, exercise load and volume, muscle findings from ultrasound, bone results from periodic exams and markers & Progressive loss of strength, lower tolerated load, reduced exercise capacity & Muscle atrophy, bone loss, reduced physical capacity \\
+Immune & Blood cell counts, stress hormones, immune markers, signs of latent virus reactivation & Changes of immune markers against the personal baseline, links between stress, sleep and immunity & Altered immunity, higher susceptibility to infection \\
+Neurological and sensorimotor & Reaction time, cognition test results, symptoms of space motion sickness, balance and coordination tests & Slower responses, worse attention and memory, coordination problems & Sensorimotor and vestibular changes \\
+Vision & Visual acuity and Amsler grid per eye; visual symptoms reported by the crew; retinal photograph, optical coherence tomography and ocular ultrasound findings per eye & Change of each eye against the preflight examination, trend across the scheduled examinations, new symptoms between examinations, co-occurrence with blood pressure and time in flight & Eye changes of SANS, blurred vision \\
+Hearing & Hearing thresholds per frequency and ear; personal noise exposure during work and sleep & Change of each ear against the preflight audiogram, trend across tests, noise dose next to hearing results & Hearing threshold shift, interference with communication, alarms and sleep \\
+Sleep and circadian rhythm & Sleep duration, efficiency, stages when the headband is used, awakenings, light exposure, regularity & Accumulated sleep debt, circadian shift, fragmented sleep, links with performance and recovery & Sleep loss, fatigue, lower performance \\
+Psychological and behavioral & Self reported mood, stress, workload, rest quality and isolation; structured questionnaires & Persistent change of mood or stress, mental fatigue, links between isolation, sleep and performance & Behavioral changes and team problems; indicators only, never a diagnosis \\
+Metabolic, renal and nutritional & Urinalysis results, blood chemistry, fluid intake and diet reported by the crew & Dehydration, nutritional imbalance, kidney stone risk factors, links between diet, exercise and recovery & Renal problems, bone loss, inadequate nutrition \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+The evidence behind the choice of dimensions is in \ref{sec:scientific-foundation}. Two constraints shape how each one is analyzed. First, the dimensions with frequent data (cardiovascular, respiratory, sleep, activity and exercise) support time series analysis, while the immune, metabolic, vision and hearing dimensions rely on periodic samples and examinations and allow only slow, sparse trends. Second, the psychological dimension uses indicators of risk and a request for appropriate evaluation. AHI never diagnoses depression, anxiety or any other condition from heart rate, messages or expressions.
+
+\subsection{Level 1: Real-Time Monitoring}
+\label{subsec:baseline}
+
+\medskip\noindent\textbf{Personal baseline.} Each person is compared with their own history and not with a population average. For every person, metric and activity context (sleep, rest, work or exercise), the engine keeps a robust estimate of the normal value and a band around it. Contexts matter because a heart rate during exercise should be compared with past exercise and not with sleep. For the accepted samples $x_1,\dots,x_n$ of one context:
+
+\begin{equation}
+m=\operatorname{median}(x_i),\qquad \mathrm{MAD}=\operatorname{median}\left(\lvert x_i-m\rvert\right),\qquad s=\max\left(1.4826\,\mathrm{MAD},\;s_{\min}\right)
+\end{equation}
+
+\begin{equation}
+\text{normal band}=\left[m-ks,\;m+ks\right]
+\end{equation}
+
+The median and the median absolute deviation (MAD) resist outliers, the factor 1.4826 makes the MAD comparable to a standard deviation for normal data, and the floor $s_{\min}$ keeps a very stable signal from making small changes look large. Preflight data provide the first baseline, which is then updated in flight. A sample enters the baseline only if it is not an outlier and not marked questionable, and new samples are held out while a slow drift is active, so that a gradual decline does not quietly become the new normal. A baseline is used only after enough samples, and until then the interface says that it is still learning the person's normal.
+
+\medskip\noindent\textbf{Acute deviation.} For a value $x$ the signed robust z-score is $z=(x-m)/s$. The acute check uses the median of the last three readings, which filters a single spike:
+
+\begin{equation}
+z_{\text{acute}}=\frac{\operatorname{median}\left(x_t,x_{t-1},x_{t-2}\right)-m}{s}
+\end{equation}
+
+Increasing values of $z_{\text{acute}}$ in the direction that is bad for the metric give moderate, high and critical levels.
+
+\medskip\noindent\textbf{Slow drift.} An acute check cannot see a gradual change. An exponentially weighted average $D_t$ of the z-scores, with a half-life $H$ that stays correct for irregular samples, follows slow changes:
+
+\begin{equation}
+\alpha_t=1-0.5^{\,\Delta t/H},\qquad D_t=D_{t-1}+\alpha_t\left(z_t-D_{t-1}\right)
+\end{equation}
+
+A drift that stays above a level for a minimum time raises an alert, so that a single bad hour does not.
+
+\medskip\noindent\textbf{Periodic data.} Sleep, exercise sessions, cognition tests and check-ins arrive once a day or less, and they use runs of consecutive values outside the band. Laboratory, urinalysis and ultrasound results are compared with the person's previous results and with the reference ranges reported with them.
+
+\medskip\noindent\textbf{Environment.} Cabin signals have no personal normal. They are compared with limits taken from cited standards, such as the NASA-STD-3001 limit for the one hour average CO\textsubscript{2} partial pressure \cite{nasa_ochmo_tb004_co2}, and with their own recent trend.
+
+\medskip\noindent\textbf{Noise and hearing.} Personal noise exposure is compared with a cited limit and not with a personal normal: the 24 hour noise dose $D$ measured by the crew-worn dosimeter is compared with the NASA-STD-3001 limit $D\le100$ \cite{nasa_ochmo_tb035_acoustics}, and the work and sleep period levels are kept as separate observations, because noise during sleep also affects rest. Hearing is compared with the person. Each audiogram is compared, frequency by frequency and ear by ear, with the preflight audiogram of the same person, which is the baseline of this dimension:
+
+\begin{equation}
+\Delta T_{f,e}=T_{f,e}-T^{\text{pre}}_{f,e}
+\end{equation}
+
+where $T_{f,e}$ is the threshold at frequency $f$ for ear $e$, in decibels hearing level. A shift that persists in a later test is flagged for review by the flight surgeon; the size of shift that counts as significant is configuration that the flight surgeon sets, not a value invented by AHI. The platform shows the noise exposure and the hearing results on the same timeline, so that a reviewer can see whether a shift followed a period of high exposure. It reports this as co-occurrence and not as cause, all the more because low frequency shifts on the ISS are not typically caused by noise \cite{coste2024hearing}.
+
+\medskip\noindent\textbf{Eyes.} The vision dimension combines tests of how well the person sees, such as visual acuity and the Amsler grid, with examinations of the structure of the eye, such as OCT, retinal photography and ocular ultrasound, because structural changes can exist without symptoms \cite{brunstetter2023brief}. Each result, for example the retinal and nerve fiber layer thickness measured by OCT, is compared per eye with the preflight examination and with the previous in-flight results. AHI shows the change and its trend across the scheduled examinations and requests review when an eye changes more than the configured amount.
+
+Between examinations, the daily check-in lets the crew member report visual symptoms: blurred vision, difficulty focusing, distorted lines or images, or a change in near or distant vision. A new symptom creates a request to inform the crew surgeon, as NASA asks crew members to do for any vision change \cite{brunstetter2023brief}, and can bring the next screening forward. Since SANS severity is related to mission duration \cite{brunstetter2023brief} and its leading hypothesis is the headward fluid shift \cite{nasa_fluid_shifts_study}, the vision panel places time in flight, blood pressure and fluid related indicators, when available, on the same timeline as the eye results. These relations are shown as co-occurrence. AHI does not interpret images, does not decide whether a finding is SANS and does not diagnose SANS automatically.
+
+\medskip\noindent\textbf{Career radiation dose.} NASA-STD-3001 limits the total career effective dose of an astronaut from spaceflight radiation to less than 600~mSv, for all ages and sexes \cite{nasa_ochmo_tb020_radiation}. This is a published, cited limit, so AHI follows it directly. For each astronaut, the career dose is the sum of the dose from previous missions, taken from the medical record, the dose of the current mission measured by the personal dosimeter, and an estimate for the time since the last readout, computed from the area monitors and labeled as derived:
+
+\begin{equation}
+D_{\text{career}}=D_{\text{prior}}+D_{\text{mission}}+\hat{D}_{\text{since readout}},\qquad
+u=\frac{D_{\text{career}}}{600~\text{mSv}}
+\end{equation}
+
+The platform shows the fraction $u$ of the limit already used and projects it to the end of the mission at the recent dose rate $\dot{D}$, for the mission profile in use (ISS, Moon or Mars):
+
+\begin{equation}
+\hat{D}_{\text{end}}=D_{\text{career}}+\dot{D}\,T_{\text{remaining}}
+\end{equation}
+
+The projection is a planning aid for the flight surgeon and for mission planning. As stated in \ref{subsec:spaceflight-challenges}, a dosimeter value is compared with the limit only when it is reported as effective dose, and AHI does not estimate cancer or any other radiation health risk.
+
+\medskip\noindent\textbf{Radiation shelter rule.} NASA-STD-3001 requires a method to alert the crew when radiation levels are expected to exceed acceptable levels, and the NASA technical brief notes that the time course of solar particle events usually allows the crew to reconfigure the vehicle and prepare a shelter, for example with water and stowage around the crew quarters \cite{nasa_ochmo_tb020_radiation}. AHI turns this into a rule with two independent triggers:
+
+\begin{enumerate}
+\item \textbf{Space weather notification.} A DONKI notification of a solar energetic particle event, or of a flare or coronal mass ejection with a predicted particle event, relayed on board by the ground node (\ref{subsec:space-weather}).
+\item \textbf{On board measurement.} A rise of the area dose rate measured by the station radiation monitors well above its recent trend, which needs no link to Earth. The size of the rise is configuration.
+\end{enumerate}
+
+Either trigger creates a high priority recommendation for the whole crew: prepare the radiation shelter according to the mission protocol, and review any planned extravehicular activity. It is marked as an on board action, because the crew can act at once, and it is sent to the ground for confirmation. The recommendation shows its trigger, the notification identifier or the measured dose rate, and it is closed when the dose rate returns to its trend and the notification period ends. AHI recommends; the decision to shelter follows the flight rules of the mission.
+
+\medskip\noindent\textbf{Data quality.} A signal with no valid value within its expected cadence becomes \texttt{NO\_DATA}, and a device reported as stale or offline has the same effect. Questionable values cannot escalate beyond a moderate level on their own. \textbf{Missing data is never treated as normal.}
+
+\subsection{Level 2: Predictive Analytics}
+\label{subsec:trend-analysis}
+
+Prediction answers two questions: where is a signal going, and how likely is a deterioration over a given horizon. AHI uses several techniques, summarized in \ref{tab:techniques}.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Analytical techniques of AHI and their use.}
+\label{tab:techniques}
+\small
+\begin{tabular}{p{4.2cm}p{9.8cm}}
+\hline
+\textbf{Technique} & \textbf{Use} \\
+\hline
+Statistical baselines & Compare each indicator with the individual history \\
+Anomaly detection & Identify unusual changes, univariate and multivariate \\
+Time series forecasting & Project the trend of a signal with an uncertainty interval \\
+Multivariate analysis & Relate different physiological, behavioral and environmental signals \\
+Risk and survival models & Estimate the risk of an event within a time window \\
+Explainable AI & Show which factors drove a prediction \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\medskip\noindent\textbf{Trend projection.} The first forecasting method is damped Holt linear smoothing, which is transparent and needs little data:
+
+\begin{equation}
+\ell_t=\alpha y_t+(1-\alpha)\left(\ell_{t-1}+\phi b_{t-1}\right),\qquad
+b_t=\beta\left(\ell_t-\ell_{t-1}\right)+(1-\beta)\phi b_{t-1}
+\end{equation}
+
+\begin{equation}
+\hat{y}_{t+h}=\ell_t+\left(\phi+\phi^2+\dots+\phi^h\right)b_t
+\end{equation}
+
+The damping $\phi<1$ makes the trend fade with the horizon instead of growing without limit. The interval is $\hat{y}\pm z_{q}\,\sigma_h$, where $\sigma_h$ is the standard deviation of recent residuals widened with the horizon. The \textit{time to band exit}, the first moment the projection leaves the personal band, turns a trend into an operational question. Projections are shown for 24, 48 and 72 hours where the data support them, and the interface says when there is not enough data.
+
+\medskip\noindent\textbf{Combined patterns.} Explicit rules look at several signals together, for example a fatigue pattern made of short or inefficient sleep, low heart rate variability and a rising resting heart rate, or elevated cabin CO\textsubscript{2} while breathing rate rises and reaction time slows. A combined rule reports a co-occurrence and not a cause.
+
+\medskip\noindent\textbf{Transparent risk score.} The rule hits of one astronaut are combined into an operational attention level (low, moderate, high or critical), a score from 0 to 100, the contributing factors in plain language and a confidence value. Each triggered rule contributes a weight $w_i$ that grows with its level, combined as a noisy-OR:
+
+\begin{equation}
+\text{score}=100\left(1-\prod_i\left(1-w_i\right)\right)
+\end{equation}
+
+Several independent moderate deviations escalate without exceeding 100. A critical level requires at least one critical finding, a lost signal weighs as unknown and not as worse, and self report alone cannot raise the level above moderate. Confidence falls with every missing or questionable key signal and describes how much data stands behind the level. The score is an operational level and not a probability.
+
+\medskip\noindent\textbf{Machine learning models.} When enough real data exist, AHI adds learned models behind the same interface: Isolation Forest for multivariate anomaly detection, gradient boosted trees (XGBoost) and random forests for risk estimation and for ranking the factors that matter, and, once long histories exist, sequence models such as LSTM networks or the Temporal Fusion Transformer for multivariate forecasting. The initial set is the personal baseline, documented rules, Isolation Forest and XGBoost. Every learned model is versioned, documented with its features and training data, evaluated for false alerts and calibration, and explained by the factors that drove each output (\ref{sec:artificial-intelligence}).
+
+\medskip\noindent\textbf{Predictions offered.} \ref{tab:predictions} lists the predictions AHI is designed to produce. They do not all have the same precision. Sleep and fatigue have frequent data and allow temporal models, while bone loss and immune changes depend on periodic clinical and laboratory evaluations, so their predictions are slower and less certain. No prediction is presented as a diagnosis or as the certainty that a disease will occur.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Predictions AHI is designed to produce.}
+\label{tab:predictions}
+\footnotesize
+\begin{tabular}{p{3.4cm}p{5.4cm}p{5.2cm}}
+\hline
+\textbf{Prediction} & \textbf{Data used} & \textbf{Expected result} \\
+\hline
+Accumulated fatigue & Sleep, heart rate variability, activity, heart rate & Risk of fatigue in the next 24 to 72 hours \\
+Cardiovascular deterioration & ECG, blood pressure, heart rate variability, exercise & Trend of cardiovascular change \\
+Muscle loss & Strength, load, repetitions, training & Trend of loss of performance \\
+Sleep changes & Actigraphy, EEG headband, light exposure & Risk of sleep debt \\
+Immune changes & Blood, saliva, stress hormones, history & Trend of immune change \\
+Dehydration & Fluid intake, urinalysis, clinical indicators & Risk of fluid imbalance \\
+Psychological deterioration & Questionnaires, sleep, stress, isolation & Risk of worse well-being \\
+Environmental risk & CO\textsubscript{2}, radiation, contaminants, history & Accumulated exposure and possible effect on health \\
+Vision change & Vision screening, OCT, retinal photograph and ultrasound findings, symptoms, time in flight & Trend of each eye against the preflight examination; never a SANS diagnosis \\
+Hearing change & Audiograms, noise dose, sleep period noise & Trend of thresholds against the preflight audiogram, with exposure alongside \\
+Career radiation dose & Personal dosimeter, area monitors, prior missions, mission profile & Fraction of the NASA-STD-3001 career limit used, projected to the end of the mission \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\subsection{Level 3: Prescriptive Intelligence}
+\label{subsec:recommendations}
+
+The third level turns predictions into actions. For each relevant risk, the recommendation engine selects interventions from a versioned catalog, considering the current condition, the history, the evolution of the indicators, the schedule and workload, sleep, exercise, diet, the cabin environment, and medical restrictions and mission protocols. The catalog contains six kinds of action:
+
+\begin{itemize}
+\item \textbf{Exercise:} adjust training intensity, resistance or aerobic work and recovery periods. Example: a decline of muscle performance leads to a suggestion to review the training prescription with the specialist.
+\item \textbf{Nutrition and hydration:} follow fluid and protein intake and flag possible deficiencies. Example: low fluid intake leads to a suggestion to follow a hydration plan approved by the medical team.
+\item \textbf{Sleep and recovery:} regular rest periods, lighting, pauses between activities. Example: three consecutive nights of short sleep lead to a suggestion to review the rest schedule.
+\item \textbf{Mental health and well-being:} breathing and relaxation exercises, leisure time, planned contact with family, and a psychological evaluation when needed. Example: persistent signs of stress lead to a suggestion of a relaxation activity and of contact with the psychological support team.
+\item \textbf{Medical follow-up:} request a medical evaluation, repeat an examination or refer to a specialist. Example: persistent cardiovascular changes lead to a request for review by the flight surgeon, a report of blurred vision leads to a request to inform the crew surgeon, and a hearing threshold shift leads to a request to repeat the hearing assessment.
+\item \textbf{Environmental protection:} radiation shelter, hearing protection and exposure reduction, following mission protocols. Example: a solar particle event leads to a suggestion to prepare the radiation shelter, and a high noise dose during sleep leads to a suggestion to use hearing protection and to check the noise sources near the crew quarters.
+\end{itemize}
+
+The catalog never recommends medication, doses or treatment. Each recommendation is a record with seven fields: the problem identified, the evidence that justifies it, the suggested action, the expected result, the time for reassessment, the status of the intervention and the evolution of the indicators after it. The last two fields close the loop: over time the platform learns which interventions are followed by better indicators, always within the protocols validated by the medical team.
+
+\medskip\noindent\textbf{Autonomy and distance.} Each recommendation states who can act. \textit{On board} means that the crew can act now. \textit{Ground review} means that a flight surgeon or mission control should review it. Items that are high, critical or addressed to the flight surgeon always require human review. When the communication delay is long, a high or critical item that needs ground review also creates an on board first step, whose reason states the earliest possible reply from Earth:
+
+\begin{equation}
+t_{\text{reply}}=2\,t_{\text{one way}}+t_{\text{review}}
+\end{equation}
+
+\medskip\noindent\textbf{Scenarios with and without intervention.} For a selected action, AHI compares the projected course of the indicators with and without the intervention. The comparison is a planning aid. Its effect sizes must come from published evidence or from the observed results of past interventions, and it is labeled as a projection and not as evidence of efficacy.

@@ -6,11 +6,16 @@ import { useAppStore } from '../../state/store'
 import { useUiStore } from '../../app/uiStore'
 import { STATUS_META } from '../../lib/status'
 import type { Alert, Anomaly, BodyRegionId, DataOrigin } from '../../types/domain'
-import { METRIC_CATALOG, REGION_LABELS } from '../../engine/catalog'
+import { METRIC_CATALOG } from '../../engine/catalog'
+import { t, tp, useT } from '../../i18n'
+import { tx } from '../../i18n/rich'
+import { metricLabel, regionLabel } from '../../i18n/catalog'
+import { lowerLabel } from './text'
 import { StatusIcon, StatusPill } from '../../components/Status'
 import { Badge, SectionLabel } from '../../components/ui'
 import { ORIGIN_LABEL, fmtMetric, formatUtcTime, relTime } from '../../components/format'
 import { ANOMALY_METHOD_LABEL, observedAt, regionAlerts, regionAnomalies } from '../anatomy/atlas/health'
+import { alertTitle } from '../../i18n/engineText'
 
 /** Statistical flags older than this (sim time) are history, not part of the current picture. */
 const ANOMALY_WINDOW_MS = 24 * 3_600_000
@@ -22,7 +27,7 @@ const EVENTS_ID = 'region-events'
 /** Origin of the data behind an alert or flag. Simulated data always carries the violet badge. */
 function OriginBadge({ origin }: { origin: DataOrigin }) {
   return (
-    <Badge tone={origin === 'SIMULATED' ? 'sim' : 'neutral'} icon={origin === 'SIMULATED' ? <FlaskConical size={10} aria-hidden /> : undefined} title="Data origin of the readings behind this item">
+    <Badge tone={origin === 'SIMULATED' ? 'sim' : 'neutral'} icon={origin === 'SIMULATED' ? <FlaskConical size={10} aria-hidden /> : undefined} title={t('attention.events.originTitle')}>
       {ORIGIN_LABEL[origin] ?? origin}
     </Badge>
   )
@@ -44,7 +49,7 @@ function ObservedVsNormal({ astronautId, alert }: { astronautId: string; alert: 
     return (
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <OriginBadge origin="SIMULATED" />
-        <span className="text-[10px] text-ink-500 present:hidden">Rule {alert.ruleId}</span>
+        <span className="text-[10px] text-ink-500 present:hidden">{t('attention.events.rule', { id: alert.ruleId })}</span>
       </div>
     )
   }
@@ -53,21 +58,21 @@ function ObservedVsNormal({ astronautId, alert }: { astronautId: string; alert: 
     <>
       <dl className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
         <div className="rounded-lg bg-white/[0.03] px-2 py-1.5 ring-1 ring-white/[0.05]">
-          <dt className="text-ink-500">Observed when raised</dt>
+          <dt className="text-ink-500">{t('attention.events.observed')}</dt>
           <dd className={clsx('tabular mt-0.5 text-[13px] font-semibold', observed == null ? 'text-nodata' : 'text-ink-100')}>
-            {observed == null ? 'No reading' : `${fmtMetric(metric, observed)} ${def.unit}`}
+            {observed == null ? t('attention.events.noReading') : `${fmtMetric(metric, observed)} ${def.unit}`}
           </dd>
         </div>
         <div className="rounded-lg bg-white/[0.03] px-2 py-1.5 ring-1 ring-white/[0.05]">
-          <dt className="text-ink-500">Personal normal</dt>
+          <dt className="text-ink-500">{t('attention.events.personalNormal')}</dt>
           <dd className="tabular mt-0.5 text-[13px] font-semibold text-ink-100">
-            {ready && low != null && high != null ? `${fmtMetric(metric, low)} to ${fmtMetric(metric, high)} ${def.unit}` : <span className="font-medium text-ink-300">Still learning</span>}
+            {ready && low != null && high != null ? t('attention.range', { low: fmtMetric(metric, low), high: fmtMetric(metric, high), unit: def.unit }) : <span className="font-medium text-ink-300">{t('attention.events.stillLearning')}</span>}
           </dd>
         </div>
       </dl>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <OriginBadge origin={origin} />
-        <span className="text-[10px] text-ink-500 present:hidden">Rule {alert.ruleId}</span>
+        <span className="text-[10px] text-ink-500 present:hidden">{t('attention.events.rule', { id: alert.ruleId })}</span>
       </div>
     </>
   )
@@ -82,21 +87,21 @@ function AlertRow({ astronautId, alert, now }: { astronautId: string; alert: Ale
       <div className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5">
           <StatusPill status={alert.severity} variant="technical" size="sm" />
-          {level > 0 && <span className="text-[10px] font-bold tracking-wide text-rose-200 uppercase">Escalated</span>}
+          {level > 0 && <span className="text-[10px] font-bold tracking-wide text-rose-200 uppercase">{t('attention.events.escalated')}</span>}
         </span>
-        <span className="tabular shrink-0 text-[11px] text-ink-500" title={`${formatUtcTime(alert.createdAt)} UTC (simulated clock)`}>
+        <span className="tabular shrink-0 text-[11px] text-ink-500" title={t('attention.events.timeTitle', { time: formatUtcTime(alert.createdAt) })}>
           {formatUtcTime(alert.createdAt, false)} UTC · {relTime(alert.createdAt, now)}
         </span>
       </div>
-      <div className="mt-1.5 text-[13px] leading-snug font-semibold text-ink-100">{alert.title}</div>
+      <div className="mt-1.5 text-[13px] leading-snug font-semibold text-ink-100">{alertTitle(alert)}</div>
       {def && (
         <button
           type="button"
           onClick={() => selectMetric(alert.metric)}
-          aria-label={`Triggered by ${def.label}. Show its chart.`}
+          aria-label={t('attention.events.triggeredAria', { metric: metricLabel(alert.metric!) })}
           className="focus-ring mt-0.5 rounded text-left text-xs text-ink-300 hover:text-accent"
         >
-          Triggered by <span className="font-semibold underline decoration-white/20 underline-offset-2">{def.label}</span>
+          {tx('attention.events.triggeredBy', { metric: <span className="font-semibold underline decoration-white/20 underline-offset-2">{metricLabel(alert.metric!)}</span> })}
         </button>
       )}
       <ObservedVsNormal astronautId={astronautId} alert={alert} />
@@ -111,7 +116,7 @@ function FlagRow({ astronautId, flag }: { astronautId: string; flag: Anomaly }) 
       <div className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-ink-100">
           <StatusIcon status={flag.severity} size={13} className="shrink-0" />
-          <span className="truncate">{METRIC_CATALOG[flag.metric].label}</span>
+          <span className="truncate">{metricLabel(flag.metric)}</span>
         </span>
         <span className="tabular shrink-0 text-[11px] text-ink-500">{formatUtcTime(flag.detectedAt, false)} UTC</span>
       </div>
@@ -143,11 +148,11 @@ export function RegionAlertsJump({ astronautId, region }: { astronautId: string;
     >
       <StatusIcon status={worst} size={13} className="shrink-0" />
       <span className="min-w-0 flex-1">
-        <span className="tabular">{alerts.length}</span> open {alerts.length === 1 ? 'alert' : 'alerts'} for this system
+        {tp('attention.events.openForSystem', alerts.length)}
         <span className="font-normal text-ink-300"> · {STATUS_META[worst].label}</span>
       </span>
       <span className="flex shrink-0 items-center gap-1 font-normal text-ink-300">
-        Details <ArrowDown size={12} aria-hidden />
+        {t('attention.events.details')} <ArrowDown size={12} aria-hidden />
       </span>
     </button>
   )
@@ -172,32 +177,33 @@ export function RegionEvents({ astronautId, region }: { astronautId: string; reg
   const shownFlags = showAll ? flags : flags.slice(0, SHOWN_FLAGS)
   const hidden = alerts.length - shownAlerts.length + (flags.length - shownFlags.length)
   const total = alerts.length + flags.length
-  const name = REGION_LABELS[region].label.toLowerCase()
+  const name = lowerLabel(regionLabel(region))
+  useT()
 
   return (
-    <section id={EVENTS_ID} aria-label={`Alerts and flags for ${name}`} className="scroll-mt-2">
+    <section id={EVENTS_ID} aria-label={t('attention.events.sectionAria', { region: name })} className="scroll-mt-2">
       <SectionLabel
         right={
           alerts.length > 0 ? (
             <button type="button" onClick={() => setAlertsOpen(true)} className="focus-ring flex items-center gap-1 rounded px-1 text-[11px] font-semibold text-accent hover:underline">
-              <BellRing size={11} aria-hidden /> Open alerts
+              <BellRing size={11} aria-hidden /> {t('attention.events.openAlerts')}
             </button>
           ) : total > 0 ? (
             <span className="tabular text-[11px] text-ink-500">{total}</span>
           ) : null
         }
       >
-        Alerts and flags
+        {t('attention.events.title')}
       </SectionLabel>
       {total === 0 ? (
         <div className="mt-2 flex items-center gap-2.5 rounded-xl bg-white/[0.03] px-3 py-2.5 text-[13px] text-ink-300 ring-1 ring-white/[0.05]">
           <CircleCheck size={15} className="shrink-0 text-ink-500" aria-hidden />
-          No open alerts and no flags in the last 24 h for this system.
+          {t('attention.events.none')}
         </div>
       ) : (
         <>
           {shownAlerts.length > 0 && (
-            <ul className="mt-2 flex flex-col gap-2" aria-label="Open alerts">
+            <ul className="mt-2 flex flex-col gap-2" aria-label={t('attention.events.openAlertsList')}>
               {shownAlerts.map((a) => (
                 <AlertRow key={a.id} astronautId={astronautId} alert={a} now={now} />
               ))}
@@ -206,9 +212,9 @@ export function RegionEvents({ astronautId, region }: { astronautId: string; reg
           {shownFlags.length > 0 && (
             <>
               <div className="mt-2.5 text-[11px] text-ink-500">
-                Statistical flags, last 24 h <span className="tabular">({flags.length})</span>
+                {t('attention.events.flags')} <span className="tabular">({flags.length})</span>
               </div>
-              <ul className="mt-1.5 flex flex-col gap-1.5" aria-label="Statistical flags in the last 24 hours">
+              <ul className="mt-1.5 flex flex-col gap-1.5" aria-label={t('attention.events.flagsAria')}>
                 {shownFlags.map((f) => (
                   <FlagRow key={f.id} astronautId={astronautId} flag={f} />
                 ))}
@@ -217,10 +223,10 @@ export function RegionEvents({ astronautId, region }: { astronautId: string; reg
           )}
           {(alerts.length > SHOWN_ALERTS || flags.length > SHOWN_FLAGS) && (
             <button type="button" onClick={() => setShowAll((v) => !v)} className="focus-ring mt-1.5 rounded px-2 text-[11px] font-semibold text-accent hover:underline">
-              {showAll ? 'Show less' : `Show ${hidden} more`}
+              {showAll ? t('attention.showLess') : t('attention.showMore', { n: hidden })}
             </button>
           )}
-          <p className="mt-2 text-[10.5px] leading-relaxed text-ink-500">Alerts and flags compare readings with the personal normal. They ask for a review and are not a diagnosis.</p>
+          <p className="mt-2 text-[10.5px] leading-relaxed text-ink-500">{t('attention.events.footer')}</p>
         </>
       )}
     </section>

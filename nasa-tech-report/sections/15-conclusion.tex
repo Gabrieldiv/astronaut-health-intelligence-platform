@@ -1,0 +1,25 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+\subsection{Summary}
+\label{subsec:summary}
+
+This report presented Astronaut Health Intelligence (AHI), a platform for the prevention of health problems and the predictive protection of crew health on space missions. AHI integrates physiological, behavioral and environmental data from equipment in use on the International Space Station: the Bio-Monitor, the Actiwatch Spectrum and the Dry-EEG Headband among the wearables; the blood pressure and ECG monitor, the Holter monitor, the pulse oximeter, the Ultrasound 2, the urine analyzer and the sample collection kits among the medical equipment; the optical coherence tomography and the On-Orbit Hearing Assessment for the eyes and ears; CEVIS, ARED and T2 for exercise; and the air quality, carbon dioxide, combustion, noise, radiation, water and microbial monitors for the cabin, complemented by the space weather notifications of NASA DONKI.
+
+The platform organizes health into ten dimensions, with vision and hearing as two separate dimensions, and uses the five hazards of human spaceflight as the axis of its risk analysis. It works on three levels. Real-time monitoring compares each person with their own normal and detects acute changes, slow drifts and missing data. Predictive analytics projects trends for 24 to 72 hours and estimates risks with transparent rules first and learned models as real data allow. Prescriptive intelligence recommends exercise, nutrition, sleep, well-being and medical follow-up actions, each with its evidence, its autonomy and its follow-up. It follows the career radiation dose of each astronaut against the NASA-STD-3001 limit and recommends preparing the radiation shelter when a solar particle event is reported or measured. A language model explains the results in plain language and powers a health assistant by text and voice, under strict guardrails, and never computes them. Internet access is useful but not essential: the demonstrator simulates the AI with the Claude API, and an on board backend with a contingency plan, including local language and speech models, keeps the platform working without a connection. Role-based access, five languages and audio description make the platform usable by an international and diverse crew.
+
+\subsection{Contributions}
+\label{subsec:contributions}
+
+\begin{enumerate}
+\item \textbf{A hardware grounded design,} in which every data source is a device that public sources describe as used on the ISS, with what each source does and does not establish.
+\item \textbf{A canonical health observation model} with origin, quality, source and context on every record, and one adapter per device, so that the analysis does not depend on where a value comes from.
+\item \textbf{An explainable analysis chain} from personal baselines to risk, forecasts and recommendations, in which every output can be traced to its data and to a versioned rule or model.
+\item \textbf{A treatment of missing data as a first class state,} reported as such and never as normal.
+\item \textbf{An operational view of distance,} in which recommendations carry an autonomy tag and a long Earth link places on board steps first.
+\item \textbf{A contingency design for language features,} in which the explanations and the assistant are built behind one interface, served by the Claude API in the demonstrator and by a local on board model when there is no internet access.
+\item \textbf{Inclusion as a requirement,} with five languages, a plain language assistant by text and voice, and audio description for blind and low vision users, people with dyslexia and astronauts busy with a task.
+\item \textbf{A staged evaluation plan,} from simulated scenarios to the replay of real public data and an operational shadow mode, with the evidence each stage can and cannot provide.
+\end{enumerate}
+
+The limits are stated as clearly as the design. AHI does not diagnose, does not prescribe, and does not replace the flight surgeon. Its hardware premise is an assumption about access that the project does not have, and its clinical performance can only be established with authorized crew data and expert review. Within those limits, AHI shows how heterogeneous health signals from real space station equipment can be turned into early, explainable and honest support for the decisions of crews and their medical teams.

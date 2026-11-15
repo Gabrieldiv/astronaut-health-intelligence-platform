@@ -106,7 +106,8 @@ Data origin badges reuse a consistent scheme (for example a violet `SIMULATED` c
 | Realistic anatomy with status as a highlight | Tissue color shows what a structure is; status color shows only what needs attention |
 | Context only structures show no status | "Nothing is measured" must never look like "normal" |
 | Top bar priority collapse | Labels go first on narrow widths; Start demo and the alerts bell are never clipped |
-| Alert sound off by default | Opt in, two tone chime for new critical alerts only |
+| Alert sound on by default for critical alerts | A health monitor must be heard; one sound at a time, repeat until acknowledged, escalate after 2 min, warnings opt in ([Accessibility](./accessibility#alert-sounds)) |
+| Monitor mode by default in the 3D viewer | What is measured reacts; context only anatomy steps back. Explore mode is one click away |
 
 ## Accessibility measures in the code
 
@@ -115,7 +116,9 @@ Data origin badges reuse a consistent scheme (for example a violet `SIMULATED` c
 | Color is never the only cue | Status always pairs color with an icon and words; `NO_DATA` also changes shape (hollow, dashed) |
 | Keyboard operation | Global shortcuts (`1` to `4`, `V`, `P`, `A`, `Space`, `Esc`, `?`, arrows in the tour); timeline markers navigable with arrow keys and `Enter`; shortcuts ignored while typing |
 | Visible focus | `focus-ring` utility (2 px accent outline) on interactive elements |
-| Skip link | "Skip to what needs attention" as the first focusable element |
+| Skip links | "Skip to main content" and "Skip to what needs attention" as the first focusable elements |
+| 3D body by keyboard | The body navigator: arrow keys over regions and structures, `Enter`, `Esc`, with spoken announcements ([3D anatomy](../architecture/anatomy-3d#keyboard-body-navigator)) |
+| Sound and speech | Alert earcons with escalation; audio description with `D` and `Shift` + `D` ([Accessibility](./accessibility)) |
 | Accessible names | About 90 `aria-label` attributes; short vital labels keep the full name in the title and accessible name |
 | Live regions | `aria-live` in alerts, 3D labels, Crew view, center stage, data dialog and guided tour |
 | ARIA roles | Dialogs, menus (`menuitem`, `menuitemradio`, `menuitemcheckbox`), tabs, radio groups, switch, progress bar, status and alert roles |
@@ -124,7 +127,7 @@ Data origin badges reuse a consistent scheme (for example a violet `SIMULATED` c
 | Readable sizes | Presentation mode enforces a 13 px floor and scales 3D labels by 1.3 |
 
 ::: warning Not audited
-These measures exist in the code, but no formal WCAG audit or screen reader test has been done. 3D content is not accessible to screen readers beyond its labels and the equivalent text panels: single structures can only be selected with a pointer, while body systems are reachable from the chips with the keyboard. This is listed in [Limitations and known issues](../validation/limitations).
+These measures exist in the code, but no formal WCAG audit or screen reader test has been done. The 3D body is reachable by keyboard through the body navigator and announced through live regions, but the picture itself is not described beyond its labels and the equivalent text panels. This is listed in [Limitations and known issues](../validation/limitations).
 :::
 
 ## Next steps

@@ -1,0 +1,41 @@
+# AHI backend stack: PostgreSQL + API. The web app keeps running on its own (npm run dev in frontend/web)
+# and works without this stack too (offline demo mode with the bundled NASA snapshot).
+#   docker compose up --build
+#   open http://localhost:8000/docs
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ahi
+      POSTGRES_PASSWORD: ahi # local demo credentials only
+      POSTGRES_DB: ahi
+    ports:
+      - "5432:5432"
+    volumes:
+      - ahi-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ahi -d ahi"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://ahi:ahi@db:5432/ahi
+      AUTO_MIGRATE: "true"
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:5183,http://127.0.0.1:5183
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ready')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  ahi-pg:

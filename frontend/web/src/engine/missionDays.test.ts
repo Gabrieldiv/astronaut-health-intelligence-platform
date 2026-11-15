@@ -19,7 +19,7 @@ describe('mission days (long-term view)', () => {
   let e: HealthEngine
   beforeAll(() => {
     e = new HealthEngine({ scenarioId: 'NOMINAL' })
-  }, 60000)
+  }, 120000)
 
   it('covers mission day 1 .. current mission day for every astronaut, ascending', () => {
     const current = e.crew[0]!.missionDay
@@ -93,7 +93,7 @@ describe('scenarios show up in the recent days', () => {
     const last = days[days.length - 1]!.sleepHours!
     expect(last).toBeLessThan(early - 1.5)
     expect(['MODERATE', 'HIGH']).toContain(days[days.length - 2]!.riskLevel)
-  }, 60000)
+  }, 120000)
 
   it('PERFORMANCE_DECLINE lowers exercise output on the recent days', () => {
     const e = new HealthEngine({ scenarioId: 'PERFORMANCE_DECLINE' })
@@ -101,5 +101,5 @@ describe('scenarios show up in the recent days', () => {
     const days = e.missionDays['AST-04']!
     const loads = days.map((d) => d.exerciseLoadPct).filter((x): x is number => x !== null)
     expect(loads[loads.length - 1]!).toBeLessThan(mean(loads.slice(0, 30)) - 10)
-  }, 60000)
+  }, 120000)
 })

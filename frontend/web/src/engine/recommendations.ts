@@ -12,11 +12,12 @@
  *    CRITICAL GROUND_REVIEW item also gets an ONBOARD first step, because Earth cannot answer
  *    before 2 x one way delay + review time.
  */
-import type { BodyRegionId, CommProfile, InterventionKind, Recommendation, RiskLevel } from '../types/domain'
+import type { BodyRegionId, CommProfile, EngineMsg, InterventionKind, MissionProfileId, Recommendation, RiskLevel } from '../types/domain'
 import { ALERTS, COMMS, REC_CATALOG_VERSION } from './config'
 import { levelRank } from './anomaly'
 import type { RuleHit } from './risk'
 import { MIN_MS, fmtClock, fmtDuration } from './text'
+import { msg, said } from './msg'
 
 export interface RecTemplate {
   title: string
@@ -174,6 +175,61 @@ export interface CommContext {
   profile: CommProfile
   /** Minimum simulated review time on Earth (minutes). */
   reviewMin: number
+  /** Additive (v4): active mission profile, adds a context sentence to some recommendations. */
+  missionProfileId?: MissionProfileId
+}
+
+const MICROGRAVITY_EXERCISE = 'In weightlessness, daily exercise is the main countermeasure against bone and muscle loss, so keeping the planned sessions matters.'
+const DEEP_SPACE_RADIATION = 'Outside the Earth magnetic field a solar particle event can raise the dose quickly: know the shelter location and follow the shelter procedure without waiting for Earth.'
+
+/**
+ * Mission profile context per rule (v4). Plain, non diagnostic sentences appended to the
+ * rationale when the profile makes the rule more relevant. Only where the environment justifies it.
+ */
+export const PROFILE_CONTEXT: Partial<Record<MissionProfileId, Partial<Record<string, string>>>> = {
+  ISS: {
+    'R-EX-01': MICROGRAVITY_EXERCISE,
+    'R-ACT-01': MICROGRAVITY_EXERCISE,
+  },
+  MARS_TRANSIT: {
+    'R-EX-01': MICROGRAVITY_EXERCISE,
+    'R-ACT-01': MICROGRAVITY_EXERCISE,
+    'R-ENV-RAD-01': DEEP_SPACE_RADIATION,
+    'R-RAD-02': 'In deep space the dose grows every day of the trip: dose planning matters more the longer the mission.',
+    'R-PSY-01': 'Months of isolation with a delayed link to Earth: private time and family contact are part of the plan.',
+  },
+  MOON: {
+    'R-EX-01': 'Partial gravity alone does not protect bone and muscle: keep the planned exercise sessions.',
+    'R-ENV-RAD-01': DEEP_SPACE_RADIATION,
+  },
+  LAUNCH: {
+    'R-HR-01': 'Launch phase: acceleration, noise and stress raise heart rate; compare with the launch timeline before acting.',
+  },
+}
+
+/** Rationale with the mission profile context sentence, when one applies. */
+export function withProfileContext(rationale: string, ruleId: string, profileId: MissionProfileId | undefined): string {
+  const extra = profileId ? PROFILE_CONTEXT[profileId]?.[ruleId] : undefined
+  return extra ? `${rationale} ${extra}` : rationale
+}
+
+/** Structured title of a recommendation for a rule (key eng.rec.<rule>.title). */
+export function recTitleMsg(ruleId: string): EngineMsg {
+  const tpl = REC_CATALOG.byRule[ruleId]
+  return msg('recTitle', { title: { key: `eng.rec.${ruleId}.title`, en: tpl?.title ?? ruleId } })
+}
+
+/** Rationale (`label. why` plus the mission profile sentence) with its structured form. */
+function rationaleOf(hit: RuleHit, tpl: RecTemplate, profileId: MissionProfileId | undefined): { text: string; msg?: EngineMsg } {
+  const text = withProfileContext(`${hit.label}. ${tpl.why}`, hit.ruleId, profileId)
+  const extra = profileId ? PROFILE_CONTEXT[profileId]?.[hit.ruleId] : undefined
+  if (!hit.labelMsg) return { text }
+  const label = hit.labelMsg
+  const why = { key: `eng.rec.${hit.ruleId}.why`, en: tpl.why }
+  const m = extra
+    ? msg('rec.rationaleCtx', { label, why, extra: { key: `eng.profileCtx.${profileId}.${hit.ruleId}`, en: extra } })
+    : msg('rec.rationale', { label, why })
+  return { text: said(text, m), msg: m }
 }
 
 /** Earliest possible Earth reply after a request sent now: 2 x one way delay + review time (ms). */
@@ -183,7 +239,26 @@ export function earliestReplyMs(ctx: CommContext): number {
 
 const ONBOARD_FIRST_STEP = 'Crew medical officer: start the onboard assessment protocol now'
 
+function onboardRationaleMsg(hit: RuleHit, ctx: CommContext, now: number): EngineMsg | undefined {
+  if (!hit.labelMsg) return undefined
+  const earliest = earliestReplyMs(ctx)
+  return msg('rec.onboardRationale', {
+    label: hit.labelMsg,
+    oneWay: { durationMs: ctx.profile.oneWayDelaySec * 1000 },
+    profile: { key: `commProfile.${ctx.profile.id}.label`, en: ctx.profile.label },
+    earliest: { durationMs: earliest },
+    reviewMin: ctx.reviewMin,
+    clock: fmtClock(now + earliest),
+  })
+}
+
 function onboardRationale(hit: RuleHit, ctx: CommContext, now: number): string {
+  const english = onboardRationaleEnglish(hit, ctx, now)
+  const m = onboardRationaleMsg(hit, ctx, now)
+  return m ? said(english, m) : english
+}
+
+function onboardRationaleEnglish(hit: RuleHit, ctx: CommContext, now: number): string {
   const oneWay = fmtDuration(ctx.profile.oneWayDelaySec * 1000)
   const earliest = earliestReplyMs(ctx)
   return (
@@ -260,7 +335,13 @@ export class RecommendationManager {
           const rec = idx >= 0 ? recs[idx]! : null
           if (rec && rec.status === 'PENDING' && (levelRank(hit.level) > levelRank(rec.priority) || rec.active === false)) {
             recs = recs.slice()
-            recs[idx] = { ...rec, priority: levelRank(hit.level) > levelRank(rec.priority) ? hit.level : rec.priority, rationale: onboardRationale(hit, comm!, now), active: true }
+            recs[idx] = {
+              ...rec,
+              priority: levelRank(hit.level) > levelRank(rec.priority) ? hit.level : rec.priority,
+              rationale: onboardRationale(hit, comm!, now),
+              rationaleMsg: onboardRationaleMsg(hit, comm!, now),
+              active: true,
+            }
             changed = true
           }
         } else {
@@ -268,8 +349,10 @@ export class RecommendationManager {
             id: `REC-${++this.seq}`,
             astronautId: subject,
             ruleId: hit.ruleId,
-            title: ONBOARD_FIRST_STEP,
+            title: said(ONBOARD_FIRST_STEP, msg('rec.onboardTitle')),
             rationale: onboardRationale(hit, comm!, now),
+            titleMsg: msg('rec.onboardTitle'),
+            rationaleMsg: onboardRationaleMsg(hit, comm!, now),
             priority: hit.level,
             audience: 'CREW',
             region: tpl.region ?? hit.region,
@@ -294,17 +377,21 @@ export class RecommendationManager {
         if (rec && rec.status === 'PENDING' && (levelRank(hit.level) > levelRank(rec.priority) || rec.active === false)) {
           const priority = levelRank(hit.level) > levelRank(rec.priority) ? hit.level : rec.priority
           recs = recs.slice()
-          recs[idx] = { ...rec, priority, rationale: `${hit.label}. ${tpl.why}`, requiresHumanReview: requiresReview(priority, tpl.audience), active: true }
+          const r = rationaleOf(hit, tpl, comm?.missionProfileId)
+          recs[idx] = { ...rec, priority, rationale: r.text, rationaleMsg: r.msg, requiresHumanReview: requiresReview(priority, tpl.audience), active: true }
           changed = true
         }
         continue
       }
+      const r = rationaleOf(hit, tpl, comm?.missionProfileId)
       const rec: Recommendation = {
         id: `REC-${++this.seq}`,
         astronautId: subject,
         ruleId: hit.ruleId,
-        title: tpl.title,
-        rationale: `${hit.label}. ${tpl.why}`,
+        title: said(tpl.title, recTitleMsg(hit.ruleId)),
+        rationale: r.text,
+        titleMsg: recTitleMsg(hit.ruleId),
+        rationaleMsg: r.msg,
         priority: hit.level,
         audience: tpl.audience,
         region: tpl.region ?? hit.region,

@@ -8,7 +8,7 @@ code:
   - frontend/web/src/components/Status.tsx
   - frontend/web/src/app/uiStore.ts
   - frontend/web/src/app/shortcuts.tsx
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Design system e acessibilidade
@@ -100,7 +100,9 @@ Tecla `P` ou menu "Tools". Aumenta fontes (piso de 13 px em qualquer texto), ró
 
 | Recurso | Detalhe |
 | --- | --- |
-| Link de pular | "Skip to what needs attention", visível ao receber foco |
+| Links de salto | "Skip to main content" e "Skip to what needs attention" como os primeiros elementos focáveis, visíveis ao receber foco |
+| Corpo 3D pelo teclado | O navegador do corpo: setas sobre regiões e estruturas, `Enter`, `Esc`, com anúncios falados ([Anatomia 3D](/pt/architecture/anatomy-3d#keyboard-body-navigator)) |
+| Som e fala | Sons de alerta (earcons) com escalonamento; audiodescrição com `D` e `Shift` + `D` ([Acessibilidade](/pt/product/accessibility)) |
 | Teclado | Atalhos globais (`1` a `4`, `V`, `P`, `A`, `Space`, `Esc`, `?`), ignorados ao digitar em campos; lista completa no [Tour do produto](/pt/product/product-tour#atalhos-de-teclado) |
 | Diálogos | `role="dialog"` com `aria-modal`; `Esc` fecha |
 | Abas e menus | Padrão WAI-ARIA em "Tools", gaveta de alertas e "Data and model" (`tablist`, `tab`, `tabpanel`, `menuitem`) |
@@ -111,7 +113,7 @@ Tecla `P` ou menu "Tools". Aumenta fontes (piso de 13 px em qualquer texto), ró
 | Armazenamento | Funciona sem `localStorage` (janela anônima): só não lembra preferências |
 
 ::: warning ATENÇÃO
-Não houve auditoria formal de acessibilidade (por exemplo WCAG com leitor de tela) nem teste com usuários reais. Contraste e navegação foram verificados pelo autor durante o desenvolvimento. O conteúdo 3D não é acessível a leitores de tela além dos rótulos e dos painéis de texto equivalentes: estruturas isoladas só podem ser selecionadas com o ponteiro, enquanto os sistemas do corpo são alcançáveis pelos chips, com o teclado.
+Não houve auditoria formal de acessibilidade (por exemplo WCAG com leitor de tela) nem teste com usuários reais. Contraste e navegação foram verificados pelo autor durante o desenvolvimento. O corpo 3D é alcançável pelo teclado por meio do navegador do corpo e anunciado em regiões `aria-live`, mas a imagem em si não é descrita além dos rótulos e dos painéis de texto equivalentes. Isso está em [Limitações e problemas conhecidos](/pt/validation/limitations).
 :::
 
 ## Decisões de UX registradas
@@ -124,7 +126,8 @@ Não houve auditoria formal de acessibilidade (por exemplo WCAG com leitor de te
 | Faixa pessoal sombreada em todo gráfico | Mostrar "seu normal", não um limite populacional |
 | Lacunas não preenchidas nos gráficos | "Gaps mean no data": ausência fica visível |
 | Selo de autonomia em cada ação | Com a Terra longe, quem pode agir importa tanto quanto o quê |
-| Som de alerta desligado por padrão | Evitar alarme sonoro inesperado em demonstrações |
+| Som de alerta ligado por padrão para alertas críticos | Um monitor de saúde precisa ser ouvido; um som por vez, repete até o reconhecimento, escala depois de 2 min, avisos são opcionais ([Acessibilidade](/pt/product/accessibility#alert-sounds)) |
+| Modo Monitor por padrão no visualizador 3D | O que é medido reage; a anatomia só de contexto recua. O modo Explore está a um clique |
 | Duas visões sobre o mesmo estado | Públicos diferentes, uma fonte de verdade |
 
 ## Próximos passos

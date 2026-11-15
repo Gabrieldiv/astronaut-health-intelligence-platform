@@ -50,6 +50,15 @@ export type MetricCode =
   | 'MOOD'
   | 'PERCEIVED_FATIGUE'
   | 'STRESS'
+  // Additive (v5): periodic exam measures (eyes: SANS monitoring; ears: hearing and noise)
+  | 'RETINAL_THICKNESS' // peripapillary total retinal thickness, OCT (µm)
+  | 'CHOROIDAL_FOLDS' // chorioretinal folds on OCT: 1 present, 0 absent
+  | 'OPTIC_NERVE_SHEATH_DIAMETER' // ocular ultrasound (mm)
+  | 'VISUAL_ACUITY' // logMAR (higher = worse)
+  | 'HEARING_THRESHOLD_HIGH' // mean hearing threshold at 2, 3 and 4 kHz (dB HL)
+  | 'HEARING_THRESHOLD_LOW' // mean hearing threshold at 0.25, 0.5 and 1 kHz (dB HL)
+  | 'NOISE_EXPOSURE' // crew worn noise exposure level over the work period, LEQ 16 h (dBA)
+  | 'NOISE_DOSE' // daily noise dose (%, 100 = the 24 hour limit)
 
 /**
  * Body regions rendered by the 3D anatomy viewer and used to group metrics.
@@ -63,6 +72,9 @@ export type BodyRegionId =
   | 'muscles' // exercise load, activity
   | 'bones' // bone loss context, radiation exposure
   | 'skin' // skin temperature, thermal load
+  // Additive (v5): periodic exam regions
+  | 'eyes' // SANS monitoring: OCT, ocular ultrasound, visual acuity (periodic exams)
+  | 'ears' // hearing tests and noise exposure (the ear is not modeled anatomically)
 
 export type DeviceKind =
   | 'BIO_MONITOR' // Astroskin / Bio-Monitor style smart shirt (simulated)
@@ -74,7 +86,14 @@ export type DeviceKind =
   | 'ENV_SENSOR' // cabin CO2 / temperature / humidity (simulated)
   | 'DOSIMETER' // radiation (simulated)
 
-export type DeviceState = 'ONLINE' | 'DEGRADED' | 'DATA_STALE' | 'OFFLINE'
+export type DeviceState =
+  | 'ONLINE'
+  | 'DEGRADED'
+  | 'DATA_STALE'
+  | 'OFFLINE'
+  // Additive (v4): monitoring paused by an operator. The device emits nothing and its metrics
+  // read NO_DATA ("Paused by operator"): never normal, and never reported as a sensor failure.
+  | 'PAUSED'
 
 // ---------------------------------------------------------------------------
 // Catalog
@@ -144,12 +163,107 @@ export interface HealthObservation {
   quality: { status: QualityStatus; confidence: number; is_estimated: boolean }
   context: { mission_phase: MissionPhase; activity: ActivityContext }
   metadata: Record<string, unknown>
+  /** Additive (v5): set when the value comes from a periodic exam session instead of a device stream. */
+  exam?: ExamContext
+}
+
+// ---------------------------------------------------------------------------
+// v5 additions: periodic exams (eyes, ears). All additive.
+// ---------------------------------------------------------------------------
+
+/** Kind of periodic exam. */
+export type ExamKind = 'OCT' | 'OCULAR_ULTRASOUND' | 'VISUAL_ACUITY' | 'AUDIOMETRY' | 'NOISE_DOSIMETRY'
+
+/** Body regions that are followed with periodic exams. */
+export type ExamRegionId = 'eyes' | 'ears'
+
+export type Laterality = 'LEFT' | 'RIGHT' | 'BOTH'
+
+/** Exam context of a HealthObservation that comes from a periodic exam. */
+export interface ExamContext {
+  exam_id: string
+  kind: ExamKind
+  /** Plain label of the session, e.g. "Flight day 30 eye exam". */
+  session_label: string
+  laterality: Laterality
+  /** True for pre-flight sessions: they set the personal baseline. */
+  is_baseline: boolean
+}
+
+/** One measure of an exam session compared with the pre-flight baseline (same eye or ear). */
+export interface ExamMeasureResult {
+  metric: MetricCode
+  laterality: Laterality
+  value: number | null
+  /** Pre-flight baseline value of the same measure and side. null = no baseline on file. */
+  baseline: number | null
+  /** value - baseline, null when either is missing. */
+  change: number | null
+  status: Status
+  /** Plain language, e.g. "12 µm thicker than before flight (within the usual test to test variation)". */
+  note: string
+  /** Rule that set the status, if any (e.g. "R-SANS-01"). */
+  ruleId: string | null
+}
+
+/** One exam session (several measures taken the same day). */
+export interface ExamSession {
+  id: string
+  astronautId: string
+  region: ExamRegionId
+  kinds: ExamKind[]
+  label: string
+  phase: MissionPhase
+  /** Sim epoch ms. */
+  at: number
+  /** Flight day (negative before launch). */
+  flightDay: number
+  isBaseline: boolean
+  /** Device (simulated), e.g. "SIM-OCT-ISS". */
+  device_id: string
+  data_origin: DataOrigin
+  observations: HealthObservation[]
+  /** In-flight sessions only (empty for baseline sessions). */
+  results: ExamMeasureResult[]
+  /** NO_DATA for baseline sessions (they are the reference, not an assessment). */
+  status: Status
+}
+
+/** Daily crew worn noise exposure (one value per sim day). */
+export interface NoiseDay {
+  astronautId: string
+  /** Sim epoch ms of the end of the measured day. */
+  at: number
+  flightDay: number
+  leqDba: number
+  dosePct: number
+  status: Status
+  data_origin: DataOrigin
+}
+
+/** Exam follow up of one region for one astronaut (computed by src/engine/exams). */
+export interface ExamRegionState {
+  region: ExamRegionId
+  astronautId: string
+  status: Status
+  /** Plain language summary. "No exam yet" is never "normal". */
+  summary: string
+  /** Pre-flight sessions (personal baseline), ascending. */
+  baselineSessions: ExamSession[]
+  /** In-flight sessions done so far, ascending. */
+  sessions: ExamSession[]
+  latest: ExamSession | null
+  nextDue: { at: number; flightDay: number; label: string } | null
+  /** Ears only: recent daily noise exposure, ascending (last EXAMS.noise.keepDays days). */
+  noise?: NoiseDay[]
+  /** Short provenance and method note shown under the history. */
+  method: string
 }
 
 export interface Device {
   id: string
   kind: DeviceKind
-  name: string // e.g. "Bio-Monitor shirt (sim)"
+  name: string // e.g. "Bio-Monitor shirt" (origin is in data_origin)
   assignedTo: string | null // astronaut id or null for cabin devices
   state: DeviceState
   batteryPct: number | null
@@ -159,6 +273,8 @@ export interface Device {
   metrics: MetricCode[]
   /** Additive (engine v1): plain-language device status, e.g. "No data since 08:22 UTC". */
   detail?: string
+  /** Additive (v4): sim epoch ms when an operator paused the device, null when not paused. */
+  pausedAt?: number | null
 }
 
 /** Compact time-series point used for charts/history. t = sim epoch ms. */
@@ -227,6 +343,8 @@ export interface ContributingFactor {
   metric: MetricCode | null
   label: string // e.g. "HRV 28% below personal baseline for 3 days"
   weight: number // 0..1 relative contribution
+  /** Additive: localized form of `label` (src/i18n/engineText.ts). */
+  msg?: EngineMsg
 }
 
 export interface RiskAssessment {
@@ -242,6 +360,8 @@ export interface RiskAssessment {
   limitations: string[]
   /** One plain-language sentence summarizing the state for the crew. */
   headline: string
+  /** Additive: localized form of `headline`. */
+  headlineMsg?: EngineMsg
 }
 
 export interface ForecastPoint {
@@ -262,7 +382,16 @@ export interface Prediction {
   hoursToBandExit: number | null
   eligible: boolean // false => show "insufficient data"
   disclaimer: string
+  /** Additive (v4): why eligible is false. HISTORY_TOO_SHORT = not enough history for the horizon. */
+  ineligibleReason?: 'INSUFFICIENT_DATA' | 'HISTORY_TOO_SHORT'
+  /** Additive (v4): hours of history available when the projection was made. */
+  historyHours?: number
+  /** Additive (v4): the same projection for each horizon the user can pick (see FORECAST_HORIZONS). */
+  byHorizon?: Partial<Record<ForecastHorizonHours, Prediction>>
 }
+
+/** Additive (v4): forecast horizons the user can pick, in hours (24 h, 36 h, 72 h, 7 days, 15 days). */
+export type ForecastHorizonHours = 24 | 36 | 72 | 168 | 360
 
 export interface Recommendation {
   id: string
@@ -287,6 +416,9 @@ export interface Recommendation {
    * or self care). GROUND_REVIEW = needs the flight surgeon on Earth (subject to comm delay).
    */
   autonomy?: 'ONBOARD' | 'GROUND_REVIEW'
+  /** Additive: localized forms of `title` and `rationale`. */
+  titleMsg?: EngineMsg
+  rationaleMsg?: EngineMsg
 }
 
 export type InterventionKind =
@@ -326,6 +458,9 @@ export interface Alert {
   escalatedAt?: number | null
   /** Additive (v2): number of escalation steps reached (0 = none). */
   escalationLevel?: number
+  /** Additive: localized forms of `title` and `detail`. */
+  titleMsg?: EngineMsg
+  detailMsg?: EngineMsg
 }
 
 export interface AuditEvent {
@@ -344,6 +479,9 @@ export interface AuditEvent {
     | 'COMM_RECEIVED'
     | 'COMM_PROFILE_CHANGED'
     | 'CHECKIN_RECORDED'
+    // Additive (v4)
+    | 'DEVICE_PAUSED'
+    | 'DEVICE_RESUMED'
   detail: string
 }
 
@@ -352,6 +490,8 @@ export interface RegionState {
   status: Status
   metrics: MetricCode[]
   summary: string // plain language, e.g. "Heart rate trending up, HRV below your normal"
+  /** Additive: localized form of `summary`. */
+  summaryMsg?: EngineMsg
 }
 
 export interface AstronautHealth {
@@ -361,6 +501,46 @@ export interface AstronautHealth {
   regions: Record<BodyRegionId, RegionState>
   risk: RiskAssessment
   predictions: Partial<Record<MetricCode, Prediction>>
+  /** Additive (engine v5): experimental multivariate detector. Never sets a status by itself. */
+  multivariate?: MultivariateAssessment
+  /** Additive (v5): periodic exam follow up (eyes, ears). */
+  exams?: Partial<Record<ExamRegionId, ExamRegionState>>
+}
+
+/** One signal's share of a multivariate deviation (engine v5). */
+export interface MultivariateContribution {
+  metric: MetricCode
+  /** Robust z vs the personal baseline (signed). */
+  z: number
+  /** Share of the squared deviation, 0..1 (sums to 1 over all features). */
+  share: number
+}
+
+/**
+ * Experimental, machine learning (engine v5): Isolation Forest trained on the astronaut's own
+ * baseline window of standardized metrics. Informational flag only: it never changes the risk
+ * level or score, and it flags only when persistence rules agree.
+ */
+export interface MultivariateAssessment {
+  /** NOT_READY: no model yet. NO_DATA: an input signal is missing (never treated as typical). */
+  state: 'NOT_READY' | 'NO_DATA' | 'TYPICAL' | 'ELEVATED' | 'UNUSUAL'
+  /** True only in state UNUSUAL ("Unusual combination" flag). */
+  flagged: boolean
+  /** Anomaly score 0..1 (about 0.5 or less is typical), null without a model or data. */
+  score: number | null
+  /** Personal threshold (max of the demo floor and a high quantile of the training scores). */
+  threshold: number | null
+  /** Sim time the score first went above the threshold (current episode). */
+  since: number | null
+  /** Largest first. */
+  contributions: MultivariateContribution[]
+  /** Plain language, non-diagnostic. */
+  explanation: string
+  model_version: string
+  trained_at: number | null
+  training_size: number
+  /** Always "Experimental, machine learning". */
+  label: string
 }
 
 export interface EnvironmentState {
@@ -383,6 +563,7 @@ export type ScenarioId =
   | 'PERFORMANCE_DECLINE'
   | 'SENSOR_FAILURE'
   | 'ACUTE_CARDIO' // sudden tachycardia + SpO2 drop for alert demo
+  | 'SANS_PROGRESSION' // Additive (v5): gradual SANS like change in one astronaut's eye exams
 
 export interface ScenarioDefinition {
   id: ScenarioId
@@ -451,6 +632,11 @@ export interface AppState extends AppStateV2 {
   acknowledgeAlert: (alertId: string, actor?: string) => void
   logIntervention: (input: { astronautId: string; kind: InterventionKind; recommendationId?: string; note?: string }) => void
   dismissRecommendation: (id: string) => void
+  /**
+   * Additive (v4): pause or resume monitoring of one device (operator action, written to the
+   * audit trail). A paused device emits nothing; its metrics become NO_DATA "Paused by operator".
+   */
+  setDevicePaused: (deviceId: string, paused: boolean, actor?: string) => void
   /** Advance simulation by dtRealMs (called by the ticker). */
   /** Advance the simulation synchronously by simMs and publish (used by the guided demo). */
   fastForward: (simMs: number) => void
@@ -629,4 +815,48 @@ export interface AppStateV2 {
   submitCheckIn: (input: Omit<CheckIn, 'id' | 'at' | 'data_origin'>) => void
   /** Pure projection: two trajectories for the next hours, with and without the intervention. */
   compareIntervention: (input: { astronautId: string; kind: InterventionKind; metric?: MetricCode; horizonHours?: number }) => InterventionComparison | null
+  /**
+   * Additive (v4, mission profiles): active mission context (src/engine/missions). Orthogonal to
+   * the scenario; changing it restarts the simulation like a scenario change, keeps the scenario,
+   * and switches the Earth link to the profile default comm profile.
+   */
+  missionProfileId: MissionProfileId
+  setMissionProfile: (id: MissionProfileId) => void
+}
+
+// ---------------------------------------------------------------------------
+// v4 additions (mission profiles). All additive.
+// ---------------------------------------------------------------------------
+
+/** Mission context with its own exposure (radiation, gravity, distance, delay). */
+export type MissionProfileId = 'LAUNCH' | 'ISS' | 'MOON' | 'MARS_TRANSIT'
+
+// ---------------------------------------------------------------------------
+// Localized engine text (additive). The engine keeps writing its English sentences; next to them
+// it attaches a structured message (stable id + params) that src/i18n/engineText.ts renders in the
+// selected language. Ids map to `eng.<id>` keys in src/i18n/locales/<lang>/engine.ts.
+// ---------------------------------------------------------------------------
+
+/** A parameter of an engine message. Plain strings and numbers are inserted as they are. */
+export type EngineParam =
+  | string
+  | number
+  | EngineMsg
+  /** Metric name: `inline` (inside a sentence), `sentence` (sentence start), `lower` (lower case label), `nocabin` (inline without "cabin"). */
+  | { metric: MetricCode; form: 'inline' | 'sentence' | 'lower' | 'nocabin' }
+  /** A metric value with its unit. */
+  | { value: number; metric: MetricCode }
+  /** A fixed decimal number; `sign` adds "+" to positive values. */
+  | { num: number; decimals: number; sign?: boolean }
+  /** A duration ("25 min", "5 hours", "3 days"). */
+  | { durationMs: number }
+  /** A catalog or UI message key, with the English text used for English and as fallback. */
+  | { key: string; en: string }
+  /** A list joined as "a, b and c" (or "a, b, c" with `comma`). */
+  | { list: EngineParam[]; comma?: boolean }
+
+/** Stable message id plus params. */
+export interface EngineMsg {
+  id: string
+  params?: Record<string, EngineParam>
 }

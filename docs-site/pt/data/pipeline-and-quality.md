@@ -7,7 +7,7 @@ code:
   - frontend/web/scripts/osdr/discover.mjs
   - frontend/web/scripts/osdr/import.mjs
   - frontend/web/scripts/osdr/lib.mjs
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Pipeline, normalização e qualidade
@@ -18,13 +18,13 @@ verified: 2026-11-14
 | --- | --- |
 | Base | `PROJECT_MASTER.md` (seções 3, 4, 5, 6, 9, 16 e 17), contrato `frontend/web/src/types/domain.ts`, simuladores em `frontend/web/src/engine/`, inventário `docs/data-source-inventory.md` |
 | Data | 14/11/2026. Acessos às fontes NASA conferidos nesta data |
-| Status | O pipeline do OSDR está implementado (scripts Node). O pipeline do EDA e a API de ingestão estão planejados |
+| Status | O pipeline do OSDR está implementado (scripts Node) e a API de ingestão existe no backend opcional. O pipeline do EDA está planejado |
 
 As regras de origem (`REAL_PUBLIC`, `DERIVED`, `SIMULATED`, `MANUAL`) estão em [Origens e proveniência](/pt/data/data-origins) e valem para tudo abaixo.
 
 ## Resumo em 1 minuto
 
-1. **Hoje o app mostra 21 métricas ([Dicionário de dados](/pt/data/data-dictionary)), e todas vêm de simuladores ou do check-in digitado no app** (`SIMULATED` ou `MANUAL`). A única exceção são dois painéis de exames de sangue reais da Inspiration4 (OSD-569 e OSD-575), exibidos como referência histórica.
+1. **Hoje o app mostra 29 métricas ([Dicionário de dados](/pt/data/data-dictionary)), e todas vêm de simuladores ou do check-in digitado no app** (`SIMULATED` ou `MANUAL`). As exceções reais são dois painéis de exames de sangue da Inspiration4 (OSD-569 e OSD-575), exibidos como referência histórica, e os eventos de clima espacial do NASA DONKI, exibidos como contexto da missão.
 2. **O trabalho é trocar simulação por dado real onde ele existe**, e onde não existe, **ancorar a simulação em fontes científicas citáveis**.
 3. **Não existe telemetria fisiológica contínua pública de astronautas** (FC, ECG, SpO₂ minuto a minuto). Para essas métricas, a estratégia é calibrar o simulador com faixas publicadas e manter o selo `SIMULATED`.
 4. **Onde há dado real e público com mais impacto:** ambiente da cabine da ISS no **NASA EDA** (prioridade número 1), exames laboratoriais no **NASA OSDR** (já feito) e o catálogo oficial de medidas nas **NASA Standard Measures**.
@@ -171,23 +171,32 @@ Sugestão de divisão do time de contribuidores: pessoa A no EDA (ambiente e rad
 
 O modelo canônico `HealthObservation`, campo a campo, está em [Modelo de dados e contratos](/pt/architecture/data-model). Proposta de padronização em `metadata.population_type`: `ISS_ASTRONAUT`, `COMMERCIAL_ASTRONAUT`, `ANALOG_PARTICIPANT` (HERA, repouso no leito, confinamento), `GROUND_CONTROL`, `NOT_APPLICABLE` (cabine).
 
-### Lote de ingestão (backend futuro)
+### Lote de ingestão (backend) {#ingestion-batch-planned-backend}
 
-<StatusBadge status="PLANNED" />
+<StatusBadge status="IMPLEMENTED" />
 
-Formato para quando existir o backend (`POST /api/v1/observations`). Hoje os dados entram como JSON estático.
+`POST /api/v1/observations` na [AHI API](/pt/architecture/backend#ingestion-rules) recebe um lote de observações canônicas, validado como um todo, e responde `202` com `accepted_count`, `duplicate_count`, `rejected_count` e os ids rejeitados. Cada observação traz a própria proveniência:
 
 ```json
 {
-  "subject_id": "AST-01",
-  "mission_id": "MISSION-001",
-  "source_id": "SIM-ASTROSKIN-001",
-  "data_origin": "SIMULATED",
   "observations": [
-    { "metric_code": "HEART_RATE", "value": 82, "unit": "bpm", "measured_at": "2026-11-13T14:30:00Z", "quality_status": "VALID" }
+    {
+      "observation_id": "OBS-AST-01-HR-0001",
+      "subject_id": "AST-01",
+      "mission_id": "MISSION-001",
+      "device_id": "DEV-BIO-AST-01",
+      "metric_code": "HEART_RATE",
+      "value": 82,
+      "unit": "bpm",
+      "measured_at": "2026-11-13T14:30:00Z",
+      "data_origin": "SIMULATED",
+      "quality": { "status": "VALID" }
+    }
   ]
 }
 ```
+
+O app web ainda não envia seu fluxo simulado para a API; o motor roda sobre as leituras no navegador. O endpoint está pronto para um adapter real ou um job de importação.
 
 ### Ambiente da cabine (entrega do EDA)
 

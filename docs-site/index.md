@@ -25,7 +25,7 @@ hero:
 features:
   - icon: 🫀
     title: 3D anatomy at a glance
-    details: A realistic anatomical atlas (Z-Anatomy) with 250 selectable structures in system layers. A body system that needs attention lights up in its status color, the heart beats at the live heart rate and the lungs breathe at the live breathing rate.
+    details: A realistic anatomical atlas (Z-Anatomy) with 250 structures. Zoom to the pointer, Monitor or Explore mode, a keyboard body navigator. A body system that needs attention lights up in its status color, the heart beats at the live heart rate and the lungs breathe at the live breathing rate.
     link: /architecture/anatomy-3d
     linkText: How the body is built
   - icon: 📈
@@ -35,7 +35,7 @@ features:
     linkText: Baseline method
   - icon: 🧭
     title: Explainable risk
-    details: Transparent rules with ids, a documented 0 to 100 score, contributing factors and confidence. No machine learning model and no language model decides anything.
+    details: Statistics first. Transparent rules with ids, a documented 0 to 100 score, contributing factors and confidence. An experimental machine learning note and the Ask AHI assistant explain, but never decide.
     link: /intelligence/risk-assessment
     linkText: Risk score
   - icon: 🛰️
@@ -43,14 +43,24 @@ features:
     details: ISS, Moon and Mars link profiles (up to 22 minutes one way). Messages travel with the delay, and on board first steps come before ground review.
     link: /intelligence/self-report-and-earth-link
     linkText: Earth link
+  - icon: ☢️
+    title: Mission profiles and space weather
+    details: Launch, ISS, Moon and Mars transit with cited reference values, the mission dose against the NASA career limit, and a shelter advisory built on real NASA DONKI events.
+    link: /intelligence/mission-profiles
+    linkText: Mission profiles
+  - icon: 👁️
+    title: Eyes, ears and accessibility
+    details: Periodic SANS eye exams and hearing tests against the pre-flight baseline. Alert sounds with escalation, audio description and full keyboard use.
+    link: /intelligence/eye-and-hearing
+    linkText: Eye health and hearing
   - icon: 🧪
     title: Real NASA data with provenance
-    details: Two public NASA OSDR datasets (Inspiration4 blood panels, OSD-569 and OSD-575) shown as historical reference with accession, file and SHA-256.
+    details: Two public NASA OSDR datasets (Inspiration4 blood panels, OSD-569 and OSD-575) with accession, file and SHA-256, and NASA DONKI space weather as mission context. Context only, never crew measurements.
     link: /data/dataset-catalog
     linkText: Dataset catalog
   - icon: ✅
     title: Measured, not claimed
-    details: 143 automated tests and a headless evaluation of six scenarios on simulated data. Every number on these pages links back to code or to a generated file.
+    details: 375 web tests, 44 backend tests and a headless evaluation of the scenarios on simulated data. Every number on these pages links back to code, a generated file or a cited source.
     link: /validation/results
     linkText: Results and evidence
 ---
@@ -97,7 +107,7 @@ features:
 
 ## Architecture at a glance
 
-<p class="lead">Everything runs in the browser today: no backend, no database, no external service. The app only loads its own static files, including the 3D anatomy. A backend is planned behind the same contracts (see <a href="./architecture/target-architecture">Target architecture</a>).</p>
+<p class="lead">The app runs fully in the browser, offline if needed. An optional FastAPI backend adds ingestion, live NASA data and the assistant demo behind the same contracts (see <a href="./architecture/backend">Backend and API</a>).</p>
 
 <div class="ahi-arch">
 
@@ -109,6 +119,7 @@ flowchart LR
     ENG --> ST["zustand store"]
     ST --> UI["React UI and<br/>3D anatomy"]
     OSDR["NASA OSDR panels<br/>REAL_PUBLIC"] -.-> UI
+    API["AHI API (optional)<br/>DONKI, OSDR, assistant"] -.-> UI
 ```
 
 </div>

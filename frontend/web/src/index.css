@@ -71,6 +71,34 @@
   }
 }
 
+/*
+ * Z-index scale for every fixed or portaled layer. Use it through Tailwind as `z-(--z-dialog)`;
+ * never write a raw `z-[NN]` for an overlay. Low to high:
+ *   page      normal content
+ *   sticky    top bar and expanded timeline ribbon
+ *   tooltip   hover tooltips and page popovers: always BELOW an open drawer or dialog
+ *   drawer    side drawers (alerts, comms, assistant)
+ *   dialog    centered modal dialogs (Data and model, report, settings)
+ *   raised    a popover opened from inside a drawer or dialog (sits on its own dialog)
+ *   toast     small notices that must stay visible (sound blocked, screen description)
+ *   tour      guided demo overlay
+ *   command   keyboard shortcuts sheet
+ *   skip      skip links, focused only
+ */
+:root {
+  --z-page: 0;
+  --z-sticky: 40;
+  --z-tooltip: 50;
+  --z-popover: 50;
+  --z-drawer: 60;
+  --z-dialog: 70;
+  --z-raised: 75;
+  --z-toast: 80;
+  --z-tour: 90;
+  --z-command: 95;
+  --z-skip: 100;
+}
+
 html, body, #root { height: 100%; }
 body {
   margin: 0;
@@ -87,6 +115,12 @@ body {
 @media (min-width: 1024px) {
   body { overflow: hidden; }
 }
+/* Japanese: Inter has no kana or kanji. Noto Sans JP is loaded on demand (src/i18n); the system
+   Japanese fonts cover the time before it arrives, or an offline demo. Latin text keeps Inter. */
+:root:lang(ja) {
+  --font-sans: "Inter", "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Meiryo", ui-sans-serif, system-ui, sans-serif;
+}
+:root:lang(ja) body { line-break: strict; word-break: normal; overflow-wrap: anywhere; }
 * { scrollbar-width: thin; scrollbar-color: #22324f transparent; }
 .tabular { font-variant-numeric: tabular-nums; }
 

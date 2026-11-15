@@ -1,0 +1,2923 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AHI API",
+    "summary": "Astronaut Health Intelligence: decision support prototype, not a medical device.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "API and database status",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health/live": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness probe",
+        "operationId": "live_api_v1_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Live Api V1 Health Live Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health/ready": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Readiness probe (database reachable)",
+        "operationId": "ready_api_v1_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Ready Api V1 Health Ready Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/astronauts": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "List Astronauts",
+        "operationId": "list_astronauts_api_v1_astronauts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AstronautOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Astronauts Api V1 Astronauts Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Register a pseudonymized astronaut",
+        "operationId": "create_astronaut_api_v1_astronauts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AstronautIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AstronautOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/astronauts/{astronaut_id}": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Get Astronaut",
+        "operationId": "get_astronaut_api_v1_astronauts__astronaut_id__get",
+        "parameters": [
+          {
+            "name": "astronaut_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Astronaut Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AstronautOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/missions": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "List Missions",
+        "operationId": "list_missions_api_v1_missions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MissionOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Missions Api V1 Missions Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Create Mission",
+        "operationId": "create_mission_api_v1_missions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MissionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices": {
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Create Device",
+        "operationId": "create_device_api_v1_devices_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "List Devices",
+        "operationId": "list_devices_api_v1_devices_get",
+        "parameters": [
+          {
+            "name": "assigned_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Assigned To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceOut"
+                  },
+                  "title": "Response List Devices Api V1 Devices Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/observations": {
+      "post": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Ingest canonical HealthObservations (idempotent by observation_id)",
+        "description": "Every observation must carry data_origin and the provenance that origin requires: REAL_PUBLIC needs source_reference.repository and dataset_accession, SIMULATED needs device_id, DERIVED needs metadata.method. Resending an identical observation_id is counted as a duplicate; reusing an id with different content is rejected.",
+        "operationId": "post_observations_api_v1_observations_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestBatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "observations"
+        ],
+        "summary": "Query observations of one subject",
+        "operationId": "list_observations_api_v1_observations_get",
+        "parameters": [
+          {
+            "name": "subject_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "title": "Subject Id"
+            }
+          },
+          {
+            "name": "metric_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "HEART_RATE",
+                    "HRV_RMSSD",
+                    "ECG_SIGNAL",
+                    "SPO2",
+                    "RESPIRATORY_RATE",
+                    "SYSTOLIC_BP",
+                    "DIASTOLIC_BP",
+                    "SKIN_TEMPERATURE",
+                    "ACTIVITY_LEVEL",
+                    "SLEEP_DURATION",
+                    "SLEEP_EFFICIENCY",
+                    "EXERCISE_DURATION",
+                    "EXERCISE_LOAD",
+                    "REACTION_TIME",
+                    "HYDRATION",
+                    "CO2",
+                    "CABIN_TEMPERATURE",
+                    "RELATIVE_HUMIDITY",
+                    "RADIATION_DOSE_RATE",
+                    "RADIATION_DOSE",
+                    "CORTISOL",
+                    "WBC",
+                    "MOOD",
+                    "PERCEIVED_FATIGUE",
+                    "STRESS"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Metric Code"
+            }
+          },
+          {
+            "name": "data_origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "REAL_PUBLIC",
+                    "DERIVED",
+                    "SIMULATED",
+                    "MANUAL"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Origin"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Inclusive, ISO 8601 with timezone",
+              "title": "Start"
+            },
+            "description": "Inclusive, ISO 8601 with timezone"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exclusive, ISO 8601 with timezone",
+              "title": "End"
+            },
+            "description": "Exclusive, ISO 8601 with timezone"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "default": 1000,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservationPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/space-weather": {
+      "get": {
+        "tags": [
+          "nasa"
+        ],
+        "summary": "Recent space weather from NASA DONKI (REAL_PUBLIC context, not crew measurements)",
+        "operationId": "space_weather_api_v1_space_weather_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceWeatherSnapshot"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The NASA source could not be reached or answered unexpectedly. No data is invented."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/nasa/osdr/studies": {
+      "get": {
+        "tags": [
+          "nasa"
+        ],
+        "summary": "Human studies in NASA OSDR matching a search term (REAL_PUBLIC context)",
+        "operationId": "osdr_studies_api_v1_nasa_osdr_studies_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 80,
+              "default": "astronaut",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 25,
+              "minimum": 1,
+              "default": 10,
+              "title": "Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OsdrStudyList"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The NASA source could not be reached or answered unexpectedly. No data is invented."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assistant/status": {
+      "get": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Whether the assistant can answer (no secrets returned)",
+        "operationId": "status_api_v1_assistant_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assistant/chat": {
+      "post": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Ask the assistant about the selected astronaut. Streams server sent events.",
+        "operationId": "chat_api_v1_assistant_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "413": {
+            "description": "Request too large."
+          },
+          "429": {
+            "description": "Too many questions from this client, or the cloud model is rate limited."
+          },
+          "502": {
+            "description": "The cloud model failed or could not be reached."
+          },
+          "503": {
+            "description": "Assistant not configured (no API key)."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/multivariate": {
+      "post": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Score standardized feature vectors with a seeded Isolation Forest (experimental, machine learning)",
+        "description": "Server parity path of the browser detector (frontend/web/src/engine/ml), which stays the offline path. Fits PCA whitening and a seeded scikit-learn IsolationForest on the submitted training window (the person's own baseline window of robust z scores), then returns a score, the personal threshold and per feature deviation contributions for each scored vector. Stateless: nothing is stored. Decision support only, never a diagnosis or a status.",
+        "operationId": "multivariate_api_v1_analytics_multivariate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MultivariateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultivariateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AlertItem": {
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MODERATE",
+              "HIGH",
+              "CRITICAL",
+              "NO_DATA"
+            ],
+            "title": "Severity"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 600,
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "maxLength": 600,
+            "title": "Detail",
+            "default": ""
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric"
+          },
+          "minutes_open": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minutes Open"
+          },
+          "escalated": {
+            "type": "boolean",
+            "title": "Escalated",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "severity",
+          "title"
+        ],
+        "title": "AlertItem"
+      },
+      "AssistantContext": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "1",
+            "title": "Schema Version",
+            "default": "1"
+          },
+          "data_origin": {
+            "type": "string",
+            "enum": [
+              "SIMULATED",
+              "REAL_PUBLIC",
+              "DERIVED",
+              "MANUAL"
+            ],
+            "title": "Data Origin",
+            "default": "SIMULATED"
+          },
+          "sim_time_utc": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Sim Time Utc",
+            "default": ""
+          },
+          "astronaut": {
+            "$ref": "#/components/schemas/AstronautSnapshot"
+          },
+          "overall": {
+            "$ref": "#/components/schemas/OverallState"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricReading"
+            },
+            "type": "array",
+            "maxItems": 30,
+            "title": "Metrics",
+            "default": []
+          },
+          "open_alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertItem"
+            },
+            "type": "array",
+            "maxItems": 15,
+            "title": "Open Alerts",
+            "default": []
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/RecommendationItem"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Recommendations",
+            "default": []
+          },
+          "mission": {
+            "$ref": "#/components/schemas/MissionSnapshot"
+          },
+          "cabin": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CabinSnapshot"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "crew_overview": {
+            "items": {
+              "$ref": "#/components/schemas/CrewMember"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Crew Overview",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "astronaut",
+          "overall",
+          "mission"
+        ],
+        "title": "AssistantContext",
+        "description": "Grounded snapshot of the engine outputs for the selected astronaut."
+      },
+      "AssistantStatus": {
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "title": "Configured"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "deployment": {
+            "type": "string",
+            "const": "cloud-demo",
+            "title": "Deployment",
+            "default": "cloud-demo"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "configured",
+          "provider",
+          "model",
+          "note"
+        ],
+        "title": "AssistantStatus"
+      },
+      "AstronautIn": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$",
+            "title": "Id",
+            "examples": [
+              "ASTRONAUT-001"
+            ]
+          },
+          "pseudonym": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Pseudonym",
+            "description": "Call sign or code. Never a real name.",
+            "examples": [
+              "Commander A"
+            ]
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role",
+            "examples": [
+              "Commander"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "pseudonym"
+        ],
+        "title": "AstronautIn"
+      },
+      "AstronautOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$",
+            "title": "Id",
+            "examples": [
+              "ASTRONAUT-001"
+            ]
+          },
+          "pseudonym": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Pseudonym",
+            "description": "Call sign or code. Never a real name.",
+            "examples": [
+              "Commander A"
+            ]
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role",
+            "examples": [
+              "Commander"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "pseudonym",
+          "created_at"
+        ],
+        "title": "AstronautOut"
+      },
+      "AstronautSnapshot": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Id"
+          },
+          "callsign": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Callsign"
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "callsign",
+          "role"
+        ],
+        "title": "AstronautSnapshot"
+      },
+      "CabinSnapshot": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MODERATE",
+              "HIGH",
+              "CRITICAL",
+              "NO_DATA"
+            ],
+            "title": "Status"
+          },
+          "headline": {
+            "type": "string",
+            "maxLength": 600,
+            "title": "Headline",
+            "default": ""
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricReading"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "title": "Metrics",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "CabinSnapshot"
+      },
+      "ChatRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Question"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ChatTurn"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "title": "History",
+            "default": []
+          },
+          "context": {
+            "$ref": "#/components/schemas/AssistantContext"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "context"
+        ],
+        "title": "ChatRequest"
+      },
+      "ChatTurn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "ChatTurn"
+      },
+      "CrewMember": {
+        "properties": {
+          "callsign": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Callsign"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MODERATE",
+              "HIGH",
+              "CRITICAL",
+              "NO_DATA"
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "callsign",
+          "status"
+        ],
+        "title": "CrewMember"
+      },
+      "DeviceIn": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$",
+            "title": "Id",
+            "examples": [
+              "SIM-ASTROSKIN-001"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "BIO_MONITOR",
+              "ACTIGRAPHY",
+              "BP_MONITOR",
+              "EXERCISE_CEVIS",
+              "EXERCISE_ARED",
+              "EXERCISE_T2",
+              "ENV_SENSOR",
+              "DOSIMETER"
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To",
+            "description": "Astronaut id, or null for cabin devices."
+          },
+          "mission_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mission Id"
+          },
+          "data_origin": {
+            "type": "string",
+            "enum": [
+              "REAL_PUBLIC",
+              "DERIVED",
+              "SIMULATED",
+              "MANUAL"
+            ],
+            "title": "Data Origin",
+            "description": "SIMULATED for every device in the MVP."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "data_origin"
+        ],
+        "title": "DeviceIn"
+      },
+      "DeviceOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$",
+            "title": "Id",
+            "examples": [
+              "SIM-ASTROSKIN-001"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "BIO_MONITOR",
+              "ACTIGRAPHY",
+              "BP_MONITOR",
+              "EXERCISE_CEVIS",
+              "EXERCISE_ARED",
+              "EXERCISE_T2",
+              "ENV_SENSOR",
+              "DOSIMETER"
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To",
+            "description": "Astronaut id, or null for cabin devices."
+          },
+          "mission_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mission Id"
+          },
+          "data_origin": {
+            "type": "string",
+            "enum": [
+              "REAL_PUBLIC",
+              "DERIVED",
+              "SIMULATED",
+              "MANUAL"
+            ],
+            "title": "Data Origin",
+            "description": "SIMULATED for every device in the MVP."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "data_origin",
+          "created_at"
+        ],
+        "title": "DeviceOut"
+      },
+      "FeatureContribution": {
+        "properties": {
+          "feature": {
+            "type": "string",
+            "title": "Feature"
+          },
+          "z": {
+            "type": "number",
+            "title": "Z"
+          },
+          "share": {
+            "type": "number",
+            "title": "Share",
+            "description": "Share of the squared deviation (sums to 1 over all features)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature",
+          "z",
+          "share"
+        ],
+        "title": "FeatureContribution"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthObservation": {
+        "properties": {
+          "observation_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$",
+            "title": "Observation Id",
+            "description": "Idempotency key: resending the same id is a no op."
+          },
+          "subject_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$",
+            "title": "Subject Id",
+            "description": "Pseudonymized subject, or CABIN for environment readings."
+          },
+          "mission_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mission Id"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "metric_code": {
+            "type": "string",
+            "enum": [
+              "HEART_RATE",
+              "HRV_RMSSD",
+              "ECG_SIGNAL",
+              "SPO2",
+              "RESPIRATORY_RATE",
+              "SYSTOLIC_BP",
+              "DIASTOLIC_BP",
+              "SKIN_TEMPERATURE",
+              "ACTIVITY_LEVEL",
+              "SLEEP_DURATION",
+              "SLEEP_EFFICIENCY",
+              "EXERCISE_DURATION",
+              "EXERCISE_LOAD",
+              "REACTION_TIME",
+              "HYDRATION",
+              "CO2",
+              "CABIN_TEMPERATURE",
+              "RELATIVE_HUMIDITY",
+              "RADIATION_DOSE_RATE",
+              "RADIATION_DOSE",
+              "CORTISOL",
+              "WBC",
+              "MOOD",
+              "PERCEIVED_FATIGUE",
+              "STRESS"
+            ],
+            "title": "Metric Code"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value",
+            "description": "null means missing; it is never replaced by zero."
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Unit"
+          },
+          "measured_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Measured At"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "data_origin": {
+            "type": "string",
+            "enum": [
+              "REAL_PUBLIC",
+              "DERIVED",
+              "SIMULATED",
+              "MANUAL"
+            ],
+            "title": "Data Origin"
+          },
+          "source_reference": {
+            "$ref": "#/components/schemas/SourceReference"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "context": {
+            "$ref": "#/components/schemas/ObservationContext"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "observation_id",
+          "subject_id",
+          "metric_code",
+          "value",
+          "unit",
+          "measured_at",
+          "data_origin",
+          "quality"
+        ],
+        "title": "HealthObservation",
+        "description": "One measurement. Provenance (data_origin plus its required references) is mandatory."
+      },
+      "HealthStatus": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status"
+          },
+          "service": {
+            "type": "string",
+            "const": "ahi-api",
+            "title": "Service",
+            "default": "ahi-api"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "database": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ],
+            "title": "Database"
+          },
+          "database_backend": {
+            "type": "string",
+            "title": "Database Backend"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version",
+          "database",
+          "database_backend",
+          "time"
+        ],
+        "title": "HealthStatus"
+      },
+      "IngestBatch": {
+        "properties": {
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/HealthObservation"
+            },
+            "type": "array",
+            "maxItems": 5000,
+            "minItems": 1,
+            "title": "Observations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "observations"
+        ],
+        "title": "IngestBatch",
+        "description": "A batch is validated as a whole: one invalid observation rejects the request (422) and nothing is stored."
+      },
+      "IngestResult": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ACCEPTED",
+            "title": "Status"
+          },
+          "batch_id": {
+            "type": "string",
+            "title": "Batch Id"
+          },
+          "accepted_count": {
+            "type": "integer",
+            "title": "Accepted Count",
+            "description": "New observations stored."
+          },
+          "duplicate_count": {
+            "type": "integer",
+            "title": "Duplicate Count",
+            "description": "Identical resends of an id already stored (idempotent no op)."
+          },
+          "rejected_count": {
+            "type": "integer",
+            "title": "Rejected Count"
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/Rejection"
+            },
+            "type": "array",
+            "title": "Rejected"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "batch_id",
+          "accepted_count",
+          "duplicate_count",
+          "rejected_count",
+          "rejected"
+        ],
+        "title": "IngestResult"
+      },
+      "MetricReading": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Label"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value",
+            "description": "Latest value. null means no data, never zero."
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Unit"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MODERATE",
+              "HIGH",
+              "CRITICAL",
+              "NO_DATA"
+            ],
+            "title": "Status"
+          },
+          "normal_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normal Low",
+            "description": "Lower edge of the personal normal band"
+          },
+          "normal_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normal High"
+          },
+          "baseline_ready": {
+            "type": "boolean",
+            "title": "Baseline Ready",
+            "default": false
+          },
+          "trend_per_hour": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend Per Hour"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 600
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality"
+          },
+          "data_origin": {
+            "type": "string",
+            "enum": [
+              "SIMULATED",
+              "REAL_PUBLIC",
+              "DERIVED",
+              "MANUAL"
+            ],
+            "title": "Data Origin",
+            "default": "SIMULATED"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "label",
+          "value",
+          "unit",
+          "status"
+        ],
+        "title": "MetricReading"
+      },
+      "MissionIn": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$",
+            "title": "Id",
+            "examples": [
+              "MISSION-001"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ISS",
+                  "MOON",
+                  "MARS",
+                  "ANALOG",
+                  "OTHER"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "PRE_FLIGHT",
+              "IN_FLIGHT",
+              "POST_FLIGHT"
+            ],
+            "title": "Phase"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "phase"
+        ],
+        "title": "MissionIn"
+      },
+      "MissionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$",
+            "title": "Id",
+            "examples": [
+              "MISSION-001"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ISS",
+                  "MOON",
+                  "MARS",
+                  "ANALOG",
+                  "OTHER"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "PRE_FLIGHT",
+              "IN_FLIGHT",
+              "POST_FLIGHT"
+            ],
+            "title": "Phase"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "phase",
+          "created_at"
+        ],
+        "title": "MissionOut"
+      },
+      "MissionSnapshot": {
+        "properties": {
+          "profile": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Profile"
+          },
+          "vehicle": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Vehicle",
+            "default": ""
+          },
+          "mission_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mission Day"
+          },
+          "scenario": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Scenario",
+            "default": ""
+          },
+          "earth_link": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Earth Link",
+            "default": ""
+          },
+          "one_way_delay_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "One Way Delay Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "profile"
+        ],
+        "title": "MissionSnapshot"
+      },
+      "MultivariateOptions": {
+        "properties": {
+          "n_estimators": {
+            "type": "integer",
+            "maximum": 500.0,
+            "minimum": 10.0,
+            "title": "N Estimators",
+            "default": 100
+          },
+          "max_samples": {
+            "type": "integer",
+            "maximum": 4096.0,
+            "minimum": 16.0,
+            "title": "Max Samples",
+            "default": 256
+          },
+          "random_state": {
+            "type": "integer",
+            "maximum": 4294967295.0,
+            "minimum": 0.0,
+            "title": "Random State",
+            "default": 20261115
+          },
+          "whiten": {
+            "type": "boolean",
+            "title": "Whiten",
+            "description": "Decorrelate with PCA whitening fitted on the training window.",
+            "default": true
+          },
+          "whitening_floor": {
+            "type": "number",
+            "maximum": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Whitening Floor",
+            "description": "Minimum variance per principal axis.",
+            "default": 0.05
+          },
+          "range_aware": {
+            "type": "boolean",
+            "title": "Range Aware",
+            "description": "Range aware isolation like the browser forest (far points score above the usual extremes). False: plain sklearn scores.",
+            "default": true
+          },
+          "calibration_quantile": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "minimum": 0.5,
+            "title": "Calibration Quantile",
+            "default": 0.995
+          },
+          "score_floor": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score Floor",
+            "default": 0.6
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "MultivariateOptions",
+        "description": "Demo configuration, not an official limit. Defaults mirror MULTIVARIATE in src/engine/config.ts."
+      },
+      "MultivariateRequest": {
+        "properties": {
+          "subject_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Id",
+            "description": "Pseudonymized id, echoed back."
+          },
+          "features": {
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z0-9_]{1,40}$"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "minItems": 1,
+            "title": "Features"
+          },
+          "training": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array",
+              "maxItems": 32,
+              "minItems": 1
+            },
+            "type": "array",
+            "maxItems": 20000,
+            "minItems": 32,
+            "title": "Training",
+            "description": "The person's own baseline window."
+          },
+          "score": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array",
+              "maxItems": 32,
+              "minItems": 1
+            },
+            "type": "array",
+            "maxItems": 5000,
+            "minItems": 1,
+            "title": "Score",
+            "description": "Vectors to score."
+          },
+          "options": {
+            "$ref": "#/components/schemas/MultivariateOptions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "features",
+          "training",
+          "score"
+        ],
+        "title": "MultivariateRequest",
+        "description": "Standardized feature windows (robust z per metric vs the personal baseline), not raw vitals."
+      },
+      "MultivariateResponse": {
+        "properties": {
+          "subject_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Id"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "engine": {
+            "type": "string",
+            "title": "Engine"
+          },
+          "label": {
+            "type": "string",
+            "const": "Experimental, machine learning",
+            "title": "Label",
+            "default": "Experimental, machine learning"
+          },
+          "data_origin": {
+            "type": "string",
+            "const": "DERIVED",
+            "title": "Data Origin",
+            "default": "DERIVED"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "training_size": {
+            "type": "integer",
+            "title": "Training Size"
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Threshold"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MultivariateResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject_id",
+          "model_version",
+          "engine",
+          "features",
+          "training_size",
+          "threshold",
+          "results",
+          "limitations"
+        ],
+        "title": "MultivariateResponse"
+      },
+      "MultivariateResult": {
+        "properties": {
+          "score": {
+            "type": "number",
+            "title": "Score",
+            "description": "Isolation Forest anomaly score 0..1 (about 0.5 or less is typical)."
+          },
+          "above_threshold": {
+            "type": "boolean",
+            "title": "Above Threshold",
+            "description": "Score at or above the personal threshold. Not a flag: persistence rules apply first."
+          },
+          "contributions": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureContribution"
+            },
+            "type": "array",
+            "title": "Contributions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "score",
+          "above_threshold",
+          "contributions"
+        ],
+        "title": "MultivariateResult"
+      },
+      "ObservationContext": {
+        "properties": {
+          "mission_phase": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "PRE_FLIGHT",
+                  "IN_FLIGHT",
+                  "POST_FLIGHT"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mission Phase"
+          },
+          "activity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "SLEEP",
+                  "REST",
+                  "WORK",
+                  "EXERCISE",
+                  "EVA"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ObservationContext"
+      },
+      "ObservationOut": {
+        "properties": {
+          "observation_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$",
+            "title": "Observation Id",
+            "description": "Idempotency key: resending the same id is a no op."
+          },
+          "subject_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$",
+            "title": "Subject Id",
+            "description": "Pseudonymized subject, or CABIN for environment readings."
+          },
+          "mission_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mission Id"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,79}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "metric_code": {
+            "type": "string",
+            "enum": [
+              "HEART_RATE",
+              "HRV_RMSSD",
+              "ECG_SIGNAL",
+              "SPO2",
+              "RESPIRATORY_RATE",
+              "SYSTOLIC_BP",
+              "DIASTOLIC_BP",
+              "SKIN_TEMPERATURE",
+              "ACTIVITY_LEVEL",
+              "SLEEP_DURATION",
+              "SLEEP_EFFICIENCY",
+              "EXERCISE_DURATION",
+              "EXERCISE_LOAD",
+              "REACTION_TIME",
+              "HYDRATION",
+              "CO2",
+              "CABIN_TEMPERATURE",
+              "RELATIVE_HUMIDITY",
+              "RADIATION_DOSE_RATE",
+              "RADIATION_DOSE",
+              "CORTISOL",
+              "WBC",
+              "MOOD",
+              "PERCEIVED_FATIGUE",
+              "STRESS"
+            ],
+            "title": "Metric Code"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value",
+            "description": "null means missing; it is never replaced by zero."
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Unit"
+          },
+          "measured_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Measured At"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At"
+          },
+          "data_origin": {
+            "type": "string",
+            "enum": [
+              "REAL_PUBLIC",
+              "DERIVED",
+              "SIMULATED",
+              "MANUAL"
+            ],
+            "title": "Data Origin"
+          },
+          "source_reference": {
+            "$ref": "#/components/schemas/SourceReference"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "context": {
+            "$ref": "#/components/schemas/ObservationContext"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "ingested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ingested At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "observation_id",
+          "subject_id",
+          "metric_code",
+          "value",
+          "unit",
+          "measured_at",
+          "received_at",
+          "data_origin",
+          "quality",
+          "ingested_at"
+        ],
+        "title": "ObservationOut"
+      },
+      "ObservationPage": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationOut"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "items"
+        ],
+        "title": "ObservationPage"
+      },
+      "OsdrStudy": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "OSDR accession, e.g. \"OSD-569\"."
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link",
+            "description": "Study page in the OSDR repository."
+          },
+          "organism": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organism"
+          },
+          "projectType": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projecttype",
+            "description": "As reported by OSDR, e.g. \"Spaceflight Study\"."
+          },
+          "mission": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mission"
+          },
+          "releaseDate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Releasedate",
+            "description": "Public release date (YYYY-MM-DD) when OSDR states it."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "First sentences of the OSDR study description."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "link"
+        ],
+        "title": "OsdrStudy"
+      },
+      "OsdrStudyList": {
+        "properties": {
+          "data_origin": {
+            "type": "string",
+            "const": "REAL_PUBLIC",
+            "title": "Data Origin",
+            "default": "REAL_PUBLIC"
+          },
+          "source": {
+            "type": "string",
+            "const": "NASA OSDR",
+            "title": "Source",
+            "default": "NASA OSDR"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "title": "Sourceurl",
+            "description": "The exact search request sent to the OSDR public API."
+          },
+          "retrievedAt": {
+            "type": "string",
+            "title": "Retrievedat"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Matching human studies reported by OSDR (only the first ones are returned)."
+          },
+          "studies": {
+            "items": {
+              "$ref": "#/components/schemas/OsdrStudy"
+            },
+            "type": "array",
+            "title": "Studies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sourceUrl",
+          "retrievedAt",
+          "query",
+          "total",
+          "studies"
+        ],
+        "title": "OsdrStudyList"
+      },
+      "OverallState": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MODERATE",
+              "HIGH",
+              "CRITICAL",
+              "NO_DATA"
+            ],
+            "title": "Status"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "headline": {
+            "type": "string",
+            "maxLength": 600,
+            "title": "Headline",
+            "default": ""
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "contributing_factors": {
+            "items": {
+              "type": "string",
+              "maxLength": 600
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Contributing Factors",
+            "default": []
+          },
+          "limitations": {
+            "items": {
+              "type": "string",
+              "maxLength": 600
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Limitations",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "OverallState"
+      },
+      "Quality": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "VALID",
+              "QUESTIONABLE",
+              "INVALID",
+              "MISSING"
+            ],
+            "title": "Status"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "default": 1.0
+          },
+          "is_estimated": {
+            "type": "boolean",
+            "title": "Is Estimated",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "Quality"
+      },
+      "RecommendationItem": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 600,
+            "title": "Title"
+          },
+          "rationale": {
+            "type": "string",
+            "maxLength": 600,
+            "title": "Rationale",
+            "default": ""
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MODERATE",
+              "HIGH",
+              "CRITICAL",
+              "NO_DATA"
+            ],
+            "title": "Priority"
+          },
+          "audience": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Audience"
+          },
+          "autonomy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Autonomy"
+          },
+          "requires_human_review": {
+            "type": "boolean",
+            "title": "Requires Human Review",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "priority",
+          "audience"
+        ],
+        "title": "RecommendationItem"
+      },
+      "Rejection": {
+        "properties": {
+          "observation_id": {
+            "type": "string",
+            "title": "Observation Id"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "observation_id",
+          "reason"
+        ],
+        "title": "Rejection"
+      },
+      "SourceReference": {
+        "properties": {
+          "repository": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repository"
+          },
+          "dataset_accession": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Accession"
+          },
+          "file_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Name"
+          },
+          "record_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Reference"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SourceReference"
+      },
+      "SpaceWeatherEvent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "DONKI activity id, e.g. \"2026-11-10T04:12:00-FLR-001\"."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SOLAR_FLARE",
+              "SEP",
+              "CME",
+              "GEOMAGNETIC_STORM"
+            ],
+            "title": "Kind"
+          },
+          "startTime": {
+            "type": "string",
+            "title": "Starttime",
+            "description": "ISO 8601 UTC."
+          },
+          "peakTime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peaktime"
+          },
+          "classType": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classtype",
+            "description": "Flare class such as \"X1.2\" (flares only)."
+          },
+          "kpIndex": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kpindex",
+            "description": "Highest Kp index reported (geomagnetic storms only)."
+          },
+          "link": {
+            "type": "string",
+            "title": "Link",
+            "description": "DONKI web page of the event."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "startTime",
+          "link"
+        ],
+        "title": "SpaceWeatherEvent"
+      },
+      "SpaceWeatherSnapshot": {
+        "properties": {
+          "data_origin": {
+            "type": "string",
+            "const": "REAL_PUBLIC",
+            "title": "Data Origin",
+            "default": "REAL_PUBLIC"
+          },
+          "source": {
+            "type": "string",
+            "const": "NASA DONKI (CCMC)",
+            "title": "Source",
+            "default": "NASA DONKI (CCMC)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "title": "Sourceurl"
+          },
+          "retrievedAt": {
+            "type": "string",
+            "title": "Retrievedat",
+            "description": "ISO 8601 UTC time the data was fetched from DONKI."
+          },
+          "window": {
+            "$ref": "#/components/schemas/TimeWindow"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/SpaceWeatherEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "snapshot"
+            ],
+            "title": "Mode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sourceUrl",
+          "retrievedAt",
+          "window",
+          "events",
+          "mode"
+        ],
+        "title": "SpaceWeatherSnapshot"
+      },
+      "TimeWindow": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "title": "End"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "TimeWindow"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

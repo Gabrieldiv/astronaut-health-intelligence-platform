@@ -1,27 +1,41 @@
 import clsx from 'clsx'
 import { ChevronDown, ChevronLeft, FlaskConical, Signal } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
 import type { BodyRegionId, MetricCode, Status } from '../../types/domain'
-import { METRIC_CATALOG, REGION_LABELS } from '../../engine/catalog'
+import { METRIC_CATALOG } from '../../engine/catalog'
+import { useT } from '../../i18n'
+import { engineText } from '../../i18n/engineText'
+import { Details } from '../../components/viz/Details'
+import { tx } from '../../i18n/rich'
+import { metricLabel, metricPlain, regionDescription, regionLabel, regionSystem } from '../../i18n/catalog'
 import { MetricValue } from '../../components/MetricValue'
-import { StatusDot, StatusIcon, StatusPill } from '../../components/Status'
+import { StatusDot, StatusIcon } from '../../components/Status'
+import { Sparkline } from '../../components/Sparkline'
+import { BandGauge } from '../../components/viz/BandGauge'
 import { EventLegend, TrendChart } from '../../components/TrendChart'
 import { BaselineInfo } from '../../components/BaselineInfo'
 import { Badge, IconButton } from '../../components/ui'
-import { ORIGIN_LABEL, QUALITY_LABEL, deltaVsNormal, fmtMetric } from '../../components/format'
+import { ORIGIN_LABEL, QUALITY_LABEL, deltaVsNormal, fmtMetric, lastHours, relTime } from '../../components/format'
 import { REGION_ICON } from '../stage/CenterStage'
 import { regionMetricsFromCatalog, useActions, useChartEvents } from '../shared/hooks'
 import { RegionAlertsJump, RegionEvents } from './RegionEvents'
+import { MeasuredBy } from './MeasuredBy'
+import { forHorizon, historyNote, useForecastHorizon } from './forecastHorizon'
+import { HorizonPicker } from './HorizonPicker'
+import { ExamHistory } from './ExamHistory'
+import { FeedAwareStatusPill, FeedLabel, PAUSED_COLOR, PausedNotice, useFeedState } from './FeedStatus'
 
 const WINDOWS = [6, 24, 72] as const
 
 function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: string; metric: MetricCode; expanded: boolean; onToggle: () => void }) {
   const ms = useAppStore((s) => s.health[astronautId]?.metrics[metric])
   const history = useAppStore((s) => s.history[astronautId]?.[metric])
-  const prediction = useAppStore((s) => s.health[astronautId]?.predictions[metric])
+  const basePrediction = useAppStore((s) => s.health[astronautId]?.predictions[metric])
+  const horizon = useForecastHorizon((s) => s.hours)
+  const prediction = forHorizon(basePrediction, horizon)
   const [win, setWin] = useState<(typeof WINDOWS)[number]>(24)
   const def = METRIC_CATALOG[metric]
   const region = def.region === 'environment' ? null : def.region
@@ -31,8 +45,18 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
   const noData = status === 'NO_DATA'
   const delta = deltaVsNormal(ms, status)
   const b = ms?.baseline
-  const bandText = b && b.status === 'READY' ? `${fmtMetric(metric, b.low)} to ${fmtMetric(metric, b.high)} ${def.unit}` : 'Still learning your normal'
+  const t = useT()
+  const bandText = b && b.status === 'READY' ? t('attention.range', { low: fmtMetric(metric, b.low), high: fmtMetric(metric, b.high), unit: def.unit }) : t('attention.stillLearningNormal')
   const id = `metric-${metric}`
+  const feed = useFeedState(astronautId, metric)
+  const simNow = useAppStore((s) => Math.floor(s.clock.simNow / 60000) * 60000)
+  const spark = useMemo(() => lastHours(history, 24), [history])
+  const live = feed === 'LIVE'
+  const color = !live ? (feed === 'PAUSED' ? PAUSED_COLOR : STATUS_META.NO_DATA.color) : meta.color === STATUS_META.LOW.color ? '#5eead4' : meta.color
+  const ready = b && b.status === 'READY'
+  const gaugeLabel = live
+    ? t('visual.gaugeAria', { metric: metricLabel(metric), value: fmtMetric(metric, ms?.current), unit: def.unit, band: bandText, status: `${meta.crewLabel}, ${delta.text}` })
+    : t('visual.gaugeAriaNoValue', { metric: metricLabel(metric), state: t(`visual.feed.${feed}`), band: bandText })
   return (
     <li
       className={clsx('rounded-xl ring-1 transition-colors', expanded ? 'bg-white/[0.05] ring-white/15' : 'bg-white/[0.025] ring-white/[0.06]', noData && 'border border-dashed border-nodata/40 ring-0')}
@@ -43,48 +67,56 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-[13px] font-semibold text-ink-100">{def.label}</span>
+            <span className="truncate text-[13px] font-semibold text-ink-100">{metricLabel(metric)}</span>
             <span className="flex shrink-0 items-baseline gap-1">
-              {noData ? (
-                <span className="text-sm font-semibold text-nodata">Signal lost</span>
-              ) : (
+              {live ? (
                 <>
                   <MetricValue value={ms?.current} decimals={def.decimals} className="text-[20px] leading-none font-semibold text-ink-100" />
                   <span className="text-[11px] text-ink-500">{def.unit}</span>
                 </>
+              ) : (
+                <FeedLabel feed={feed} className="text-sm" />
               )}
             </span>
           </span>
-          <span className="mt-1 flex items-center justify-between gap-2 text-xs">
-            <span className={clsx('flex items-center gap-1 font-medium')} style={{ color: delta.tone === 'in' ? '#a9b6cf' : meta.color }}>
-              <StatusIcon status={status} size={12} />
-              {delta.text}
-            </span>
-            <span className="text-[11px] text-ink-500">{meta.crewLabel}</span>
+          <BandGauge value={live ? ms?.current : null} low={ready ? b.low : null} high={ready ? b.high : null} color={color} label={gaugeLabel} className="mt-2" height={8} />
+          <span className="mt-1.5 flex items-center justify-between gap-2 text-[11px]">
+            {live ? (
+              <span className="flex items-center gap-1 font-medium" style={{ color: delta.tone === 'in' ? '#a9b6cf' : meta.color }}>
+                <StatusIcon status={status} size={12} />
+                {delta.short}
+              </span>
+            ) : (
+              <span className="text-ink-500">{feed === 'LOST' ? meta.crewLabel : t(feed === 'PAUSED' ? 'visual.feed.pausedHint' : 'visual.feed.waitingHint')}</span>
+            )}
+            <span className="tabular shrink-0 text-ink-500">{ready ? t('visual.normalShort', { low: fmtMetric(metric, b.low), high: fmtMetric(metric, b.high) }) : t('visual.learning')}</span>
+          </span>
+          <span className="mt-1 flex items-center gap-2 text-[10px] text-ink-500" aria-hidden>
+            <span className="shrink-0 font-semibold tracking-wide uppercase">{t('visual.last24h')}</span>
+            <Sparkline points={spark} color={color} band={ready ? { low: b.low, high: b.high } : null} height={20} className="min-w-0 flex-1" maxPoints={60} />
+            <span className="tabular shrink-0">{ms && ms.lastUpdated > 0 ? t('visual.updated', { when: relTime(ms.lastUpdated, simNow) }) : t('visual.noUpdate')}</span>
           </span>
         </span>
         <ChevronDown size={14} className={clsx('mt-1 shrink-0 text-ink-500 transition-transform', expanded && 'rotate-180')} aria-hidden />
       </button>
       <div className="flex items-center gap-1 pr-3 pb-2.5 pl-[33px] text-[11px] text-ink-500">
-        <span>
-          Your normal: <span className="tabular text-ink-300">{bandText}</span>
-          {ms?.zScore != null && !noData && <span className="tabular present:hidden"> · z {ms.zScore.toFixed(1)}</span>}
-        </span>
+        <span className="sr-only">{tx('attention.yourNormal', { band: <span>{bandText}</span> })}</span>
+        {ms?.zScore != null && !noData && <span className="tabular present:hidden">z {ms.zScore.toFixed(1)}</span>}
         <BaselineInfo metric={metric} baseline={b} />
       </div>
       {expanded && (
         <div id={id} className="px-3 pb-3">
-          <p className="mb-2 text-xs leading-relaxed text-ink-300">{def.plainLanguage}</p>
+          <p className="mb-2 text-xs leading-relaxed text-ink-300">{metricPlain(metric)}</p>
           <div className="mb-1 flex items-center justify-between gap-2">
             <div className="flex flex-wrap gap-1 present:invisible">
-              <Badge tone={ms?.quality === 'VALID' ? 'neutral' : 'warn'} icon={<Signal size={10} aria-hidden />} title="Data quality">
+              <Badge tone={ms?.quality === 'VALID' ? 'neutral' : 'warn'} icon={<Signal size={10} aria-hidden />} title={t('attention.dataQuality')}>
                 {QUALITY_LABEL[ms?.quality ?? 'MISSING']}
               </Badge>
-              <Badge tone="sim" icon={<FlaskConical size={10} aria-hidden />} title="Data origin">
+              <Badge tone="sim" icon={<FlaskConical size={10} aria-hidden />} title={t('attention.dataOrigin')}>
                 {ORIGIN_LABEL[ms?.data_origin ?? 'SIMULATED']}
               </Badge>
             </div>
-            <div className="flex rounded-lg bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]" role="group" aria-label="Chart window">
+            <div className="flex rounded-lg bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]" role="group" aria-label={t('attention.chartWindow')}>
               {WINDOWS.map((w) => (
                 <button
                   key={w}
@@ -93,27 +125,38 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
                   onClick={() => setWin(w)}
                   className={clsx('focus-ring tabular rounded-md px-2 py-0.5 text-[10px] font-semibold', win === w ? 'bg-white/10 text-ink-100' : 'text-ink-500 hover:text-ink-300')}
                 >
-                  {w} h
+                  {t('attention.hours', { n: w })}
                 </button>
               ))}
             </div>
           </div>
-          <TrendChart metric={metric} history={history ?? []} baseline={b ?? null} prediction={prediction ?? null} color={noData ? '#94a3b8' : meta.color === STATUS_META.LOW.color ? '#5eead4' : meta.color} windowHours={win} height={170} events={events} />
+          <TrendChart metric={metric} history={history ?? []} baseline={b ?? null} prediction={prediction ?? null} color={color} windowHours={win} height={170} events={events} />
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-ink-500 present:hidden">
             <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-3 rounded-sm bg-accent/20 ring-1 ring-accent/40" aria-hidden /> Your normal band
+              <span className="inline-block h-2 w-3 rounded-sm bg-accent/20 ring-1 ring-accent/40" aria-hidden /> {t('attention.legend.band')}
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-0.5 w-3 rounded" style={{ background: '#5eead4' }} aria-hidden /> Measured
+              <span className="inline-block h-0.5 w-3 rounded" style={{ background: '#5eead4' }} aria-hidden /> {t('attention.legend.measured')}
             </span>
             {prediction?.eligible && (
               <span className="flex items-center gap-1">
-                <span className="inline-block h-2 w-3 rounded-sm bg-white/15" aria-hidden /> Forecast ({prediction.intervalLabel})
+                <span className="inline-block h-2 w-3 rounded-sm bg-white/15" aria-hidden /> {t('attention.legend.forecast', { interval: prediction.intervalLabel })}
               </span>
             )}
             <EventLegend events={events} />
-            <span>Gaps mean no data</span>
+            <span>{t('attention.legend.gaps')}</span>
           </div>
+          {basePrediction && (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[10px] font-semibold tracking-[0.14em] text-ink-500 uppercase">{t('attention.forecast')}</span>
+              <HorizonPicker size="xs" />
+            </div>
+          )}
+          {prediction && !prediction.eligible && (
+            <p className="mt-1 text-[11px] text-ink-300" role="status">
+              {prediction.ineligibleReason === 'HISTORY_TOO_SHORT' ? t('attention.historyShortNote', { note: historyNote(prediction) }) : t('attention.notEnoughData')}
+            </p>
+          )}
           {prediction?.eligible && <p className="mt-1 text-[10px] text-ink-500 present:hidden">{prediction.method}. {prediction.disclaimer}</p>}
         </div>
       )}
@@ -136,7 +179,8 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
   )
   const selectedMetric = useAppStore((s) => s.selectedMetric)
   const { selectRegion, selectMetric } = useActions()
-  const label = REGION_LABELS[region]
+  const t = useT()
+  const label = { label: regionLabel(region), system: regionSystem(region), description: regionDescription(region) }
   const Icon = REGION_ICON[region]
   const fromState = metricsKey ? (metricsKey.split(',') as MetricCode[]) : []
   const metrics = fromState.length ? fromState : regionMetricsFromCatalog(region)
@@ -148,7 +192,7 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
       {!embedded && (
         <div className="flex items-center gap-2">
           <IconButton
-            label="Back to overview"
+            label={t('attention.backToOverview')}
             size="sm"
             onClick={() => {
               selectRegion(null)
@@ -157,7 +201,7 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
           >
             <ChevronLeft size={16} />
           </IconButton>
-          <span className="text-xs text-ink-500">Overview</span>
+          <span className="text-xs text-ink-500">{t('attention.overview')}</span>
         </div>
       )}
       {!embedded && (
@@ -172,17 +216,21 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
                 <div className="text-xs text-ink-500">{label.system}</div>
               </div>
             </div>
-            <StatusPill status={status} />
+            <FeedAwareStatusPill astronautId={astronautId} metrics={metrics} status={status} />
           </div>
-          {summary && <p className="mt-3 text-[14px] leading-snug text-ink-100">{summary}</p>}
-          <p className="mt-1.5 text-xs leading-relaxed text-ink-500">{label.description}</p>
+          {summary && <p className="mt-3 text-[13px] leading-snug text-ink-100">{engineText('regionSummary', summary, region)}</p>}
+          <Details className="mt-1.5">{label.description}</Details>
         </div>
       )}
       <RegionAlertsJump astronautId={astronautId} region={region} />
-      {metrics.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-white/15 px-3 py-4 text-center text-xs text-ink-500">No live sensor for this system in the MVP. Shown for context only.</div>
+      {region !== 'eyes' && region !== 'ears' && <PausedNotice astronautId={astronautId} metrics={metrics} />}
+      {region === 'eyes' || region === 'ears' ? (
+        // periodic exams: a session history instead of live trend charts
+        <ExamHistory astronautId={astronautId} region={region} />
+      ) : metrics.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-white/15 px-3 py-4 text-center text-xs text-ink-500">{t('attention.noSensor')}</div>
       ) : (
-        <ul className="flex flex-col gap-2" aria-label={`${label.label} metrics`}>
+        <ul className="flex flex-col gap-2" aria-label={t('attention.regionMetrics', { region: label.label })}>
           {metrics.map((m) => (
             <MetricRow key={m} astronautId={astronautId} metric={m} expanded={m === open} onToggle={() => {
                 setCollapsed(m === open)
@@ -191,6 +239,7 @@ export function RegionDetail({ astronautId, region, embedded = false }: { astron
           ))}
         </ul>
       )}
+      {region !== 'eyes' && region !== 'ears' && <MeasuredBy astronautId={astronautId} metrics={metrics} />}
       <RegionEvents astronautId={astronautId} region={region} />
     </div>
   )

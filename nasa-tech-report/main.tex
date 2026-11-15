@@ -1,0 +1,153 @@
+% Define Class: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[template=tech-report]{nasa-latex-docs}
+
+% Preamble Section: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Acronyms
+\input{acronyms}
+
+% Add bibliography file
+\addbibresource{main.bib}
+
+% Figure source line: printed under the caption; the link lives here, not in the references.
+\newcommand{\figsource}[1]{\par\vspace{0.6em}\parbox{\linewidth}{\footnotesize\raggedright\textbf{Source:} #1}\par\vspace{0.4em}}
+% Japanese text (status word translations): pdflatex with CJKutf8.
+\usepackage{CJKutf8}
+\newcommand{\ja}[1]{\begin{CJK}{UTF8}{min}#1\end{CJK}}
+% Hardware figure: width, file, caption, label, source.
+% Placed in the text flow (not a float), because floats followed by text overlap in this template.
+\newcommand{\hwfigure}[5]{%
+\par\bigskip\noindent
+\begin{minipage}{\linewidth}
+\centering
+\includegraphics[width=#1\textwidth]{#2}
+\captionof{figure}{#3}
+\label{#4}
+\figsource{#5}
+\end{minipage}
+\par\bigskip}
+
+% Document parameters (generic placeholder values - replace with your own) %%%
+\docTypeTitle[NASA Space Apps Challenge - 2026 Project] % Project or Team Name
+\docTitle[Astronaut Health Intelligence (AHI)] % Technical Report Title
+\docNumber[TR-0001]
+\docVersion[1.1]
+\docDate[November 15, 2026]
+\docOrganization[AstroHealth Tech Team \\ Santo André, São Paulo - Brazil] % Team name \\ City, Country
+\docHeader[Document Header]
+\docFooter[] % Document Footer
+\docAbstract[
+    Human health monitoring is a critical component of crew safety and mission success in space exploration. As human spaceflight missions become longer and extend farther from Earth, astronauts are increasingly exposed to a combination of physiological, environmental, and operational stressors that may affect their health, well-being, and performance. Factors such as microgravity, space radiation, isolation, confinement, disrupted sleep cycles, and demanding workloads create complex health risks that require continuous monitoring and timely interpretation.
+    
+    Although space missions generate valuable physiological, behavioral, and environmental data, an important challenge remains: transforming heterogeneous information into a coherent understanding of an astronaut's health status. Identifying meaningful changes, recognizing abnormal patterns, and anticipating potential risks require more than data collection. They require integrated analysis, individual health baselines, and the ability to interpret trends over time.
+
+    The \textbf{Astronaut Health Intelligence (AHI)} project proposes a predictive human health monitoring platform designed to address this challenge. Its primary objective is to transform diverse health and mission-related data into actionable insights through data integration, statistical analysis, anomaly detection, risk assessment, and artificial intelligence-assisted interpretation.
+
+    The proposed platform assumes as its data sources the equipment in use on the International Space Station: wearables such as the Bio-Monitor, the Actiwatch Spectrum and the Dry-EEG Headband; medical equipment such as the blood pressure and ECG monitor, the Holter monitor, the pulse oximeter, the Ultrasound 2, the urine analyzer and sample collection kits; the optical coherence tomography and the On-Orbit Hearing Assessment for periodic eye and ear examinations; the CEVIS, ARED and T2 exercise devices; and the environmental monitors for air quality, carbon dioxide, combustion products, noise, radiation, water and microbes. Space weather notifications from the NASA DONKI service, accessed through the NASA Open APIs, complement the on board radiation monitors. Publicly available scientific datasets from NASA complement these sources. By organizing these sources into a standardized data model, AHI aims to provide a unified and traceable representation of astronaut health throughout a space mission.
+
+    At its analytical core, AHI works on three levels: real-time monitoring, predictive analytics and prescriptive intelligence. It combines individual baseline modeling, time-series forecasting, statistical anomaly detection, and machine learning models such as Isolation Forest and XGBoost to identify deviations from expected physiological and behavioral patterns across ten health dimensions, including vision and hearing as two separate dimensions. Instead of relying exclusively on generalized thresholds, the platform emphasizes changes relative to each astronaut's historical baseline. This approach aims to account for individual variability and identify potentially relevant trends that could otherwise remain unnoticed.
+
+    The platform also includes a \textbf{Large Language Model (LLM)} as an AI-assisted interpretation layer, under strict guardrails: it writes the statistical predictions in direct, plain language and powers a health assistant that answers questions by text and voice. Health monitoring cannot depend on internet access, so the target architecture runs a local model specialized in AHI on board the ISS or the Artemis spacecraft. The demonstrator uses the Claude API as a stand-in for that local model, to show how the functionality would work. Using structured analytical outputs and curated scientific context from NASA and other reliable sources, this component can explain detected patterns, summarize potential concerns, and present relevant scientific information in a human-readable format. The LLM acts as an explanatory and contextual assistance mechanism rather than an independent diagnostic system or autonomous medical decision-maker.
+
+    The AHI platform is organized around five complementary capabilities:
+
+    \begin{enumerate}
+    \item \textbf{Data Integration:} Consolidation of physiological, behavioral, environmental, equipment, and scientific research data into a unified and standardized representation.
+
+    \item \textbf{Health Monitoring:} Visualization of health indicators, historical trends, individual baselines, and data quality information.
+
+    \item \textbf{Anomaly Detection:} Identification of unusual variations and deviations in physiological or behavioral patterns through statistical and analytical methods.
+
+    \item \textbf{Predictive Risk Assessment:} Analysis of historical trends and potential risk scenarios to support early risk awareness and operational planning.
+
+    \item \textbf{AI-Assisted Interpretation:} Generation of contextual explanations and analytical summaries supported by evidence and curated scientific references.
+
+    \end{enumerate}
+
+    AHI is also designed to be global and inclusive. The interface is available in English, Portuguese, Spanish, Japanese and German; access is role based, so that crew members, crew medical officers and flight surgeons each see what their role requires; and audio description lets blind and low vision users, people with dyslexia and astronauts busy with a task follow and operate the platform without looking at a screen.
+
+    The project is grounded in publicly available NASA resources, including the \textit{NASA Open Science Data Repository (OSDR)}, Human Research Program publications, and relevant mission health measurement references. These resources provide scientific foundations and opportunities to investigate historical research data. Since access to real astronaut health records and operational telemetry is restricted, AHI explicitly distinguishes between device data, laboratory results, self report, publicly available research data, derived analytical outputs and simulated observations used for development and demonstration.
+
+    The expected outcome is a modular and extensible software platform demonstrating how data-driven health monitoring and AI-assisted interpretation can improve the identification and understanding of potential health changes during human spaceflight missions. Its architecture is designed to support future integration with wearable sensors, environmental monitoring systems, mission data infrastructure, and additional validated analytical models.
+
+    \textbf{AHI is designed as a health-monitoring and decision-support tool, not as a medical diagnostic system.} It does not replace qualified medical professionals, clinical evaluation, or established mission medical protocols. Instead, its purpose is to organize complex information, highlight potentially relevant changes, and provide interpretable evidence that can assist medical and mission personnel in their assessments.
+
+    By connecting health data, scientific knowledge, and predictive analytics, \textbf{Astronaut Health Intelligence} proposes a data-driven approach to one of the central challenges of human space exploration: identifying relevant health signals early enough to support crew well-being, informed decision-making, and mission success.
+] % Executive summary of the report.
+
+% Remove the logos (the class falls back to the NASA/Artemis logos when unset)
+% \docLogo[Artemis_Logo]
+% \docOrgLogo[NASA_Logo]
+\docLogo[SpaceApps]
+\docOrgLogo[NASA_Logo]
+
+% Remove the revision-log instruction page
+\docRevisionLog[]
+
+% Authors (the template ships with 2 default placeholder slots; empty slots hide them)
+\docAuthor[1]{Igor Fernando Casita}{Team Leader \& AI Lead}{University of São Paulo (USP)}{Brazil}
+\docAuthor[2]{Lucas Palhares Barbosa}{Senior Software Engineer \& AI Engineer}{FATEC Rio Preto}{Brazil}
+\docAuthor[3]{Gabriel da Silva Simões}{Senior Data Scientist}{University of São Paulo (USP)}{Brazil}
+\docAuthor[4]{Daniel Hiro Batista}{Data Researcher}{University of São Paulo (USP)}{Brazil}
+\docAuthor[5]{Ricardo Camargo}{Senior Data Analyst}{USP ESALQ}{Brazil}
+% \docAuthor[6]{Bruna Debianchi}{}{}{Brazil}
+
+% Electronic signature on the author/approver pages ("/s/ Name"). Set only when you intend to sign.
+\docSigned[true] % /s/ - eletronic signature
+\docSignDate[November 15, 2026]
+
+% Contributors and approvers: empty entries hide those pages. Fill them to show the pages.
+\docContributor[1]{}{}{}{}
+\docContributor[2]{}{}{}{}
+\docApprover[1]{}{}{}{}
+\docApprover[2]{}{}{}{}
+
+% Main Document Content: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\input{sections/00-abstract}
+
+\input{sections/01-introduction}
+
+\input{sections/02-scientific-foundation}
+
+\input{sections/03-data-sources}
+
+\input{sections/04-solution-overview}
+
+\input{sections/05-hardware-sensors}
+
+\input{sections/06-analytical-methodology}
+
+\input{sections/07-artificial-intelligence}
+
+\input{sections/08-software-architecture}
+
+\input{sections/09-visual-identity-3d-model-ux}
+
+\input{sections/10-global-access-inclusion}
+
+\input{sections/11-implementation-demo}
+
+\input{sections/12-results}
+
+\input{sections/13-limitations-ethics}
+
+\input{sections/14-future-work}
+
+\input{sections/15-conclusion}
+
+% Start the bibliography on a new page before the template places its hyperlink anchor.
+% Without this the table of contents link for References points to the last page of the Conclusion.
+\clearpage
+\printbibliography
+
+\begin{appendices}
+\input{appendices/A-articles-nasa-sources}
+\input{appendices/B-algorithms}
+\input{appendices/C-diagrams}
+\input{appendices/D-tests}
+\end{appendices}
+
+\end{document}
+% End of Document %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

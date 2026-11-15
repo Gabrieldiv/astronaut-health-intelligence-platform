@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { IconButton } from '../../components/ui'
+import { useT } from '../../i18n'
 
 /**
  * Centered modal dialog shared by the v2 feature buttons (mission overview, handover report,
@@ -34,6 +35,7 @@ export function Modal({
   headerExtra?: ReactNode
 }) {
   const panelRef = useRef<HTMLDivElement>(null)
+  const t = useT()
   const closeRef = useRef(onClose)
   useEffect(() => {
     closeRef.current = onClose
@@ -70,7 +72,7 @@ export function Modal({
   }, [open])
   if (!open) return null
   return createPortal(
-    <div className={clsx('ahi-modal-host fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6', hostClassName)}>
+    <div className={clsx('ahi-modal-host fixed inset-0 z-(--z-dialog) flex items-center justify-center p-3 sm:p-6', hostClassName)}>
       <div className="ahi-modal-scrim animate-fade-in absolute inset-0 bg-space-950/65 backdrop-blur-[3px]" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
@@ -96,7 +98,7 @@ export function Modal({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {headerExtra}
-            <IconButton label="Close" onClick={onClose} size="sm">
+            <IconButton label={t('common.close')} onClick={onClose} size="sm">
               <X size={16} />
             </IconButton>
           </div>

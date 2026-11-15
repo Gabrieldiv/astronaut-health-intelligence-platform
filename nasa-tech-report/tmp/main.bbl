@@ -1,0 +1,148 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{none/global//global/global/global}
+  \entry{nasa_human_spaceflight_risks}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=N}{%
+         family={{National Aeronautics and Space Administration}},
+         familyi={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{N2}
+    \strng{fullhash}{N2}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{About Human Spaceflight Risks}
+    \verb{url}
+    \verb https://www.nasa.gov/hrp/risks/
+    \endverb
+    \field{year}{2026}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{nasa_human_research_program}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=N}{%
+         family={{National Aeronautics and Space Administration}},
+         familyi={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{N2}
+    \strng{fullhash}{N2}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Human Research Program}
+    \verb{url}
+    \verb https://www.nasa.gov/hrp/
+    \endverb
+    \field{year}{2026}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{nasa_human_health_countermeasures}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=N}{%
+         family={{National Aeronautics and Space Administration}},
+         familyi={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{N2}
+    \strng{fullhash}{N2}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Human Health Countermeasures: Spaceflight Risks}
+    \verb{url}
+    \verb https://www.nasa.gov/humans-in-space/hhc-spaceflight-risks/
+    \endverb
+    \field{year}{2026}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{canadian_space_agency_biomonitor}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=C}{%
+         family={{Canadian Space Agency}},
+         familyi={C\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{C1}
+    \strng{fullhash}{C1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Bio-Monitor: Keeping an Eye on Astronauts' Vital Signs}
+    \verb{url}
+    \verb https://www.asc-csa.gc.ca/eng/sciences/bio-monitor.asp
+    \endverb
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{nasa_lsah}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=N}{%
+         family={{National Aeronautics and Space Administration}},
+         familyi={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{N2}
+    \strng{fullhash}{N2}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Lifetime Surveillance of Astronaut Health (LSAH)}
+    \verb{url}
+    \verb https://www.nasa.gov/directorates/esdmd/hhp/lifetime-surveillance-of-
+    \verb astronaut-health-lsah/
+    \endverb
+    \field{year}{2023}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{nasa_health_monitoring_challenge_2026}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=N}{%
+         family={{NASA Space Apps Challenge}},
+         familyi={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{N1}
+    \strng{fullhash}{N1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Create Health Monitoring Software for Astronauts on Space
+  Missions}
+    \verb{url}
+    \verb https://www.spaceappschallenge.org/2026/challenges/health-monitoring-
+    \verb software/
+    \endverb
+    \field{year}{2026}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+\enddatalist
+\endinput
