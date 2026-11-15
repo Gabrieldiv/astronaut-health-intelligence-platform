@@ -9,6 +9,8 @@ code:
   - frontend/web/src/engine/missions/dose.ts
   - frontend/web/src/engine/missions/spaceWeather.ts
   - frontend/web/src/features/mission/MissionContext.tsx
+  - frontend/web/src/features/mission/backdrops/facts.ts
+  - frontend/web/src/features/mission/backdrops/MissionBackdrop.tsx
 tests:
   - frontend/web/src/engine/missions/missions.test.ts
   - frontend/web/src/state/missionProfile.test.ts
@@ -24,7 +26,7 @@ The same crew, the same devices and the same engine can be read in four mission 
 Profiles are **independent of the scenarios** ([Demo scenarios](../product/demo-scenarios)): a scenario scripts what happens to a crew member, a profile sets the environment around them.
 
 ::: info Where to find it in the app
-The profile selector sits in the top bar. Its info button opens the **mission context** dialog: hazards of the profile, reference values with their sources, the mission dose bar and the space weather advisory.
+The profile selector sits in the top bar. The **mission context** view shows the hazards of the profile, reference values with their sources, the mission dose bar and the space weather advisory. The 3D stage also shows a [backdrop](#mission-backdrops) of the active profile.
 :::
 
 ## The four profiles
@@ -79,6 +81,19 @@ Missing space weather data is never shown as "all clear". Each advisory links to
 
 The 72 hour window and the "X class" cut are demo configuration in `config.ts` (`SPACE_WEATHER`), not official limits. The shelter wording follows the general crew procedure described by NASA; it is not a medical instruction.
 
+## Mission backdrops {#mission-backdrops}
+
+Behind the 3D body the stage shows a scene of the active profile: the launch pad with the ascent plume, Earth seen from low orbit, the lunar surface, or the Earth to Mars transfer arc with the ship. It is context and decoration; it never carries a health status. A compact chip shows the profile name and two or three facts. **Every number in the chip is read from the cited profile table above** (`facts.ts`); the backdrop adds no new reference value.
+
+| Profile | Chip facts | Extra widget |
+| --- | --- | --- |
+| Launch and ascent | Up to 3 g, 8.5 min powered flight[^m9][^m10] | Peak g gauge: the cited reference peak, not a live reading |
+| ISS | 400 km up, weightless, 0.65 mSv/day[^m3][^m5] | Orbit progress on the simulated clock, period about 92 min (derived, see below) |
+| Moon | 0.165 g, 384,400 km from Earth, delay 1.3 s[^m7] | none |
+| Mars transit | 1.8 mSv/day, delay 4 to 24 min[^m2][^m11] | Ship position on the arc: the simulated mission day over the cited 253 day transit[^m2] |
+
+The ISS orbit period is **derived**, not quoted: a circular orbit at the cited 400 km altitude, with Kepler's third law, the mean Earth radius (6371 km) and Earth's gravitational parameter (398,600 km³/s²)[^m16], gives about 92 minutes. The Moon delay is the mean distance divided by the speed of light. Numbers follow the selected interface language. How the backdrop is drawn: [3D anatomy](../architecture/anatomy-3d#mission-backdrop).
+
 ## Limitations
 
 - One reference value per profile; real dose rates vary with solar cycle, shielding and location in the vehicle.
@@ -107,6 +122,7 @@ The 72 hour window and the "X class" cut are demo configuration in `config.ts` (
 [^m13]: NASA OCHMO-TB-020 Rev. E, Design for Ionizing Radiation Protection ([V1 4031], solar particle event limit). <https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf>
 [^m14]: Shavers M. et al. 2024. Space agency-specific standards for crew dose and risk assessment of ionising radiation exposures for the International Space Station. *Z Med Phys* 34(1):14-30. <https://pmc.ncbi.nlm.nih.gov/articles/PMC10919966>
 [^m15]: NOAA Space Weather Prediction Center, Solar flares (radio blackouts): flare class letters by peak X-ray flux. <https://www.spaceweather.gov/phenomena/solar-flares-radio-blackouts>
+[^m16]: NASA NSSDC, Earth Fact Sheet (volumetric mean radius 6371 km, GM 0.39860 x 10^6 km³/s²). <https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html>
 
 ## Next steps
 

@@ -9,11 +9,14 @@ code:
   - backend/app/modules
   - backend/openapi.json
   - frontend/web/src/lib/api/client.ts
+  - frontend/web/src/lib/api/connectivity.ts
+  - frontend/web/src/features/connectivity/index.tsx
   - frontend/web/src/types/api.gen.ts
   - docker-compose.yml
 tests:
   - backend/tests
   - frontend/web/src/lib/api/client.test.ts
+  - frontend/web/src/lib/api/connectivity.test.ts
 verified: 2026-11-15
 ---
 
@@ -99,6 +102,25 @@ Both are `REAL_PUBLIC` mission context, not astronaut measurements ([NASA data s
 | `VITE_API_URL=off` | Never calls an API: for static hosting (for example GitHub Pages) |
 
 Offline, the engine, the simulation and the 3D viewer work exactly as online. Space weather uses the bundled snapshot, OSDR search and the assistant are shown as unavailable.
+
+### Online and offline switch {#online-and-offline-switch}
+
+The user chooses how the app uses the API. The switch is a segmented control in **Data and model**, NASA context tab; a small chip in the top bar shows the result and opens it.
+
+| Mode | Behavior |
+| --- | --- |
+| **Automatic** (default) | Probe the API once; use it when it answers, otherwise fall back to the offline demo |
+| **Online** | Always use the API. If it does not answer, the panel says "The AHI API is unreachable", shows the command that starts it (`uvicorn app.main:create_app --factory --port 8000`, from `backend/`) with a copy button, and checks again every 30 s. Every caller keeps its offline path, so the app stays usable |
+| **Offline** | Never open a network connection: bundled DONKI snapshot, assistant off, OSDR study list hidden |
+
+| Chip | When |
+| --- | --- |
+| Offline demo | Offline mode, or Automatic with no answer from the API |
+| Live NASA data | The API answered |
+| API unreachable | Online mode and the API does not answer |
+| Checking connection | A probe is in progress |
+
+`VITE_API_URL=off` wins over the stored choice: such a build is always offline and the panel says so. The choice is stored in the browser (`ahi.connectivity.v1`); if storage is unavailable (for example a private window) it lasts for the session only. The rules (`parseMode`, `resolveMode`, `chipState`) are pure functions covered by `connectivity.test.ts`.
 
 ## Generated types
 

@@ -99,7 +99,7 @@ A trilha de auditoria ("Activity log") registra reconhecimentos, escalonamentos,
 
 ## Saídas
 
-`Alert` (severidade, título, detalhe, região, métrica, regra, criação, reconhecimento, resolução, escalonamento) e `AuditEvent`. Na interface: gaveta de alertas (abas "Open" e "History"), sino com contador, faixa CRITICAL sobre o cabeçalho do corpo e som opcional de dois tons para alertas CRITICAL novos (desligado por padrão). Detalhes da tela em [Tour do produto](/pt/product/product-tour#gaveta-de-alertas).
+`Alert` (severidade, título, detalhe, região, métrica, regra, criação, reconhecimento, resolução, escalonamento) e `AuditEvent`. Na interface: gaveta de alertas (abas "Open" e "History"), sino com contador, faixa CRITICAL sobre o cabeçalho do corpo e som opcional de dois tons para alertas CRITICAL novos (desligado por padrão). Detalhes da tela em [Tour do produto](/pt/product/product-tour#alerts-drawer).
 
 ## Limitações
 

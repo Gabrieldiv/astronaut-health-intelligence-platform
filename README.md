@@ -51,7 +51,7 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
 
 | | |
 | --- | --- |
-| **3D anatomy** | A realistic anatomical atlas (Z-Anatomy) with 250 structures. Zoom toward the pointer, **Monitor** mode (only monitored systems react) or **Explore** mode (every structure), a keyboard body navigator and a scan band that shows monitoring is live. The heart beats at the live heart rate and the lungs breathe at the live breathing rate. |
+| **3D anatomy** | A realistic anatomical atlas (Z-Anatomy) with 250 structures. Zoom toward the pointer, **Monitor** mode (only monitored systems react) or **Explore** mode (every structure), a keyboard body navigator and a scan band that shows monitoring is live. The heart beats at the live heart rate and the lungs breathe at the live breathing rate. Behind the body, a backdrop of the active mission profile with a few cited facts. |
 | **Personal baselines** | Each metric is compared with that astronaut's own normal band (robust median and MAD, aware of sleep, rest, work and exercise). |
 | **Statistics first** | Robust z, EWMA drift, CUSUM for small steady drifts and persistence rules give a status (All good, Keep an eye, Act soon, Act now, Signal lost) with reasons in plain language. An experimental Isolation Forest adds an "Unusual combination" note and never changes a status. Missing data is never shown as normal. |
 | **Mission profiles** | Launch, ISS, Moon and Mars transit with cited reference values (dose rate, gravity, distance, delay), the mission dose against the NASA 600 mSv career limit, and a space weather advisory built on real NASA DONKI events. |
@@ -59,12 +59,12 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
 | **What to do** | Non-prescriptive recommended actions, tagged "Can act on board now" or "Needs flight surgeon", plus a hypothetical with vs without comparison. |
 | **Distance from Earth** | ISS, Moon and Mars link profiles. Messages travel with the light time delay, and AHI puts on board steps first when Earth is far. |
 | **Forecasts** | Projections from 24 h to 15 days with an 80% band that widens with the horizon, only when there is enough history. |
-| **Devices** | "Measured by" lists the devices behind every reading; an operator can pause a device (its readings read "Paused by operator", never normal). |
-| **Accessibility** | Alert sounds per severity that repeat and escalate until acknowledged, audio description (`D`), skip links, live regions and full keyboard use. |
-| **Languages** | English by default. Português (Brasil), Español, 日本語 and Deutsch are optional in Tools > Language: machine assisted, pending native review. |
+| **Devices** | "Measured by" lists the devices behind every reading; an operator can pause a device. A metric without data says why: "Paused by operator" (with an inline Resume), "Waiting for data" or "Signal lost", never normal. |
+| **Accessibility** | Alert sounds per severity that repeat and escalate until acknowledged, audio description (`D`) that stops on a language change, a red dot on the browser tab while a critical alert is open, skip links, live regions and full keyboard use. Panels show a picture first and keep sentences behind "Details", still read by screen readers. |
+| **Languages** | English by default. Português (Brasil), Español, 日本語 and Deutsch are optional in Tools > Language: machine assisted, pending native review. Engine sentences are translated through structured messages; a few engine texts are still English in the other languages. |
 | **Ask AHI** | A plain language assistant that explains what the engine shows, with a "Based on:" line. Demo with the Claude API through the backend; a real mission needs the onboard offline design in [docs/assistant-architecture.md](docs/assistant-architecture.md). |
 | **Two views** | Ground view for flight surgeons and mission control, Crew view for the astronaut (with "Your body systems" cards). Presentation mode and a 10 step guided demo. |
-| **Backend (optional)** | FastAPI modular monolith: ingestion, observations, NASA DONKI and OSDR connectors, assistant, experimental analytics. The app runs fully without it (offline demo mode). |
+| **Backend (optional)** | FastAPI modular monolith: ingestion, observations, NASA DONKI and OSDR connectors, assistant, experimental analytics. The app runs fully without it (offline demo mode); an Automatic, Online or Offline switch in Data and model decides whether it is used. |
 
 <table>
   <tr>
@@ -85,7 +85,7 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
 
 ### App only (offline demo mode)
 
-Requirements: **Node.js 20.19 or newer (22.12 or newer recommended)**. No backend and no API key: after `npm install` the demo works offline, with a bundled real NASA DONKI snapshot for space weather.
+Requirements: **Node.js 20.19 or newer (22.12 or newer recommended)**. No backend and no API key: after `npm install` the demo works offline, with a bundled real NASA DONKI snapshot for space weather. The connection chip in the top bar reads "Offline demo"; choose **Offline** in Data and model to make sure no network request is made.
 
 ```bash
 git clone https://github.com/lucaspalharesbarbosa/astronaut-health-intelligence-platform.git

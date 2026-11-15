@@ -23,6 +23,7 @@ A Astronaut Health Intelligence Platform (AHI) é um protótipo com dados de dis
 | Interface | Ground view e Crew view (com cartões dos sistemas do corpo), demo guiada, Measured by, link com a Terra, check-in, visão da missão, relatório de passagem de turno com exportação FHIR R4, what-if |
 | Anatomia 3D | Atlas Z-Anatomy com 250 estruturas, zoom em direção ao ponteiro, modos Monitor e Explore, downloads com nova tentativa, navegador do corpo pelo teclado, varredura do corpo, fallback procedural |
 | Acessibilidade e idiomas | Sons de alerta com escalonamento, audiodescrição, links de salto, regiões ao vivo; idiomas opcionais da interface (pt-BR, es, ja, de) com inglês como padrão ([Acessibilidade](/pt/product/accessibility)) |
+| Acabamento da entrega final | Cenários da missão com fatos citados dos perfis, painéis com a imagem primeiro (medidores, barras de mudança, relógio de atraso, frases atrás de "Details"), estados "Paused by operator", "Waiting for data" e "Signal lost" com "Resume" no lugar, ponto vermelho na aba do navegador com alerta crítico aberto, regra da rotação em repouso, uma única escala de z-index, parada da fala numa troca de idioma, chave online e offline, mensagens estruturadas do motor para tradução, pseudo idioma e script de varredura i18n |
 | Backend | Monólito modular em FastAPI: cadastro, ingestão idempotente, observações, conectores NASA DONKI e OSDR, assistente, análise experimental; SQLite ou PostgreSQL; modo demo offline no app ([Backend e API](/pt/architecture/backend)) |
 | Assistente | Demo do Ask AHI com a Claude API, arquitetura offline a bordo documentada ([Ask AHI](/pt/product/assistant)) |
 | Dados reais da NASA | Painéis OSDR OSD-569 e OSD-575 como referência, eventos DONKI como contexto de missão |
@@ -53,6 +54,7 @@ Substituir o simulador de cabine por um replay `REAL_PUBLIC` de um período real
 - Fundamentar em uma fonte citável cada limiar de demo que restar, ou manter o rótulo de demo.
 - Calibrar os simuladores com faixas publicadas e documentá-las no model card.
 - Ter falantes nativos revisando qualquer idioma da interface além do inglês antes de apresentá-lo.
+- Terminar a tradução do texto do motor: algumas notas de exame, notas de previsão, notas de qualidade de dado e textos dos perfis de missão ainda estão em inglês nos outros idiomas ([Texto do motor](/pt/product/accessibility#engine-text)).
 
 ### 6. Anatomia 3D: próximos passos {#anatomy-next-steps}
 

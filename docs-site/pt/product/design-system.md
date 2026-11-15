@@ -8,6 +8,14 @@ code:
   - frontend/web/src/components/Status.tsx
   - frontend/web/src/app/uiStore.ts
   - frontend/web/src/app/shortcuts.tsx
+  - frontend/web/src/components/viz/BandGauge.tsx
+  - frontend/web/src/components/viz/ChangeBar.tsx
+  - frontend/web/src/components/viz/DelayClock.tsx
+  - frontend/web/src/components/viz/Details.tsx
+  - frontend/web/src/features/attention/feedState.ts
+tests:
+  - frontend/web/src/components/viz/scale.test.ts
+  - frontend/web/src/features/attention/feedState.test.ts
 verified: 2026-11-15
 ---
 
@@ -116,6 +124,39 @@ Tecla `P` ou menu "Tools". Aumenta fontes (piso de 13 px em qualquer texto), ró
 Não houve auditoria formal de acessibilidade (por exemplo WCAG com leitor de tela) nem teste com usuários reais. Contraste e navegação foram verificados pelo autor durante o desenvolvimento. O corpo 3D é alcançável pelo teclado por meio do navegador do corpo e anunciado em regiões `aria-live`, mas a imagem em si não é descrita além dos rótulos e dos painéis de texto equivalentes. Isso está em [Limitações e problemas conhecidos](/pt/validation/limitations).
 :::
 
+## Painéis com a imagem primeiro {#visual-first-panels}
+
+O painel de atenção, os detalhes de sistema e de estrutura, o histórico de exames e o contexto da missão mostram primeiro uma imagem e guardam a frase completa atrás do botão **"Details"**. Os visuais ficam em `components/viz/`; a escala deles é pura e tem teste unitário (`scale.test.ts`).
+
+| Visual | Componente | O que desenha |
+| --- | --- | --- |
+| Medidor de faixa | `BandGauge.tsx` | O normal pessoal como uma faixa suave e o valor atual como um marcador na cor do status. A faixa fica no meio da trilha; um valor muito fora alarga a trilha para o marcador continuar nela. Sem valor: só a faixa, nunca um marcador |
+| Barra de mudança | `ChangeBar.tsx` | Uma mudança em relação à baseline como uma barra que cresce para a direita (maior) ou para a esquerda (menor) a partir de um traço central, usada no histórico de exames |
+| Relógio de atraso | `DelayClock.tsx` | O atraso de mensagem só de ida como um arco que enche o mostrador em uma hora: um segundo-luz é uma lasca, Marte é quase o mostrador todo |
+| Details | `Details.tsx` | Um botão que abre a frase. Fechado, o texto só fica escondido visualmente (`sr-only`), então leitores de tela e a audiodescrição continuam lendo |
+| Ícones e prazos | `features/attention/visual.ts` | Um ícone por sinal (o seu sistema do corpo) e por tipo de ação; prazo da ação "Now", "Within 1 h" ou "Today" a partir da prioridade (convenção de interface da demo, não uma regra clínica) |
+
+Os visuais decorativos têm `aria-hidden` e as palavras ficam ao lado deles; um medidor com significado tem um rótulo acessível com o valor, a faixa e o status em palavras.
+
+**Estados de alimentação** (`features/attention/feedState.ts`): uma métrica está LIVE (leitura atual), PAUSED (um operador pausou o aparelho que a alimenta), WAITING (o aparelho está online, por exemplo acabou de ser retomado, mas nenhuma leitura chegou ainda) ou LOST (sem leitura e sem aparelho saudável). Só LIVE traz valor. Um sistema do corpo fica PAUSED ou WAITING só quando toda métrica sem dado está nesse estado. O rótulo correspondente ("Paused by operator", "Waiting for data", "Signal lost") usa uma cor neutra, e um aparelho pausado ganha um botão **"Resume"** ali mesmo.
+
+## Camadas (escala de z-index) {#z-index-scale}
+
+Toda camada fixa ou em portal usa uma única escala, definida como variáveis CSS em `src/index.css` e usada pelo Tailwind como `z-(--z-dialog)`. Um `z-[NN]` cru não é permitido para uma sobreposição.
+
+| Token | Valor | Usado por |
+| --- | --- | --- |
+| `--z-page` | 0 | Conteúdo normal |
+| `--z-sticky` | 40 | Barra superior e a faixa expandida da linha do tempo |
+| `--z-tooltip`, `--z-popover` | 50 | Tooltips e popovers da página, sempre abaixo de uma gaveta ou diálogo aberto |
+| `--z-drawer` | 60 | Gavetas laterais (alertas, comunicação, assistente) |
+| `--z-dialog` | 70 | Diálogos modais centrados ("Data and model", relatório, ajustes) |
+| `--z-raised` | 75 | Um popover aberto de dentro de uma gaveta ou diálogo |
+| `--z-toast` | 80 | Avisos pequenos que precisam continuar visíveis (som bloqueado, descrição da tela) |
+| `--z-tour` | 90 | Sobreposição da demo guiada |
+| `--z-command` | 95 | Folha de atalhos de teclado |
+| `--z-skip` | 100 | Links de salto, quando focados |
+
 ## Decisões de UX registradas
 
 | Decisão | Motivo |
@@ -128,6 +169,9 @@ Não houve auditoria formal de acessibilidade (por exemplo WCAG com leitor de te
 | Selo de autonomia em cada ação | Com a Terra longe, quem pode agir importa tanto quanto o quê |
 | Som de alerta ligado por padrão para alertas críticos | Um monitor de saúde precisa ser ouvido; um som por vez, repete até o reconhecimento, escala depois de 2 min, avisos são opcionais ([Acessibilidade](/pt/product/accessibility#alert-sounds)) |
 | Modo Monitor por padrão no visualizador 3D | O que é medido reage; a anatomia só de contexto recua. O modo Explore está a um clique |
+| Imagem primeiro, frase atrás de "Details" | Uma olhada precisa bastar; a frase fica a um clique e é sempre lida pela tecnologia assistiva |
+| Aparelho pausado não é sinal perdido | Uma decisão de operador ganha palavras neutras próprias e um botão "Resume"; nenhum dos dois estados aparece como normal |
+| Ponto vermelho na aba do navegador com alerta crítico aberto | Mesmo uma aba escondida mostra que alguém precisa olhar |
 | Duas visões sobre o mesmo estado | Públicos diferentes, uma fonte de verdade |
 
 ## Próximos passos
