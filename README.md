@@ -61,7 +61,7 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
 | **Forecasts** | Projections from 24 h to 15 days with an 80% band that widens with the horizon, only when there is enough history. |
 | **Devices** | "Measured by" lists the devices behind every reading; an operator can pause a device. A metric without data says why: "Paused by operator" (with an inline Resume), "Waiting for data" or "Signal lost", never normal. |
 | **Accessibility** | Alert sounds per severity that repeat and escalate until acknowledged, audio description (`D`) that stops on a language change, a red dot on the browser tab while a critical alert is open, skip links, live regions and full keyboard use. Panels show a picture first and keep sentences behind "Details", still read by screen readers. |
-| **Languages** | English by default. Português (Brasil), Español, 日本語 and Deutsch are optional in Tools > Language: machine assisted, pending native review. Engine sentences are translated through structured messages; a few engine texts are still English in the other languages. |
+| **Languages** | English by default. Português (Brasil), Español, 日本語 and Deutsch are optional in Tools > Language: machine assisted, pending native review. Engine sentences are translated through structured messages; the plain text handover and the packets to the ground stay English by design. |
 | **Ask AHI** | A plain language assistant that explains what the engine shows, with a "Based on:" line. Demo with the Claude API through the backend; a real mission needs the onboard offline design in [docs/assistant-architecture.md](docs/assistant-architecture.md). |
 | **Two views** | Ground view for flight surgeons and mission control, Crew view for the astronaut (with "Your body systems" cards). Presentation mode and a 10 step guided demo. |
 | **Backend (optional)** | FastAPI modular monolith: ingestion, observations, NASA DONKI and OSDR connectors, assistant, experimental analytics. The app runs fully without it (offline demo mode); an Automatic, Online or Offline switch in Data and model decides whether it is used. |
@@ -126,12 +126,13 @@ From the repository root, `docker compose up --build` starts PostgreSQL 17 and t
 | Command | Where | What it does |
 | --- | --- | --- |
 | `npm run dev` | `frontend/web` | Development server on port 5173 |
-| `npm test` | `frontend/web` | 375 unit and scenario tests (vitest) |
+| `npm test` | `frontend/web` | 430 unit and scenario tests (vitest) |
 | `npx tsc -b` | `frontend/web` | Type check |
 | `npx vite build` | `frontend/web` | Production build into `dist/` |
 | `npm run evaluate` | `frontend/web` | Re-runs the engine evaluation and regenerates `docs/model-card.md` |
 | `npm run api:types` | `frontend/web` | Regenerates the API types from `backend/openapi.json` |
 | `npm run lint` | `frontend/web` | Lint (oxlint) |
+| `npm run e2e` | `frontend/web` | Playwright end to end tests (first time: `npx playwright install chromium`) |
 | `npm run anatomy:validate` | `frontend/web` | Checks the published 3D atlas against its manifest contract |
 | `npm run anatomy:build` | `frontend/web` | Rebuilds the 3D atlas from the Z-Anatomy source (needs Blender 4.5 LTS; not needed to run the app) |
 | `python -m pytest` | `backend` | Backend tests (external HTTP mocked) |
@@ -215,10 +216,12 @@ Principles: every record carries its origin, astronaut and analog or animal data
 │   │                         # exams (eyes, ears), missions (profiles, dose, space weather), ml (experimental)
 │   ├── src/state/            # zustand store and simulation clock
 │   ├── src/features/         # UI features (anatomy, crew, attention, timeline, comms, ...)
+│   ├── e2e/                  # Playwright end to end and visual tests
 │   ├── src/types/domain.ts   # Canonical data model and shared contract
 │   ├── public/anatomy/       # 3D atlas: one GLB per anatomical system, manifest.json, LICENSE.md (CC BY-SA 4.0)
 │   └── scripts/              # Engine evaluation, NASA OSDR import, anatomy asset pipeline (scripts/anatomy)
 ├── backend/                  # Optional AHI API (FastAPI): ingestion, observations, NASA, assistant, analytics
+├── .github/workflows/        # CI (app, end to end, backend, docs), docs deploy, manual visual baselines
 ├── docker-compose.yml        # PostgreSQL 17 and the API
 ├── data/                     # NASA OSDR raw files, manifests (provenance) and processed data
 ├── docs/                     # Demo script, model card, data inventory, data team guide, anatomy assets guide,
@@ -259,10 +262,11 @@ npm run docs:dev
 - Indicators relate to a body system, not to a single structure: a highlighted structure marks its body system, never a finding in that structure. Structures that nothing measures (digestive organs, glands, nerves and others) are context only and show no status.
 - The mission dose is an approximation (absorbed dose times a reference quality ratio), not NASA's effective dose method. The machine learning detector has only seen simulated data.
 - The assistant demo uses a cloud model, which is not acceptable on a real mission.
-- The health engine runs in the browser; the backend does not run it yet. No authentication or access profiles.
+- The health engine runs in the browser; the backend does not run it yet.
+- **No authentication and no role based access control (RBAC).** The demo has no login and the API is open; anyone with the page sees every astronaut. A real deployment needs SSO (OpenID Connect) and server side RBAC enforced in the FastAPI backend, with an audit of access (see the roadmap).
 - Performance was only observed on one development laptop; it is not a benchmark.
 
-Next steps: port the health engine to the Python backend, a clinical review flow, access profiles, replay of real ISS cabin telemetry from NASA EDA, and for the 3D anatomy textures, a female reference model and BodyParts3D kidney geometry. See the [roadmap](https://lucaspalharesbarbosa.github.io/astronaut-health-intelligence-platform/resources/roadmap).
+Next steps: port the health engine to the Python backend, a clinical review flow, authentication and role based access control, replay of real ISS cabin telemetry from NASA EDA, and for the 3D anatomy textures, a female reference model and BodyParts3D kidney geometry. See the [roadmap](https://lucaspalharesbarbosa.github.io/astronaut-health-intelligence-platform/resources/roadmap).
 
 ## License and acknowledgments
 

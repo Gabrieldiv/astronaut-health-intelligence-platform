@@ -26,7 +26,7 @@ The same crew, the same devices and the same engine can be read in four mission 
 Profiles are **independent of the scenarios** ([Demo scenarios](../product/demo-scenarios)): a scenario scripts what happens to a crew member, a profile sets the environment around them.
 
 ::: info Where to find it in the app
-The profile selector sits in the top bar. The **mission context** view shows the hazards of the profile, reference values with their sources, the mission dose bar and the space weather advisory. The 3D stage also shows a [backdrop](#mission-backdrops) of the active profile.
+The Mission and Earth link control sits in the top bar and opens a panel with three tabs. Its **Mission** tab holds the profile picker and shows the hazards of the profile, reference values with their sources, the mission dose bar and the space weather advisory. The 3D stage also shows a [backdrop](#mission-backdrops) of the active profile.
 :::
 
 ## The four profiles

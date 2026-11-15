@@ -42,6 +42,8 @@ frontend/web/
 ├── index.html                 App entry (loading screen while baselines are prepared)
 ├── anatomy-lab.html           Dev only: every visual state of the 3D body
 ├── features-lab.html          Dev only: feature components with fake state
+├── playwright.config.ts       Playwright configuration (npm run e2e)
+├── e2e/                       Playwright end to end tests (demo-script.spec.ts) and visual tests (visual.spec.ts)
 ├── public/
 │   └── anatomy/               3D atlas: nine *.glb files (one per anatomical system), manifest.json,
 │                              LICENSE.md (CC BY-SA 4.0). Generated, never edited by hand
@@ -95,7 +97,7 @@ backend/
 | `src/engine/` | Pure TypeScript engine and simulator, no React | [Engine and simulation](../architecture/engine-and-simulation) |
 | `src/engine/config.ts` | Every tunable number (demo configuration) | [Thresholds](../intelligence/thresholds) |
 | `src/engine/catalog.ts` | Metrics, regions, mission, crew, scenarios, Earth link profiles | [Data dictionary](../data/data-dictionary) |
-| `src/**/*.test.ts` | vitest tests (38 files) | [Testing strategy](./testing) |
+| `src/**/*.test.ts` | vitest tests (48 files) | [Testing strategy](./testing) |
 | `src/engine/missions/`, `src/engine/exams/`, `src/engine/ml/` | Mission profiles, exams, experimental machine learning | [Mission profiles](../intelligence/mission-profiles), [Eye health and hearing](../intelligence/eye-and-hearing), [Anomaly detection](../intelligence/anomaly-detection#unusual-combination-experimental) |
 | `src/features/a11y/`, `src/features/assistant/` | Sounds, audio description, skip links; Ask AHI | [Accessibility](../product/accessibility), [Ask AHI](../product/assistant) |
 | `src/lib/api/` | Typed API client with offline fallback | [Backend and API](../architecture/backend#offline-demo-mode) |

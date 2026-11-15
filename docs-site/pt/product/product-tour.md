@@ -72,10 +72,10 @@ Da esquerda para a direita:
 | Elemento | O que faz |
 | --- | --- |
 | Logo "AHI" e selo `SIMULATED` | O selo abre "Where this data comes from": explica que toda leitura é simulada e lista os adapters de dispositivos ativos |
-| Nome da missão e **perfil de missão** | Missão ("Demo Expedition", fase "In flight") e o perfil: "Launch and ascent", "ISS", "Moon (Artemis class)" ou "Mars transit". O botão de informação abre o diálogo de contexto da missão: riscos, valores de referência citados, dose da missão e clima espacial. Veja [Perfis de missão](/pt/intelligence/mission-profiles) |
+| Nome da missão e o controle **Mission and Earth link** | O nome da missão e um controle que mostra o perfil de missão ("Launch and ascent", "ISS", "Moon (Artemis class)" ou "Mars transit"), o link com a Terra e o atraso só de ida, com um ponto quando o aviso de clima espacial pede atenção. Ele abre o painel **Mission and Earth link** com três abas: **Mission** (escolha do perfil, o que o perfil altera, riscos, valores de referência citados, dose da missão), **Earth link** (perfil, mensagens em trânsito e entregues) e **Space weather**. Veja [Perfis de missão](/pt/intelligence/mission-profiles) e [Recursos da missão](/pt/product/mission-features) |
 | `MET` | Tempo decorrido de missão no relógio simulado. A hora UTC simulada aparece no tooltip |
 | Player de cenário | Escolha do cenário, play/pause, velocidade e reinício (detalhes abaixo) |
-| "Earth link" | Perfil de comunicação (ISS, Moon, Mars near, Mars far), atraso só de ida e mensagens em trânsito. Abre a gaveta de comunicação |
+| "Ask AHI" | Abre a gaveta do assistente (tecla `K`). Veja [Ask AHI](/pt/product/assistant) |
 | "Ground" / "Crew" | Alterna a visão |
 | Chip de conexão | "Offline demo", "Live NASA data", "API unreachable" ou "Checking connection". Abre "Data and model", onde fica a [chave online e offline](/pt/architecture/backend#online-and-offline-switch) |
 | "Tools" | Menu de ferramentas da missão (detalhes abaixo) |
@@ -297,7 +297,7 @@ Faixa fina com **uma raia por astronauta e uma para a cabine**, colorida pelo st
 - check-ins diários;
 - mensagens com a Terra ("To Earth" ou "From Earth").
 
-Escolha o intervalo "24 h", "72 h" ou "All". Clique em um marcador para ir à pessoa e ao sistema relacionados. Com a linha do tempo em foco, as setas percorrem os marcadores e Enter abre um deles. A legenda explica: "Lane color = status at that time".
+Escolha o intervalo "24 h", "72 h" ou "All". Clique em um marcador para ir à pessoa e ao sistema relacionados (marcadores do link com a Terra abrem a aba "Earth link" do painel Mission and Earth link). Com a linha do tempo em foco, as setas percorrem os marcadores e Enter abre um deles. A legenda explica: "Lane color = status at that time".
 
 ## Vitais, cabine e dispositivos {#live-vitals-cabin-and-devices}
 
@@ -359,7 +359,7 @@ Os atalhos são ignorados enquanto você digita em um campo e quando Ctrl, Alt o
 
 ## Ask AHI
 
-O botão **"Ask AHI"** no canto inferior direito abre o assistente: respostas em linguagem simples sobre o que o app mostra, em streaming, com uma linha "Based on:", entrada por voz onde o navegador permite e leitura em voz alta opcional. Precisa do backend com uma chave; senão mostra "Assistant offline". Veja [Ask AHI](/pt/product/assistant).
+O botão **"Ask AHI"** na barra superior (tecla `K`) abre o assistente: respostas em linguagem simples sobre o que o app mostra, em streaming, com uma linha "Based on:", entrada por voz onde o navegador permite e leitura em voz alta opcional. Precisa do backend com uma chave; senão mostra "Assistant offline". Veja [Ask AHI](/pt/product/assistant).
 
 ## Modo compacto
 

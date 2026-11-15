@@ -86,7 +86,7 @@ flowchart LR
 ```
 
 - Inside the boundary: simulation, engine, store and UI, all in one browser tab. On its own the app calls no external service; it loads its own static files, including the 3D anatomy and the DONKI snapshot.
-- Outside: people (who read and act), files they export, and the optional [AHI API](../architecture/backend), which reads NASA data and hosts the assistant demo. Authentication and access profiles are [planned](../resources/roadmap).
+- Outside: people (who read and act), files they export, and the optional [AHI API](../architecture/backend), which reads NASA data and hosts the assistant demo. Authentication and role based access control are **not implemented** (the demo has no login); they are [planned](../resources/roadmap#access-profiles).
 
 ## What is real and what is simulated
 

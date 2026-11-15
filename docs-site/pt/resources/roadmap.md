@@ -1,6 +1,6 @@
 ---
 title: Roadmap
-description: O que a Astronaut Health Intelligence Platform entregou no NASA Space Apps 2026 e o que vem a seguir, da migração do motor para Python e de um fluxo de revisão clínica a perfis de acesso, dados reais de cabine da NASA e os próximos passos da anatomia 3D.
+description: O que a Astronaut Health Intelligence Platform entregou no NASA Space Apps 2026 e o que vem a seguir, da migração do motor para Python e de um fluxo de revisão clínica a autenticação e controle de acesso, dados reais de cabine da NASA e os próximos passos da anatomia 3D.
 status: PLANNED
 verified: 2026-11-15
 ---
@@ -27,6 +27,7 @@ A Astronaut Health Intelligence Platform (AHI) é um protótipo com dados de dis
 | Backend | Monólito modular em FastAPI: cadastro, ingestão idempotente, observações, conectores NASA DONKI e OSDR, assistente, análise experimental; SQLite ou PostgreSQL; modo demo offline no app ([Backend e API](/pt/architecture/backend)) |
 | Assistente | Demo do Ask AHI com a Claude API, arquitetura offline a bordo documentada ([Ask AHI](/pt/product/assistant)) |
 | Dados reais da NASA | Painéis OSDR OSD-569 e OSD-575 como referência, eventos DONKI como contexto de missão |
+| Testes | Testes unitários e de cenário com vitest, pytest no backend, testes ponta a ponta do roteiro da demo e testes visuais dos painéis com Playwright, todos no CI ([Estratégia de testes](/pt/engineering/testing)) |
 | Documentação | Este portal no GitHub Pages (EN e PT-BR) |
 
 ## A seguir {#next}
@@ -41,9 +42,20 @@ O motor roda em TypeScript no navegador para que o app funcione offline. O backe
 
 Uma fila de revisão para itens de Aviso e Crítico: atribuir, comentar, aprovar ou rejeitar uma recomendação, com cada passo na trilha de auditoria e armazenamento persistente. Hoje as respostas simuladas do médico de voo são templates, e o sinal multivariado e os alertas de olhos e audição terminam em "revisar com o médico de voo" sem um fluxo por trás.
 
-### 3. Perfis de acesso {#access-profiles}
+### 3. Autenticação e controle de acesso por papel {#access-profiles}
 
-Autenticação e papéis para tripulação, médico da tripulação, médico de voo, Mission Control, pesquisador e engenheiro de dados, de acordo com as personas da especificação. Cada papel vê só o que precisa; a API confere isso.
+**Não implementado nesta versão.** A demo não tem login nem papéis: quem abre a página vê todos os astronautas, e a API aceita qualquer requisição sem autenticação. Isso é aceitável para um protótipo simulado e não é aceitável para dados reais de tripulação. Uma implantação real precisa de login (SSO) e de controle de acesso por papel (RBAC) **aplicado no servidor, no backend FastAPI**, nunca apenas na interface.
+
+Esboço de desenho (uma proposta, nada disso existe no código ainda):
+
+| Peça | Proposta |
+| --- | --- |
+| Login | Single sign on com OpenID Connect (OIDC) no provedor de identidade da organização. Tokens de curta duração; a AHI não guarda senhas |
+| Papéis | **Tripulante**: só os próprios dados (a Crew view). **Médico de voo**: a tripulação das missões atribuídas, com direito de revisar e reconhecer. **Mission Control**: status operacional, alertas e comunicações das missões que apoia. **Administrador**: usuários, papéis e configuração, sem acesso a dados de saúde por padrão |
+| Aplicação das regras | Uma dependência do FastAPI confere o token e o papel em cada rota e filtra as linhas por astronauta e missão. A interface esconde o que um papel não pode usar, mas quem controla é o servidor |
+| Auditoria | Toda leitura e escrita de dado de saúde registra quem, o quê e quando, em um armazenamento persistente e à prova de adulteração (o mesmo de que o fluxo de revisão clínica precisa) |
+
+Quais campos o Mission Control vê, e sob quais regras, é uma decisão de política das partes interessadas, não técnica. Este item depende do armazenamento persistente do item 2.
 
 ### 4. Replay real da cabine da ISS e séries de radiação (NASA EDA) {#real-iss-cabin-replay-and-radiation-series-nasa-eda}
 
@@ -54,7 +66,7 @@ Substituir o simulador de cabine por um replay `REAL_PUBLIC` de um período real
 - Fundamentar em uma fonte citável cada limiar de demo que restar, ou manter o rótulo de demo.
 - Calibrar os simuladores com faixas publicadas e documentá-las no model card.
 - Ter falantes nativos revisando qualquer idioma da interface além do inglês antes de apresentá-lo.
-- Terminar a tradução do texto do motor: algumas notas de exame, notas de previsão, notas de qualidade de dado e textos dos perfis de missão ainda estão em inglês nos outros idiomas ([Texto do motor](/pt/product/accessibility#engine-text)).
+- Manter cada frase do motor em uma mensagem estruturada para que seja traduzida (notas de exame, de previsão, dos aparelhos e textos dos perfis de missão já são; a passagem de turno em texto puro e os pacotes à Terra ficam em inglês de propósito) ([Texto do motor](/pt/product/accessibility#engine-text)).
 
 ### 6. Anatomia 3D: próximos passos {#anatomy-next-steps}
 
@@ -63,7 +75,7 @@ Substituir o simulador de cabine por um replay `REAL_PUBLIC` de um período real
 | **Texturas** | A fonte só tem cores chapadas, então todo o detalhe vem da geometria e dos materiais. Texturas dão detalhe de superfície, ao custo de mais download |
 | **Modelo feminino de referência** | Hoje um único modelo de referência (fonte adulta masculina, virilha neutra) representa todos os tripulantes. Um segundo modelo precisa de licença compatível e dos mesmos ids de estrutura |
 | **Rim do BodyParts3D** | Os rins são formas procedurais simples porque o modelo de rim dentro do Z-Anatomy tem licença não comercial. O BodyParts3D, a base em que o Z-Anatomy se apoia, é uma fonte candidata de geometria real de rim; os termos da licença precisam ser conferidos antes |
-| **Testes visuais automatizados** | A renderização ainda é conferida à mão na página de laboratório |
+| **Testes visuais automatizados do canvas 3D** | Os testes visuais do Playwright cobrem os painéis, mas o canvas é mascarado porque seus quadros dependem da GPU. A renderização do corpo em si ainda é conferida à mão na página de laboratório |
 
 Fora dos planos: anatomia por astronauta (exames ou tamanho do corpo). O corpo é anatomia de referência por decisão de projeto.
 

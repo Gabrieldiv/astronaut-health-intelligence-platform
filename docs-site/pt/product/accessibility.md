@@ -115,7 +115,7 @@ O motor de saúde escreve suas frases em inglês (manchetes de risco, fatores, r
 - Se falta a mensagem ou uma das chaves, aparece a frase em inglês, nunca uma frase traduzida pela metade.
 - Quem só tem o texto em inglês ainda recebe a tradução: o motor lembra cada frase que produziu junto com a sua mensagem.
 
-`engineText.test.ts` verifica que o inglês fica idêntico e que as mensagens traduzidas são montadas. Nem todo texto do motor está coberto ainda: algumas notas de exame, notas de previsão, notas de qualidade de dado e textos dos perfis de missão ainda aparecem em inglês nos outros idiomas. A passagem de turno em texto puro e os pacotes enviados à Terra ficam em inglês de propósito.
+`engineText.test.ts` verifica que o inglês fica idêntico e que as mensagens traduzidas são montadas. Hoje estão cobertos: manchetes de risco, fatores, recomendações, alertas, resumos de região, notas de exame, notas de previsão, notas de pausa e de sinal dos aparelhos e a orientação de autonomia; os textos dos perfis de missão e os nomes dos perigos são montados pelo mesmo arquivo. A passagem de turno em texto puro e os pacotes enviados à Terra ficam em inglês de propósito. Uma frase que não carrega mensagem estruturada aparece em inglês, e a pseudolocale abaixo torna esse texto visível.
 
 ### Encontrar texto sem tradução {#finding-untranslated-text}
 
@@ -131,7 +131,7 @@ Duas ferramentas de desenvolvimento, fora do produto:
 - Ainda não foi feita uma auditoria WCAG formal nem um teste estruturado com leitor de tela.
 - A qualidade da síntese e do reconhecimento de fala depende do navegador e das vozes do sistema operacional.
 - Os earcons foram desenhados para serem distintos, não validados contra um conjunto padrão de sons de alarme.
-- Alguns textos do motor ainda aparecem em inglês com outro idioma escolhido ([Texto do motor](#engine-text)).
+- Frases do motor sem mensagem estruturada, e a passagem de turno em texto puro e os pacotes à Terra, ficam em inglês com outro idioma escolhido ([Texto do motor](#engine-text)).
 
 ## Status {#status}
 

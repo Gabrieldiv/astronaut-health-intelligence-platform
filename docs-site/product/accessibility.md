@@ -115,7 +115,7 @@ The health engine writes its sentences in English (risk headlines, factors, reco
 - If a message or one of its keys is missing, the English sentence is shown, never a half translated one.
 - A caller that only has the English text still gets a translation: the engine remembers each sentence it produced together with its message.
 
-`engineText.test.ts` checks that English stays identical and that translated messages render. Not every engine text is covered yet: some exam notes, forecast notes, data quality notes and mission profile texts still appear in English in the other languages. Plain text handover and packets to the ground stay English by design.
+`engineText.test.ts` checks that English stays identical and that translated messages render. Covered today: risk headlines, factors, recommendations, alerts, region summaries, exam notes, forecast notes, device pause and signal notes and the autonomy guidance; the mission profile texts and hazard names render through the same file. Plain text handover and packets to the ground stay English by design. A sentence that carries no structured message is shown in English, and the pseudo locale below makes such text visible.
 
 ### Finding untranslated text {#finding-untranslated-text}
 
@@ -131,7 +131,7 @@ Two developer tools, not part of the product:
 - No formal WCAG audit and no structured screen reader test has been done yet.
 - Speech synthesis and recognition quality depend on the browser and the operating system voices.
 - The earcons are designed for distinctness, not validated against a standard alarm sound set.
-- Some engine texts are still English when another language is selected ([Engine text](#engine-text)).
+- Engine sentences without a structured message, and the plain text handover and ground packets, stay in English when another language is selected ([Engine text](#engine-text)).
 
 ## Status
 

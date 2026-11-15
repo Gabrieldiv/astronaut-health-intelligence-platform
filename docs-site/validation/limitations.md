@@ -2,7 +2,7 @@
 title: Limitations & Known Issues
 description: Every known limitation of the Astronaut Health Intelligence Platform, from data and science to engine, 3D anatomy, product, platform and documentation, with its impact and where it is tracked.
 status: IMPLEMENTED
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Limitations & Known Issues
@@ -58,7 +58,7 @@ The canonical list of what the Astronaut Health Intelligence Platform (AHI) cann
 | Limitation | Impact | Tracked in |
 | --- | --- | --- |
 | The engine runs in the browser; the backend stores observations but does not run the engine yet | App state and the audit trail are lost on reload | [Roadmap](../resources/roadmap) (engine port to Python) |
-| No authentication or access profiles | Anyone with the page or the API sees everything | [Roadmap](../resources/roadmap) |
+| **No authentication and no role based access control (RBAC).** The demo has no login and the API accepts every request | Anyone with the page or the API sees every astronaut. A real deployment needs SSO (OIDC) and server side RBAC enforced in the FastAPI backend, with an audit of access | [Roadmap](../resources/roadmap#access-profiles) |
 | The assistant demo uses a cloud model | Not acceptable on a real mission (delay, privacy, certification) | [Ask AHI](../product/assistant#the-onboard-target) |
 | No flight surgeon review workflow | Ground replies are templates | [Roadmap](../resources/roadmap) |
 | Earth link is a delay model only | No bandwidth, blackout or loss modeling | [Earth link](../intelligence/self-report-and-earth-link#earth-link) |
@@ -71,8 +71,9 @@ The canonical list of what the Astronaut Health Intelligence Platform (AHI) cann
 
 | Limitation | Impact | Tracked in |
 | --- | --- | --- |
-| No UI component tests | UI regressions are caught by hand or by browser tests | [Testing strategy](../engineering/testing) |
-| No automated test of the 3D rendering (the anatomy data layer is tested) | Visual states, picking and loading are checked by hand on the lab page | [Testing strategy](../engineering/testing) |
+| No React component tests. Playwright end to end tests cover the demo script, and visual tests cover the panels | UI regressions outside those flows are caught by hand | [Testing strategy](../engineering/testing) |
+| No pixel test of the 3D rendering: the canvas is masked in the visual tests, and the anatomy data layer and viewer logic are tested as data | Visual states, picking and loading of the body are checked by hand on the lab page | [Testing strategy](../engineering/testing) |
+| The Playwright visual tests have no committed baseline images yet (neither Windows nor Linux), so they are skipped in CI; the functional end to end tests run in CI | Panel visual regressions are not checked automatically until the baselines are generated and committed | [Testing strategy](../engineering/testing#end-to-end-and-visual-tests) |
 | No formal accessibility audit or screen reader test | Measures exist in code but are unverified | [Accessibility](../product/accessibility#limitations) |
 | Performance figures are informal observations on one laptop | Not a benchmark; other machines, browsers and screens were not measured | [Results](./results#measured-performance) |
 

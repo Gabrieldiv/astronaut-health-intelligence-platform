@@ -26,7 +26,7 @@ A mesma tripulação, os mesmos dispositivos e o mesmo motor podem ser lidos em 
 Os perfis são **independentes dos cenários** ([Cenários de demo](/pt/product/demo-scenarios)): um cenário roteiriza o que acontece com um tripulante, um perfil define o ambiente ao redor.
 
 ::: info Onde encontrar no app
-O seletor de perfil fica na barra superior. A visão de **contexto da missão** ("mission context") mostra os perigos do perfil, valores de referência com fontes, a barra de dose da missão e o aviso de clima espacial. O palco 3D também mostra um [cenário](#mission-backdrops) do perfil ativo.
+O controle Mission and Earth link fica na barra superior e abre um painel com três abas. A aba **Mission** tem a escolha do perfil e mostra os perigos do perfil, valores de referência com fontes, a barra de dose da missão e o aviso de clima espacial. O palco 3D também mostra um [cenário](#mission-backdrops) do perfil ativo.
 :::
 
 ## Os quatro perfis {#the-four-profiles}

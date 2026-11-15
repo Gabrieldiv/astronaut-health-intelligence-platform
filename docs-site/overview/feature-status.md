@@ -77,7 +77,7 @@ Data origins: <OriginBadge origin="SIMULATED" /> simulator output, <OriginBadge 
 | --- | --- | --- | --- | --- |
 | Ground view (whole crew) | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="SIMULATED" /> | [Product tour](../product/product-tour) | <CodeLink path="frontend/web/src/app/App.tsx" /> |
 | Crew view (one astronaut, plain language, "Your body systems" cards) | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="SIMULATED" /> | [Product tour](../product/product-tour#ground-view-and-crew-view) | <CodeLink path="frontend/web/src/features/crewview/CrewView.tsx" /> |
-| Mission profile selector and mission context dialog | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="DERIVED, REAL_PUBLIC" /> | [Mission profiles](../intelligence/mission-profiles) | <CodeLink path="frontend/web/src/features/mission/MissionContext.tsx" /> |
+| Mission and Earth link panel (tabs Mission, Earth link and Space weather; profile picker) | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="DERIVED, REAL_PUBLIC" /> | [Mission profiles](../intelligence/mission-profiles) | <CodeLink path="frontend/web/src/features/mission/MissionContext.tsx" /> |
 | Anatomical atlas viewer (Z-Anatomy, 250 structures, status highlights, live heart beat and breathing) | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="SIMULATED, DERIVED" /> | [3D anatomy](../architecture/anatomy-3d) | <CodeLink path="frontend/web/src/features/anatomy/viewer/AtlasViewer.tsx" /> |
 | Zoom to the pointer (wheel, trackpad, pinch) | <StatusBadge status="IMPLEMENTED" /> | | [3D anatomy](../architecture/anatomy-3d#navigation-and-preset-views) | <CodeLink path="frontend/web/src/features/anatomy/viewer/zoom.ts" /> |
 | Monitor and Explore modes | <StatusBadge status="IMPLEMENTED" /> | | [3D anatomy](../architecture/anatomy-3d#monitor-and-explore) | <CodeLink path="frontend/web/src/features/anatomy/viewer/interaction.ts" /> |
@@ -112,9 +112,11 @@ Data origins: <OriginBadge origin="SIMULATED" /> simulator output, <OriginBadge 
 | Idle auto rotation rule of the 3D body | <StatusBadge status="IMPLEMENTED" /> | | [3D anatomy](../architecture/anatomy-3d#navigation-and-preset-views) | <CodeLink path="frontend/web/src/features/anatomy/viewer/autoRotate.ts" /> |
 | Browser tab status dot while a critical alert is open | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="DERIVED" /> | [Product tour](../product/product-tour#alerts-drawer) | <CodeLink path="frontend/web/src/app/useStatusFavicon.ts" /> |
 | Speech stop and short announcement on a language change | <StatusBadge status="IMPLEMENTED" /> | | [Accessibility](../product/accessibility#audio-description) | <CodeLink path="frontend/web/src/features/a11y/languageSpeech.ts" /> |
-| Engine text translation through structured messages (partial coverage) | <StatusBadge status="EXPERIMENTAL" /> | | [Engine text](../product/accessibility#engine-text) | <CodeLink path="frontend/web/src/i18n/engineText.ts" /> |
+| Engine text translation through structured messages (the plain text handover and ground packets stay English) | <StatusBadge status="EXPERIMENTAL" /> | | [Engine text](../product/accessibility#engine-text) | <CodeLink path="frontend/web/src/i18n/engineText.ts" /> |
 | Pseudo locale `qps` and i18n sweep script (developer tools) | <StatusBadge status="IMPLEMENTED" /> | | [Finding untranslated text](../product/accessibility#finding-untranslated-text) | <CodeLink path="frontend/web/src/i18n/pseudo.ts" /> |
 | z-index scale for every overlay | <StatusBadge status="IMPLEMENTED" /> | | [Design system](../product/design-system#z-index-scale) | <CodeLink path="frontend/web/src/index.css" /> |
+| Health indicator count with a breakdown by body system | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="DERIVED" /> | [Product tour](../product/product-tour) | <CodeLink path="frontend/web/src/features/stage/IndicatorBreakdown.tsx" /> |
+| Mission chip that opens "What the mission profile changes" | <StatusBadge status="IMPLEMENTED" /> | | [Mission profiles](../intelligence/mission-profiles#what-the-profile-changes) | <CodeLink path="frontend/web/src/features/mission/MissionContext.tsx" /> |
 | Optional interface languages (pt-BR, es, ja, de; English default) | <StatusBadge status="EXPERIMENTAL" /> | | [Languages](../product/accessibility#languages) | <CodeLink path="frontend/web/src/i18n/index.ts" /> |
 | Flight surgeon review queue | <StatusBadge status="PLANNED" /> | | [Roadmap](../resources/roadmap) | none |
 | Hosted web app for judges | <StatusBadge status="PLANNED" /> | | [Roadmap](../resources/roadmap) | none |
@@ -129,11 +131,11 @@ Data origins: <OriginBadge origin="SIMULATED" /> simulator output, <OriginBadge 
 | Database: SQLite by default, PostgreSQL with Docker Compose, Alembic migrations | <StatusBadge status="IMPLEMENTED" /> | [Backend and API](../architecture/backend#storage-and-migrations) | <CodeLink path="docker-compose.yml" /> |
 | OpenAPI schema and generated frontend types (`npm run api:types`) | <StatusBadge status="IMPLEMENTED" /> | [Backend and API](../architecture/backend#generated-types) | <CodeLink path="backend/openapi.json" /> |
 | Health engine in Python (port of the TypeScript engine) | <StatusBadge status="PLANNED" /> | [Roadmap](../resources/roadmap) | <CodeLink path="backend/app/modules/engine/__init__.py" label="seam only" /> |
-| Authentication and access profiles | <StatusBadge status="PLANNED" /> | [Roadmap](../resources/roadmap) | none |
+| Authentication and role based access control (not implemented: the demo has no login; needs SSO and server side RBAC in the backend) | <StatusBadge status="PLANNED" /> | [Roadmap](../resources/roadmap#access-profiles) | none |
 | Persistent audit trail | <StatusBadge status="PLANNED" /> | [Governance](../data/governance-and-privacy) | none (in memory today) |
-| Unit and scenario tests (web: 375 tests in 38 files; backend: 44 pytest tests in 6 files) | <StatusBadge status="IMPLEMENTED" /> | [Testing](../engineering/testing) | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> |
+| Unit and scenario tests (web: 430 tests in 48 files; backend: 44 pytest tests in 6 files) | <StatusBadge status="IMPLEMENTED" /> | [Testing](../engineering/testing) | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> |
 | Headless evaluation of the engine | <StatusBadge status="IMPLEMENTED" /> | [Results](../validation/results) | <CodeLink path="frontend/web/scripts/evaluate.ts" /> |
-| End to end browser tests | <StatusBadge status="PLANNED" /> | [Testing](../engineering/testing) | none |
+| End to end browser tests (Playwright: 14 functional tests run in CI; 6 visual tests wait for committed baselines) | <StatusBadge status="IMPLEMENTED" /> | [Testing](../engineering/testing#end-to-end-and-visual-tests) | <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> |
 | CI and documentation deployment (GitHub Actions, GitHub Pages) | <StatusBadge status="IMPLEMENTED" /> | [Deployment](../engineering/deployment) | <CodeLink path=".github/workflows/docs-deploy.yml" /> |
 
 ## Next steps

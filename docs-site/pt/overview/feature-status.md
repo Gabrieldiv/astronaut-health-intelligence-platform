@@ -83,7 +83,7 @@ Definições completas em [Origens e proveniência dos dados](/pt/data/data-orig
 | --- | --- | --- | --- | --- |
 | "Ground view" (tripulação, corpo, atenção, linha do tempo, vitais) | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="SIMULATED, DERIVED" /> | <CodeLink path="frontend/web/src/app/App.tsx" /> | [Tour do produto](/pt/product/product-tour) |
 | "Crew view" para o astronauta, com os cartões "Your body systems" | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="SIMULATED, DERIVED" /> | <CodeLink path="frontend/web/src/features/crewview/CrewView.tsx" /> | [Tour do produto](/pt/product/product-tour) |
-| Seletor de perfil de missão e diálogo de contexto da missão | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="DERIVED, REAL_PUBLIC" /> | <CodeLink path="frontend/web/src/features/mission/MissionContext.tsx" /> | [Perfis de missão](/pt/intelligence/mission-profiles) |
+| Painel Mission and Earth link (abas Mission, Earth link e Space weather; escolha do perfil) | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="DERIVED, REAL_PUBLIC" /> | <CodeLink path="frontend/web/src/features/mission/MissionContext.tsx" /> | [Perfis de missão](/pt/intelligence/mission-profiles) |
 | Visualizador do atlas anatômico (Z-Anatomy, 250 estruturas, destaques de status, coração e pulmões ao vivo) | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="SIMULATED, DERIVED" /> | <CodeLink path="frontend/web/src/features/anatomy/viewer/AtlasViewer.tsx" /> | [Anatomia 3D](/pt/architecture/anatomy-3d) |
 | Zoom em direção ao ponteiro (roda, trackpad, pinça) | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/features/anatomy/viewer/zoom.ts" /> | [Anatomia 3D](/pt/architecture/anatomy-3d#navigation-and-preset-views) |
 | Modos Monitor e Explore | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/features/anatomy/viewer/interaction.ts" /> | [Anatomia 3D](/pt/architecture/anatomy-3d#monitor-and-explore) |
@@ -117,9 +117,11 @@ Definições completas em [Origens e proveniência dos dados](/pt/data/data-orig
 | Regra da rotação em repouso do corpo 3D | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/features/anatomy/viewer/autoRotate.ts" /> | [Anatomia 3D](/pt/architecture/anatomy-3d#navigation-and-preset-views) |
 | Ponto de status na aba do navegador enquanto há alerta crítico aberto | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="DERIVED" /> | <CodeLink path="frontend/web/src/app/useStatusFavicon.ts" /> | [Tour do produto](/pt/product/product-tour#alerts-drawer) |
 | Parada da fala e anúncio curto numa troca de idioma | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/features/a11y/languageSpeech.ts" /> | [Acessibilidade](/pt/product/accessibility#audio-description) |
-| Tradução do texto do motor por mensagens estruturadas (cobertura parcial) | <StatusBadge status="EXPERIMENTAL" /> |  | <CodeLink path="frontend/web/src/i18n/engineText.ts" /> | [Texto do motor](/pt/product/accessibility#engine-text) |
+| Tradução do texto do motor por mensagens estruturadas (a passagem de turno em texto puro e os pacotes à Terra ficam em inglês) | <StatusBadge status="EXPERIMENTAL" /> |  | <CodeLink path="frontend/web/src/i18n/engineText.ts" /> | [Texto do motor](/pt/product/accessibility#engine-text) |
 | Pseudo idioma `qps` e script de varredura i18n (ferramentas de desenvolvimento) | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/i18n/pseudo.ts" /> | [Encontrar texto sem tradução](/pt/product/accessibility#finding-untranslated-text) |
 | Escala de z-index para toda sobreposição | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/index.css" /> | [Design system](/pt/product/design-system#z-index-scale) |
+| Contagem de indicadores de saúde com detalhamento por sistema do corpo | <StatusBadge status="IMPLEMENTED" /> | <OriginBadge origin="DERIVED" /> | <CodeLink path="frontend/web/src/features/stage/IndicatorBreakdown.tsx" /> | [Tour do produto](/pt/product/product-tour) |
+| Chip da missão que abre "What the mission profile changes" (o que o perfil muda) | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/features/mission/MissionContext.tsx" /> | [Perfis de missão](/pt/intelligence/mission-profiles#o-que-o-perfil-altera) |
 | Idiomas opcionais da interface (pt-BR, es, ja, de; inglês padrão) | <StatusBadge status="EXPERIMENTAL" /> | | <CodeLink path="frontend/web/src/i18n/index.ts" /> | Tradução com apoio de máquina, aguardando revisão nativa ([Idiomas](/pt/product/accessibility#languages)) |
 | Fluxo real de revisão do médico de voo | <StatusBadge status="PLANNED" /> | | | [Roadmap](/pt/resources/roadmap) |
 
@@ -127,8 +129,9 @@ Definições completas em [Origens e proveniência dos dados](/pt/data/data-orig
 
 | Capacidade | Status | Origem | Código | Documentação |
 | --- | --- | --- | --- | --- |
-| Testes unitários e de cenário (web: 375 testes em 38 arquivos; backend: 44 testes pytest em 6 arquivos) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> | [Estratégia de testes](/pt/engineering/testing) |
-| CI no GitHub Actions (lint, tipos, testes e build do app; build do portal em pull requests) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path=".github/workflows/ci.yml" /> | [Documentação e deploy](/pt/engineering/deployment) |
+| Testes unitários e de cenário (web: 430 testes em 48 arquivos; backend: 44 testes pytest em 6 arquivos) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> | [Estratégia de testes](/pt/engineering/testing) |
+| Testes ponta a ponta no navegador (Playwright: 14 testes funcionais rodam no CI; 6 testes visuais aguardam imagens de referência commitadas) | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> | [Testes](/pt/engineering/testing#end-to-end-and-visual-tests) |
+| CI no GitHub Actions (lint, tipos, testes, build e testes ponta a ponta do app; build do portal em pull requests) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path=".github/workflows/ci.yml" /> | [Documentação e deploy](/pt/engineering/deployment) |
 | Portal de documentação bilíngue no GitHub Pages | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path=".github/workflows/docs-deploy.yml" /> | [Documentação e deploy](/pt/engineering/deployment) |
 | Modo demo offline: o app roda inteiro no navegador, `VITE_API_URL=off` para hospedagem estática | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/lib/api/client.ts" /> | [Backend e API](/pt/architecture/backend#offline-demo-mode) |
 | Chave online e offline ("Automatic", "Online", "Offline") com chip de conexão na barra superior | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/lib/api/connectivity.ts" /> | [Backend e API](/pt/architecture/backend#online-and-offline-switch) |
@@ -136,7 +139,7 @@ Definições completas em [Origens e proveniência dos dados](/pt/data/data-orig
 | Banco de dados: SQLite por padrão, PostgreSQL com Docker Compose, migrações Alembic | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="docker-compose.yml" /> | [Backend e API](/pt/architecture/backend#storage-and-migrations) |
 | Schema OpenAPI e tipos gerados para o frontend (`npm run api:types`) | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="backend/openapi.json" /> | [Backend e API](/pt/architecture/backend#generated-types) |
 | Motor de saúde em Python (port do motor TypeScript) | <StatusBadge status="PLANNED" /> |  | <CodeLink path="backend/app/modules/engine/__init__.py" label="só a interface" /> | [Roadmap](/pt/resources/roadmap) |
-| Autenticação e perfis de acesso | <StatusBadge status="PLANNED" /> |  |  | [Roadmap](/pt/resources/roadmap) |
+| Autenticação e controle de acesso por papel (não implementado: a demo não tem login; precisa de SSO e RBAC no servidor, no backend) | <StatusBadge status="PLANNED" /> |  |  | [Roadmap](/pt/resources/roadmap#access-profiles) |
 | Partes ainda conceituais da arquitetura alvo (jobs em segundo plano, Redis, serviços do motor no servidor) | <StatusBadge status="CONCEPTUAL" /> |  |  | [Arquitetura alvo](/pt/architecture/target-architecture) |
 | Implantação publicada do app | <StatusBadge status="PLANNED" /> | | | O app roda localmente por enquanto; só o portal é publicado ([Roadmap](/pt/resources/roadmap)) |
 
