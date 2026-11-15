@@ -16,7 +16,11 @@ import {
 } from './chat'
 import { loadSpeakPref, saveSpeakPref, speak, speechInputSupported, speechOutputSupported, stopSpeaking, useSpeechInput } from './speech'
 import { LIMITS } from './types'
+import { t, useT } from '../../i18n'
+import { tx } from '../../i18n/rich'
+import { roleLabel } from '../../i18n/catalog'
 
+/** English note (kept as a constant for tests); the panel shows t('assistant.demoNote'). */
 export const DEMO_NOTE = 'Demo: answers come from a cloud AI model. Not medical advice.'
 
 let nextId = 0
@@ -30,6 +34,7 @@ export function Assistant() {
     setOpen(false)
     launcher.current?.focus()
   }, [])
+  const t = useT()
   return (
     <>
       <button
@@ -41,7 +46,7 @@ export function Assistant() {
         className="focus-ring glass-strong fixed right-4 bottom-4 z-50 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-ink-100 shadow-lg ring-1 ring-accent/30 transition-colors hover:bg-white/[0.08]"
       >
         <Sparkles size={16} className="text-accent" aria-hidden />
-        Ask AHI
+        {t('assistant.launcher')}
       </button>
       {open && <AssistantDrawer onClose={close} />}
     </>
@@ -52,7 +57,8 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
   const crew = useAppStore((s) => s.crew)
   const selectedId = useAppStore((s) => s.selectedAstronautId)
   const astro = crew.find((c) => c.id === selectedId) ?? crew[0]
-  const callsign = astro?.callsign ?? 'the crew'
+  const t = useT()
+  const callsign = astro?.callsign ?? t('assistant.theCrew')
 
   const [availability, setAvailability] = useState<AssistantAvailability>({ kind: 'checking' })
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -128,14 +134,14 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
             failure = ev.message
           }
         }, ctrl.signal)
-        if (!answer.trim() && !failure) failure = 'The assistant returned an empty answer.'
+        if (!answer.trim() && !failure) failure = t('assistant.emptyAnswer')
       } catch (e) {
-        if (ctrl.signal.aborted) failure = answer ? null : 'Stopped.'
+        if (ctrl.signal.aborted) failure = answer ? null : t('assistant.stopped')
         else if (e instanceof AssistantHttpError) {
           failure = e.message
           // Backend down or key missing: switch the whole panel to its calm offline state.
           if (e.status === null || e.status === 503) setAvailability({ kind: 'offline', reason: e.message, apiReachable: e.status === 503 })
-        } else failure = 'The assistant could not answer.'
+        } else failure = t('assistant.couldNot')
       } finally {
         abort.current = null
         setBusy(false)
@@ -143,7 +149,7 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
         if (!failure && answer && speakRef.current) speak(speakableText(answer))
       }
     },
-    [busy],
+    [busy, t],
   )
 
   const voice = useSpeechInput(setInput, (text) => void ask(text))
@@ -168,13 +174,13 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
     if (!v) stopSpeaking()
   }
 
-  const starters = [`How is ${callsign} doing?`, 'Why is this alert on?', 'What should we do now?']
+  const starters = [t('assistant.starter1', { callsign }), t('assistant.starter2'), t('assistant.starter3')]
 
   const footer = (
     <form onSubmit={onSubmit} className="flex flex-col gap-2">
       <div className="flex items-end gap-2">
         <label htmlFor="assistant-input" className="sr-only">
-          Ask a question about {callsign}
+          {t('assistant.inputLabel', { callsign })}
         </label>
         <textarea
           id="assistant-input"
@@ -185,12 +191,12 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}
           disabled={!ready}
-          placeholder={ready ? (voice.listening ? 'Listening…' : `Ask about ${callsign}…`) : 'Assistant offline'}
+          placeholder={ready ? (voice.listening ? t('assistant.listening') : t('assistant.askAbout', { callsign })) : t('assistant.offlinePlaceholder')}
           className="focus-ring min-h-[44px] flex-1 resize-none rounded-xl bg-white/[0.04] px-3 py-2 text-sm text-ink-100 ring-1 ring-white/10 placeholder:text-ink-500 disabled:opacity-50"
         />
         {canListen && (
           <IconButton
-            label={voice.listening ? 'Stop listening' : 'Ask by voice'}
+            label={voice.listening ? t('assistant.stopListening') : t('assistant.askVoice')}
             active={voice.listening}
             disabled={!ready || busy}
             onClick={voice.listening ? voice.stop : voice.start}
@@ -200,17 +206,17 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
           </IconButton>
         )}
         {busy ? (
-          <IconButton label="Stop answer" onClick={() => abort.current?.abort()}>
+          <IconButton label={t('assistant.stopAnswer')} onClick={() => abort.current?.abort()}>
             <Square size={14} />
           </IconButton>
         ) : (
-          <IconButton label="Send question" type="submit" disabled={!ready || !input.trim()}>
+          <IconButton label={t('assistant.send')} type="submit" disabled={!ready || !input.trim()}>
             <Send size={16} />
           </IconButton>
         )}
       </div>
       <div className="flex items-center justify-between gap-2 text-[11px] text-ink-500">
-        <span>{voice.error ?? 'Enter to send, Shift+Enter for a new line, Esc to close.'}</span>
+        <span>{voice.error ?? t('assistant.hint')}</span>
         {canSpeak && (
           <button
             type="button"
@@ -219,7 +225,7 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
             className="focus-ring inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-ink-300 hover:text-ink-100"
           >
             {speakOn ? <Volume2 size={13} aria-hidden /> : <VolumeX size={13} aria-hidden />}
-            Read answers aloud
+            {t('assistant.readAloud')}
           </button>
         )}
       </div>
@@ -227,25 +233,24 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
   )
 
   return (
-    <Drawer open onClose={onClose} title="Ask AHI" icon={<Sparkles size={16} className="text-accent" aria-hidden />} footer={footer}>
+    <Drawer open onClose={onClose} title={t('assistant.title')} icon={<Sparkles size={16} className="text-accent" aria-hidden />} footer={footer}>
       <div className="flex h-full flex-col gap-3">
         <p className="flex flex-wrap items-center gap-2 rounded-lg bg-amber-400/[0.07] px-3 py-2 text-xs text-amber-100 ring-1 ring-amber-300/20">
-          <Badge tone="sim">Simulated data</Badge>
-          {DEMO_NOTE}
+          <Badge tone="sim">{t('assistant.simData')}</Badge>
+          {t('assistant.demoNote')}
         </p>
         <p className="text-xs text-ink-500">
-          Answers about <span className="font-semibold text-ink-300">{callsign}</span>
-          {astro ? ` (${astro.role})` : ''}, using what the health engine shows right now. Medical decisions stay with the crew medical officer and the flight surgeon.
+          {tx('assistant.about', { callsign: <span className="font-semibold text-ink-300">{callsign}</span>, role: astro ? ` (${roleLabel(astro.role)})` : '' })}
         </p>
 
         {availability.kind === 'checking' && (
           <p className="flex items-center gap-2 text-sm text-ink-300" role="status">
-            <Loader2 size={14} className="animate-spin" aria-hidden /> Checking the assistant…
+            <Loader2 size={14} className="animate-spin" aria-hidden /> {t('assistant.checking')}
           </p>
         )}
         {availability.kind === 'offline' && <OfflineState availability={availability} onRetry={check} />}
 
-        <div ref={logRef} role="log" aria-live="polite" aria-label="Conversation" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
+        <div ref={logRef} role="log" aria-live="polite" aria-label={t('assistant.conversation')} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
           {messages.map((m) => (
             <MessageBubble key={m.id} m={m} />
           ))}
@@ -253,7 +258,7 @@ function AssistantDrawer({ onClose }: { onClose: () => void }) {
 
         {ready && messages.length === 0 && (
           <div className="flex flex-col gap-2">
-            <span className="text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">Try asking</span>
+            <span className="text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">{t('assistant.tryAsking')}</span>
             {starters.map((q) => (
               <Button key={q} variant="ghost" className="justify-start text-left" onClick={() => void ask(q)}>
                 {q}
@@ -270,18 +275,18 @@ function OfflineState({ availability, onRetry }: { availability: Extract<Assista
   return (
     <div className="rounded-xl bg-white/[0.03] p-4 text-sm text-ink-300 ring-1 ring-white/[0.08]" role="status">
       <p className="flex items-center gap-2 font-semibold text-ink-100">
-        <CloudOff size={16} aria-hidden /> Assistant offline
+        <CloudOff size={16} aria-hidden /> {t('assistant.offline')}
       </p>
-      <p className="mt-1">The rest of AHI keeps working: monitoring, alerts and recommendations do not need the assistant.</p>
+      <p className="mt-1">{t('assistant.offlineBody')}</p>
       <p className="mt-2 text-xs text-ink-500">{availability.reason}</p>
-      <p className="mt-3 text-xs font-semibold text-ink-300">To enable it</p>
+      <p className="mt-3 text-xs font-semibold text-ink-300">{t('assistant.enable')}</p>
       <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-xs">
-        {!availability.apiReachable && <li>Start the AHI API (see backend/README.md).</li>}
-        <li>Put ANTHROPIC_API_KEY in backend/.env (never commit it).</li>
-        <li>Restart the API, then retry.</li>
+        {!availability.apiReachable && <li>{t('assistant.step1')}</li>}
+        <li>{t('assistant.step2')}</li>
+        <li>{t('assistant.step3')}</li>
       </ol>
       <Button variant="ghost" className="mt-3" onClick={onRetry}>
-        <RefreshCw size={13} aria-hidden /> Retry
+        <RefreshCw size={13} aria-hidden /> {t('assistant.retry')}
       </Button>
     </div>
   )
@@ -291,7 +296,7 @@ function MessageBubble({ m }: { m: ChatMessage }) {
   if (m.role === 'user') {
     return (
       <div className="self-end rounded-2xl rounded-br-md bg-accent/15 px-3 py-2 text-sm whitespace-pre-wrap text-ink-100 ring-1 ring-accent/25">
-        <span className="sr-only">You: </span>
+        <span className="sr-only">{t('assistant.you')}</span>
         {m.text}
       </div>
     )
@@ -299,14 +304,14 @@ function MessageBubble({ m }: { m: ChatMessage }) {
   const { body, basedOn } = splitBasedOn(m.text)
   return (
     <div className={clsx('max-w-[92%] self-start rounded-2xl rounded-bl-md bg-white/[0.04] px-3 py-2 text-sm text-ink-100 ring-1', m.error ? 'ring-amber-300/30' : 'ring-white/[0.08]')}>
-      <span className="sr-only">AHI assistant: </span>
+      <span className="sr-only">{t('assistant.ahi')}</span>
       {body && <p className="whitespace-pre-wrap">{body}</p>}
       {m.pending && !body && (
         <span className="flex items-center gap-2 text-ink-500">
-          <Loader2 size={13} className="animate-spin" aria-hidden /> Thinking…
+          <Loader2 size={13} className="animate-spin" aria-hidden /> {t('assistant.thinking')}
         </span>
       )}
-      {basedOn && <p className="mt-2 border-t border-white/[0.07] pt-1.5 text-[11px] text-ink-500">Based on: {basedOn}</p>}
+      {basedOn && <p className="mt-2 border-t border-white/[0.07] pt-1.5 text-[11px] text-ink-500">{t('assistant.basedOn', { text: basedOn })}</p>}
       {m.error && <p className="mt-1 text-xs text-amber-200">{m.error}</p>}
     </div>
   )

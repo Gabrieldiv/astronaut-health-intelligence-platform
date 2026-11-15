@@ -5,23 +5,25 @@ import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
 import type { ActivityContext, BodyRegionId, Status } from '../../types/domain'
-import { REGION_LABELS } from '../../engine/catalog'
 import { StatusDot, StatusPill } from '../../components/Status'
 import { CriticalBanner } from '../alerts/Alerts'
 import { PANEL_HEADER, PANEL_TITLE } from '../../components/ui'
-import { SIGNAL_LOST_HEADLINE, useAstronaut, useSelectedStructure, useSignalLost } from '../shared/hooks'
+import { signalLostHeadline, useAstronaut, useSelectedStructure, useSignalLost } from '../shared/hooks'
 import { regionStructureCount } from '../anatomy/atlas/health'
 import { CheckInButton } from '../checkin'
-import { WEARABLE_PAUSED_HEADLINE, useWearablePaused } from '../vitals/deviceMeta'
+import { wearablePausedHeadline, useWearablePaused } from '../vitals/deviceMeta'
+import { getLang, t, translatedRecord, useT } from '../../i18n'
+import { regionDescription, regionLabel, regionSystem, roleLabel } from '../../i18n/catalog'
 
 // three.js and the anatomy scene load as a separate chunk so the dashboard paints first.
 const AnatomyViewer = lazy(() => import('../anatomy').then((m) => ({ default: m.AnatomyViewer })))
 
 function ViewerFallback() {
+  const t = useT()
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-xs text-ink-500">
       <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent/15 border-t-accent" aria-hidden />
-      Building 3D anatomy...
+      {t('stage.building3d')}
     </div>
   )
 }
@@ -38,7 +40,7 @@ export const REGION_ICON: Record<BodyRegionId, LucideIcon> = {
   ears: Ear,
 }
 
-export const ACTIVITY_LABEL: Record<ActivityContext, string> = { SLEEP: 'Sleeping', REST: 'Resting', WORK: 'Working', EXERCISE: 'Exercising', EVA: 'On spacewalk (EVA)' }
+export const ACTIVITY_LABEL: Record<ActivityContext, string> = translatedRecord(['SLEEP', 'REST', 'WORK', 'EXERCISE', 'EVA'] as const, (a) => t(`stage.activity.${a}`))
 
 /** The 3D canvas never re-renders because of page level state. */
 export const Stage3D = memo(function Stage3D() {
@@ -60,6 +62,7 @@ function Headline() {
   const wearablePaused = useWearablePaused(id)
   const override = signalLost && (level == null || level === 'LOW')
   const status: Status = override ? 'NO_DATA' : (level ?? 'NO_DATA')
+  const t = useT()
   if (!astronaut) return null
   return (
     <div data-tour="headline" className="relative z-10 shrink-0">
@@ -67,7 +70,7 @@ function Headline() {
         <h2 className={clsx(PANEL_TITLE, 'flex-1 overflow-hidden')}>
           <span className="text-ink-100">{astronaut.callsign}</span>
           <span className="truncate font-normal tracking-normal normal-case">
-            <span className="hidden @min-[520px]/stage:inline">{astronaut.role} · </span>Mission day {astronaut.missionDay}
+            <span className="hidden @min-[520px]/stage:inline">{roleLabel(astronaut.role)} · </span>{t('stage.missionDay', { n: astronaut.missionDay })}
           </span>
           {activity && (
             <span className="shrink-0 rounded-md bg-white/[0.05] px-1.5 py-1 font-medium tracking-normal text-ink-300 normal-case ring-1 ring-white/[0.06]">
@@ -83,7 +86,7 @@ function Headline() {
           aria-live="polite"
           className="line-clamp-2 max-w-[720px] text-[19px] leading-snug font-medium text-balance text-ink-100 [text-shadow:0_2px_12px_rgba(4,7,13,0.9)] short:text-[17px]"
         >
-          {override ? (wearablePaused ? WEARABLE_PAUSED_HEADLINE : SIGNAL_LOST_HEADLINE) : (headline ?? 'Waiting for data.')}
+          {override ? (wearablePaused ? wearablePausedHeadline() : signalLostHeadline()) : (headline ?? t('stage.waiting'))}
         </p>
       </div>
     </div>
@@ -125,7 +128,8 @@ function RegionChip({
   const selectRegion = useAppStore((s) => s.selectRegion)
   const selectMetric = useAppStore((s) => s.selectMetric)
   const meta = STATUS_META[status]
-  const label = REGION_LABELS[region]
+  const t = useT()
+  const label = { label: regionLabel(region), system: regionSystem(region), description: regionDescription(region) }
   const Icon = REGION_ICON[region]
   const flagged = status !== 'LOW' && monitored
   const tinted = flagged && !selected && status !== 'NO_DATA'
@@ -134,8 +138,8 @@ function RegionChip({
     <button
       type="button"
       aria-pressed={selected}
-      aria-label={`${label.label}, ${label.system}. ${monitored ? meta.crewLabel : 'Not monitored'}. ${summary}${structureName ? ` Selected structure: ${structureName}. Press to select the whole system.` : ''}`}
-      title={`${label.label}: ${summary || label.description}${atlasCount ? ` (${atlasCount} structures in the anatomy atlas)` : ''}`}
+      aria-label={`${label.label}, ${label.system}. ${monitored ? meta.crewLabel : t('stage.notMonitored')}. ${summary}${structureName ? t('stage.selectedStructure', { name: structureName }) : ''}`}
+      title={`${label.label}: ${summary || label.description}${atlasCount ? t('stage.atlasCount', { n: atlasCount }) : ''}`}
       onClick={() => {
         // With a structure selected inside this region the click widens the selection to the
         // whole region (selectRegion clears the structure) instead of toggling the region off.
@@ -160,7 +164,7 @@ function RegionChip({
       <span className="hidden min-w-0 flex-1 leading-tight @min-[560px]/stage:block">
         <span className="block text-xs font-semibold whitespace-nowrap text-ink-100 roomy:text-[13px]">{label.label}</span>
         <span className={clsx('hidden truncate text-[10px] present:hidden @min-[880px]/stage:block roomy:text-[11px]', structureName ? 'text-accent/90' : 'text-ink-500')}>
-          {structureName ?? (monitored ? label.system : 'Context only')}
+          {structureName ?? (monitored ? label.system : t('stage.contextOnly'))}
         </span>
       </span>
       <span className={clsx('absolute top-1 flex @min-[560px]/stage:static', side === 'left' ? 'right-1' : 'left-1')}>
@@ -180,10 +184,13 @@ function RegionColumn({ side, regions }: { side: 'left' | 'right'; regions: Body
   const selected = useAppStore((s) => s.selectedRegion)
   const { structure, manifest } = useSelectedStructure()
   const counts = useMemo(() => (manifest ? Object.fromEntries(regions.map((r) => [r, regionStructureCount(manifest, r)])) : null), [manifest, regions])
+  const t = useT()
+  // German nouns keep their capital letter.
+  const lower = (s: string) => (getLang() === 'de' ? s : s.toLowerCase())
   return (
     <div
       role="group"
-      aria-label={`Body systems: ${regions.map((r) => REGION_LABELS[r].label.toLowerCase()).join(', ')}`}
+      aria-label={t('stage.bodySystems', { list: regions.map((r) => lower(regionLabel(r))).join(', ') })}
       className="relative z-10 flex w-10 shrink-0 flex-col justify-center gap-2 @min-[560px]/stage:w-[108px] @min-[880px]/stage:w-[150px] roomy:gap-3 @min-[1100px]/stage:roomy:w-[168px]"
     >
       {regions.map((r) => (
@@ -194,8 +201,9 @@ function RegionColumn({ side, regions }: { side: 'left' | 'right'; regions: Body
 }
 
 export function CenterStage({ className }: { className?: string }) {
+  const t = useT()
   return (
-    <section aria-label="Body overview" className={clsx('@container/stage glass relative flex min-h-0 flex-col overflow-hidden rounded-2xl', className)}>
+    <section aria-label={t('stage.bodyOverview')} className={clsx('@container/stage glass relative flex min-h-0 flex-col overflow-hidden rounded-2xl', className)}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_55%,rgba(94,234,212,0.08),transparent_70%)]" aria-hidden />
       {/* A critical alert floats over the headline instead of pushing the stage down, so the 3D body keeps its size. */}
       <div className="relative z-20 shrink-0">

@@ -1,3 +1,4 @@
+import { getBcp47 } from '../../i18n'
 /**
  * Thin wrapper over the browser speech synthesis (Web Speech API). No network, no audio files.
  * Long text is split into sentence chunks: some browsers stop a single long utterance midway.
@@ -28,9 +29,20 @@ export function chunkForSpeech(text: string, max = 220): string[] {
   return out
 }
 
+/** Voice for the selected language (exact tag first, then any voice of that language), or null for the default voice. */
 function pickVoice(): SpeechSynthesisVoice | null {
+  const tag = getBcp47()
+  const prefix = tag.split('-')[0]!.toLowerCase()
   const voices = window.speechSynthesis.getVoices()
-  return voices.find((v) => v.lang === 'en-US' && v.localService) ?? voices.find((v) => v.lang?.startsWith('en') && v.default) ?? voices.find((v) => v.lang?.startsWith('en')) ?? null
+  const norm = (l: string | undefined) => (l ?? '').replace('_', '-').toLowerCase()
+  const same = (v: SpeechSynthesisVoice) => norm(v.lang).startsWith(prefix)
+  return (
+    voices.find((v) => norm(v.lang) === tag.toLowerCase() && v.localService) ??
+    voices.find((v) => norm(v.lang) === tag.toLowerCase()) ??
+    voices.find((v) => same(v) && v.default) ??
+    voices.find(same) ??
+    null
+  )
 }
 
 /**
@@ -44,7 +56,7 @@ export function speak(text: string, opts: { rate?: number; interrupt?: boolean }
   const voice = pickVoice()
   for (const chunk of chunkForSpeech(text)) {
     const u = new SpeechSynthesisUtterance(chunk)
-    u.lang = voice?.lang ?? 'en-US'
+    u.lang = voice?.lang ?? getBcp47()
     if (voice) u.voice = voice
     u.rate = opts.rate ?? 1
     synth.speak(u)

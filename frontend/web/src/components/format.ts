@@ -1,11 +1,12 @@
 import type { MetricCode, MetricState, Status, TimePoint } from '../types/domain'
 import { METRIC_CATALOG } from '../engine/catalog'
+import { formatFixed, t, translatedRecord, type MessageKey } from '../i18n'
 
 export const NO_VALUE = '--'
 
 export function fmtNum(v: number | null | undefined, decimals: number): string {
   if (v == null || !Number.isFinite(v)) return NO_VALUE
-  return v.toFixed(decimals)
+  return formatFixed(v, decimals)
 }
 
 export function fmtMetric(code: MetricCode, v: number | null | undefined): string {
@@ -33,33 +34,60 @@ export function formatUtcTime(ms: number, seconds = true): string {
   return seconds ? `${base}:${pad(d.getUTCSeconds())}` : base
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+/** "1 Oct 2026" (month and order follow the current language). */
 export function formatUtcDate(ms: number): string {
   const d = new Date(ms)
-  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
+  return t('format.date', { d: d.getUTCDate(), month: t(`format.month.${d.getUTCMonth()}` as MessageKey), y: d.getUTCFullYear() })
 }
 
 export function relTime(ms: number, now: number): string {
   const diff = Math.max(0, now - ms)
   const min = diff / 60000
-  if (min < 1) return 'just now'
-  if (min < 60) return `${Math.round(min)} min ago`
+  if (min < 1) return t('format.justNow')
+  if (min < 60) return t('format.minAgo', { n: Math.round(min) })
   const h = min / 60
-  if (h < 48) return `${Math.round(h)} h ago`
-  return `${Math.round(h / 24)} d ago`
+  if (h < 48) return t('format.hAgo', { n: Math.round(h) })
+  return t('format.dAgo', { n: Math.round(h / 24) })
 }
 
 export function formatHours(h: number): string {
-  if (h < 1) return 'less than 1 h'
-  if (h < 10) return `~${(Math.round(h * 2) / 2).toString()} h`
-  return `~${Math.round(h)} h`
+  if (h < 1) return t('format.lessThan1h')
+  const half = Math.round(h * 2) / 2
+  if (h < 10) return t('format.aboutH', { n: formatFixed(half, Number.isInteger(half) ? 0 : 1) })
+  return t('format.aboutH', { n: Math.round(h) })
 }
 
 export const SPEEDS: { value: number; label: string; hint: string }[] = [
-  { value: 1, label: 'Real time', hint: '1 second per second' },
-  { value: 60, label: '1 min/s', hint: '1 simulated minute per second' },
-  { value: 600, label: '10 min/s', hint: '10 simulated minutes per second' },
-  { value: 3600, label: '1 h/s', hint: '1 simulated hour per second' },
+  {
+    value: 1,
+    get label() {
+      return t('format.speed.realTime')
+    },
+    get hint() {
+      return t('format.speed.realTime.hint')
+    },
+  },
+  {
+    value: 60,
+    label: '1 min/s',
+    get hint() {
+      return t('format.speed.60.hint')
+    },
+  },
+  {
+    value: 600,
+    label: '10 min/s',
+    get hint() {
+      return t('format.speed.600.hint')
+    },
+  },
+  {
+    value: 3600,
+    label: '1 h/s',
+    get hint() {
+      return t('format.speed.3600.hint')
+    },
+  },
 ]
 
 export function speedLabel(speed: number): string {
@@ -78,19 +106,19 @@ export interface NormalDelta {
  * Within the band reads as normal; outside it reads as % from the person's typical value.
  */
 export function deltaVsNormal(ms: MetricState | undefined, status?: Status): NormalDelta {
-  if (!ms || ms.current == null || status === 'NO_DATA') return { text: 'Signal lost', short: 'Signal lost', tone: 'none', pct: null }
+  if (!ms || ms.current == null || status === 'NO_DATA') return { text: t('format.delta.signalLost'), short: t('format.delta.signalLost'), tone: 'none', pct: null }
   const b = ms.baseline
-  if (!b || b.status !== 'READY') return { text: 'Learning your normal', short: 'Learning', tone: 'learning', pct: null }
+  if (!b || b.status !== 'READY') return { text: t('format.delta.learning'), short: t('format.delta.learningShort'), tone: 'learning', pct: null }
   const ref = Number.isFinite(b.median) && b.median !== 0 ? b.median : b.mean
   const pct = ref ? ((ms.current - ref) / Math.abs(ref)) * 100 : null
   if (ms.current >= b.low && ms.current <= b.high) {
-    return { text: 'Within your normal range', short: 'In your normal', tone: 'in', pct }
+    return { text: t('format.delta.within'), short: t('format.delta.withinShort'), tone: 'in', pct }
   }
   const above = ms.current > b.high
   const mag = pct == null ? '' : `${Math.max(1, Math.round(Math.abs(pct)))}% `
   return {
-    text: `${mag}${above ? 'above' : 'below'} your normal`,
-    short: `${above ? '+' : '−'}${mag.trim() || ''} vs normal`,
+    text: t(above ? 'format.delta.above' : 'format.delta.below', { mag }),
+    short: t('format.delta.vsNormal', { sign: above ? '+' : '−', mag: mag.trim() || '' }),
     tone: above ? 'above' : 'below',
     pct,
   }
@@ -130,16 +158,6 @@ export function downsample(points: TimePoint[], max: number): TimePoint[] {
   return out
 }
 
-export const QUALITY_LABEL: Record<string, string> = {
-  VALID: 'Good signal',
-  QUESTIONABLE: 'Questionable',
-  INVALID: 'Invalid',
-  MISSING: 'Missing',
-}
+export const QUALITY_LABEL: Record<string, string> = translatedRecord(['VALID', 'QUESTIONABLE', 'INVALID', 'MISSING'] as const, (k) => t(`format.quality.${k}`))
 
-export const ORIGIN_LABEL: Record<string, string> = {
-  SIMULATED: 'Simulated',
-  REAL_PUBLIC: 'Public dataset',
-  DERIVED: 'Derived',
-  MANUAL: 'Manual entry',
-}
+export const ORIGIN_LABEL: Record<string, string> = translatedRecord(['SIMULATED', 'REAL_PUBLIC', 'DERIVED', 'MANUAL'] as const, (k) => t(`format.origin.${k}`))

@@ -11,21 +11,26 @@
  */
 import type { AtlasStructure } from '../atlas/types'
 import { regionOfStructure } from '../atlas/health'
+import { t } from '../../../i18n'
 
 export type InteractionMode = 'monitor' | 'explore'
 
 export const DEFAULT_INTERACTION_MODE: InteractionMode = 'monitor'
 export const INTERACTION_MODE_KEY = 'ahi.anatomy.interactionMode'
 
+const modeInfo = (m: InteractionMode) => ({
+  get label() {
+    return t(`anatomy.mode.${m}`)
+  },
+  get title() {
+    return t(`anatomy.mode.${m}.title`)
+  },
+})
+
+/** Labels and tooltips in the current language (src/i18n/locales/[lang]/anatomy.ts). */
 export const INTERACTION_MODE_INFO: Record<InteractionMode, { label: string; title: string }> = {
-  monitor: {
-    label: 'Monitor',
-    title: 'Monitor mode: only monitored body regions respond to hover and click. Click to explore all anatomy.',
-  },
-  explore: {
-    label: 'Explore',
-    title: 'Explore mode: every structure can be selected, for anatomical reference. Click to go back to Monitor mode.',
-  },
+  monitor: modeInfo('monitor'),
+  explore: modeInfo('explore'),
 }
 
 /** true when the structure reacts to hover and click in this mode. */

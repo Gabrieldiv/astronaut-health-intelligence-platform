@@ -6,6 +6,8 @@ import type { Baseline, MetricCode, Prediction, RiskLevel, TimePoint } from '../
 import { METRIC_CATALOG } from '../engine/catalog'
 import { STATUS_META } from '../lib/status'
 import { downsample, fmtMetric, formatUtcTime, relTime } from './format'
+import { t, translatedRecord } from '../i18n'
+import { metricLabel } from '../i18n/catalog'
 
 /** Something that happened on the time axis (drawn as a marker over the chart). */
 export interface ChartEvent {
@@ -17,7 +19,7 @@ export interface ChartEvent {
   severity?: RiskLevel
 }
 
-const EVENT_KIND_LABEL: Record<ChartEvent['kind'], string> = { alert: 'Alert', intervention: 'Action logged', checkin: 'Check-in' }
+const EVENT_KIND_LABEL: Record<ChartEvent['kind'], string> = translatedRecord(['alert', 'intervention', 'checkin'] as const, (k) => t(`components.event.${k}`))
 const CHECKIN_COLOR = '#a5b4fc'
 
 export function eventColor(e: ChartEvent): string {
@@ -57,12 +59,12 @@ interface Row {
 
 const H = 3600000
 
-function relLabel(t: number, now: number): string {
-  const h = Math.round((t - now) / H)
-  if (h === 0) return 'Now'
+function relLabel(at: number, now: number): string {
+  const h = Math.round((at - now) / H)
+  if (h === 0) return t('components.chart.now')
   // Long forecast horizons (7 or 15 days) read better in days.
-  if (Math.abs(h) >= 48 && h % 24 === 0) return h < 0 ? `${-h / 24} d ago` : `+${h / 24} d`
-  return h < 0 ? `${-h} h ago` : `+${h} h`
+  if (Math.abs(h) >= 48 && h % 24 === 0) return h < 0 ? t('format.dAgo', { n: -h / 24 }) : `+${h / 24} d`
+  return h < 0 ? t('format.hAgo', { n: -h }) : `+${h} h`
 }
 
 /** Tick step: from the history window, widened when a long forecast stretches the axis. */
@@ -141,7 +143,7 @@ export function TrendChart({
   if (!model) {
     return (
       <div className="flex items-center justify-center rounded-xl border border-dashed border-white/15 text-xs text-ink-500" style={{ height }}>
-        No history yet
+        {t('components.chart.noHistory')}
       </div>
     )
   }
@@ -151,7 +153,7 @@ export function TrendChart({
   const span = model.end - model.from || 1
   return (
     <div style={{ height }} className="relative w-full">
-      <div className="h-full w-full" role="img" aria-label={`${def.label} trend over the last ${windowHours} hours${model.hasFc ? ' with forecast' : ''}${shownEvents.length ? `, ${shownEvents.length} events marked` : ''}`}>
+      <div className="h-full w-full" role="img" aria-label={`${t('components.chart.aria', { label: metricLabel(metric), n: windowHours })}${model.hasFc ? t('components.chart.withForecast') : ''}${shownEvents.length ? t('components.chart.eventsMarked', { n: shownEvents.length }) : ''}`}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={model.rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -185,7 +187,7 @@ export function TrendChart({
               strokeOpacity={0.22}
               strokeDasharray="3 4"
               ifOverflow="extendDomain"
-              label={{ value: 'Your normal', position: 'insideTopLeft', fill: '#5eead4', fontSize: 10, opacity: 0.8 }}
+              label={{ value: t('components.chart.yourNormal'), position: 'insideTopLeft', fill: '#5eead4', fontSize: 10, opacity: 0.8 }}
             />
           )}
           {model.hasFc && <ReferenceArea x1={model.now} x2={model.end} fill="rgba(255,255,255,0.025)" />}
@@ -220,14 +222,14 @@ export function TrendChart({
                   </div>
                   {isFc && row.range ? (
                     <div className="tabular mt-0.5 text-ink-100">
-                      Forecast {fmtMetric(metric, row.fc)} {def.unit}
+                      {t('components.chart.forecast', { value: fmtMetric(metric, row.fc) })} {def.unit}
                       <span className="text-ink-500">
                         {' '}
-                        ({fmtMetric(metric, row.range[0])} to {fmtMetric(metric, row.range[1])})
+                        ({t('components.baseline.range', { low: fmtMetric(metric, row.range[0]), high: fmtMetric(metric, row.range[1]) })})
                       </span>
                     </div>
                   ) : (
-                    <div className="tabular mt-0.5 font-semibold text-ink-100">{row.v == null ? 'No data' : `${fmtMetric(metric, row.v)} ${def.unit}`}</div>
+                    <div className="tabular mt-0.5 font-semibold text-ink-100">{row.v == null ? t('status.NO_DATA.label') : `${fmtMetric(metric, row.v)} ${def.unit}`}</div>
                   )}
                 </div>
               )
@@ -238,7 +240,7 @@ export function TrendChart({
       </div>
       {shownEvents.length > 0 && (
         // Plot area: YAxis width 36 on the left, chart margin 8 on the right.
-        <ul className="pointer-events-none absolute top-0 right-2 left-9 h-4" aria-label="Events on this chart">
+        <ul className="pointer-events-none absolute top-0 right-2 left-9 h-4" aria-label={t('components.chart.eventsList')}>
           {shownEvents.map((e) => {
             const x = ((e.t - model.from) / span) * 100
             const active = hoverEvent === e.id
@@ -248,7 +250,7 @@ export function TrendChart({
                   type="button"
                   className="focus-ring pointer-events-auto flex h-4 w-4 items-center justify-center rounded-full bg-space-900/90 ring-1"
                   style={{ ['--tw-ring-color' as string]: `color-mix(in srgb, ${eventColor(e)} 55%, transparent)` }}
-                  aria-label={`${EVENT_KIND_LABEL[e.kind]} at ${formatUtcTime(e.t, false)} UTC: ${e.label}`}
+                  aria-label={t('components.chart.eventAria', { kind: EVENT_KIND_LABEL[e.kind], time: formatUtcTime(e.t, false), label: e.label })}
                   onMouseEnter={() => setHoverEvent(e.id)}
                   onMouseLeave={() => setHoverEvent((h) => (h === e.id ? null : h))}
                   onFocus={() => setHoverEvent(e.id)}

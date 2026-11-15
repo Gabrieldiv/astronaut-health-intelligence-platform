@@ -2,15 +2,33 @@ import { CircleCheck, CircleDashed, CirclePause, TriangleAlert, WifiOff, type Lu
 import { useMemo } from 'react'
 import { useAppStore } from '../../state/store'
 import type { Device, DeviceState, MetricCode } from '../../types/domain'
+import { t } from '../../i18n'
 
 /** Device state: plain label, color, icon and how much it needs attention (rank). */
-export const DEVICE_STATE_META: Record<DeviceState, { label: string; color: string; icon: LucideIcon; rank: number }> = {
-  ONLINE: { label: 'Online', color: '#34d399', icon: CircleCheck, rank: 0 },
+interface DeviceStateMeta {
+  /** Plain label in the current language (getter, see src/i18n). */
+  readonly label: string
+  color: string
+  icon: LucideIcon
+  rank: number
+}
+
+const stateMeta = (s: DeviceState, color: string, icon: LucideIcon, rank: number): DeviceStateMeta => ({
+  get label() {
+    return t(`devices.state.${s}`)
+  },
+  color,
+  icon,
+  rank,
+})
+
+export const DEVICE_STATE_META: Record<DeviceState, DeviceStateMeta> = {
+  ONLINE: stateMeta('ONLINE', '#34d399', CircleCheck, 0),
   // A pause is an operator decision, not a fault: calm color, ranked under real problems.
-  PAUSED: { label: 'Paused by operator', color: '#a5b4fc', icon: CirclePause, rank: 1 },
-  DEGRADED: { label: 'Degraded', color: '#fbbf24', icon: TriangleAlert, rank: 2 },
-  DATA_STALE: { label: 'Data stale', color: '#94a3b8', icon: CircleDashed, rank: 3 },
-  OFFLINE: { label: 'Offline', color: '#94a3b8', icon: WifiOff, rank: 4 },
+  PAUSED: stateMeta('PAUSED', '#a5b4fc', CirclePause, 1),
+  DEGRADED: stateMeta('DEGRADED', '#fbbf24', TriangleAlert, 2),
+  DATA_STALE: stateMeta('DATA_STALE', '#94a3b8', CircleDashed, 3),
+  OFFLINE: stateMeta('OFFLINE', '#94a3b8', WifiOff, 4),
 }
 
 /** Devices an astronaut sees: the ones worn by them plus the shared and cabin devices. */
@@ -35,6 +53,8 @@ export function useDevicesForMetrics(astronautId: string, metrics: MetricCode[])
 
 /** Headline when the core wearable vitals are missing: a pause is said as such, never as a sensor fault. */
 export const WEARABLE_PAUSED_HEADLINE = 'Wearable monitoring is paused by an operator. Missing data is never treated as normal: resume it to see live readings.'
+/** WEARABLE_PAUSED_HEADLINE in the current language. */
+export const wearablePausedHeadline = () => t('devices.wearablePausedHeadline')
 
 /** True when this astronaut's Bio-Monitor (the core vitals wearable) is paused by an operator. */
 export function useWearablePaused(astronautId: string): boolean {

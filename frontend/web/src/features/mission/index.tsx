@@ -13,6 +13,8 @@ import { fmtNum } from '../../components/format'
 import { Modal, TOPBAR_BUTTON } from './Modal'
 import { MissionContextStrip } from './MissionContext'
 import { MENU_ITEM, MenuRow } from '../topbar/menu'
+import { t, useT } from '../../i18n'
+import { tx } from '../../i18n/rich'
 
 const ACCENT = '#5eead4'
 const GRID = 'rgba(255,255,255,0.05)'
@@ -161,13 +163,13 @@ function BudgetBar({ pct, projectedPct, height = 8 }: { pct: number; projectedPc
 function RiskRibbon({ days, compact = false }: { days: MissionDaySummary[]; compact?: boolean }) {
   if (days.length === 0) return null
   return (
-    <div className={clsx('flex w-full gap-px', compact ? 'h-3' : 'h-5')} role="img" aria-label={`Daily risk level for ${days.length} mission days`}>
+    <div className={clsx('flex w-full gap-px', compact ? 'h-3' : 'h-5')} role="img" aria-label={t('mission.ov.riskRibbonAria', { n: days.length })}>
       {days.map((d) => {
         const s: Status = d.riskLevel
         return (
           <span
             key={d.missionDay}
-            title={`Day ${d.missionDay} · ${STATUS_META[s].label}${d.synthesized ? ' · summary' : ''}`}
+            title={t('mission.ov.ribbonDay', { d: d.missionDay, status: STATUS_META[s].label, summary: d.synthesized ? t('mission.ov.summaryTag') : '' })}
             className="min-w-[2px] flex-1 first:rounded-l last:rounded-r"
             style={{ background: s === 'NO_DATA' ? NO_DATA_BG : STATUS_META[s].color, opacity: s === 'LOW' ? 0.45 : 1 }}
           />
@@ -220,22 +222,27 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
   const doseAxis = niceAxis(Math.max(plan.radiationBudgetMgy, sum.projectedEnd))
   const color = astronaut.color
   const over = sum.projectedPct > 100
+  const t = useT()
 
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
           icon={<Radiation size={12} aria-hidden />}
-          label="Radiation dose"
+          label={t('mission.ov.radiationDose')}
           value={fmtNum(sum.cumulative, 1)}
-          unit={`of ${plan.radiationBudgetMgy} mGy demo budget`}
+          unit={t('mission.ov.ofBudget', { budget: plan.radiationBudgetMgy })}
           sub={
             <>
-              {Math.round(sum.budgetPct)}% used. At the current pace, about <span className="tabular font-semibold text-ink-100">{fmtNum(sum.projectedEnd, 0)} mGy</span> by day {plan.plannedDurationDays} (
-              {Math.round(sum.projectedPct)}%).
+              {tx('mission.ov.budgetSub', {
+                pct: Math.round(sum.budgetPct),
+                proj: <span className="tabular font-semibold text-ink-100">{fmtNum(sum.projectedEnd, 0)} mGy</span>,
+                day: plan.plannedDurationDays,
+                ppct: Math.round(sum.projectedPct),
+              })}
               {over && (
                 <Badge tone="warn" className="mt-1">
-                  Projected above demo budget
+                  {t('mission.ov.projectedAbove')}
                 </Badge>
               )}
             </>
@@ -245,32 +252,36 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
         </Kpi>
         <Kpi
           icon={<Dumbbell size={12} aria-hidden />}
-          label="Exercise, last 7 days"
+          label={t('mission.ov.exercise7')}
           value={sum.adherence7 == null ? '--' : `${Math.round(sum.adherence7)}%`}
-          unit="of plan"
-          sub={`Plan: ${plan.exercisePlanMinutesPerDay} min per day. Days without data are left out.`}
+          unit={t('mission.ov.ofPlan')}
+          sub={t('mission.ov.planSub', { min: plan.exercisePlanMinutesPerDay })}
         >
           <BudgetBar pct={sum.adherence7 ?? 0} projectedPct={0} height={6} />
         </Kpi>
         <Kpi
           icon={<Moon size={12} aria-hidden />}
-          label="Sleep, last 7 days"
+          label={t('mission.ov.sleep7')}
           value={fmtNum(sum.sleep7, 1)}
-          unit="h per night"
-          sub={sum.sleep7 == null ? 'No sleep data this week.' : `Target ${plan.sleepTargetHours} h. ${sum.sleep7 >= plan.sleepTargetHours ? 'On target.' : `${fmtNum(plan.sleepTargetHours - sum.sleep7, 1)} h short per night on average.`}`}
+          unit={t('mission.ov.hPerNight')}
+          sub={
+            sum.sleep7 == null
+              ? t('mission.ov.noSleep')
+              : `${t('mission.ov.target', { h: plan.sleepTargetHours })} ${sum.sleep7 >= plan.sleepTargetHours ? t('mission.ov.onTarget') : t('mission.ov.shortBy', { h: fmtNum(plan.sleepTargetHours - sum.sleep7, 1) })}`
+          }
         />
         <Kpi
           icon={<HeartPulse size={12} aria-hidden />}
-          label="Resting HR · HRV"
+          label={t('mission.ov.hrHrv')}
           value={`${fmtNum(sum.hrNow, 0)} · ${fmtNum(sum.hrvNow, 0)}`}
           unit="bpm · ms"
-          sub="Latest daily values. Compare with the trend below, not with fixed limits."
+          sub={t('mission.ov.latest')}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Card title="Cumulative radiation dose" icon={<Radiation size={12} aria-hidden />} right={<span className="text-[11px] text-ink-500">dashed = linear projection</span>}>
-          <div className="h-[190px]" role="img" aria-label={`Cumulative dose ${fmtNum(sum.cumulative, 1)} mGy, projected ${fmtNum(sum.projectedEnd, 0)} mGy at day ${plan.plannedDurationDays}`}>
+        <Card title={t('mission.ov.cumDose')} icon={<Radiation size={12} aria-hidden />} right={<span className="text-[11px] text-ink-500">{t('mission.ov.dashedProj')}</span>}>
+          <div className="h-[190px]" role="img" aria-label={t('mission.ov.doseAria', { cum: fmtNum(sum.cumulative, 1), proj: fmtNum(sum.projectedEnd, 0), day: plan.plannedDurationDays })}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={doseRows} margin={{ top: 14, right: 12, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke={GRID} vertical={false} />
@@ -280,9 +291,9 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
                   y={plan.radiationBudgetMgy}
                   stroke="rgba(232,238,252,0.55)"
                   strokeDasharray="4 4"
-                  label={{ value: `Demo budget ${plan.radiationBudgetMgy} mGy`, position: 'insideTopLeft', fill: '#a9b6cf', fontSize: 10 }}
+                  label={{ value: t('mission.ov.demoBudget', { v: plan.radiationBudgetMgy }), position: 'insideTopLeft', fill: '#a9b6cf', fontSize: 10 }}
                 />
-                <ReferenceLine x={sum.lastDay} stroke="rgba(232,238,252,0.3)" strokeDasharray="2 3" label={{ value: 'Today', position: 'top', fill: '#a9b6cf', fontSize: 10 }} />
+                <ReferenceLine x={sum.lastDay} stroke="rgba(232,238,252,0.3)" strokeDasharray="2 3" label={{ value: t('mission.ov.today'), position: 'top', fill: '#a9b6cf', fontSize: 10 }} />
                 <Line dataKey="cum" stroke={ACCENT} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls={false} />
                 <Line dataKey="proj" stroke={ACCENT} strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} isAnimationActive={false} connectNulls />
                 <Tooltip
@@ -292,7 +303,7 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
                     if (!active || !payload?.length) return null
                     const r = payload[0]!.payload as { day: number; cum?: number; proj?: number }
                     const v = r.cum ?? r.proj
-                    return <ChartTip title={`Mission day ${r.day}${r.cum == null ? ' (projection)' : ''}`} rows={[{ label: 'Dose', value: `${fmtNum(v, 1)} mGy` }]} />
+                    return <ChartTip title={`${t('mission.ov.missionDay', { d: r.day })}${r.cum == null ? t('mission.ov.projection') : ''}`} rows={[{ label: t('mission.ov.dose'), value: `${fmtNum(v, 1)} mGy` }]} />
                   }}
                 />
               </ComposedChart>
@@ -300,14 +311,14 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
           </div>
         </Card>
 
-        <Card title="Exercise adherence by week" icon={<Dumbbell size={12} aria-hidden />} right={<span className="text-[11px] text-ink-500">% of planned minutes</span>}>
-          <div className="h-[190px]" role="img" aria-label="Weekly exercise adherence versus plan">
+        <Card title={t('mission.ov.exAdh')} icon={<Dumbbell size={12} aria-hidden />} right={<span className="text-[11px] text-ink-500">{t('mission.ov.pctPlanned')}</span>}>
+          <div className="h-[190px]" role="img" aria-label={t('mission.ov.exAria')}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={sum.weeks} margin={{ top: 14, right: 12, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke={GRID} vertical={false} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={6} interval="preserveStartEnd" />
                 <YAxis domain={[0, (max: number) => Math.max(120, Math.ceil(max / 10) * 10)]} tickFormatter={(v: number) => `${v}%`} axisLine={false} tickLine={false} width={40} tickCount={4} />
-                <ReferenceLine y={100} stroke="rgba(232,238,252,0.45)" strokeDasharray="4 4" label={{ value: 'Plan', position: 'insideTopRight', fill: '#a9b6cf', fontSize: 10 }} />
+                <ReferenceLine y={100} stroke="rgba(232,238,252,0.45)" strokeDasharray="4 4" label={{ value: t('mission.ov.plan'), position: 'insideTopRight', fill: '#a9b6cf', fontSize: 10 }} />
                 <Bar dataKey="adherencePct" fill={ACCENT} fillOpacity={0.75} radius={[3, 3, 0, 0]} isAnimationActive={false} maxBarSize={22} />
                 <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
@@ -315,7 +326,7 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null
                     const w = payload[0]!.payload as WeekStat
-                    return <ChartTip title={`Week ${w.week}${w.partial ? ` (${w.days} days)` : ''}`} rows={[{ label: 'Adherence', value: w.adherencePct == null ? 'no data' : `${Math.round(w.adherencePct)}%` }]} />
+                    return <ChartTip title={`${t('mission.ov.week', { w: w.week })}${w.partial ? t('mission.ov.weekPartial', { n: w.days }) : ''}`} rows={[{ label: t('mission.ov.adherence'), value: w.adherencePct == null ? t('mission.ov.noData') : `${Math.round(w.adherencePct)}%` }]} />
                   }}
                 />
               </BarChart>
@@ -323,14 +334,14 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
           </div>
         </Card>
 
-        <Card title="Sleep by week" icon={<Moon size={12} aria-hidden />} right={<span className="text-[11px] text-ink-500">average hours per night</span>}>
-          <div className="h-[170px]" role="img" aria-label={`Weekly sleep average versus a ${plan.sleepTargetHours} hour target`}>
+        <Card title={t('mission.ov.sleepWeek')} icon={<Moon size={12} aria-hidden />} right={<span className="text-[11px] text-ink-500">{t('mission.ov.avgHours')}</span>}>
+          <div className="h-[170px]" role="img" aria-label={t('mission.ov.sleepAria', { h: plan.sleepTargetHours })}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={sum.weeks} margin={{ top: 14, right: 12, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke={GRID} vertical={false} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={6} interval="preserveStartEnd" />
                 <YAxis domain={[0, 10]} axisLine={false} tickLine={false} width={34} tickCount={6} tickFormatter={(v: number) => `${v} h`} />
-                <ReferenceLine y={plan.sleepTargetHours} stroke="rgba(232,238,252,0.45)" strokeDasharray="4 4" label={{ value: `Target ${plan.sleepTargetHours} h`, position: 'insideTopRight', fill: '#a9b6cf', fontSize: 10 }} />
+                <ReferenceLine y={plan.sleepTargetHours} stroke="rgba(232,238,252,0.45)" strokeDasharray="4 4" label={{ value: t('mission.ov.targetLine', { h: plan.sleepTargetHours }), position: 'insideTopRight', fill: '#a9b6cf', fontSize: 10 }} />
                 <Bar dataKey="sleepAvg" fill="#7dd3fc" fillOpacity={0.7} radius={[3, 3, 0, 0]} isAnimationActive={false} maxBarSize={22} />
                 <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
@@ -338,7 +349,7 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null
                     const w = payload[0]!.payload as WeekStat
-                    return <ChartTip title={`Week ${w.week}`} rows={[{ label: 'Sleep', value: w.sleepAvg == null ? 'no data' : `${fmtNum(w.sleepAvg, 1)} h` }]} />
+                    return <ChartTip title={t('mission.ov.week', { w: w.week })} rows={[{ label: t('mission.ov.sleep'), value: w.sleepAvg == null ? t('mission.ov.noData') : `${fmtNum(w.sleepAvg, 1)} h` }]} />
                   }}
                 />
               </BarChart>
@@ -346,15 +357,15 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
           </div>
         </Card>
 
-        <Card title="Resting heart rate and HRV" icon={<HeartPulse size={12} aria-hidden />} right={<span className="text-[11px] text-ink-500">per mission day</span>}>
+        <Card title={t('mission.ov.hrTitle')} icon={<HeartPulse size={12} aria-hidden />} right={<span className="text-[11px] text-ink-500">{t('mission.ov.perDay')}</span>}>
           <div className="grid h-[170px] grid-rows-2 gap-1">
             {(
               [
-                { key: 'restingHr', label: 'Resting HR', unit: 'bpm', dash: undefined },
+                { key: 'restingHr', label: t('mission.ov.restingHr'), unit: 'bpm', dash: undefined },
                 { key: 'hrv', label: 'HRV', unit: 'ms', dash: '4 3' },
               ] as const
             ).map((s) => (
-              <div key={s.key} className="relative min-h-0" role="img" aria-label={`${s.label} over mission days`}>
+              <div key={s.key} className="relative min-h-0" role="img" aria-label={t('mission.ov.overDays', { label: s.label })}>
                 <span className="absolute top-0 left-10 z-10 text-[10px] font-semibold text-ink-500">
                   {s.label} <span className="font-normal">({s.unit})</span>
                 </span>
@@ -371,7 +382,7 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
                         if (!active || !payload?.length) return null
                         const d = payload[0]!.payload as MissionDaySummary
                         const v = d[s.key]
-                        return <ChartTip title={`Mission day ${d.missionDay}`} rows={[{ label: s.label, value: v == null ? 'no data' : `${fmtNum(v, 0)} ${s.unit}`, color }]} />
+                        return <ChartTip title={t('mission.ov.missionDay', { d: d.missionDay })} rows={[{ label: s.label, value: v == null ? t('mission.ov.noData') : `${fmtNum(v, 0)} ${s.unit}`, color }]} />
                       }}
                     />
                   </LineChart>
@@ -382,11 +393,11 @@ function AstronautView({ astronaut, sum, plan }: { astronaut: Astronaut; sum: Su
         </Card>
       </div>
 
-      <Card title="Daily risk level" icon={<ShieldCheck size={12} aria-hidden />} right={<RibbonLegend />}>
+      <Card title={t('mission.ov.dailyRisk')} icon={<ShieldCheck size={12} aria-hidden />} right={<RibbonLegend />}>
         <RiskRibbon days={sum.days} />
         <div className="tabular mt-1 flex justify-between text-[10px] text-ink-500">
-          <span>Day {sum.days[0]!.missionDay}</span>
-          <span>Day {sum.lastDay}</span>
+          <span>{t('mission.ov.day', { d: sum.days[0]!.missionDay })}</span>
+          <span>{t('mission.ov.day', { d: sum.lastDay })}</span>
         </div>
       </Card>
     </div>
@@ -419,19 +430,20 @@ function CrewView({ crew, sums, plan, onPick }: { crew: Astronaut[]; sums: Recor
     return rows
   }, [crew, sums, plan.plannedDurationDays])
   const doseAxis = niceAxis(Math.max(plan.radiationBudgetMgy, ...crew.map((c) => sums[c.id]?.projectedEnd ?? 0)))
+  const t = useT()
   return (
     <div className="flex flex-col gap-3">
       <div className="overflow-x-auto rounded-xl ring-1 ring-white/[0.06]">
         <table className="w-full min-w-[760px] text-left text-xs">
           <thead>
             <tr className="border-b border-white/[0.06] bg-white/[0.02] text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">
-              <th className="px-3 py-2 font-semibold">Crew</th>
-              <th className="px-3 py-2 font-semibold">Radiation vs demo budget</th>
-              <th className="px-3 py-2 font-semibold">Exercise 7 d</th>
-              <th className="px-3 py-2 font-semibold">Sleep 7 d</th>
-              <th className="px-3 py-2 font-semibold">Resting HR</th>
+              <th className="px-3 py-2 font-semibold">{t('mission.ov.thCrew')}</th>
+              <th className="px-3 py-2 font-semibold">{t('mission.ov.thRadiation')}</th>
+              <th className="px-3 py-2 font-semibold">{t('mission.ov.thExercise')}</th>
+              <th className="px-3 py-2 font-semibold">{t('mission.ov.thSleep')}</th>
+              <th className="px-3 py-2 font-semibold">{t('mission.ov.restingHr')}</th>
               <th className="px-3 py-2 font-semibold">HRV</th>
-              <th className="w-[22%] px-3 py-2 font-semibold">Daily risk</th>
+              <th className="w-[22%] px-3 py-2 font-semibold">{t('mission.ov.thDailyRisk')}</th>
             </tr>
           </thead>
           <tbody>
@@ -440,7 +452,7 @@ function CrewView({ crew, sums, plan, onPick }: { crew: Astronaut[]; sums: Recor
               return (
                 <tr key={c.id} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.025]">
                   <td className="px-3 py-2.5">
-                    <button type="button" onClick={() => onPick(c.id)} className="focus-ring flex items-center gap-2 rounded text-left" title={`Open ${c.callsign}`}>
+                    <button type="button" onClick={() => onPick(c.id)} className="focus-ring flex items-center gap-2 rounded text-left" title={t('mission.ov.open', { callsign: c.callsign })}>
                       <span className="h-2 w-2 rounded-full" style={{ background: c.color }} aria-hidden />
                       <span>
                         <span className="block text-[13px] font-semibold text-ink-100 hover:text-accent">{c.callsign}</span>
@@ -455,7 +467,7 @@ function CrewView({ crew, sums, plan, onPick }: { crew: Astronaut[]; sums: Recor
                           <span>
                             <span className="font-semibold text-ink-100">{fmtNum(s.cumulative, 1)}</span> mGy
                           </span>
-                          <span className="text-[10px] text-ink-500">proj. {fmtNum(s.projectedEnd, 0)}</span>
+                          <span className="text-[10px] text-ink-500">{t('mission.ov.proj', { v: fmtNum(s.projectedEnd, 0) })}</span>
                         </div>
                         <div className="mt-1">
                           <BudgetBar pct={s.budgetPct} projectedPct={s.projectedPct} height={5} />
@@ -483,7 +495,7 @@ function CrewView({ crew, sums, plan, onPick }: { crew: Astronaut[]; sums: Recor
                     </>
                   ) : (
                     <td colSpan={6} className="px-3 py-2.5 text-ink-500">
-                      No mission history yet.
+                      {t('mission.ov.noHistory')}
                     </td>
                   )}
                 </tr>
@@ -493,7 +505,7 @@ function CrewView({ crew, sums, plan, onPick }: { crew: Astronaut[]; sums: Recor
         </table>
       </div>
       <Card
-        title="Cumulative radiation dose, whole crew (dashed = projection)"
+        title={t('mission.ov.crewDose')}
         icon={<Radiation size={12} aria-hidden />}
         right={
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-300">
@@ -506,13 +518,13 @@ function CrewView({ crew, sums, plan, onPick }: { crew: Astronaut[]; sums: Recor
           </span>
         }
       >
-        <div className="h-[220px]" role="img" aria-label="Cumulative radiation dose per crew member versus the demo budget">
+        <div className="h-[220px]" role="img" aria-label={t('mission.ov.crewDoseAria')}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={doseRows} margin={{ top: 14, right: 12, bottom: 0, left: 0 }}>
               <CartesianGrid stroke={GRID} vertical={false} />
               <XAxis dataKey="day" type="number" domain={[1, 'dataMax']} ticks={dayTicks(doseRows[doseRows.length - 1]?.day ?? 1)} tickFormatter={(d: number) => `D${d}`} axisLine={false} tickLine={false} tickMargin={6} />
               <YAxis domain={[0, doseAxis.max]} ticks={doseAxis.ticks} tickFormatter={(v: number) => v.toFixed(0)} axisLine={false} tickLine={false} width={34} />
-              <ReferenceLine y={plan.radiationBudgetMgy} stroke="rgba(232,238,252,0.55)" strokeDasharray="4 4" label={{ value: `Demo budget ${plan.radiationBudgetMgy} mGy`, position: 'insideTopLeft', fill: '#a9b6cf', fontSize: 10 }} />
+              <ReferenceLine y={plan.radiationBudgetMgy} stroke="rgba(232,238,252,0.55)" strokeDasharray="4 4" label={{ value: t('mission.ov.demoBudget', { v: plan.radiationBudgetMgy }), position: 'insideTopLeft', fill: '#a9b6cf', fontSize: 10 }} />
               {crew.map((c) => (
                 <Line key={c.id} dataKey={c.id} name={c.callsign} stroke={c.color} strokeWidth={1.8} dot={false} isAnimationActive={false} />
               ))}
@@ -528,7 +540,7 @@ function CrewView({ crew, sums, plan, onPick }: { crew: Astronaut[]; sums: Recor
                   const proj = crew.every((c) => r[c.id] == null)
                   return (
                     <ChartTip
-                      title={`Mission day ${r.day}${proj ? ' (projection)' : ''}`}
+                      title={`${t('mission.ov.missionDay', { d: r.day })}${proj ? t('mission.ov.projection') : ''}`}
                       rows={crew.filter((c) => (r[c.id] ?? r[`${c.id}_p`]) != null).map((c) => ({ label: c.callsign, value: `${fmtNum(r[c.id] ?? r[`${c.id}_p`], 1)} mGy`, color: c.color }))}
                     />
                   )
@@ -556,26 +568,27 @@ function MissionOverview({ onClose }: { onClose: () => void }) {
   const lastDay = Math.max(0, ...crew.map((c) => sums[c.id]?.lastDay ?? 0))
   const astronaut = crew.find((c) => c.id === view)
   const sum = astronaut ? sums[astronaut.id] : null
-  const tabs = [{ id: 'CREW', label: 'Whole crew', color: null as string | null }, ...crew.map((c) => ({ id: c.id, label: c.callsign, color: c.color }))]
+  const t = useT()
+  const tabs = [{ id: 'CREW', label: t('mission.ov.wholeCrew'), color: null as string | null }, ...crew.map((c) => ({ id: c.id, label: c.callsign, color: c.color }))]
 
   return (
     <Modal
       open
       onClose={onClose}
       size="xl"
-      title="Mission overview"
+      title={t('mission.ov.title')}
       icon={<CalendarRange size={17} className="text-accent" aria-hidden />}
       subtitle={
         <span className="tabular">
-          {mission.name} · {lastDay > 0 ? `Day ${lastDay} of ${plan.plannedDurationDays} planned` : `${plan.plannedDurationDays} days planned`}
+          {mission.name} · {lastDay > 0 ? t('mission.ov.dayOf', { d: lastDay, n: plan.plannedDurationDays }) : t('mission.ov.daysPlanned', { n: plan.plannedDurationDays })}
         </span>
       }
-      headerExtra={<Badge tone="sim">Simulated</Badge>}
+      headerExtra={<Badge tone="sim">{t('mission.ov.simulated')}</Badge>}
       footer={
         <div className="flex items-start gap-1.5 text-[11px] leading-relaxed text-ink-500">
           <Info size={12} className="mt-0.5 shrink-0" aria-hidden />
           <span>
-            <strong className="font-semibold text-ink-300">Demo configuration, not official limits. Simulated data.</strong> Budgets and targets come from the mission plan for this demo. Projections are simple linear extrapolations for discussion.{plan.note && !/not official/i.test(plan.note) ? ` ${plan.note}` : ''}
+            <strong className="font-semibold text-ink-300">{t('mission.ov.footerStrong')}</strong> {t('mission.ov.footerBody')}{plan.note && !/not official/i.test(plan.note) ? ` ${plan.note}` : ''}
           </span>
         </div>
       }
@@ -584,7 +597,7 @@ function MissionOverview({ onClose }: { onClose: () => void }) {
       {lastDay > 0 && (
         <div className="mb-4">
           <div className="tabular flex items-center justify-between text-[11px] text-ink-500">
-            <span>Mission progress</span>
+            <span>{t('mission.ov.progress')}</span>
             <span>{Math.round((lastDay / plan.plannedDurationDays) * 100)}%</span>
           </div>
           <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[0.06]" aria-hidden>
@@ -592,23 +605,23 @@ function MissionOverview({ onClose }: { onClose: () => void }) {
           </div>
         </div>
       )}
-      <div role="tablist" aria-label="Choose crew member" className="mb-4 flex flex-wrap gap-1.5">
-        {tabs.map((t) => {
-          const on = view === t.id
+      <div role="tablist" aria-label={t('mission.ov.tabsAria')} className="mb-4 flex flex-wrap gap-1.5">
+        {tabs.map((tab) => {
+          const on = view === tab.id
           return (
             <button
-              key={t.id}
+              key={tab.id}
               type="button"
               role="tab"
               aria-selected={on}
-              onClick={() => setView(t.id)}
+              onClick={() => setView(tab.id)}
               className={clsx(
                 'focus-ring flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
                 on ? 'bg-accent/12 text-accent ring-1 ring-accent/40' : 'text-ink-300 ring-1 ring-white/[0.07] hover:bg-white/[0.05] hover:text-ink-100',
               )}
             >
-              {t.color && <span className="h-2 w-2 rounded-full" style={{ background: t.color }} aria-hidden />}
-              {t.label}
+              {tab.color && <span className="h-2 w-2 rounded-full" style={{ background: tab.color }} aria-hidden />}
+              {tab.label}
             </button>
           )
         })}
@@ -616,15 +629,15 @@ function MissionOverview({ onClose }: { onClose: () => void }) {
       {!anyData ? (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-white/15 px-6 py-14 text-center">
           <CalendarRange size={26} className="text-ink-500" aria-hidden />
-          <div className="text-sm font-semibold text-ink-100">Mission history is being prepared</div>
-          <p className="max-w-md text-xs leading-relaxed text-ink-500">Daily summaries (radiation, exercise, sleep, resting heart rate and HRV) appear here once the simulator has produced mission days.</p>
+          <div className="text-sm font-semibold text-ink-100">{t('mission.ov.preparing')}</div>
+          <p className="max-w-md text-xs leading-relaxed text-ink-500">{t('mission.ov.preparingBody')}</p>
         </div>
       ) : view === 'CREW' || !astronaut ? (
         <CrewView crew={crew} sums={sums} plan={plan} onPick={setView} />
       ) : sum ? (
         <AstronautView astronaut={astronaut} sum={sum} plan={plan} />
       ) : (
-        <div className="rounded-xl border border-dashed border-white/15 px-6 py-10 text-center text-xs text-ink-500">No mission history for {astronaut.callsign} yet.</div>
+        <div className="rounded-xl border border-dashed border-white/15 px-6 py-10 text-center text-xs text-ink-500">{t('mission.ov.noHistoryFor', { callsign: astronaut.callsign })}</div>
       )}
     </Modal>
   )
@@ -634,16 +647,17 @@ function MissionOverview({ onClose }: { onClose: () => void }) {
 /** Opens the long-term mission overview. variant="menuitem" renders it as a row of the top bar Tools menu. */
 export function MissionOverviewButton({ variant = 'toolbar' }: { variant?: 'toolbar' | 'menuitem' }) {
   const [open, setOpen] = useState(false)
+  const t = useT()
   return (
     <>
       {variant === 'menuitem' ? (
         <button type="button" role="menuitem" tabIndex={-1} data-tour="mission" aria-haspopup="dialog" onClick={() => setOpen(true)} className={MENU_ITEM}>
-          <MenuRow icon={<CalendarRange size={16} />} label="Mission overview" hint="Radiation, exercise and sleep over the mission" />
+          <MenuRow icon={<CalendarRange size={16} />} label={t('mission.ov.title')} hint={t('mission.ov.menuHint')} />
         </button>
       ) : (
-        <button type="button" data-tour="mission" aria-haspopup="dialog" onClick={() => setOpen(true)} className={TOPBAR_BUTTON} title="Long-term mission view: radiation, exercise, sleep">
+        <button type="button" data-tour="mission" aria-haspopup="dialog" onClick={() => setOpen(true)} className={TOPBAR_BUTTON} title={t('mission.ov.buttonTitle')}>
           <CalendarRange size={14} className="text-accent" aria-hidden />
-          <span>Mission</span>
+          <span>{t('mission.ov.buttonShort')}</span>
         </button>
       )}
       {open && <MissionOverview onClose={() => setOpen(false)} />}

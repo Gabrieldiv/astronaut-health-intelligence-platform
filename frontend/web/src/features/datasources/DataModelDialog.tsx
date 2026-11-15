@@ -8,19 +8,22 @@ import { ModelCardTab } from './ModelCardTab'
 import { NasaContextTab } from './NasaContextTab'
 import { OriginsTab } from './OriginsTab'
 import { RealDatasetsTab } from './RealDatasetsTab'
+import { useT } from '../../i18n'
 
 type TabId = 'real' | 'nasa' | 'devices' | 'model' | 'origins'
 
-const TABS: Array<{ id: TabId; label: string; icon: LucideIcon; count?: number }> = [
-  { id: 'real', label: 'Real datasets', icon: History, count: REAL_DATASET_ACCESSIONS.length },
-  { id: 'nasa', label: 'NASA context', icon: Globe2 },
-  { id: 'devices', label: 'Simulated devices', icon: Cpu },
-  { id: 'model', label: 'Model card', icon: BookOpenCheck },
-  { id: 'origins', label: 'Data origins', icon: Tags },
+const TABS: Array<{ id: TabId; icon: LucideIcon; count?: number }> = [
+  { id: 'real', icon: History, count: REAL_DATASET_ACCESSIONS.length },
+  { id: 'nasa', icon: Globe2 },
+  { id: 'devices', icon: Cpu },
+  { id: 'model', icon: BookOpenCheck },
+  { id: 'origins', icon: Tags },
 ]
 
 export default function DataModelDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [tab, setTab] = useState<TabId>('real')
+  // Named `tr` here: the tab loop below uses `t` for the tab item.
+  const tr = useT()
   const refs = useRef<Record<TabId, HTMLButtonElement | null>>({ real: null, nasa: null, devices: null, model: null, origins: null })
 
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -42,12 +45,12 @@ export default function DataModelDialog({ open, onClose }: { open: boolean; onCl
       open={open}
       onClose={onClose}
       size="xl"
-      title="Data and model"
-      subtitle="Where every number comes from, and what the engine can and cannot do."
+      title={tr('datasources.title')}
+      subtitle={tr('datasources.subtitle')}
       icon={<Database size={17} className="text-accent" aria-hidden />}
     >
       <div className="-mx-5 -mt-4 mb-4 border-b border-white/[0.07] bg-space-950/30 px-5">
-        <div role="tablist" aria-label="Data and model sections" onKeyDown={onKey} className="flex gap-1 overflow-x-auto overflow-y-hidden">
+        <div role="tablist" aria-label={tr('datasources.tabsAria')} onKeyDown={onKey} className="flex gap-1 overflow-x-auto overflow-y-hidden">
           {TABS.map((t) => {
             const sel = t.id === tab
             const Icon = t.icon
@@ -70,7 +73,7 @@ export default function DataModelDialog({ open, onClose }: { open: boolean; onCl
                 )}
               >
                 <Icon size={14} aria-hidden className={sel ? 'text-accent' : undefined} />
-                {t.label}
+                {tr(`datasources.tab.${t.id}`)}
                 {t.count != null && <span className="tabular rounded bg-white/[0.06] px-1.5 text-[10px] text-ink-300">{t.count}</span>}
                 {sel && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-accent" aria-hidden />}
               </button>

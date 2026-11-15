@@ -13,6 +13,7 @@ import { Tour } from '../features/tour/Tour'
 import { Assistant } from '../features/assistant/AssistantPanel'
 import { ShortcutsOverlay, useGlobalShortcuts } from './shortcuts'
 import { useUiStore } from './uiStore'
+import { useLang, useT } from '../i18n'
 
 /**
  * Two views over the same live state.
@@ -34,9 +35,10 @@ if (import.meta.env.DEV) {
  * gives the timeline room for readable lane labels.
  */
 function GroundView() {
+  const t = useT()
   return (
     <>
-      <main id="main-content" aria-label="Crew health overview" className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[232px_minmax(0,1fr)_360px] xl:grid-cols-[256px_minmax(0,1fr)_392px] 2xl:grid-cols-[280px_minmax(0,1fr)_420px] roomy:grid-cols-[300px_minmax(0,1fr)_464px]">
+      <main id="main-content" aria-label={t('app.mainLabel')} className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[232px_minmax(0,1fr)_360px] xl:grid-cols-[256px_minmax(0,1fr)_392px] 2xl:grid-cols-[280px_minmax(0,1fr)_420px] roomy:grid-cols-[300px_minmax(0,1fr)_464px]">
         <CrewRail className="lg:min-h-0" />
         <div className="flex min-h-[520px] min-w-0 flex-col gap-3 lg:min-h-0">
           <CenterStage className="min-h-0 flex-1" />
@@ -56,6 +58,9 @@ export default function App() {
   useGlobalShortcuts()
   const viewMode = useUiStore((s) => s.viewMode)
   const presentation = useUiStore((s) => s.presentation)
+  // Subscribing here re-renders the whole tree on a language change, so components that read
+  // translated module tables (STATUS_META, catalog helpers) without useT() update too.
+  useLang()
   useEffect(() => {
     document.documentElement.dataset.present = presentation ? 'true' : 'false'
     document.documentElement.dataset.view = viewMode
