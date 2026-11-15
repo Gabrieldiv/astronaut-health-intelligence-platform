@@ -14,8 +14,6 @@ const m: Record<keyof typeof en, string> = {
   'comms.unit.min': '{n} 分',
   'comms.unit.minS': '{m} 分 {s} 秒',
   'comms.unit.hMin': '{h} 時間 {m} 分',
-  'comms.meaning.near': '地球への質問と返答には約 {delay} かかります。管制センターはほぼリアルタイムで判断を支援できます。',
-  'comms.meaning.far': '地球への質問と返答には少なくとも {delay} かかります。まず船内での対応を優先し、地上は急ぎの判断ではなく確認に使ってください。',
   'comms.fromEarth': '地球から',
   'comms.toEarth': '地球へ',
   'comms.simulated': 'シミュレーション',
@@ -31,7 +29,6 @@ const m: Record<keyof typeof en, string> = {
   'comms.queued.failed': 'このビルドでは地球との通信がメッセージを受け付けませんでした。後でもう一度お試しください。',
   'comms.title': '地球との通信',
   'comms.footer': 'シミュレーションの通信です。遅延はおおよその光の到達時間で、地上からの返信もシミュレーションです。判断支援のみを目的としています。',
-  'comms.distance': '地球からの距離',
   'comms.profileAria': '通信プロファイル',
   'comms.oneWayRoundTrip': '片道 {one} · 往復 {round}',
   'comms.sendToGround': '地上へ送信',
@@ -41,9 +38,5 @@ const m: Record<keyof typeof en, string> = {
   'comms.nothingInTransit': '現在送信中のものはありません。',
   'comms.delivered': '到着済み',
   'comms.noMessages': 'まだメッセージはありません。送信した健康データや相談依頼がここに表示されます。',
-  'comms.indicatorAria': '地球との通信: {profile}、片道の遅延 {delay}',
-  'comms.indicatorAriaTransit_one': '地球との通信: {profile}、片道の遅延 {delay}、送信中のメッセージ {n} 件',
-  'comms.indicatorAriaTransit_other': '地球との通信: {profile}、片道の遅延 {delay}、送信中のメッセージ {n} 件',
-  'comms.indicatorTitle': '地球との通信: 遅延と管制センターへのメッセージ',
 }
 export default m
