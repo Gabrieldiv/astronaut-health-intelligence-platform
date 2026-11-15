@@ -8,7 +8,7 @@
  * fixed thresholds below are a safety net for the demo and must be reviewed by a
  * flight surgeon before any real use.
  */
-import type { CommProfileId, InterventionKind, MetricCode, MissionPlan, RiskLevel } from '../types/domain'
+import type { CommProfileId, ForecastHorizonHours, InterventionKind, MetricCode, MissionPlan, RiskLevel } from '../types/domain'
 
 export const ENGINE_VERSION = 'ahi-engine 2.0.0'
 export const RISK_MODEL_VERSION = 'AHI transparent rules v2.0 (demo)'
@@ -340,4 +340,22 @@ export const COMPARE = {
   acuteHorizonHours: 2,
   maxHorizonHours: 168,
   disclaimer: 'Simulation for discussion only. Not evidence of clinical efficacy.',
+} as const
+
+/**
+ * v4: forecast horizons the user can pick. DEMO CONFIGURATION, NOT AN OFFICIAL LIMIT.
+ * The history rule follows PROJECT_MASTER 9.6 ("do not extrapolate long periods from short
+ * series"): a horizon is projected only when the history goes back at least
+ * horizon x minHistoryRatio hours. Otherwise the UI shows "Not enough history for this horizon".
+ */
+export const FORECAST_HORIZONS = {
+  /** 24 h, 36 h, 72 h, 7 days, 15 days. */
+  options: [24, 36, 72, 168, 360] as readonly ForecastHorizonHours[],
+  defaultHours: 24 as ForecastHorizonHours,
+  /** Demo rule: never project more than twice as far ahead as the history goes back. */
+  minHistoryRatio: 0.5,
+  /** Horizons beyond this many hours get an extra "rough trend only" note. */
+  longHorizonHours: 72,
+  /** Points kept per projection for charts (computed at full resolution, then thinned). */
+  maxPoints: 72,
 } as const

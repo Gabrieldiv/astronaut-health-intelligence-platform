@@ -14,6 +14,9 @@ import { AutonomyBadge } from './AutonomyBadge'
 import { formatHours, formatUtcTime, relTime } from '../../components/format'
 import { BODY_REGIONS, focusTarget, useActions, useEscapeClearsStructure, usePendingActions, useSelectedStructure, useSignalLost } from '../shared/hooks'
 import { RegionDetail } from './RegionDetail'
+import { forHorizon, forecastMessage, historyNote, useForecastHorizon } from './forecastHorizon'
+import { HorizonPicker } from './HorizonPicker'
+import { horizonLabel } from '../../engine/forecast'
 import { StructureDetail, StructureUnavailable } from './StructureDetail'
 
 export const DISCLAIMER = 'Decision support only. Not a diagnosis. Simulated data.'
@@ -267,7 +270,7 @@ function Actions({ astronautId }: { astronautId: string }) {
 function ForecastRow({ p, astronautId, className }: { p: Prediction; astronautId: string; className?: string }) {
   const def = METRIC_CATALOG[p.metric]
   const exits = p.eligible && p.hoursToBandExit != null
-  const message = !p.eligible ? 'Not enough data to forecast yet' : exits ? `Projected to leave your normal range in ${formatHours(p.hoursToBandExit!)}` : `Stable over next ${p.horizonHours} h`
+  const message = forecastMessage(p, formatHours)
   const last = p.points[p.points.length - 1]
   const first = p.points[0]
   const rising = last && first ? last.v > first.v : false
@@ -294,6 +297,7 @@ function ForecastRow({ p, astronautId, className }: { p: Prediction; astronautId
               {p.method} · {p.intervalLabel}
             </span>
           )}
+          {p.ineligibleReason === 'HISTORY_TOO_SHORT' && <span className="mt-0.5 block text-[10px] text-ink-500">{historyNote(p)}</span>}
         </span>
       </button>
     </li>
@@ -302,11 +306,14 @@ function ForecastRow({ p, astronautId, className }: { p: Prediction; astronautId
 
 function Forecasts({ astronautId }: { astronautId: string }) {
   const predictions = useAppStore((s) => s.health[astronautId]?.predictions)
+  const horizon = useForecastHorizon((s) => s.hours)
   const list = useMemo(() => {
-    const arr = Object.values(predictions ?? {}).filter((p): p is Prediction => !!p)
+    const arr = Object.values(predictions ?? {})
+      .map((p) => forHorizon(p, horizon))
+      .filter((p): p is Prediction => !!p)
     const rank = (p: Prediction) => (!p.eligible ? 2 : p.hoursToBandExit != null ? 0 : 1)
     return arr.sort((a, b) => rank(a) - rank(b) || (a.hoursToBandExit ?? 0) - (b.hoursToBandExit ?? 0))
-  }, [predictions])
+  }, [predictions, horizon])
   const exits = list.filter((p) => p.eligible && p.hoursToBandExit != null).length
   const [showAll, setShowAll] = useState(false)
   // Large screens (roomy) show every forecast: the extra rows are rendered but hidden by CSS elsewhere.
@@ -316,12 +323,13 @@ function Forecasts({ astronautId }: { astronautId: string }) {
       <SectionLabel
         right={
           <span className="flex items-center gap-1 text-[11px] text-ink-500">
-            <Sparkles size={11} aria-hidden /> next hours
+            <Sparkles size={11} aria-hidden /> next {horizonLabel(horizon)}
           </span>
         }
       >
         Forecast
       </SectionLabel>
+      <HorizonPicker size="xs" className="mt-1.5 w-fit" />
       {list.length === 0 ? (
         <div className="mt-2 rounded-xl bg-white/[0.03] px-3 py-2.5 text-[13px] text-ink-500 ring-1 ring-white/[0.05]">Forecasts appear once enough data is collected.</div>
       ) : (

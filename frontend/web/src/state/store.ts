@@ -160,6 +160,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
   dismissRecommendation: (id) => {
     if (engine.dismissRecommendation(id)) set(changedSlices(engine))
   },
+  // v4: operator pause / resume of one device (audited). Re-evaluate so NO_DATA shows at once.
+  setDevicePaused: (deviceId, paused, actor = 'operator') => {
+    if (!engine.setDevicePaused(deviceId, paused, actor)) return
+    engine.evaluate()
+    set(changedSlices(engine))
+  },
 
   // v2 actions
   setCommProfile: (id) => {

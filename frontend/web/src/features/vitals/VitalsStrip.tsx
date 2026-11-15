@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Activity, Cpu, WifiOff, Wind } from 'lucide-react'
+import { Activity, CirclePause, Cpu, WifiOff, Wind } from 'lucide-react'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
 import type { MetricCode, Status } from '../../types/domain'
@@ -11,6 +11,7 @@ import { deltaVsNormal, lastHours } from '../../components/format'
 import { focusTarget } from '../shared/hooks'
 import { BaselineInfo } from '../../components/BaselineInfo'
 import { DevicesIndicator } from './DevicesIndicator'
+import { useMetricPaused } from './deviceMeta'
 
 const TILE_LABEL: Partial<Record<MetricCode, string>> = { SYSTOLIC_BP: 'Blood pressure', HRV_RMSSD: 'Heart variability' }
 /** Short tile labels used below 1440 px wide and on short screens (see .vl-short in index.css). */
@@ -20,6 +21,7 @@ function VitalTile({ astronautId, metric }: { astronautId: string; metric: Metri
   const ms = useAppStore((s) => s.health[astronautId]?.metrics[metric])
   const hist = useAppStore((s) => s.history[astronautId]?.[metric])
   const selected = useAppStore((s) => s.selectedMetric === metric)
+  const paused = useMetricPaused(astronautId, metric)
   const def = METRIC_CATALOG[metric]
   const status: Status = !ms || ms.current == null ? 'NO_DATA' : ms.status
   const meta = STATUS_META[status]
@@ -32,7 +34,7 @@ function VitalTile({ astronautId, metric }: { astronautId: string; metric: Metri
     <button
       type="button"
       onClick={() => focusTarget({ astronautId, metric })}
-      aria-label={`${def.label}: ${noData ? 'signal lost' : `${ms?.current?.toFixed(def.decimals)} ${def.unit}, ${delta.text}`}. Status ${meta.crewLabel}. Open details.`}
+      aria-label={`${def.label}: ${noData ? (paused ? 'no data, device paused by operator' : 'signal lost') : `${ms?.current?.toFixed(def.decimals)} ${def.unit}, ${delta.text}`}. Status ${paused && noData ? 'paused' : meta.crewLabel}. Open details.`}
       className={clsx(
         'focus-ring group relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl px-3 pt-2.5 pb-2 text-left transition-colors short:justify-center short:pt-2',
         noData ? 'border border-dashed border-nodata/45 bg-white/[0.015]' : 'bg-white/[0.03] ring-1 ring-white/[0.06] hover:bg-white/[0.06]',
@@ -50,7 +52,7 @@ function VitalTile({ astronautId, metric }: { astronautId: string; metric: Metri
       <span className="mt-0.5 flex items-baseline gap-1 whitespace-nowrap">
         {noData ? (
           <span className="flex items-center gap-1.5 text-[15px] leading-[32px] font-semibold text-nodata xl:text-[17px] short:text-[14px] short:leading-[28px]">
-            <WifiOff size={16} aria-hidden className="shrink-0" /> Signal lost
+            {paused ? <CirclePause size={16} aria-hidden className="shrink-0" /> : <WifiOff size={16} aria-hidden className="shrink-0" />} {paused ? 'Paused' : 'Signal lost'}
           </span>
         ) : (
           <>
@@ -61,7 +63,7 @@ function VitalTile({ astronautId, metric }: { astronautId: string; metric: Metri
       </span>
       <Sparkline points={lastHours(hist, 6)} color={lineColor} band={band} height={18} className="mt-0.5 w-full short:hidden" maxPoints={72} />
       <span className={clsx('mt-1 truncate pr-5 text-[10.5px] font-medium short:hidden', noData ? 'text-nodata' : delta.tone === 'in' ? 'text-ink-500' : '')} style={!noData && delta.tone !== 'in' ? { color: meta.color } : undefined}>
-        {noData ? 'Check the sensor' : delta.tone === 'in' ? 'Normal for you' : delta.text}
+        {noData ? (paused ? 'Paused by operator' : 'Check the sensor') : delta.tone === 'in' ? 'Normal for you' : delta.text}
       </span>
     </button>
     {/* Outside the tile button (no nested buttons). Short screens: top right, next to the status icon. */}

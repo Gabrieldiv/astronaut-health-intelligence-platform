@@ -220,6 +220,8 @@ const AUDIT_LABEL: Record<ShownAction, string> = {
   COMM_RECEIVED: 'Message received',
   COMM_PROFILE_CHANGED: 'Earth link changed',
   CHECKIN_RECORDED: 'Check-in recorded',
+  DEVICE_PAUSED: 'Device paused',
+  DEVICE_RESUMED: 'Device resumed',
 }
 
 const AUDIT_DOT: Partial<Record<AuditAction, string>> = {

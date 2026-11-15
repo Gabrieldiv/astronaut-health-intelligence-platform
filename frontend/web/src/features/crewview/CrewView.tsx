@@ -1,15 +1,15 @@
 import clsx from 'clsx'
-import { BookOpen, Check, Earth, ListChecks, PartyPopper, X } from 'lucide-react'
+import { BookOpen, Check, CirclePause, Earth, ListChecks, PartyPopper, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../state/store'
 import { STATUS_META } from '../../lib/status'
-import type { Astronaut, MetricCode, Recommendation, Status } from '../../types/domain'
+import type { Astronaut, BodyRegionId, MetricCode, Recommendation, Status } from '../../types/domain'
 import { METRIC_CATALOG, REGION_LABELS } from '../../engine/catalog'
 import { MetricValue } from '../../components/MetricValue'
 import { StatusIcon, StatusPill, isUrgent } from '../../components/Status'
 import { BaselineInfo } from '../../components/BaselineInfo'
-import { deltaVsNormal } from '../../components/format'
+import { deltaVsNormal, fmtMetric } from '../../components/format'
 import { CriticalBanner } from '../alerts/Alerts'
 import { AutonomyBadge } from '../attention/AutonomyBadge'
 import { ACTIVITY_LABEL, REGION_ICON, Stage3D } from '../stage/CenterStage'
@@ -27,6 +27,7 @@ import {
 } from '../shared/hooks'
 import { CONTEXT_ONLY_TEXT, CONTEXT_ONLY_TITLE, SYSTEM_INFO, sideLabel } from '../anatomy/atlas/health'
 import { CheckInButton } from '../checkin'
+import { WEARABLE_PAUSED_HEADLINE, useMetricPaused, useWearablePaused } from '../vitals/deviceMeta'
 import { WhatIfButton } from '../whatif'
 
 /**
@@ -98,6 +99,7 @@ function Hero() {
   const { headline, activity } = useAppStore(useShallow((s) => ({ headline: s.health[id]?.risk.headline, activity: s.health[id]?.activity })))
   const status = useCrewStatus(id)
   const signalLost = useSignalLost(id)
+  const wearablePaused = useWearablePaused(id)
   const meta = STATUS_META[status]
   if (!astronaut) return null
   return (
@@ -126,7 +128,7 @@ function Hero() {
         </div>
       </div>
       <p aria-live="polite" className="mt-3 max-w-[680px] text-[22px] leading-snug short:mt-2 short:text-[18px] font-medium text-balance text-ink-100 [text-shadow:0_2px_12px_rgba(4,7,13,0.9)]">
-        {signalLost && (status === 'NO_DATA' || status === 'LOW') ? SIGNAL_LOST_HEADLINE : (headline ?? 'Waiting for data.')}
+        {signalLost && (status === 'NO_DATA' || status === 'LOW') ? (wearablePaused ? WEARABLE_PAUSED_HEADLINE : SIGNAL_LOST_HEADLINE) : (headline ?? 'Waiting for data.')}
       </p>
     </div>
   )
@@ -290,6 +292,7 @@ const CREW_VITALS: { metric: MetricCode; label: string }[] = [
 
 function BigVital({ astronautId, metric, label }: { astronautId: string; metric: MetricCode; label: string }) {
   const ms = useAppStore((s) => s.health[astronautId]?.metrics[metric])
+  const paused = useMetricPaused(astronautId, metric)
   const def = METRIC_CATALOG[metric]
   const status: Status = !ms || ms.current == null ? 'NO_DATA' : ms.status
   const meta = STATUS_META[status]
@@ -306,7 +309,7 @@ function BigVital({ astronautId, metric, label }: { astronautId: string; metric:
       </div>
       <div className="mt-0.5 flex items-baseline gap-1.5">
         {noData ? (
-          <span className="text-[22px] leading-[40px] font-semibold text-nodata">Signal lost</span>
+          <span className="text-[22px] leading-[40px] font-semibold text-nodata">{paused ? 'Paused' : 'Signal lost'}</span>
         ) : (
           <>
             <MetricValue value={ms?.current} decimals={def.decimals} className="text-[34px] leading-[40px] font-semibold tracking-tight text-ink-100" />
@@ -316,7 +319,7 @@ function BigVital({ astronautId, metric, label }: { astronautId: string; metric:
       </div>
       <div className="mt-0.5 flex items-center gap-1.5 text-[13px] font-medium" style={{ color: noData ? undefined : delta.tone === 'in' ? '#a9b6cf' : meta.color }}>
         <StatusIcon status={status} size={14} />
-        <span className={clsx(noData && 'text-nodata')}>{noData ? 'Check the sensor' : delta.tone === 'in' ? 'Normal for you' : `${delta.text}`}</span>
+        <span className={clsx(noData && 'text-nodata')}>{noData ? (paused ? 'Paused by operator' : 'Check the sensor') : delta.tone === 'in' ? 'Normal for you' : `${delta.text}`}</span>
       </div>
     </div>
   )
@@ -332,6 +335,93 @@ function CrewVitals() {
           <BigVital key={v.metric} astronautId={id} metric={v.metric} label={v.label} />
         ))}
       </div>
+    </section>
+  )
+}
+
+/** Body systems in head to toe order, with the reading that best sums each one up for the crew. */
+const CREW_REGIONS: { region: BodyRegionId; key: MetricCode }[] = [
+  { region: 'brain', key: 'SLEEP_DURATION' },
+  { region: 'heart', key: 'HEART_RATE' },
+  { region: 'lungs', key: 'SPO2' },
+  { region: 'kidneys', key: 'HYDRATION' },
+  { region: 'muscles', key: 'EXERCISE_LOAD' },
+  { region: 'bones', key: 'RADIATION_DOSE' },
+  { region: 'skin', key: 'SKIN_TEMPERATURE' },
+]
+
+/**
+ * One monitored body system: status in plain words, its key reading, tap to show it on the body.
+ * Same information as the chips beside the body in the ground view, sized for touch.
+ */
+function BodySystemCard({ astronautId, region, keyMetric }: { astronautId: string; region: BodyRegionId; keyMetric: MetricCode }) {
+  const { status, summary, monitored } = useAppStore(
+    useShallow((s) => {
+      const r = s.health[astronautId]?.regions[region]
+      return { status: (r?.status ?? 'NO_DATA') as Status, summary: r?.summary ?? '', monitored: !r || r.metrics.length > 0 }
+    }),
+  )
+  const ms = useAppStore((s) => s.health[astronautId]?.metrics[keyMetric])
+  const selected = useAppStore((s) => s.selectedRegion === region)
+  const paused = useMetricPaused(astronautId, keyMetric)
+  const { selectRegion, selectMetric } = useActions()
+  const label = REGION_LABELS[region]
+  const Icon = REGION_ICON[region]
+  const def = METRIC_CATALOG[keyMetric]
+  const meta = STATUS_META[status]
+  const noData = status === 'NO_DATA'
+  const word = !monitored ? 'Not monitored' : noData ? (paused ? 'Paused' : 'No data') : meta.crewLabel
+  const value = ms && ms.current != null ? `${fmtMetric(keyMetric, ms.current)} ${def.unit}` : null
+  const tinted = !noData && status !== 'LOW' && !selected
+  return (
+    <li>
+      <button
+        type="button"
+        aria-pressed={selected}
+        onClick={() => {
+          selectRegion(selected ? null : region)
+          selectMetric(null)
+        }}
+        aria-label={`${label.label}: ${word}.${value ? ` ${def.shortLabel} ${value}.` : ''} ${summary} ${selected ? 'Shown on the body. Press to clear.' : 'Press to show it on the body.'}`}
+        className={clsx(
+          'focus-ring flex min-h-[64px] w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left transition-colors',
+          selected
+            ? 'bg-accent/[0.1] ring-1 ring-accent/50'
+            : noData && monitored
+              ? 'border border-dashed border-nodata/40 hover:bg-white/[0.04]'
+              : 'bg-white/[0.035] ring-1 ring-white/[0.06] hover:bg-white/[0.07]',
+        )}
+        style={tinted ? { boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${meta.color} 45%, transparent)` } : undefined}
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] ring-1 ring-white/10">
+          <Icon size={19} className={selected ? 'text-accent' : 'text-ink-300'} aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[15px] leading-tight font-semibold text-ink-100">{label.label}</span>
+          <span className="tabular block truncate text-[12px] text-ink-500">{value ? `${def.shortLabel} ${value}` : label.system}</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold" style={{ color: noData ? undefined : meta.color }}>
+          {paused && noData ? <CirclePause size={15} className="text-nodata" aria-hidden /> : <StatusIcon status={status} size={15} />}
+          <span className={clsx(noData && 'text-nodata')}>{word}</span>
+        </span>
+      </button>
+    </li>
+  )
+}
+
+function CrewBodySystems() {
+  const id = useAppStore((s) => s.selectedAstronautId)
+  return (
+    <section aria-label="Your body systems" className="glass rounded-2xl p-4">
+      <h2 className="flex items-center justify-between gap-2 text-[12px] font-semibold tracking-[0.14em] text-ink-500 uppercase">
+        Your body systems
+        <span className="tracking-normal normal-case">Tap one to see it on the body</span>
+      </h2>
+      <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+        {CREW_REGIONS.map((r) => (
+          <BodySystemCard key={r.region} astronautId={id} region={r.region} keyMetric={r.key} />
+        ))}
+      </ul>
     </section>
   )
 }
@@ -355,6 +445,7 @@ export function CrewView() {
           <CrewActions />
           <CheckInButton astronautId={id} variant="prominent" />
           <CrewVitals />
+          <CrewBodySystems />
         </div>
       </div>
     </main>

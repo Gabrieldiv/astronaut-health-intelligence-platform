@@ -52,6 +52,7 @@ import {
   CHECKIN,
   COMMS,
   FORECAST,
+  FORECAST_HORIZONS,
   FORECAST_METRICS,
   MISSION_DAYS,
   SELF_REPORT_METRICS,
@@ -62,7 +63,7 @@ import { MetricTracker, bucketCode, bucketFor, bucketFromCode, levelRank, type M
 import { AlertManager } from './alerts'
 import { checkInTime, checkInValues, sanitizeCheckIn, selfReportSummary, simulateCheckIn } from './checkins'
 import { CommManager, delayPhrase, type ReplyContext, type SendInput } from './comms'
-import { buildPrediction } from './forecast'
+import { buildHorizonPredictions, buildPrediction, type ForecastInput } from './forecast'
 import { compareIntervention as projectIntervention, resolveMetric, type CompareInput } from './intervention'
 import { heuristicLevel, isoDate, sameDay, synthDay } from './missionDays'
 import { RecommendationManager, applySuppression, isActionable } from './recommendations'
@@ -158,6 +159,8 @@ const MISSION_START = Date.parse(MISSION.startedAt)
 const MISSION_DAY0 = dayIndex(MISSION_START)
 const REST_CODE = bucketCode('REST')
 const CHECKIN_SOURCE = (id: string) => `APP-CHECKIN-${id}`
+/** History read for the forecasts: enough for the longest selectable horizon (v4). */
+const HORIZON_LOOKBACK_MS = Math.max(FORECAST.windowHours, Math.max(...FORECAST_HORIZONS.options) * FORECAST_HORIZONS.minHistoryRatio) * HOUR_MS
 
 export function commProfileById(id: CommProfileId): CommProfile {
   return COMM_PROFILES.find((p) => p.id === id) ?? COMM_PROFILES[0]!
@@ -213,6 +216,10 @@ export class HealthEngine implements SimWorld {
   private lastMissionDay = -1
   private readonly crewChans = new Map<string, Channel[]>()
   private readonly checkInTimes = new Map<number, number[]>()
+  /** v4 device pause: sim time each device was resumed (grace until its first reading). */
+  private readonly resumedAt = new Map<string, number>()
+  /** v4 device pause: assessments forced to NO_DATA by a pause (no anomaly, no sensor alarm). */
+  private readonly pausedAssess = new WeakSet<object>()
 
   // Published slices (replaced, never mutated, when they change)
   crew: Astronaut[]
@@ -410,6 +417,7 @@ export class HealthEngine implements SimWorld {
     this.simTime = t
     const nowIso = this.iso(t)
     for (const ad of this.adapters) {
+      if (ad.pausedAt !== null) continue // paused by an operator: emits nothing
       const obs = ad.read(t)
       for (const o of obs) this.ingest(o, o.measured_at === nowIso ? t : Date.parse(o.measured_at))
     }
@@ -454,12 +462,54 @@ export class HealthEngine implements SimWorld {
 
   private deviceStatuses(now: number): Map<string, AdapterStatus> {
     const m = new Map<string, AdapterStatus>()
-    for (const a of this.adapters) m.set(a.id, a.status(now))
+    for (const a of this.adapters) {
+      const st = a.status(now)
+      if (a.pausedAt !== null) {
+        m.set(a.id, { ...st, state: 'PAUSED', signalPct: null, detail: `Paused by operator at ${fmtClock(a.pausedAt)}` })
+        continue
+      }
+      const resumed = this.resumedAt.get(a.id)
+      // Just resumed and no reading yet: the device is reconnecting, not failing.
+      if (resumed !== undefined && st.state === 'DATA_STALE' && st.lastSeenAt < resumed) {
+        m.set(a.id, { ...st, state: 'ONLINE', detail: `Resumed at ${fmtClock(resumed)}, waiting for the first reading` })
+        continue
+      }
+      m.set(a.id, st)
+    }
     return m
+  }
+
+  /**
+   * 'PAUSED' when the device that feeds this tracker is paused by an operator; 'RESUMING' when it
+   * was resumed and no reading arrived yet (grace: the metric's own staleness window). Either way
+   * the metric reads NO_DATA, but it is not a sensor failure. Past the grace, the usual
+   * missing data rules apply again.
+   */
+  private pauseState(tr: MetricTracker, now: number): 'PAUSED' | 'RESUMING' | null {
+    if (!tr.deviceId) return null
+    const ad = this.adapterById.get(tr.deviceId)
+    if (!ad) return null
+    if (ad.pausedAt !== null) return 'PAUSED'
+    const resumed = this.resumedAt.get(ad.id)
+    if (resumed === undefined) return null
+    if (tr.lastValidT >= resumed) return null
+    return now - resumed <= tr.cfg.staleMin * MIN_MS ? 'RESUMING' : null
   }
 
   private assessChannel(ch: Channel, now: number, statuses: Map<string, AdapterStatus>): MetricAssessment {
     const tr = ch.tracker
+    const pause = this.pauseState(tr, now)
+    if (pause) {
+      const name = inlineLabel(ch.metric)
+      const a: MetricAssessment = {
+        ...tr.assess(now, true),
+        ruleId: null,
+        label: pause === 'PAUSED' ? `Paused by operator: no ${name} data` : `Device resumed by operator: waiting for the first ${name} reading`,
+        phrase: pause === 'PAUSED' ? `${name[0]!.toUpperCase()}${name.slice(1)} is paused by an operator` : `${name[0]!.toUpperCase()}${name.slice(1)} is restarting`,
+      }
+      this.pausedAssess.add(a)
+      return a
+    }
     let down = false
     if (tr.deviceId && tr.cfg.kind === 'continuous') {
       const ad = this.adapterById.get(tr.deviceId)
@@ -514,6 +564,8 @@ export class HealthEngine implements SimWorld {
       if (!a || tr.cfg.kind !== 'continuous' || !tr.deviceId) continue
       const ad = this.adapterById.get(tr.deviceId)
       if (!ad || !ad.listed) continue
+      // Paused (or just resumed) by an operator: no data, but never reported as a sensor failure.
+      if (this.pausedAssess.has(a)) continue
       if (a.noData) silent.set(tr.deviceId, [...(silent.get(tr.deviceId) ?? []), ch.metric])
       else if (tr.questionableShare() >= 0.2) shaky.set(tr.deviceId, [...(shaky.get(tr.deviceId) ?? []), ch.metric])
     }
@@ -521,7 +573,7 @@ export class HealthEngine implements SimWorld {
     for (const [devId, metrics] of silent) {
       const ad = this.adapterById.get(devId)!
       const since = Math.min(...metrics.map((m) => now - this.channel(subjectId ?? 'CABIN', m).tracker.lastValidT))
-      const devName = ad.name.replace(' (sim)', '')
+      const devName = ad.name
       out.push({
         subjectId,
         ruleId: 'R-DQ-01',
@@ -537,7 +589,7 @@ export class HealthEngine implements SimWorld {
     }
     for (const [devId, metrics] of shaky) {
       const ad = this.adapterById.get(devId)!
-      const devName = ad.name.replace(' (sim)', '')
+      const devName = ad.name
       out.push({
         subjectId,
         ruleId: 'R-DQ-02',
@@ -561,22 +613,26 @@ export class HealthEngine implements SimWorld {
       const cfg = tr.cfg
       if (cfg.kind === 'event') {
         const ref = tr.readyBaseline('ALL')
-        out[m] = buildPrediction({
+        const input: ForecastInput = {
           astronautId: subject,
           metric: m,
           now,
           kind: 'event',
-          points: tr.series.lastValid(14).map((p) => ({ t: p.t, v: p.v as number })),
+          points: tr.series.lastValid(SIM.maxEventPoints).map((p) => ({ t: p.t, v: p.v as number })),
           band: ref ? { low: ref.low, high: ref.high } : null,
           physicalMin: cfg.physicalMin,
           physicalMax: cfg.physicalMax,
-        })
+        }
+        // buildPrediction keeps its last 14 daily values; the horizon projections use them all.
+        out[m] = { ...buildPrediction(input), byHorizon: buildHorizonPredictions(input) }
         continue
       }
       const ref = cfg.bucketed ? tr.readyBaseline('REST') : tr.readyBaseline('ALL')
       const pts: Array<{ t: number; v: number }> = []
       const multiplicative = m === 'HRV_RMSSD'
-      tr.series.forEachSince(now - FORECAST.windowHours * HOUR_MS, (t, v, bc) => {
+      // Whole stored history: the default projection bins only its last FORECAST.windowHours,
+      // the longer horizons (FORECAST_HORIZONS) need more.
+      tr.series.forEachSince(now - HORIZON_LOOKBACK_MS, (t, v, bc) => {
         if (v === null) return
         if (!cfg.bucketed) {
           pts.push({ t, v })
@@ -588,7 +644,7 @@ export class HealthEngine implements SimWorld {
         if (!bb) return
         pts.push({ t, v: multiplicative ? (v * ref.median) / bb.median : v - bb.median + ref.median })
       })
-      out[m] = buildPrediction({
+      const input: ForecastInput = {
         astronautId: subject,
         metric: m,
         now,
@@ -598,7 +654,8 @@ export class HealthEngine implements SimWorld {
         physicalMin: cfg.physicalMin,
         physicalMax: cfg.physicalMax,
         methodNote: cfg.bucketed ? 'context adjusted to resting values, exercise excluded' : undefined,
-      })
+      }
+      out[m] = { ...buildPrediction(input), byHorizon: buildHorizonPredictions(input) }
     }
     return out
   }
@@ -607,6 +664,7 @@ export class HealthEngine implements SimWorld {
     const prev = this.prevLevels.get(key) ?? 'LOW'
     const cur: RiskLevel | 'NO_DATA' = a.noData ? 'NO_DATA' : a.level
     this.prevLevels.set(key, cur)
+    if (this.pausedAssess.has(a)) return // operator pause: recorded in the audit trail, not an anomaly
     let severity: RiskLevel | null = null
     if (cur === 'NO_DATA') {
       if (prev !== 'NO_DATA') severity = 'MODERATE'
@@ -657,6 +715,7 @@ export class HealthEngine implements SimWorld {
         data_origin: 'SIMULATED',
         metrics: ad.metrics,
         detail: st.detail,
+        pausedAt: ad.pausedAt,
       })
       key += `${ad.id}:${st.state}:${st.batteryPct}:${st.signalPct}:${st.lastSeenAt}:${st.detail};`
     }
@@ -1285,6 +1344,32 @@ export class HealthEngine implements SimWorld {
       profile: cabin ? null : this.physio(input.astronautId).profile,
       baseline: tr ? tr.readyBaseline(ctxBucket) : null,
     })
+  }
+
+  /**
+   * v4: pause or resume monitoring of one listed device (operator action, audited). While paused
+   * the device emits nothing and its metrics read NO_DATA "Paused by operator", which is never
+   * treated as normal and never raised as a sensor failure. Resuming restarts the stream from
+   * now (nothing is backfilled for the pause). Returns false when nothing changed.
+   */
+  setDevicePaused(deviceId: string, paused: boolean, actor = 'operator'): boolean {
+    const ad = this.adapterById.get(deviceId)
+    if (!ad || !ad.listed || (ad.pausedAt !== null) === paused) return false
+    const at = this.simTime
+    const since = ad.pausedAt
+    ad.setPaused(paused, at)
+    if (paused) this.resumedAt.delete(ad.id)
+    else this.resumedAt.set(ad.id, at)
+    const owner = ad.assignedTo ? `${this.callsign(ad.assignedTo)}: ` : ad.kind.startsWith('EXERCISE_') ? 'Shared: ' : 'Cabin: '
+    const list = ad.metrics.map(inlineLabel).join(', ')
+    this.addAudit(
+      paused ? 'DEVICE_PAUSED' : 'DEVICE_RESUMED',
+      actor,
+      paused
+        ? `${owner}${ad.name} paused by operator. ${list} will show no data (paused by operator) until it is resumed; missing data is not treated as normal.`
+        : `${owner}${ad.name} resumed by operator after ${fmtDuration(at - (since ?? at))}. Live readings restart now; nothing is recorded for the paused period.`,
+    )
+    return true
   }
 
   dismissRecommendation(id: string, actor = 'crew'): boolean {
