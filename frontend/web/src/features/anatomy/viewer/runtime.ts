@@ -344,6 +344,21 @@ export class AtlasRuntime {
   }
 
   /**
+   * Distance along the ray to the first visible body surface (any structure on screen, ghosted
+   * ones included; the skin only while it is drawn), or null when the ray misses the body.
+   * The camera uses it so it never passes through geometry.
+   */
+  surfaceDistance(raycaster: Raycaster): number | null {
+    if (!this.pickables.length) return null
+    for (const h of raycaster.intersectObjects(this.pickables, false)) {
+      const e = h.object.userData.entry as Entry
+      if (e.skin && this.skinAlpha < 0.02) continue
+      return h.distance
+    }
+    return null
+  }
+
+  /**
    * Structure under the ray. Solid structures win over ghosted ones, and the translucent skin
    * only counts when nothing else is hit, so inner anatomy stays reachable through it.
    * In Monitor mode the ray passes through context only structures (they never answer), but they

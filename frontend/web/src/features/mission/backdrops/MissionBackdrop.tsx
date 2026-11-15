@@ -6,6 +6,7 @@
  */
 import clsx from 'clsx'
 import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { useAppStore } from '../../../state/store'
 import type { MissionProfileId } from '../../../types/domain'
 import { useT } from '../../../i18n'
@@ -110,8 +111,11 @@ function GGauge({ accent }: { accent: string }) {
   )
 }
 
-/** Compact HUD chip: profile name, two or three cited facts and one profile widget. */
-export function MissionHud({ className }: { className?: string }) {
+/**
+ * Compact HUD chip: profile name, two or three cited facts and one profile widget. The caller
+ * places it (absolute, via className) in a spot that never covers the body, and may cap its width.
+ */
+export function MissionHud({ className, style }: { className?: string; style?: CSSProperties }) {
   const id = useAppStore((s) => s.missionProfileId)
   const t = useT()
   const accent = MISSION_ACCENT[id]
@@ -119,7 +123,7 @@ export function MissionHud({ className }: { className?: string }) {
   return (
     <div
       className={clsx('pointer-events-none absolute z-10 max-w-[min(260px,calc(100%-16px))] rounded-xl px-3 py-2 backdrop-blur-sm', className)}
-      style={{ background: 'rgba(6,10,20,0.62)', boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${accent} 45%, transparent)` }}
+      style={{ background: 'rgba(6,10,20,0.62)', boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${accent} 45%, transparent)`, ...style }}
     >
       <div className="text-[11px] font-semibold tracking-[0.12em] uppercase" style={{ color: accent }}>
         {t(`backdrop.name.${id}`)}
