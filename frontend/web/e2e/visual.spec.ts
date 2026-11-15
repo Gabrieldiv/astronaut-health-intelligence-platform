@@ -15,6 +15,11 @@ import { test, expect, freezeSimulation } from './fixtures'
 test.skip(process.platform !== 'win32' && !process.env.E2E_VISUAL, 'Visual baselines exist for Windows only (set E2E_VISUAL=1 to run).')
 
 test.beforeEach(async ({ app }) => {
+  // Things that settle on their own after load must settle before any shot: the connection chip
+  // (Checking, then Offline demo), the bundled space weather snapshot behind the mission control
+  // dot, and the lazy chunks. Then the clock is paused and the scenario restarted.
+  await expect(app.getByRole('button', { name: /^Connection: Offline demo/ })).toBeVisible()
+  await app.waitForLoadState('networkidle').catch(() => undefined)
   await freezeSimulation(app)
 })
 
@@ -52,4 +57,19 @@ test('mission and Earth link panel', async ({ app: page }) => {
   await expect(dialog).toHaveScreenshot('mission-link-panel.png', { mask: [page.locator('canvas')] })
   await dialog.getByRole('tab', { name: /^Earth link/ }).click()
   await expect(dialog).toHaveScreenshot('mission-link-panel-earth-link.png', { mask: [page.locator('canvas')] })
+})
+
+test('indicator breakdown popover', async ({ app: page }) => {
+  await page.getByTitle('What do these indicators cover? Open the breakdown').click()
+  const popover = page.getByRole('dialog', { name: 'Health indicators: ORION' })
+  await expect(popover.getByRole('button', { name: /^Heart/ })).toBeVisible()
+  await expect(popover).toHaveScreenshot('indicator-breakdown.png')
+})
+
+test('mission panel, what the mission profile changes', async ({ app: page }) => {
+  await page.getByRole('button', { name: /^Mission and Earth link:/ }).click()
+  const dialog = page.getByRole('dialog', { name: 'Mission and Earth link' })
+  const first = dialog.locator('section').first()
+  await expect(first.getByRole('heading', { name: 'What the mission profile changes' })).toBeVisible()
+  await expect(first).toHaveScreenshot('mission-what-changes.png')
 })
