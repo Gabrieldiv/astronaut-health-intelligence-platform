@@ -36,6 +36,7 @@ import type {
   Mission,
   MissionDaySummary,
   MissionProfileId,
+  MultivariateAssessment,
   Prediction,
   RiskLevel,
   ScenarioId,
@@ -56,11 +57,13 @@ import {
   FORECAST_HORIZONS,
   FORECAST_METRICS,
   MISSION_DAYS,
+  MULTIVARIATE,
   SELF_REPORT_METRICS,
   SIM,
   TIMELINE,
 } from './config'
 import { MetricTracker, bucketCode, bucketFor, bucketFromCode, levelRank, type MetricAssessment } from './anomaly'
+import { MultivariateDetector } from './ml/multivariate'
 import { AlertManager } from './alerts'
 import { checkInTime, checkInValues, sanitizeCheckIn, selfReportSummary, simulateCheckIn } from './checkins'
 import { CommManager, delayPhrase, type ReplyContext, type SendInput } from './comms'
@@ -224,6 +227,10 @@ export class HealthEngine implements SimWorld {
   private readonly resumedAt = new Map<string, number>()
   /** v4 device pause: assessments forced to NO_DATA by a pause (no anomaly, no sensor alarm). */
   private readonly pausedAssess = new WeakSet<object>()
+  /** v5: experimental multivariate detector per astronaut (informational, never sets status). */
+  private readonly mvDetectors = new Map<string, MultivariateDetector>()
+  private readonly mvFlagged = new Map<string, boolean>()
+  private mvTrainBudget = 1
 
   // Published slices (replaced, never mutated, when they change)
   crew: Astronaut[]
@@ -314,6 +321,7 @@ export class HealthEngine implements SimWorld {
     for (const a of this.crewBase) for (const m of ASTRONAUT_METRICS) this.addChannel(a.id, m)
     for (const m of CABIN_METRICS) this.addChannel('CABIN', m)
     for (const a of this.crewBase) this.crewChans.set(a.id, ASTRONAUT_METRICS.map((m) => this.channel(a.id, m)))
+    for (const a of this.crewBase) this.mvDetectors.set(a.id, new MultivariateDetector(a.id, this.seed))
 
     // 1) Backfill daily metrics (sleep, exercise sessions, reaction tests) before the minute history.
     for (const ch of this.channelList) ch.tracker.recomputeEvery = BASELINE.recomputeEveryPregen
@@ -439,10 +447,49 @@ export class HealthEngine implements SimWorld {
       if (t % (tr.cfg.cadenceMin * MIN_MS) === 0) tr.ingestMissing(t, tr.lastBucket)
     }
     this.generateCheckIns(prevT, t)
+    if (t % (SIM.coarseResolutionMin * MIN_MS) === 0) this.offerMultivariate(t)
     this.dataVersion++
     // Status timeline: one frame per TIMELINE.frameEveryMin boundary (cheap rules only).
     const frameMs = TIMELINE.frameEveryMin * MIN_MS
     if (t >= this.timelinePregenFrom && Math.floor(t / frameMs) > Math.floor(prevT / frameMs)) this.pushFrame(Math.floor(t / frameMs) * frameMs)
+  }
+
+  /** v5: one standardized vector per astronaut every 5 sim minutes for the multivariate training window. */
+  private offerMultivariate(t: number): void {
+    const fresh = SIM.coarseResolutionMin * MIN_MS
+    for (const id of this.crewIds) {
+      const z: (number | null)[] = []
+      const drift: (number | null)[] = []
+      for (const m of MULTIVARIATE.features) {
+        const tr = this.channel(id, m).tracker
+        const ok = t - tr.lastValidT < fresh && tr.lastQuality !== 'QUESTIONABLE' && tr.readyBaseline(tr.lastBucket) !== null
+        z.push(ok ? tr.z : null)
+        drift.push(ok ? tr.driftZ : null)
+      }
+      this.mvDetectors.get(id)!.offer(z, drift)
+    }
+  }
+
+  /** v5: experimental multivariate assessment (informational: never part of the risk score). */
+  private multivariateFor(id: string, assess: AssessMap, now: number): MultivariateAssessment {
+    const det = this.mvDetectors.get(id)!
+    let revision = 0
+    for (const m of MULTIVARIATE.features) revision += this.channel(id, m).tracker.baselineRevision
+    // At most one retraining per evaluate() (spreads the cost); a first model is always allowed.
+    if ((this.mvTrainBudget > 0 || !det.ready) && det.maybeTrain(now, revision)) this.mvTrainBudget--
+    const z: (number | null)[] = []
+    const drift: (number | null)[] = []
+    for (const m of MULTIVARIATE.features) {
+      const as = assess[m]
+      z.push(as && !as.noData ? as.z : null)
+      drift.push(as && !as.noData ? as.driftZ : null)
+    }
+    const mv = det.assess(now, z, drift)
+    if (mv.flagged !== (this.mvFlagged.get(id) ?? false)) {
+      this.mvFlagged.set(id, mv.flagged)
+      if (mv.flagged) this.addAudit('RULE_EVALUATED', 'system', `Experimental multivariate detector (${mv.model_version}) flagged an unusual combination for ${this.callsign(id)}: ${mv.explanation} Informational only, the status is unchanged.`)
+    }
+    return mv
   }
 
   private runSteps(target: number, mode: 'auto' | 'fine' | 'coarse', maxSteps: number): void {
@@ -774,6 +821,7 @@ export class HealthEngine implements SimWorld {
 
     // Crew
     const health: Record<string, AstronautHealth> = {}
+    this.mvTrainBudget = 1
     for (const a of this.crewBase) {
       const { chans, assess, hits, dq, combined, riskHits } = this.crewRules(a.id, now, statuses, envAssess, envHits)
       const metrics: Partial<Record<MetricCode, MetricState>> = {}
@@ -799,6 +847,7 @@ export class HealthEngine implements SimWorld {
         regions,
         risk,
         predictions: this.predCache.get(a.id) ?? {},
+        multivariate: this.multivariateFor(a.id, assess, now),
       }
       allHits.push(...hits, ...dq, ...combined)
     }

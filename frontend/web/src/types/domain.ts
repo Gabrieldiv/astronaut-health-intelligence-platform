@@ -382,6 +382,44 @@ export interface AstronautHealth {
   regions: Record<BodyRegionId, RegionState>
   risk: RiskAssessment
   predictions: Partial<Record<MetricCode, Prediction>>
+  /** Additive (engine v5): experimental multivariate detector. Never sets a status by itself. */
+  multivariate?: MultivariateAssessment
+}
+
+/** One signal's share of a multivariate deviation (engine v5). */
+export interface MultivariateContribution {
+  metric: MetricCode
+  /** Robust z vs the personal baseline (signed). */
+  z: number
+  /** Share of the squared deviation, 0..1 (sums to 1 over all features). */
+  share: number
+}
+
+/**
+ * Experimental, machine learning (engine v5): Isolation Forest trained on the astronaut's own
+ * baseline window of standardized metrics. Informational flag only: it never changes the risk
+ * level or score, and it flags only when persistence rules agree.
+ */
+export interface MultivariateAssessment {
+  /** NOT_READY: no model yet. NO_DATA: an input signal is missing (never treated as typical). */
+  state: 'NOT_READY' | 'NO_DATA' | 'TYPICAL' | 'ELEVATED' | 'UNUSUAL'
+  /** True only in state UNUSUAL ("Unusual combination" flag). */
+  flagged: boolean
+  /** Anomaly score 0..1 (about 0.5 or less is typical), null without a model or data. */
+  score: number | null
+  /** Personal threshold (max of the demo floor and a high quantile of the training scores). */
+  threshold: number | null
+  /** Sim time the score first went above the threshold (current episode). */
+  since: number | null
+  /** Largest first. */
+  contributions: MultivariateContribution[]
+  /** Plain language, non-diagnostic. */
+  explanation: string
+  model_version: string
+  trained_at: number | null
+  training_size: number
+  /** Always "Experimental, machine learning". */
+  label: string
 }
 
 export interface EnvironmentState {
