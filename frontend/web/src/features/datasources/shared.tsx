@@ -7,8 +7,8 @@ export const ORIGIN_META: Record<DataOrigin, { label: string; className: string;
   REAL_PUBLIC: {
     label: 'REAL_PUBLIC',
     className: 'bg-accent/10 text-accent ring-1 ring-accent/30',
-    meaning: 'Obtained as is from a public source, with accession, file and checksum recorded.',
-    inAhi: 'Historical NASA OSDR lab panels in this window. Reference only: never live telemetry and never this crew.',
+    meaning: 'Obtained as is from a public NASA source, with its identifier, link and retrieval time recorded (plus file checksum for datasets).',
+    inAhi: 'Historical NASA OSDR lab panels, the OSDR study list and NASA DONKI space weather in this window. Context only: never live crew telemetry and never this crew.',
   },
   DERIVED: {
     label: 'DERIVED',
