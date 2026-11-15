@@ -7,6 +7,8 @@
  *  - EWMA: exponentially weighted mean of the per sample z (half-life 3 sim hours).
  *    Catches slow drifts that no single value would flag.
  *  - PERSISTENCE: drift or out-of-band values that last (hours, nights, sessions).
+ *  - CUSUM (v5): tabular CUSUM of the hourly mean z. Catches small but steady drifts that
+ *    stay under the EWMA threshold (reported as PERSISTENCE on the drift rule, capped at MODERATE).
  *  - fixed demo thresholds from config.ts (safety net, not official limits).
  *  - DATA_QUALITY: stale or missing data is NO_DATA, never "normal".
  *
@@ -16,8 +18,9 @@
  */
 import type { ActivityContext, Anomaly, Baseline, MetricCode, QualityStatus, RiskLevel, Status } from '../types/domain'
 import { METRIC_CATALOG } from './catalog'
-import { ANOMALY, BASELINE, FIXED_THRESHOLDS, METRIC_RULES, SIM, type FixedThreshold, type MetricRuleConfig } from './config'
+import { ANOMALY, BASELINE, CUSUM, FIXED_THRESHOLDS, METRIC_RULES, SIM, type FixedThreshold, type MetricRuleConfig } from './config'
 import { Reservoir, baselineScale, computeBaseline } from './baseline'
+import { HourlyCusum } from './cusum'
 import { MetricSeries } from './series'
 import { badZ, clamp, ewmaAlpha, ewmaUpdate } from './stats'
 import { HOUR_MS, MIN_MS, fmtDuration, fmtValue, inlineLabel, sentenceLabel } from './text'
@@ -81,6 +84,10 @@ export interface MetricAssessment {
   driftZ: number | null
   deviationPct: number | null
   persistenceHours: number | null
+  /** v5: CUSUM statistic in the bad direction (accumulated z units), null when not tracked. */
+  cusum?: number | null
+  /** v5: true when the CUSUM rule (small but steady drift) is the reason for the status. */
+  cusumFlag?: boolean
 }
 
 const LEVEL_RANK: Record<RiskLevel, number> = { LOW: 0, MODERATE: 1, HIGH: 2, CRITICAL: 3 }
@@ -106,6 +113,8 @@ interface Candidate {
   ruleId: string
   label: string
   phrase: string
+  /** v5: produced by the CUSUM rule. */
+  cusum?: boolean
 }
 
 /** Median of up to 3 values without allocation. */
@@ -160,6 +169,10 @@ export class MetricTracker {
   /** EWMA of absolute deviation from the bucket median, in metric units. */
   driftDiff = 0
   driftSince: number | null = null
+  /** v5: CUSUM of the hourly mean z (continuous metrics with drift detection only). */
+  readonly cusum: HourlyCusum | null
+  /** v5: incremented whenever a baseline is recomputed (the multivariate model retrains on change). */
+  baselineRevision = 0
 
   /** Event metrics: consecutive values outside the band in the bad direction. */
   run = 0
@@ -173,6 +186,7 @@ export class MetricTracker {
     this.series = new MetricSeries(this.cfg.kind)
     this.fixed = FIXED_THRESHOLDS.filter((f) => f.metric === metric)
     this.dir = METRIC_CATALOG[metric].badDirection
+    this.cusum = this.cfg.kind === 'continuous' && this.cfg.drift ? new HourlyCusum(CUSUM) : null
   }
 
 
@@ -268,7 +282,10 @@ export class MetricTracker {
         } else if (bd < ANOMALY.drift.clear) {
           this.driftSince = null
         }
+        if (this.cusum && !questionable) this.cusum.add(t, zs, b.median !== 0 ? (v / b.median - 1) * 100 : 0, v - b.median)
         accept = !questionable && Math.abs(zs) < BASELINE.gateZ && Math.abs(this.driftZ) < BASELINE.gateDrift
+        // A CUSUM signal also keeps the shifted values out of "normal" (same idea as the drift gate).
+        if (this.cusum && this.cusum.side(this.dir).side.s >= CUSUM.h) accept = false
       } else {
         this.z = null
         accept = !questionable
@@ -322,6 +339,7 @@ export class MetricTracker {
         }),
       )
       this.added.set(bk, 0)
+      this.baselineRevision++
     }
   }
 
@@ -351,6 +369,8 @@ export class MetricTracker {
       driftZ: this.cfg.kind === 'continuous' && this.cfg.drift ? this.driftZ : null,
       deviationPct: null,
       persistenceHours: null,
+      cusum: this.cusum ? this.cusum.side(this.dir).side.s : null,
+      cusumFlag: false,
     }
     if (deviceDown || stale || this.lastValue === null) {
       const since = Number.isFinite(this.lastValidT) ? now - this.lastValidT : null
@@ -486,6 +506,22 @@ export class MetricTracker {
           })
         }
       }
+      // v5 CUSUM: small but steady drift that the EWMA rule above does not reach. MODERATE at most.
+      if (this.cusum && this.cusum.signal(this.dir, now, CUSUM.minHours * HOUR_MS)) {
+        const { side, sign } = this.cusum.side(this.dir)
+        const word = sign < 0 ? 'below' : 'above'
+        const dur = fmtDuration(now - side.since!)
+        const lead = this.metric === 'HEART_RATE' ? 'Resting heart rate' : sentenceLabel(this.metric)
+        const n = Math.max(1, side.bins)
+        candidates.push({
+          level: 'MODERATE',
+          method: 'PERSISTENCE',
+          ruleId: this.cfg.driftRule,
+          label: `${lead} ${pctOrDiff(side.pctSum / n, side.diffSum / n)} ${word} your normal: a small but steady drift over ${dur} (CUSUM)`,
+          phrase: `${lead} has been slightly ${word} your normal for ${dur}`,
+          cusum: true,
+        })
+      }
       base.deviationPct = this.driftPct
     }
 
@@ -501,6 +537,6 @@ export class MetricTracker {
       level = 'MODERATE'
       label = `${label} (questionable signal, capped at Watch)`
     }
-    return { ...base, status: level, level, method: best.method, ruleId: best.ruleId, label, phrase: best.phrase }
+    return { ...base, status: level, level, method: best.method, ruleId: best.ruleId, label, phrase: best.phrase, cusumFlag: best.cusum === true }
   }
 }
