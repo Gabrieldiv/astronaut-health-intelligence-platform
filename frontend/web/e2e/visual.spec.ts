@@ -62,7 +62,7 @@ test('mission and Earth link panel', async ({ app: page }) => {
 test('indicator breakdown popover', async ({ app: page }) => {
   await page.getByTitle('What do these indicators cover? Open the breakdown').click()
   const popover = page.getByRole('dialog', { name: 'Health indicators: ORION' })
-  await expect(popover.getByRole('button', { name: /^Heart/ })).toBeVisible()
+  await expect(popover.getByRole('button', { name: /^Heart/ })).toBeVisible()
   await expect(popover).toHaveScreenshot('indicator-breakdown.png')
 })
 
