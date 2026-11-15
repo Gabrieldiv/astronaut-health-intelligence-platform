@@ -181,10 +181,152 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/assistant/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Whether the assistant can answer (no secrets returned) */
+        get: operations["status_api_v1_assistant_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assistant/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask the assistant about the selected astronaut. Streams server sent events. */
+        post: operations["chat_api_v1_assistant_chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/multivariate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Score standardized feature vectors with a seeded Isolation Forest (experimental, machine learning)
+         * @description Server parity path of the browser detector (frontend/web/src/engine/ml), which stays the offline path. Fits PCA whitening and a seeded scikit-learn IsolationForest on the submitted training window (the person's own baseline window of robust z scores), then returns a score, the personal threshold and per feature deviation contributions for each scored vector. Stateless: nothing is stored. Decision support only, never a diagnosis or a status.
+         */
+        post: operations["multivariate_api_v1_analytics_multivariate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AlertItem */
+        AlertItem: {
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "LOW" | "MODERATE" | "HIGH" | "CRITICAL" | "NO_DATA";
+            /** Title */
+            title: string;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /** Metric */
+            metric?: string | null;
+            /** Minutes Open */
+            minutes_open?: number | null;
+            /**
+             * Escalated
+             * @default false
+             */
+            escalated: boolean;
+        };
+        /**
+         * AssistantContext
+         * @description Grounded snapshot of the engine outputs for the selected astronaut.
+         */
+        AssistantContext: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: "1";
+            /**
+             * Data Origin
+             * @default SIMULATED
+             * @enum {string}
+             */
+            data_origin: "SIMULATED" | "REAL_PUBLIC" | "DERIVED" | "MANUAL";
+            /**
+             * Sim Time Utc
+             * @default
+             */
+            sim_time_utc: string;
+            astronaut: components["schemas"]["AstronautSnapshot"];
+            overall: components["schemas"]["OverallState"];
+            /**
+             * Metrics
+             * @default []
+             */
+            metrics: components["schemas"]["MetricReading"][];
+            /**
+             * Open Alerts
+             * @default []
+             */
+            open_alerts: components["schemas"]["AlertItem"][];
+            /**
+             * Recommendations
+             * @default []
+             */
+            recommendations: components["schemas"]["RecommendationItem"][];
+            mission: components["schemas"]["MissionSnapshot"];
+            cabin?: components["schemas"]["CabinSnapshot"] | null;
+            /**
+             * Crew Overview
+             * @default []
+             */
+            crew_overview: components["schemas"]["CrewMember"][];
+        };
+        /** AssistantStatus */
+        AssistantStatus: {
+            /** Configured */
+            configured: boolean;
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+            /**
+             * Deployment
+             * @default cloud-demo
+             * @constant
+             */
+            deployment: "cloud-demo";
+            /** Note */
+            note: string;
+        };
         /** AstronautIn */
         AstronautIn: {
             /**
@@ -227,6 +369,64 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** AstronautSnapshot */
+        AstronautSnapshot: {
+            /** Id */
+            id: string;
+            /** Callsign */
+            callsign: string;
+            /** Role */
+            role: string;
+        };
+        /** CabinSnapshot */
+        CabinSnapshot: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "LOW" | "MODERATE" | "HIGH" | "CRITICAL" | "NO_DATA";
+            /**
+             * Headline
+             * @default
+             */
+            headline: string;
+            /**
+             * Metrics
+             * @default []
+             */
+            metrics: components["schemas"]["MetricReading"][];
+        };
+        /** ChatRequest */
+        ChatRequest: {
+            /** Question */
+            question: string;
+            /**
+             * History
+             * @default []
+             */
+            history: components["schemas"]["ChatTurn"][];
+            context: components["schemas"]["AssistantContext"];
+        };
+        /** ChatTurn */
+        ChatTurn: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Content */
+            content: string;
+        };
+        /** CrewMember */
+        CrewMember: {
+            /** Callsign */
+            callsign: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "LOW" | "MODERATE" | "HIGH" | "CRITICAL" | "NO_DATA";
         };
         /** DeviceIn */
         DeviceIn: {
@@ -288,6 +488,18 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** FeatureContribution */
+        FeatureContribution: {
+            /** Feature */
+            feature: string;
+            /** Z */
+            z: number;
+            /**
+             * Share
+             * @description Share of the squared deviation (sums to 1 over all features).
+             */
+            share: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -402,6 +614,49 @@ export interface components {
             /** Rejected */
             rejected: components["schemas"]["Rejection"][];
         };
+        /** MetricReading */
+        MetricReading: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /**
+             * Value
+             * @description Latest value. null means no data, never zero.
+             */
+            value: number | null;
+            /** Unit */
+            unit: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "LOW" | "MODERATE" | "HIGH" | "CRITICAL" | "NO_DATA";
+            /**
+             * Normal Low
+             * @description Lower edge of the personal normal band
+             */
+            normal_low?: number | null;
+            /** Normal High */
+            normal_high?: number | null;
+            /**
+             * Baseline Ready
+             * @default false
+             */
+            baseline_ready: boolean;
+            /** Trend Per Hour */
+            trend_per_hour?: number | null;
+            /** Explanation */
+            explanation?: string | null;
+            /** Quality */
+            quality?: string | null;
+            /**
+             * Data Origin
+             * @default SIMULATED
+             * @enum {string}
+             */
+            data_origin: "SIMULATED" | "REAL_PUBLIC" | "DERIVED" | "MANUAL";
+        };
         /** MissionIn */
         MissionIn: {
             /**
@@ -444,6 +699,149 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** MissionSnapshot */
+        MissionSnapshot: {
+            /** Profile */
+            profile: string;
+            /**
+             * Vehicle
+             * @default
+             */
+            vehicle: string;
+            /** Mission Day */
+            mission_day?: number | null;
+            /**
+             * Scenario
+             * @default
+             */
+            scenario: string;
+            /**
+             * Earth Link
+             * @default
+             */
+            earth_link: string;
+            /** One Way Delay Seconds */
+            one_way_delay_seconds?: number | null;
+        };
+        /**
+         * MultivariateOptions
+         * @description Demo configuration, not an official limit. Defaults mirror MULTIVARIATE in src/engine/config.ts.
+         */
+        MultivariateOptions: {
+            /**
+             * N Estimators
+             * @default 100
+             */
+            n_estimators: number;
+            /**
+             * Max Samples
+             * @default 256
+             */
+            max_samples: number;
+            /**
+             * Random State
+             * @default 20261115
+             */
+            random_state: number;
+            /**
+             * Whiten
+             * @description Decorrelate with PCA whitening fitted on the training window.
+             * @default true
+             */
+            whiten: boolean;
+            /**
+             * Whitening Floor
+             * @description Minimum variance per principal axis.
+             * @default 0.05
+             */
+            whitening_floor: number;
+            /**
+             * Range Aware
+             * @description Range aware isolation like the browser forest (far points score above the usual extremes). False: plain sklearn scores.
+             * @default true
+             */
+            range_aware: boolean;
+            /**
+             * Calibration Quantile
+             * @default 0.995
+             */
+            calibration_quantile: number;
+            /**
+             * Score Floor
+             * @default 0.6
+             */
+            score_floor: number;
+        };
+        /**
+         * MultivariateRequest
+         * @description Standardized feature windows (robust z per metric vs the personal baseline), not raw vitals.
+         */
+        MultivariateRequest: {
+            /**
+             * Subject Id
+             * @description Pseudonymized id, echoed back.
+             */
+            subject_id?: string | null;
+            /** Features */
+            features: string[];
+            /**
+             * Training
+             * @description The person's own baseline window.
+             */
+            training: number[][];
+            /**
+             * Score
+             * @description Vectors to score.
+             */
+            score: number[][];
+            options?: components["schemas"]["MultivariateOptions"];
+        };
+        /** MultivariateResponse */
+        MultivariateResponse: {
+            /** Subject Id */
+            subject_id: string | null;
+            /** Model Version */
+            model_version: string;
+            /** Engine */
+            engine: string;
+            /**
+             * Label
+             * @default Experimental, machine learning
+             * @constant
+             */
+            label: "Experimental, machine learning";
+            /**
+             * Data Origin
+             * @default DERIVED
+             * @constant
+             */
+            data_origin: "DERIVED";
+            /** Features */
+            features: string[];
+            /** Training Size */
+            training_size: number;
+            /** Threshold */
+            threshold: number;
+            /** Results */
+            results: components["schemas"]["MultivariateResult"][];
+            /** Limitations */
+            limitations: string[];
+        };
+        /** MultivariateResult */
+        MultivariateResult: {
+            /**
+             * Score
+             * @description Isolation Forest anomaly score 0..1 (about 0.5 or less is typical).
+             */
+            score: number;
+            /**
+             * Above Threshold
+             * @description Score at or above the personal threshold. Not a flag: persistence rules apply first.
+             */
+            above_threshold: boolean;
+            /** Contributions */
+            contributions: components["schemas"]["FeatureContribution"][];
         };
         /** ObservationContext */
         ObservationContext: {
@@ -580,6 +978,33 @@ export interface components {
             /** Studies */
             studies: components["schemas"]["OsdrStudy"][];
         };
+        /** OverallState */
+        OverallState: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "LOW" | "MODERATE" | "HIGH" | "CRITICAL" | "NO_DATA";
+            /** Risk Score */
+            risk_score?: number | null;
+            /**
+             * Headline
+             * @default
+             */
+            headline: string;
+            /** Confidence */
+            confidence?: number | null;
+            /**
+             * Contributing Factors
+             * @default []
+             */
+            contributing_factors: string[];
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
+        };
         /** Quality */
         Quality: {
             /**
@@ -597,6 +1022,30 @@ export interface components {
              * @default false
              */
             is_estimated: boolean;
+        };
+        /** RecommendationItem */
+        RecommendationItem: {
+            /** Title */
+            title: string;
+            /**
+             * Rationale
+             * @default
+             */
+            rationale: string;
+            /**
+             * Priority
+             * @enum {string}
+             */
+            priority: "LOW" | "MODERATE" | "HIGH" | "CRITICAL" | "NO_DATA";
+            /** Audience */
+            audience: string;
+            /** Autonomy */
+            autonomy?: string | null;
+            /**
+             * Requires Human Review
+             * @default true
+             */
+            requires_human_review: boolean;
         };
         /** Rejection */
         Rejection: {
@@ -1120,6 +1569,118 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    status_api_v1_assistant_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistantStatus"];
+                };
+            };
+        };
+    };
+    chat_api_v1_assistant_chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Request too large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too many questions from this client, or the cloud model is rate limited. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The cloud model failed or could not be reached. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Assistant not configured (no API key). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    multivariate_api_v1_analytics_multivariate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MultivariateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MultivariateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
