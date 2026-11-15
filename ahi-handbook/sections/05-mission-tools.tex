@@ -1,0 +1,15 @@
+\section{Mission Tools}
+\label{sec:mission-tools}
+
+These tools deal with the realities of a long mission. Open them from the \textbf{Earth link} control and the \textbf{Tools} menu in the top bar.
+
+\begin{itemize}
+\item \textbf{Earth link} (\ref{fig:mars}). Profiles go from the ISS (0.5 s one way) and the Moon (1.3 s) to Mars at its closest (about 4 min) and farthest (about 22 min) \cite{nasa_space_communications_seven_things}. \textbf{Send health packet} and \textbf{Request flight surgeon consult} send messages that stay \textit{In transit} until the simulated clock reaches their arrival. Under Mars profiles, high and critical items also get an on board first step for the crew medical officer.
+\item \textbf{Mission overview} (\ref{fig:mission}): radiation dose with a projection, exercise adherence, sleep by week, resting heart rate and HRV, per astronaut or for the whole crew. Budgets are labeled \textit{demo configuration, not official limits}.
+\item \textbf{Shift handover} (\ref{fig:handover}): a printable report of the last 24 hours. \textbf{Export FHIR R4 Bundle} downloads a standard JSON bundle with pseudonymized identifiers only; \textbf{Send to ground} queues it on the Earth link.
+\item \textbf{Data and model} (\ref{fig:datamodel}): where every number comes from. Real NASA OSDR blood panels from the Inspiration4 mission \cite{osdr_osd569,osdr_osd575} with provenance and file hash, the simulated devices, the model card and the data origin labels. OSDR data is historical reference only and never feeds the alerts.
+\end{itemize}
+
+\screenpair{images/screens/mars-comms.png}{Earth link, farthest Mars profile: messages in transit and the on board first step.}{fig:mars}{images/screens/mission-overview.png}{Mission overview: radiation dose, exercise, sleep, resting heart rate and HRV.}{fig:mission}
+
+\screenpair{images/screens/handover-report.png}{Shift handover report with print and FHIR R4 export.}{fig:handover}{images/screens/data-model.png}{Data and model: a real NASA OSDR panel with its provenance.}{fig:datamodel}

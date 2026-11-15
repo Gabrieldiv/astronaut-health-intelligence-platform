@@ -1,0 +1,57 @@
+\section{Tutorial: A Mission in Seven Steps}
+\label{sec:tutorial}
+
+
+\subsection{Step 1: Let the guided demo drive}
+\label{subsec:guided-demo}
+
+\sidefig{0.68}{Click \textbf{Start demo} in the top bar. A ten step tour spotlights each part of the screen and sets up every scene by itself (\ref{fig:guided-demo}), from the crew and the body to an acute event, slow fatigue, the what-if, the Crew view and the mission tools. Use \textbf{Next} and \textbf{Back} (or \key{$\rightarrow$} and \key{$\leftarrow$}), \textbf{Auto} to advance by itself (about two minutes) and \key{Esc} to leave; leaving restores a calm nominal day. Steps 2 to 7 do the same things by hand.}{images/screens/guided-demo.png}{Guided demo, step 1 of 10: ``Meet the crew''.}{fig:guided-demo}
+
+\subsection{Step 2: Read one astronaut's status}
+\label{subsec:read-status}
+
+\sidefig{0.70}{Select ORION in the crew rail. The \textbf{What needs attention} panel (\ref{fig:attention}) answers four questions:
+\begin{itemize}\setlength\itemsep{1pt}
+\item \textbf{How is he?} The \textbf{overall status}, the \textbf{risk score} from 0 to 100 and the \textbf{confidence}, which falls when key signals are missing (``Status cannot be confirmed'' if core vitals are absent).
+\item \textbf{What to do?} \textbf{Recommended actions} with their rationale, priority and an \textbf{autonomy badge}: \textit{Can act on board now}, \textit{Needs flight surgeon}, or \textit{Earth reply in N min+} when Earth is far. \textbf{Mark done} logs the action in the audit trail, \textbf{Dismiss} hides it and \textbf{Compare} opens the what-if (Step 6).
+\item \textbf{Why?} Contributing factors in plain words with a weight bar, for example ``HRV 28\% below personal baseline for 3 days''.
+\item \textbf{What next?} A forecast per metric, such as ``Projected to leave your normal range in about 5 h''.
+\end{itemize}}{images/screens/attention-actions.png}{What needs attention during a critical event.}{fig:attention}
+
+\subsection{Step 3: Explore the 3D body}
+\label{subsec:body}
+
+Click the \textbf{Heart} chip beside the body. The camera flies to the heart, the rest of the body becomes a ghost and the right panel shows the \textbf{body system detail} (\ref{fig:body-detail}): each metric with its deviation (``11\% above your normal'') and normal range. Expand a row for the \textbf{trend chart}: the shaded band ``Your normal'', the history (a gap means no data), the dashed \textbf{forecast cone} (80\% interval) and a \textbf{horizon picker} from 24 hours to 15 days. ``Why is this my normal?'' shows the window, median and MAD behind the band.
+
+Click any structure, such as the skull, to see its name and \textbf{Measured by}, the devices that feed it; structures that nothing measures are \textit{Context only}. Drag to rotate, scroll to zoom, and use the pill under the body for \textbf{Layers}, skin opacity and the \textbf{Front, Back, Left, Right} views (\ref{fig:atlas-layers}).
+
+\screenpair{images/screens/body-detail.png}{Body system detail: heart selected, metrics against the personal normal, trend and forecast.}{fig:body-detail}{images/anatomy/atlas-layers.jpg}{Layer presets of the Z-Anatomy atlas \cite{z_anatomy}: default, skeleton, muscles, organs and vessels.}{fig:atlas-layers}
+
+\subsection{Step 4: Respond to a critical alert}
+\label{subsec:alert}
+
+\sidefig{0.58}{In the scenario player choose \textbf{Acute cardio event} at \textbf{1 min/s} and press play (\key{Space}). In about seven seconds ORION's heart rate rises at rest while his blood oxygen falls: a red \textbf{critical banner} appears, the bell pulses, a sound rings and the heart and lungs glow through the chest (\ref{fig:critical}).
+\begin{enumerate}\setlength\itemsep{1pt}
+\item Click \textbf{Mark done} on ``Pause activity, rest, and request flight surgeon review''.
+\item Press \key{A}, then \textbf{Acknowledge}: the sound stops. \textbf{View} jumps to the metric.
+\item Unacknowledged alerts escalate after 5 and 15 simulated minutes, and a health packet goes to Earth.
+\end{enumerate}}{images/screens/critical-alert.png}{Acute cardiac event: critical banner, heart and lungs highlighted, risk score 100.}{fig:critical}
+
+\subsection{Step 5: Spot a slow drift}
+\label{subsec:drift}
+
+Choose \textbf{Progressive fatigue} at \textbf{1 h/s} and select LYRA (\key{2}). Over about two simulated days her sleep shortens, her heart rate variability falls below her own band and her resting heart rate drifts up. No single value crosses a line, yet the combined rule moves her to \textit{Keep an eye} and then \textit{Act soon}. Her lane on the \textbf{status timeline} shows the pattern building (\ref{fig:timeline}); choose 24 h, 72 h or All and click a marker to jump to that moment.
+
+\subsection{Step 6: Compare ``what if''}
+\label{subsec:whatif}
+
+On LYRA's ``Sleep extension'' action, click \textbf{Compare}. The dialog (\ref{fig:whatif}) projects heart rate variability for 48 hours \textbf{with} and \textbf{without} the action, against her personal normal, lists its assumptions and states: ``Simulation for discussion only. Not evidence of clinical efficacy.''
+
+\screenpair{images/screens/timeline-fatigue.png}{Progressive fatigue: LYRA's timeline lane drifts from green to amber and orange.}{fig:timeline}{images/screens/whatif.png}{What-if: heart rate variability with and without a sleep extension.}{fig:whatif}
+
+\subsection{Step 7: Switch to the Crew view and check in}
+\label{subsec:crew-view}
+
+\sidefig{0.58}{Press \key{V}. The \textbf{Crew view} (\ref{fig:crew-view}) is for the astronaut the data is about: a large status word, one sentence, at most two actions (``Do this now'', ``Do this soon'', ``When you can''), cards per body system and ``Your body vs your normal'', with no risk score or model detail.
+
+Click \textbf{Start check-in} for the 30 second daily questionnaire: mood, fatigue, stress and sleep on a 1 to 5 scale, symptom tags and a note. Answers are compared with the person's own history; they support objective signals and never raise an alert alone. Press \key{V} to return.}{images/screens/crew-view.png}{Crew view: status word, top actions, check-in and values against the personal normal.}{fig:crew-view}

@@ -1,0 +1,28 @@
+\section{Accessibility, Languages and the Assistant}
+\label{sec:access}
+
+AHI says important things in more than one way (settings in \textbf{Tools > Accessibility and sound}).
+
+\begin{itemize}
+\item \textbf{Alert sounds:} critical alerts ring every 30 s until acknowledged, and more urgently after 2 minutes.
+\item \textbf{Audio description:} \key{D} describes the screen aloud; \key{Shift}+\key{D} keeps speaking new alerts, status changes and selections. Missing data is spoken as ``no data''.
+\item \textbf{Keyboard and 3D body:} \key{Tab} reaches the body navigator; arrows move between body systems and structures, \key{Enter} selects. The interface follows WCAG 2.1 practices \cite{w3c_wcag21}.
+\item \textbf{Languages:} English by default; Portuguese, Spanish, Japanese and German in \textbf{Tools > Language} (machine assisted, pending native review). \key{P} turns on presentation mode.
+\item \textbf{Ask AHI} (bottom right): ask ``How is ORION doing?'' by text or voice. Answers stream, can be read aloud and end with ``Based on:'' naming the data used. The assistant explains engine results and never diagnoses or changes a status. The demonstrator uses the Claude API \cite{anthropic_claude_api}; a mission would use a local model on board.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Keyboard shortcuts. Press \texttt{?} in the application to see them all.}
+\label{tab:shortcuts}
+\small
+\begin{tabular}{p{1.8cm}p{3.6cm}p{1.4cm}p{3.6cm}p{1.2cm}p{3.6cm}}
+\hline
+\textbf{Key} & \textbf{Action} & \textbf{Key} & \textbf{Action} & \textbf{Key} & \textbf{Action} \\
+\hline
+\key{1} to \key{4} & Select crew member & \key{V} & Ground or Crew view & \key{A} & Open or close alerts \\
+\key{Space} & Play or pause & \key{Esc} & Close a panel, go back & \key{D} & Describe the screen \\
+\key{P} & Presentation mode & \key{?} & Show all shortcuts & & \\
+\hline
+\end{tabular}
+\end{table}
