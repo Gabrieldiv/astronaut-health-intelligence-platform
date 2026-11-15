@@ -1,18 +1,18 @@
 ---
 title: Dicionário de dados
-description: Os 21 códigos de métrica da Astronaut Health Intelligence Platform, com unidade, cadência, região do corpo, fonte simulada, origem e regras associadas.
+description: Os 29 códigos de métrica da Astronaut Health Intelligence Platform, com unidade, cadência, região do corpo, fonte simulada, origem e regras associadas.
 status: IMPLEMENTED
 origin: SIMULATED, MANUAL
 code:
   - frontend/web/src/engine/catalog.ts
   - frontend/web/src/engine/config.ts
   - frontend/web/src/types/domain.ts
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Dicionário de dados
 
-Esta é a tabela canônica das métricas da Astronaut Health Intelligence Platform (AHI). São **21 códigos** (`MetricCode`), definidos em `frontend/web/src/engine/catalog.ts` (rótulo, unidade, região, direção ruim) e `frontend/web/src/engine/config.ts` (cadência, tempo até `NO_DATA`, regras).
+Esta é a tabela canônica das métricas da Astronaut Health Intelligence Platform (AHI). São **29 códigos** (`MetricCode`): 25 por astronauta (8 deles de exames periódicos de olhos e audição) e 4 da cabine, definidos em `frontend/web/src/engine/catalog.ts` (rótulo, unidade, região, direção ruim) e `frontend/web/src/engine/config.ts` (cadência, tempo até `NO_DATA`, regras).
 
 ::: info
 Hoje **todas as métricas vêm de simuladores ou do check-in digitado no app**. Nenhuma é telemetria real. Os exames laboratoriais reais do OSDR não são métricas do motor: aparecem só como referência no [Catálogo de datasets](/pt/data/dataset-catalog).
@@ -33,7 +33,7 @@ Hoje **todas as métricas vêm de simuladores ou do check-in digitado no app**. 
 
 ## Sinais vitais
 
-Fonte simulada: camiseta inteligente do tipo Bio-Monitor (Agência Espacial Canadense). Origem: <OriginBadge origin="SIMULATED" />.
+Fonte simulada: Bio-Monitor shirt, camiseta inteligente do tipo Bio-Monitor (Agência Espacial Canadense). Origem: <OriginBadge origin="SIMULATED" />.
 
 | `metric_code` | Rótulo | Unidade | Cadência | `NO_DATA` após | Região | Direção ruim | Regras |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -51,9 +51,9 @@ A pressão arterial é uma estimativa da camiseta simulada.
 
 | `metric_code` | Rótulo | Unidade | Cadência | `NO_DATA` após | Região | Direção ruim | Fonte simulada | Regras |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `ACTIVITY_LEVEL` | Activity | score 0 a 100 | 1 min | 10 min | músculos | para baixo | Actigrafia | R-ACT-01 (deriva) |
-| `SLEEP_DURATION` | Sleep duration | h | 1 por dia (às 06:00 UTC) | 36 h | cérebro | para baixo | Actigrafia | R-SLEEP-01 (persistência) |
-| `SLEEP_EFFICIENCY` | Sleep efficiency | % | 1 por dia | 36 h | cérebro | para baixo | Actigrafia | R-SLEEP-02 (persistência) |
+| `ACTIVITY_LEVEL` | Activity | score 0 a 100 | 1 min | 10 min | músculos | para baixo | Actigraphy watch | R-ACT-01 (deriva) |
+| `SLEEP_DURATION` | Sleep duration | h | 1 por dia (às 06:00 UTC) | 36 h | cérebro | para baixo | Actigraphy watch | R-SLEEP-01 (persistência) |
+| `SLEEP_EFFICIENCY` | Sleep efficiency | % | 1 por dia | 36 h | cérebro | para baixo | Actigraphy watch | R-SLEEP-02 (persistência) |
 | `EXERCISE_LOAD` | Exercise performance | % da baseline | por sessão | 32 h | músculos | para baixo | CEVIS, ARED, T2 | R-EX-01 (persistência) |
 
 CEVIS, ARED e T2 são **equipamentos de exercício**, não monitores médicos.
@@ -70,17 +70,32 @@ CEVIS, ARED e T2 são **equipamentos de exercício**, não monitores médicos.
 
 As métricas de autorrelato ficam limitadas a MODERATE e nunca criam alertas. Veja [Autorrelato e link com a Terra](/pt/intelligence/self-report-and-earth-link).
 
+## Exames de olhos e audição
+
+Fonte: exames periódicos simulados. Origem: <OriginBadge origin="SIMULATED" />. Cada medida é comparada, por lado (olho ou ouvido esquerdo e direito), com a linha de base pré-voo da própria pessoa, não com uma faixa móvel. Como são exames, não há tempo até `NO_DATA`: antes do primeiro exame em voo a métrica diz "No exam yet" (`NO_DATA`). Regras e fontes: [Saúde ocular e audição](/pt/intelligence/eye-and-hearing).
+
+| `metric_code` | Rótulo | Unidade | Cadência | Região | Direção ruim | Fonte simulada | Regras |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `RETINAL_THICKNESS` | Retinal thickness (OCT) | µm | por exame ocular | olhos | para cima | Exame ocular simulado | R-SANS-01 |
+| `CHOROIDAL_FOLDS` | Choroidal folds (OCT) | presente | por exame ocular | olhos | para cima | Exame ocular simulado | R-SANS-01 |
+| `OPTIC_NERVE_SHEATH_DIAMETER` | Optic nerve sheath (ultrasound) | mm | por exame ocular | olhos | para cima | Exame ocular simulado | R-SANS-01 |
+| `VISUAL_ACUITY` | Visual acuity | logMAR | por exame ocular | olhos | para cima | Exame ocular simulado | R-SANS-01 |
+| `HEARING_THRESHOLD_HIGH` | Hearing threshold, high pitch (2, 3, 4 kHz) | dB HL | por teste de audição | ouvidos | para cima | Teste de audição simulado | R-HEAR-01 |
+| `HEARING_THRESHOLD_LOW` | Hearing threshold, low pitch (0,25, 0,5, 1 kHz) | dB HL | por teste de audição | ouvidos | para cima | Teste de audição simulado | R-HEAR-01 |
+| `NOISE_EXPOSURE` | Noise exposure (work period) | dBA | 1 por dia | ouvidos | para cima | Leitura de ruído usada pelo tripulante | R-NOISE-01 |
+| `NOISE_DOSE` | Daily noise dose | % | 1 por dia | ouvidos | para cima | Leitura de ruído usada pelo tripulante | R-NOISE-01 |
+
 ## Radiação e cabine
 
 A cabine usa `subject_id = "CABIN"`. Origem: <OriginBadge origin="SIMULATED" />.
 
 | `metric_code` | Rótulo | Unidade | Cadência | `NO_DATA` após | Região | Direção ruim | Fonte simulada | Regras |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `RADIATION_DOSE` | Accumulated dose | mGy | 15 min | 45 min | esqueleto | para cima | Dosímetro pessoal | R-RAD-02 (limiar de demo) |
-| `RADIATION_DOSE_RATE` | Radiation dose rate | µGy/h | 1 min | 10 min | ambiente | para cima | Monitor de radiação de área | R-ENV-RAD-01 (limiar de demo) |
-| `CO2` | Cabin CO₂ | ppm | 1 min | 10 min | ambiente | para cima | Sensor ambiental da cabine | R-ENV-CO2-01 (limiar de demo), R-ENV-CO2-02 (coocorrência) |
-| `CABIN_TEMPERATURE` | Cabin temperature | °C | 1 min | 10 min | ambiente | ambas | Sensor ambiental da cabine | R-ENV-TEMP-01 (limiar de demo) |
-| `RELATIVE_HUMIDITY` | Humidity | % | 1 min | 10 min | ambiente | ambas | Sensor ambiental da cabine | R-ENV-RH-01 (limiar de demo) |
+| `RADIATION_DOSE` | Accumulated dose | mGy | 15 min | 45 min | esqueleto | para cima | Personal dosimeter | R-RAD-02 (limiar de demo) |
+| `RADIATION_DOSE_RATE` | Radiation dose rate | µGy/h | 1 min | 10 min | ambiente | para cima | Area radiation monitor | R-ENV-RAD-01 (limiar de demo) |
+| `CO2` | Cabin CO₂ | ppm | 1 min | 10 min | ambiente | para cima | Cabin environment sensor | R-ENV-CO2-01 (limiar de demo), R-ENV-CO2-02 (coocorrência) |
+| `CABIN_TEMPERATURE` | Cabin temperature | °C | 1 min | 10 min | ambiente | ambas | Cabin environment sensor | R-ENV-TEMP-01 (limiar de demo) |
+| `RELATIVE_HUMIDITY` | Humidity | % | 1 min | 10 min | ambiente | ambas | Cabin environment sensor | R-ENV-RH-01 (limiar de demo) |
 
 As métricas da cabine não têm baseline pessoal: um módulo não tem "normal pessoal". Elas usam só limiares de demo, listados em [Limiares e limitações](/pt/intelligence/thresholds).
 
@@ -95,8 +110,10 @@ As métricas da cabine não têm baseline pessoal: um módulo não tem "normal p
 | `muscles` | Muscles | Musculoskeletal | atividade, desempenho de exercício |
 | `bones` | Skeleton | Bone and radiation | dose acumulada |
 | `skin` | Skin | Thermal | temperatura da pele |
+| `eyes` | Eyes | Vision (SANS monitoring) | espessura da retina, dobras de coroide, bainha do nervo óptico, acuidade visual |
+| `ears` | Ears | Hearing and noise | limiares auditivos, exposição a ruído, dose diária de ruído |
 
-Os olhos não são região monitorada: no corpo 3D são estruturas só de contexto.
+Uma região com todas as métricas ausentes é `NO_DATA`, nunca `LOW`.
 
 Quais estruturas anatômicas do atlas 3D pertencem a cada região, e quais são só de contexto, está em [Mapeamento da anatomia para a saúde](/pt/architecture/data-model#anatomy-to-health-mapping).
 

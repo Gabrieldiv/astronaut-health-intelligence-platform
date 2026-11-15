@@ -1,6 +1,6 @@
 ---
 title: Demo Scenarios & Guided Demo
-description: The six simulated scenarios of the Astronaut Health Intelligence Platform, what to observe in each, measured detection timings, the 10 step guided demo and a four minute pitch script.
+description: The seven simulated scenarios of the Astronaut Health Intelligence Platform, what to observe in each, measured detection timings, the 10 step guided demo and a four to five minute pitch script.
 status: IMPLEMENTED
 origin: SIMULATED
 code:
@@ -14,13 +14,13 @@ verified: 2026-11-14
 
 # Demo Scenarios & Guided Demo
 
-The Astronaut Health Intelligence Platform (AHI) ships with six scripted scenarios. Each one tells a short story about a crew member or the cabin, with simulated data. Pick one in the **scenario player** (top bar, center), choose a speed, and press play.
+The Astronaut Health Intelligence Platform (AHI) ships with seven scripted scenarios. Each one tells a short story about a crew member or the cabin, with simulated data. Pick one in the **scenario player** (top bar, center), choose a speed, and press play.
 
 ::: info How time works
 Every scenario starts at **08:00 UTC sim time**, after 5 days of pre-generated history. The speed sets how many simulated seconds pass per real second: Real time (1x), **1 min/s** (60x), **10 min/s** (600x) and **1 h/s** (3600x). Detection times below are in simulated time; divide by the speed to get real seconds.
 :::
 
-## The six scenarios
+## The seven scenarios
 
 | Scenario | Who | What happens | Best speed |
 | --- | --- | --- | --- |
@@ -30,6 +30,7 @@ Every scenario starts at **08:00 UTC sim time**, after 5 days of pre-generated h
 | **Cabin CO2 rise** | Cabin, whole crew | CO2 scrubber degradation raises cabin CO2 by about 3,900 ppm over about 3.5 h; breathing rate and reaction time shift for everyone | 10 min/s |
 | **Progressive fatigue** | LYRA (Flight Engineer) | Over about 54 h: later bedtime, lower sleep efficiency, HRV down 38%, resting heart rate up 8 bpm | 1 h/s |
 | **Exercise performance decline** | ATLAS (Mission Specialist) | Workout output falls about 7.5% per day (down to 32% below the usual) | 1 h/s |
+| **Eye changes (SANS like)** | ORION (Commander) | Simulated eye exams drift from the pre-flight baseline: thicker retina, wider optic nerve sheath, then new folds. The flight day 30 exam already reads Watch when the scenario starts (mission day 44); the flight day 90 exam reads Warning | any |
 
 ## When things happen on screen
 
@@ -40,7 +41,7 @@ Real seconds after pressing play at the suggested speed, derived from the simula
 | Acute cardio event | about 7 s at 1 min/s | same moment (also CRITICAL) |
 | Sensor failure | about 14 s at 1 min/s | never (MODERATE by design) |
 | Cabin CO2 rise | about 9 s at 10 min/s | about 14 s |
-| Progressive fatigue | about 32 s at 1 h/s | about 34 s |
+| Progressive fatigue | about 32 s at 1 h/s | about 33 s |
 | Exercise performance decline | about 28 s at 1 h/s | about 76 s |
 
 In the nominal scenario nothing should happen: the evaluation found no alert at MODERATE or above.
@@ -87,6 +88,13 @@ Everything is green: "All good" on every card, "All indicators are within your n
 - Persistence rules raise MODERATE after consecutive low sessions, then HIGH. The muscles layer appears automatically when it is not nominal.
 - Suggested action: adjust exercise load and recovery with the trainer.
 
+### Eye changes, SANS like (ORION)
+- Click the **Eyes** chip: the exam history against the pre-flight baseline, per eye. Retinal thickening beyond the published 19.4 µm variability is a Watch.
+- The other crew members stay nominal; their eye detail shows when the next exam (flight day 90) is due.
+- Suggested action: review with the flight surgeon. Nothing here is a diagnosis ([Eye health and hearing](../intelligence/eye-and-hearing)).
+
+The scenarios are independent of the **mission profile**: any scenario can run under Launch, ISS, Moon or Mars transit ([Mission profiles](../intelligence/mission-profiles)).
+
 ## Guided demo
 
 Click **Start demo** in the top bar. A 10 step tour spotlights each part of the screen and sets up the scenes by itself, so a presenter (or a judge) can follow the story without knowing the app.
@@ -108,30 +116,34 @@ Click **Start demo** in the top bar. A 10 step tour spotlights each part of the 
 
 Controls: **Next** and **Back** (or `→` and `←`), **Auto** to advance every few seconds (about 2 minutes for the whole tour), and `Esc` to exit. Exiting restores a calm state: nominal day, 1 min/s, ISS link, ORION selected, and your previous view.
 
-## Four minute pitch script
+## Pitch script (about 4 to 5 minutes) {#four-minute-pitch-script}
 
-Based on `docs/demo-script.md`, updated for the v2 interface. All device data is simulated; say so once at the start.
+The full script is <CodeLink path="docs/demo-script.md" />. All device data is simulated; say so once at the start. NASA DONKI space weather and the OSDR panels are real public data, shown as context only.
 
-**Setup (before presenting).** Run `npm run dev` in `frontend/web`, open `http://localhost:5173` in full screen (1440x900 or larger), scenario **Nominal day**, speed **1 min/s**. Optionally turn on **Presentation mode** (`P`).
+**Setup.** Run `npm run dev` in `frontend/web`, open `http://localhost:5173` in full screen (1440x900 or larger), scenario **Nominal day**, speed **1 min/s**, profile **ISS**. Optional: the backend with a key in `backend/.env` for live NASA data and Ask AHI. Click once in the page so the browser allows the alert sound.
 
 | Time | Beat | What to do and say |
 | --- | --- | --- |
-| 0:00 to 0:30 | **Problem** | Long missions expose crews to five hazards: radiation, isolation, distance from Earth, altered gravity and closed environments. Signals come from many devices at different rates. Medical support is far away, so the crew needs to understand its own state fast. |
-| 0:30 to 1:00 | **The screen in 10 seconds** | Click **Start demo** and let steps 1 and 2 run: crew cards in plain words, the realistic 3D body where anything that needs attention lights up in its status color, the heart beating at the live heart rate. Point at the always visible `SIMULATED` badge. |
-| 1:00 to 1:50 | **Acute event, fast decision** | Steps 3 and 4: ORION's heart rate jumps, oxygen drops, CRITICAL banner. Show the actions: each says why, and flight surgeon review is flagged. Click **Mark done** on the rest action (it is logged in the audit trail), then acknowledge the alert from the bell. |
-| 1:50 to 2:20 | **Far from Earth** | Step 5: switch to Mars farthest. Any answer from Earth now takes at least 44 minutes, so AHI puts an on board first step on top and shows the wait. |
-| 2:20 to 3:10 | **Slow drift** | Steps 6 and 7: progressive fatigue on LYRA. Sleep down, HRV below her own band, resting heart rate up. Open the HRV chart: personal band, markers, forecast cone. Message: the system does not wait for one number to cross an arbitrary line; it looks at pattern, persistence and context against each person's own baseline. |
-| 3:10 to 3:40 | **What if, and the crew** | Steps 8 and 9: the what-if comparison (a hypothetical projection, never a promise of clinical effect), then the Crew view with the 30 second check-in. |
-| 3:40 to 4:00 | **Impact** | Step 10, Tools: mission overview, handover report with FHIR export, and real NASA OSDR data with provenance. Close with the line below. |
+| 0:00 to 0:20 | **Problem** | Five hazards of long missions; many devices at different rates; medical support far away. |
+| 0:20 to 0:50 | **The screen in 10 seconds** | Crew cards in plain words, the 3D body with its scan band, What needs attention, live vitals, the `SIMULATED` badge. |
+| 0:50 to 1:10 | **Monitor mode and zoom** | Scroll over the heart (zoom to the pointer), click it: readings, personal band, **Measured by**. Monitor mode keeps the focus on what is measured. |
+| 1:10 to 2:00 | **Acute event, sound, fast decision** | Acute cardio event on ORION: CRITICAL banner and alert sound. **Mark done** on the rest action, acknowledge (the sound stops). Press `D` for the spoken description. |
+| 2:00 to 2:40 | **Mission profiles and space weather** | Switch to **Mars transit**, open the mission context: cited dose rate, 4 to 24 min delay, mission dose vs the NASA 600 mSv career limit, DONKI space weather card (shelter advice if a recent X flare or SEP, otherwise calm; never "all clear" without data). |
+| 2:40 to 3:20 | **Slow drift** | Progressive fatigue on LYRA at 1 h/s: HRV below her own band; pick the 7 day horizon and show the band widening. |
+| 3:20 to 3:50 | **Eyes** | Eye changes (SANS like): the eyes read Watch from the flight day 30 exam; exam history against the pre-flight baseline. |
+| 3:50 to 4:10 | **Crew view** | `V`: big status word, two actions, **Your body systems** cards, check-in. |
+| 4:10 to 4:30 | **Ask AHI** (if a key is set) | "How is ORION doing?": streamed answer ending with "Based on:". Demo only; a mission needs an onboard model. |
+| 4:30 to 4:45 | **Impact** | Close with the line below. |
 
 > We turn physiological and environmental signals into one integrated, explainable view of each astronaut's health, spotting trends before they become operational problems.
 
 ::: details Backup beats if time allows
 - **Sensor failure** (VEGA, 1 min/s): organs turn grey and the heart stops animating. Missing data is never shown as normal.
+- **Pause a device**: Devices in the vitals strip, pause the shirt: "Paused by operator", no data, no sensor failure alarm.
 - **Cabin CO2 rise** (10 min/s): the whole crew shifts slightly; the app shows co-occurrence and reminds that correlation is not causation.
 :::
 
-Next steps to mention: import more NASA data as `REAL_PUBLIC` (EDA cabin replay first), a FastAPI ingestion backend behind the same device adapter contract, and a flight surgeon review workflow. See the [roadmap](../resources/roadmap).
+Next steps to mention: the engine port to Python, a clinical review flow, access profiles and real ISS cabin data from NASA EDA. See the [roadmap](../resources/roadmap).
 
 ## Next steps
 

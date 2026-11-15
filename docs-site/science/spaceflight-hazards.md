@@ -37,7 +37,7 @@ The table below shows where each hazard appears in AHI today. Every signal liste
 | Hostile or closed environments | Cabin CO₂, air temperature and relative humidity; effect of high CO₂ on simulated breathing rate and reaction time | `CO2`, `CABIN_TEMPERATURE`, `RELATIVE_HUMIDITY` | <StatusBadge status="IMPLEMENTED" /> simulated. Real ISS cabin telemetry from NASA EDA: <StatusBadge status="PLANNED" /> |
 
 ::: warning What is not covered
-AHI does not model cancer risk, immune function, microbiology, noise, lighting, bone mineral density, muscle volume, sensorimotor function or eye health. Some of these are measured on real missions only through periodic exams or biospecimens (see [Health Monitoring in Space Missions](/science/health-monitoring-in-missions)). The platform does not estimate radiation health risk; it only displays simulated dose values against demo watch levels.
+AHI does not model cancer risk, immune function, microbiology, lighting, bone mineral density, muscle volume or sensorimotor function. Eye health (SANS), hearing and noise are followed through periodic simulated exams ([Eye Health and Hearing](/intelligence/eye-and-hearing)). Some of these are measured on real missions only through periodic exams or biospecimens (see [Health Monitoring in Space Missions](/science/health-monitoring-in-missions)). The platform does not estimate radiation health risk; it displays simulated dose values against demo watch levels and an approximate mission dose against the NASA career limit ([Mission Profiles](/intelligence/mission-profiles)).
 :::
 
 ## Hazard by hazard

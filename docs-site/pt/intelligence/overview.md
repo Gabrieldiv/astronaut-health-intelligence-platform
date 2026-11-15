@@ -1,6 +1,6 @@
 ---
 title: Visão geral e status dos métodos
-description: O pipeline de inteligência de saúde da Astronaut Health Intelligence Platform e a lista do que está implementado, planejado ou fora de escopo.
+description: "O pipeline de inteligência de saúde da Astronaut Health Intelligence Platform e a auditoria dos métodos: o que está implementado, experimental, planejado ou fora de escopo."
 status: IMPLEMENTED
 origin: SIMULATED, DERIVED
 code:
@@ -8,15 +8,15 @@ code:
   - frontend/web/src/engine/config.ts
 tests:
   - frontend/web/src/engine/engine.test.ts
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Visão geral e status dos métodos
 
 O motor de inteligência de saúde da Astronaut Health Intelligence Platform (AHI) fica em `frontend/web/src/engine/`. É **TypeScript puro**, roda no navegador e é coberto por testes com vitest. Ele transforma observações simuladas em status, risco, previsões, alertas e recomendações explicáveis.
 
-::: warning ATENÇÃO
-O motor é **estatístico e baseado em regras**. Não há aprendizado de máquina, LLM nem modelo treinado em tempo de execução. Todo número fixo é configuração de demo, não limite oficial da NASA. Veja [Abordagem de IA e análise de dados](/pt/intelligence/ai-and-analytics) e [Limiares e limitações](/pt/intelligence/thresholds).
+::: warning Estatística primeiro
+Status, risco e alertas vêm só de estatística clássica e de regras explícitas com identificador. Um detector **experimental** de aprendizado de máquina (um Isolation Forest por astronauta) acrescenta uma nota informativa "Unusual combination" e nunca muda um status. O assistente opcional [Ask AHI](/pt/product/assistant) explica as saídas do motor e não calcula nada. Todo número fixo é configuração de demo, não limite oficial da NASA. Veja [Abordagem de IA e análise de dados](/pt/intelligence/ai-and-analytics) e [Limiares e limitações](/pt/intelligence/thresholds).
 :::
 
 ## Versões
@@ -28,6 +28,8 @@ O motor é **estatístico e baseado em regras**. Não há aprendizado de máquin
 | Baseline | `robust-baseline v1 (median/MAD)` |
 | Previsão | `Damped Holt linear smoothing v1` |
 | Catálogo de recomendações | `rec-catalog v2.0` |
+| CUSUM | `Tabular CUSUM on hourly mean robust z v1` |
+| Detector multivariado | `ahi-iforest-ts v1 (experimental, PCA whitened)` |
 
 ## Pipeline
 
@@ -36,11 +38,14 @@ flowchart TB
     A[Adapters simulados<br/>sim/adapters.ts] --> B[HealthObservation<br/>origem, qualidade, contexto]
     B --> C[MetricTracker por pessoa e métrica<br/>anomaly.ts]
     C --> BL[Baseline pessoal<br/>baseline.ts]
+    EX[Exames periódicos<br/>exams/] --> D
+    MP[Perfil de missão<br/>missions/] --> D
     BL --> C
     C --> D[evaluate<br/>engine.ts]
     D --> E[Status por métrica e região]
     D --> F[Regras combinadas, risco e confiança<br/>risk.ts]
     D --> G[Previsões<br/>forecast.ts]
+    D --> ML[Combinação incomum<br/>ml/, experimental,<br/>só informativa]
     F --> H[Recomendações e alertas<br/>recommendations.ts, alerts.ts]
     H --> I[Store zustand e interface]
     E --> I
@@ -53,10 +58,14 @@ Em palavras:
 2. Um **MetricTracker** por pessoa e métrica mantém histórico limitado, a [baseline pessoal](/pt/intelligence/personal-baseline) e os detectores da [detecção de anomalias](/pt/intelligence/anomaly-detection), com custo constante por amostra.
 3. **`evaluate()`** junta tudo: regras combinadas e escore na [avaliação de risco](/pt/intelligence/risk-assessment), [previsão](/pt/intelligence/forecasting), [recomendações](/pt/intelligence/recommendations) e [alertas](/pt/intelligence/alerts).
 4. O check-in e a comunicação com a Terra entram como fatores e mensagens. Veja [Autorrelato e link com a Terra](/pt/intelligence/self-report-and-earth-link).
+5. **Exames periódicos** de olhos (SANS) e audição são comparados com a linha de base pré-voo da própria pessoa ([Saúde ocular e audição](/pt/intelligence/eye-and-hearing)). O **perfil de missão** define a dose de radiação simulada e o aviso de clima espacial ([Perfis de missão](/pt/intelligence/mission-profiles)).
+6. O detector **experimental** multivariado acrescenta só uma nota ([Detecção de anomalias](/pt/intelligence/anomaly-detection#unusual-combination-experimental)).
 
 A arquitetura do código (relógio, publicação, estado) está em [Motor e simulação](/pt/architecture/engine-and-simulation).
 
-## O que está implementado e o que não está
+## O que está implementado e o que não está {#methods-status}
+
+O plano do produto (seção 9.3) lista métodos candidatos. Esta tabela é a auditoria dessa lista contra o código: estatística primeiro, aprendizado de máquina só onde a estatística deixa uma lacuna, e mesmo assim como camada experimental e informativa.
 
 | Método | Para que serve | Status | Página |
 | --- | --- | --- | --- |
@@ -68,15 +77,17 @@ A arquitetura do código (relógio, publicação, estado) está em [Motor e simu
 | Limiares fixos de demo | Rede de segurança | <StatusBadge status="IMPLEMENTED" /> | [Limiares](/pt/intelligence/thresholds) |
 | Regras combinadas | Padrões que importam juntos | <StatusBadge status="IMPLEMENTED" /> | [Risco](/pt/intelligence/risk-assessment) |
 | Escore de risco 0 a 100 por noisy-OR | Nível de atenção | <StatusBadge status="IMPLEMENTED" /> | [Risco](/pt/intelligence/risk-assessment) |
-| Holt linear amortecido com intervalo de 80% | Projeção de curto prazo | <StatusBadge status="IMPLEMENTED" /> | [Previsão](/pt/intelligence/forecasting) |
+| Holt linear amortecido com intervalo de 80% | Projeção de 24 h a 15 dias | <StatusBadge status="IMPLEMENTED" /> | [Previsão](/pt/intelligence/forecasting) |
 | Regra de saída da faixa e de recuperação | "Projected to leave your normal range in ..." | <StatusBadge status="IMPLEMENTED" /> | [Previsão](/pt/intelligence/forecasting) |
 | Projeção "e se" determinística, sem ruído | Discussão de uma ação | <StatusBadge status="EXPERIMENTAL" /> | [Recomendações](/pt/intelligence/recommendations) |
 | Regra IQR (intervalo interquartil) | Citada no plano como alternativa robusta | <StatusBadge status="NOT_IMPLEMENTED" /> | A mediana e o MAD cumprem esse papel |
-| CUSUM | Pequenas mudanças acumuladas | <StatusBadge status="NOT_IMPLEMENTED" /> | A deriva EWMA cumpre esse papel |
-| Isolation Forest | Anomalia multivariada | <StatusBadge status="PLANNED" /> | [IA e análise](/pt/intelligence/ai-and-analytics) |
+| CUSUM | Mudanças pequenas e constantes que ficam abaixo da regra EWMA | <StatusBadge status="IMPLEMENTED" /> só Watch | [Anomalias](/pt/intelligence/anomaly-detection#cusum) |
+| Isolation Forest | Combinação incomum de vários sinais | <StatusBadge status="EXPERIMENTAL" /> por astronauta, só informativo, US-019 do plano | [Anomalias](/pt/intelligence/anomaly-detection#unusual-combination-experimental) |
+| Exames de olhos (SANS) e audição | Mudança contra a linha de base pré-voo | <StatusBadge status="IMPLEMENTED" /> | [Saúde ocular e audição](/pt/intelligence/eye-and-hearing) |
+| Perfil de missão, dose e clima espacial | Contexto da missão | <StatusBadge status="IMPLEMENTED" /> | [Perfis de missão](/pt/intelligence/mission-profiles) |
 | ARIMA | Séries temporais adequadas | <StatusBadge status="NOT_IMPLEMENTED" /> P2 no plano, não agendado | [IA e análise](/pt/intelligence/ai-and-analytics) |
 | XGBoost e SHAP | Risco com dataset rotulado e sua explicação | <StatusBadge status="NOT_IMPLEMENTED" /> sem dados rotulados | [IA e análise](/pt/intelligence/ai-and-analytics) |
-| Explicação com LLM | Linguagem natural de uma recomendação já escolhida | <StatusBadge status="PLANNED" /> | [IA e análise](/pt/intelligence/ai-and-analytics) |
+| Explicação com LLM (Ask AHI) | Linguagem simples sobre o que o motor já mostra | <StatusBadge status="EXPERIMENTAL" /> só demo | [Assistente Ask AHI](/pt/product/assistant) |
 
 ## Modelo de página
 

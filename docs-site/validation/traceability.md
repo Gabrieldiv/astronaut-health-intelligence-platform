@@ -1,7 +1,7 @@
 ---
 title: Traceability Matrix
 description: Traceability of every capability of the Astronaut Health Intelligence Platform to its product spec requirement, source code, tests, data, method and reference.
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Traceability Matrix
@@ -19,8 +19,13 @@ Each row links a capability of the Astronaut Health Intelligence Platform (AHI) 
 | Exercise simulator (CEVIS, ARED, T2) | US-013 | <CodeLink path="frontend/web/src/engine/sim/physiology.ts" /> | `engine.test.ts`, `intervention.test.ts` | <OriginBadge origin="SIMULATED" /> | Session model | [Device simulation](../intelligence/scenario-simulation) |
 | NASA OSDR import with provenance | US-008, US-016 | <CodeLink path="frontend/web/scripts/osdr/import.mjs" /> | none (checks inside the script) | <OriginBadge origin="REAL_PUBLIC" /> OSD-569, OSD-575 | SHA-256, manifest | [Dataset catalog](../data/dataset-catalog) |
 | Data quality flags (missing, questionable, stale) | US-009 | <CodeLink path="frontend/web/src/engine/anomaly.ts" /> | `anomaly.test.ts`, `engine.test.ts` | <OriginBadge origin="SIMULATED" /> | Stale windows, questionable share | [Anomaly detection](../intelligence/anomaly-detection#data-quality) |
-| Ingestion API | US-006 | none | none | | | [Target architecture](../architecture/target-architecture) |
-| Persistence | US-002 | none | none | | | [Target architecture](../architecture/target-architecture) |
+| Device pause and resume (operator) | none (v5 addition) | <CodeLink path="frontend/web/src/features/vitals/DevicesIndicator.tsx" /> | `devicePause.test.ts` | <OriginBadge origin="SIMULATED" /> | PAUSED state, readings `NO_DATA`, audit entries | [Device simulation](../intelligence/scenario-simulation#pausing-a-device) |
+| Periodic eye (SANS) and hearing exams | none (v5 addition) | <CodeLink path="frontend/web/src/engine/sim/exams.ts" /> | `exams.test.ts`, `examRegions.test.ts` | <OriginBadge origin="SIMULATED" /> | Exam schedule from NASA briefs | [Eye health and hearing](../intelligence/eye-and-hearing) |
+| Ingestion API | US-006 | <CodeLink path="backend/app/modules/ingestion/service.py" /> | `test_ingestion_observations.py` | all origins | Canonical validation, idempotent by `observation_id` | [Backend and API](../architecture/backend#ingestion-rules) |
+| Persistence | US-002 | <CodeLink path="backend/app/modules/observations/models.py" /> | `test_ingestion_observations.py`, `test_health_registry.py` | all origins | SQLite or PostgreSQL, Alembic | [Backend and API](../architecture/backend#storage-and-migrations) |
+| NASA DONKI space weather (live and bundled snapshot) | none (v5 addition) | <CodeLink path="backend/app/modules/nasa/donki.py" /> | `test_nasa.py`, `spaceWeather.test.ts` | <OriginBadge origin="REAL_PUBLIC" /> | Four DONKI feeds, 15 min cache, snapshot fallback | [NASA data sources](../data/sources#donki-space-weather) |
+| NASA OSDR study search | US-008 | <CodeLink path="backend/app/modules/nasa/osdr.py" /> | `test_nasa.py` | <OriginBadge origin="REAL_PUBLIC" /> | OSDR search API, human studies | [NASA data sources](../data/sources) |
+| Offline demo mode and typed API client | none (v5 addition) | <CodeLink path="frontend/web/src/lib/api/client.ts" /> | `client.test.ts`, `test_schema.py` | | `VITE_API_URL`, generated OpenAPI types | [Backend and API](../architecture/backend#offline-demo-mode) |
 
 ## Health intelligence
 
@@ -28,12 +33,15 @@ Each row links a capability of the Astronaut Health Intelligence Platform (AHI) 
 | --- | --- | --- | --- | --- | --- | --- |
 | Personal baseline | US-017 | <CodeLink path="frontend/web/src/engine/baseline.ts" /> | `baseline.test.ts`, `stats.test.ts` | <OriginBadge origin="DERIVED" /> | Median, MAD, p05 / p95, context buckets | [Personal baseline](../intelligence/personal-baseline) |
 | Univariate anomaly detection | US-018 | <CodeLink path="frontend/web/src/engine/anomaly.ts" /> | `anomaly.test.ts` | <OriginBadge origin="DERIVED" /> | Robust z, EWMA, persistence | [Anomaly detection](../intelligence/anomaly-detection) |
-| Multivariate anomaly detection | US-019 | none | none | | Isolation Forest (planned) | [AI and analytics](../intelligence/ai-and-analytics) |
+| Small steady drift | US-018 | <CodeLink path="frontend/web/src/engine/cusum.ts" /> | `cusum.test.ts` | <OriginBadge origin="DERIVED" /> | Tabular CUSUM on hourly mean robust z | [Anomaly detection](../intelligence/anomaly-detection#cusum) |
+| Multivariate anomaly detection (experimental) | US-019 | <CodeLink path="frontend/web/src/engine/ml/multivariate.ts" />, <CodeLink path="backend/app/modules/analytics/service.py" /> | `multivariate.test.ts`, `engineMultivariate.test.ts`, `isolationForest.test.ts`, `whitening.test.ts`, `test_analytics.py` | <OriginBadge origin="DERIVED" /> | Per astronaut Isolation Forest, PCA whitening, persistence gate | [Anomaly detection](../intelligence/anomaly-detection#unusual-combination-experimental) |
+| Eye and hearing assessment | none (v5 addition) | <CodeLink path="frontend/web/src/engine/exams/assess.ts" /> | `exams.test.ts` | <OriginBadge origin="DERIVED" /> | Change vs pre-flight baseline, cited criteria | [Eye health and hearing](../intelligence/eye-and-hearing) |
+| Mission profiles, dose and space weather advisory | none (v5 addition) | <CodeLink path="frontend/web/src/engine/missions/profiles.ts" /> | `missions.test.ts`, `missionProfile.test.ts` | <OriginBadge origin="DERIVED, REAL_PUBLIC" /> | Cited reference values, career limit, DONKI events | [Mission profiles](../intelligence/mission-profiles) |
 | Risk assessment | US-020 | <CodeLink path="frontend/web/src/engine/risk.ts" /> | `risk.test.ts` | <OriginBadge origin="DERIVED" /> | Combined rules, noisy-OR score, confidence | [Risk assessment](../intelligence/risk-assessment) |
-| Trend projection | US-021 | <CodeLink path="frontend/web/src/engine/forecast.ts" /> | `forecast.test.ts` | <OriginBadge origin="DERIVED" /> | Damped Holt, 80% interval | [Forecasting](../intelligence/forecasting) |
+| Trend projection with horizons up to 15 days | US-021 | <CodeLink path="frontend/web/src/engine/forecast.ts" /> | `forecast.test.ts` | <OriginBadge origin="DERIVED" /> | Damped Holt, 80% interval, history rule | [Forecasting](../intelligence/forecasting#selectable-horizons) |
 | With and without intervention | US-022 | <CodeLink path="frontend/web/src/engine/intervention.ts" /> | `intervention.test.ts` | <OriginBadge origin="SIMULATED" /> | Noise free projection | [What-if](../intelligence/recommendations#what-if-projection) |
 | Rule based recommendations | US-023 | <CodeLink path="frontend/web/src/engine/recommendations.ts" /> | `risk.test.ts`, `comms.test.ts` | <OriginBadge origin="DERIVED" /> | Versioned catalog, autonomy | [Recommendations](../intelligence/recommendations) |
-| LLM explanation of a recommendation | US-024 | none | none | | Guarded LLM (planned) | [AI and analytics](../intelligence/ai-and-analytics#planned-llm-explanation-layer) |
+| Assistant explanation (Ask AHI, demo) | US-024 | <CodeLink path="backend/app/modules/assistant/router.py" />, <CodeLink path="frontend/web/src/features/assistant/AssistantPanel.tsx" /> | `test_assistant.py`, `assistant.test.ts` | <OriginBadge origin="DERIVED" /> | Grounded snapshot, streamed answer, "Based on:" line | [Ask AHI](../product/assistant) |
 | Alerts and acknowledgement | US-025 | <CodeLink path="frontend/web/src/engine/alerts.ts" /> | `alerts.test.ts`, `risk.test.ts` | <OriginBadge origin="DERIVED" /> | Dedupe, auto resolve, escalation | [Alerts](../intelligence/alerts) |
 | Audit trail | US-027 | <CodeLink path="frontend/web/src/engine/engine.ts" /> | `alerts.test.ts`, `engine.test.ts`, `comms.test.ts` | <OriginBadge origin="MANUAL" /> | Event log with actor and time | [Governance](../data/governance-and-privacy#audit-trail) |
 | Daily check-in and self report | none (v2 addition) | <CodeLink path="frontend/web/src/engine/checkins.ts" /> | `checkins.test.ts` | <OriginBadge origin="SIMULATED, MANUAL" /> | Personal band on 1 to 5 answers | [Self-report](../intelligence/self-report-and-earth-link) |
@@ -54,6 +62,9 @@ Each row links a capability of the Astronaut Health Intelligence Platform (AHI) 
 | Pseudonymized astronaut registry | US-003 | <CodeLink path="frontend/web/src/engine/catalog.ts" /> | `fhir.test.ts` (no PII) | configuration | | [Governance](../data/governance-and-privacy) |
 | Mission and phase | US-004 | <CodeLink path="frontend/web/src/engine/catalog.ts" /> | `comms.test.ts` (mission reference) | configuration | | [Data model](../architecture/data-model) |
 | Devices and sources | US-005 | <CodeLink path="frontend/web/src/features/datasources/DevicesTab.tsx" /> | `engine.test.ts` (device states) | <OriginBadge origin="SIMULATED" /> | | [Data dictionary](../data/data-dictionary#simulated-devices) |
+| Measured by (devices behind a region) | none (v5 addition) | <CodeLink path="frontend/web/src/features/attention/MeasuredBy.tsx" /> | none (UI) | <OriginBadge origin="SIMULATED" /> | Region to metrics to devices | [Device simulation](../intelligence/scenario-simulation#measured-by) |
+| Crew view body system cards | none (v5 addition) | <CodeLink path="frontend/web/src/features/crewview/CrewView.tsx" /> | none (UI) | <OriginBadge origin="SIMULATED, DERIVED" /> | One card per region, tap to highlight | [Product tour](../product/product-tour#ground-view-and-crew-view) |
+| Alert sounds, audio description, skip links | none (v5 addition) | <CodeLink path="frontend/web/src/features/a11y/alarmSchedule.ts" /> | `alarmSchedule.test.ts`, `describe.test.ts` | <OriginBadge origin="DERIVED" /> | Earcons, escalation, speech synthesis | [Accessibility](../product/accessibility) |
 | Anatomical atlas viewer (3D body) | none (v3 addition) | <CodeLink path="frontend/web/src/features/anatomy/viewer/AtlasViewer.tsx" /> | none for rendering (visual check on `anatomy-lab.html`) | <OriginBadge origin="SIMULATED, DERIVED" /> | Tissue materials, status highlights, live vitals | [3D anatomy](../architecture/anatomy-3d) |
 | Atlas manifest contract | none (v3 addition) | <CodeLink path="frontend/web/src/features/anatomy/atlas/types.ts" /> | `manifest.contract.test.ts`, `validate.mjs` | Z-Anatomy, CC BY-SA 4.0 | Manifest checked against every GLB | [Manifest contract](../architecture/anatomy-3d#manifest-contract) |
 | Anatomy to health mapping | none (v3 addition) | <CodeLink path="frontend/web/src/features/anatomy/atlas/health.ts" /> | `health.test.ts`, `manifest.contract.test.ts` | <OriginBadge origin="DERIVED" /> | Structure to region by rule; metrics from the catalog | [Data model](../architecture/data-model#anatomy-to-health-mapping) |
@@ -62,10 +73,12 @@ Each row links a capability of the Astronaut Health Intelligence Platform (AHI) 
 | Per system lazy loading | none (v3 addition) | <CodeLink path="frontend/web/src/features/anatomy/viewer/atlasLoader.ts" /> | none (UI); file list checked by `manifest.contract.test.ts` | Z-Anatomy, CC BY-SA 4.0 | One GLB per system, session cache | [3D anatomy](../architecture/anatomy-3d#loading-strategy-and-offline-constraint) |
 | Procedural fallback body | none (v3 addition) | <CodeLink path="frontend/web/src/features/anatomy/AnatomyViewer.tsx" /> | none (visual check, forced on `anatomy-lab.html`) | <OriginBadge origin="SIMULATED, DERIVED" /> | Error boundary, usable manifest check | [3D anatomy](../architecture/anatomy-3d#fallback) |
 | Anatomy asset pipeline | none (v3 addition) | <CodeLink path="frontend/web/scripts/anatomy/build.mjs" /> | `validate.mjs` (`npm run anatomy:validate`), `manifest.contract.test.ts` | Z-Anatomy, CC BY-SA 4.0 | Pinned SHA-256, headless Blender, glTF Transform | [3D anatomy assets](../data/anatomy-assets) |
-| Female reference model, textures, per astronaut anatomy, eye monitoring (SANS) | none | none | none | | Planned or absent | [Feature status](../overview/feature-status#user-interface), [Roadmap](../resources/roadmap#anatomy-next-steps) |
+| Zoom to pointer, Monitor and Explore, atlas retry, body scan | none (v5 addition) | <CodeLink path="frontend/web/src/features/anatomy/viewer/zoom.ts" />, <CodeLink path="frontend/web/src/features/anatomy/viewer/interaction.ts" />, <CodeLink path="frontend/web/src/features/anatomy/viewer/retry.ts" />, <CodeLink path="frontend/web/src/features/anatomy/viewer/scan.ts" /> | `zoom.test.ts`, `interaction.test.ts`, `retry.test.ts`, `scan.test.ts` | | Pointer ray zoom, persisted mode, exponential backoff, shader band | [3D anatomy](../architecture/anatomy-3d#interaction) |
+| Keyboard body navigator | none (v5 addition) | <CodeLink path="frontend/web/src/features/anatomy/a11y/KeyboardNavigator.tsx" /> | `keyboardNav.test.ts` | <OriginBadge origin="DERIVED" /> | Arrow keys over regions and structures, live announcement | [3D anatomy](../architecture/anatomy-3d#keyboard-body-navigator) |
+| Female reference model, textures, BodyParts3D kidney, per astronaut anatomy | none | none | none | | Planned or absent | [Feature status](../overview/feature-status#user-interface), [Roadmap](../resources/roadmap#anatomy-next-steps) |
 | Project setup (monorepo, README, lint, tests) | US-001 | <CodeLink path="frontend/web/package.json" /> | CI | | | [Project structure](../engineering/project-structure) |
 
-US-001 is only partly met: there is no backend, no Docker Compose and no `.env.example`, because the prototype has no server.
+US-001 is met: the repository holds the web app, the backend with `docker-compose.yml` and `backend/.env.example`, lint and tests.
 
 ## Science references
 

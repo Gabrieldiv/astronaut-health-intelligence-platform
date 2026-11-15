@@ -1,117 +1,88 @@
 ---
 title: Abordagem de IA e análise de dados
-description: O que é e o que não é inteligência artificial na Astronaut Health Intelligence Platform. Estatística, regras e projeções clássicas hoje; LLM só como camada de explicação planejada.
+description: O tipo de inteligência usado na Astronaut Health Intelligence Platform, separando processamento estatístico, pontuação por regras, um detector experimental de aprendizado de máquina e o assistente de demo com modelo de linguagem, com o que está implementado e por quê.
 status: IMPLEMENTED
 origin: DERIVED
 code:
-  - frontend/web/package.json
-  - frontend/web/src/engine/config.ts
+  - frontend/web/src/engine/stats.ts
+  - frontend/web/src/engine/cusum.ts
   - frontend/web/src/engine/risk.ts
   - frontend/web/src/engine/forecast.ts
-verified: 2026-11-14
+  - frontend/web/src/engine/ml/multivariate.ts
+  - backend/app/modules/assistant/prompt.py
+verified: 2026-11-15
 ---
 
 # Abordagem de IA e análise de dados
 
-"Intelligence" está no nome da Astronaut Health Intelligence Platform (AHI), então a pergunta é justa: **onde está a IA?** A resposta curta é que, em tempo de execução, **não há LLM, não há modelo de aprendizado de máquina treinado, não há RAG, agentes nem prompts**. A inteligência da plataforma é estatística e baseada em regras, escolhida de propósito para ser explicável, testável e reproduzível.
+"Inteligência de saúde" na Astronaut Health Intelligence Platform (AHI) significa **estatística explicável e regras transparentes primeiro**. Aprendizado de máquina e um modelo de linguagem existem, mas cada um em um papel estreito e rotulado, que não pode mudar um status. Esta página diz com precisão o que roda, o que não roda e por quê.
 
-::: info Verificado em 14/11/2026
-As dependências de `frontend/web/package.json` são de interface, 3D, estado, gráficos e testes (React, three.js, zustand, Recharts, vitest e afins). Não há biblioteca de LLM, de aprendizado de máquina ou de cliente de API de IA, e o app não faz chamadas a serviços de IA.
+::: tip Em uma frase
+Status, risco e alertas vêm só de estatística e de regras versionadas. Um detector **experimental de aprendizado de máquina** acrescenta uma nota informativa "Unusual combination". Um **modelo de linguagem** é usado só pelo assistente opcional Ask AHI, como demo, pela AHI API, para explicar o que o motor já calculou.
 :::
 
-## As quatro categorias
+## Quatro famílias de técnicas
 
-Separamos quatro coisas que costumam ser chamadas de "IA":
-
-| Categoria | O que é | Na AHI hoje | Status |
+| Família | O que é | Na AHI | Status |
 | --- | --- | --- | --- |
-| 1. Processamento estatístico | Estatística descritiva e robusta sobre os dados da própria pessoa | Baseline (mediana, MAD, p05, p95), z robusto, deriva EWMA, persistência, qualidade do dado | <StatusBadge status="IMPLEMENTED" /> |
-| 2. Pontuação por regras | Regras explícitas com identificador, nível e peso | Regras por métrica, regras combinadas, escore noisy-OR de 0 a 100, confiança, autonomia | <StatusBadge status="IMPLEMENTED" /> |
-| 3. Modelos preditivos tradicionais | Modelos clássicos, sem treinamento em dataset rotulado | Holt linear amortecido com intervalo de 80% e projeção "e se" determinística | <StatusBadge status="IMPLEMENTED" /> |
-| 3b. Aprendizado de máquina | Modelos ajustados a dados (anomalia multivariada, classificação de risco) | Nenhum. Isolation Forest está planejado (US-019, P1); ARIMA, XGBoost e SHAP aparecem como P2 no plano, mas não estão implementados nem agendados | <StatusBadge status="NOT_IMPLEMENTED" /> |
-| 4. LLM (IA generativa) | Modelo de linguagem que gera texto | Nenhum em tempo de execução. Uma camada de explicação está planejada (US-024) | <StatusBadge status="PLANNED" /> |
+| **Processamento estatístico** | Estatística descritiva sobre os dados recentes de cada pessoa | Mediana, MAD, quantis, z robusto, deriva EWMA, CUSUM, contagens de persistência, médias em janelas de 30 min | <StatusBadge status="IMPLEMENTED" /> |
+| **Pontuação por regras** | Regras explícitas e versionadas, com identificador e fórmula documentada | Regras por métrica, regras de exames, três regras combinadas, escore noisy-OR, confiança, catálogo de recomendações, autonomia | <StatusBadge status="IMPLEMENTED" /> |
+| **Modelos preditivos e de aprendizado de máquina** | Modelos de séries temporais e modelos treinados | Holt linear amortecido (sem etapa de treino); um Isolation Forest por astronauta para combinações incomuns | <StatusBadge status="IMPLEMENTED" /> Holt, <StatusBadge status="EXPERIMENTAL" /> Isolation Forest |
+| **Modelos de linguagem (LLMs)** | Modelos generativos de texto | Ask AHI explica as saídas do motor (demo, Claude API pela AHI API) | <StatusBadge status="EXPERIMENTAL" /> só demo |
 
-### 1. Processamento estatístico
+### Processamento estatístico
 
-Tudo que define "o normal" e "o desvio" é estatística clássica e robusta, calculada no navegador sobre os dados da própria pessoa. Nada é aprendido de uma população. Detalhes e fórmulas em [Linha de base pessoal](/pt/intelligence/personal-baseline) e [Detecção de anomalias](/pt/intelligence/anomaly-detection).
+Cada pessoa é comparada consigo mesma. A baseline usa mediana e MAD porque resistem a valores extremos; a deriva usa EWMA porque uma mudança lenta é invisível em uma leitura isolada; o CUSUM pega um deslocamento ainda menor que nunca para. Páginas: [Linha de base pessoal](/pt/intelligence/personal-baseline), [Detecção de anomalias](/pt/intelligence/anomaly-detection).
 
-### 2. Pontuação por regras
+### Pontuação por regras
 
-O nível de atenção sai de regras transparentes. Cada uma tem identificador (por exemplo R-FAT-01), condição legível, frase em linguagem simples e peso conhecido. O escore combina os pesos por noisy-OR. Qualquer pessoa pode refazer a conta à mão. Veja [Avaliação de risco](/pt/intelligence/risk-assessment).
+Regras transformam estatística em decisões que um humano pode auditar: cada achado tem identificador, nível, frase em linguagem simples e peso, e a fórmula do escore cabe em uma linha. Páginas: [Avaliação de risco](/pt/intelligence/risk-assessment), [Recomendações](/pt/intelligence/recommendations), [Limiares](/pt/intelligence/thresholds).
 
-### 3. Modelos preditivos tradicionais
+### Modelos preditivos e de aprendizado de máquina
 
-A previsão usa suavização exponencial de Holt com tendência amortecida, um método clássico de séries temporais com três parâmetros fixos (alpha, beta, phi). Não há treinamento: o modelo se ajusta à série recente a cada cálculo. A comparação "e se" roda o próprio simulador sem ruído. Veja [Previsão](/pt/intelligence/forecasting) e [Recomendações](/pt/intelligence/recommendations).
+| Método | Status | Por quê |
+| --- | --- | --- |
+| Holt linear amortecido com intervalo de 80% | <StatusBadge status="IMPLEMENTED" /> | Simples, estável, não precisa de dados de treino, a incerteza é explícita ([Previsão](/pt/intelligence/forecasting)) |
+| Isolation Forest, por astronauta, com branqueamento PCA | <StatusBadge status="EXPERIMENTAL" /> | US-019 do plano. Treinado na janela da própria pessoa, então não precisa de dados de população; só acrescenta uma nota e lista os sinais que contribuíram ([Detecção de anomalias](/pt/intelligence/anomaly-detection#unusual-combination-experimental)). Uma versão com scikit-learn roda no backend para comparação |
+| ARIMA | <StatusBadge status="NOT_IMPLEMENTED" /> | P2 no plano; Holt amortecido com elegibilidade explícita cobre os horizontes oferecidos |
+| Modelo de risco XGBoost | <StatusBadge status="NOT_IMPLEMENTED" /> | Precisa de um dataset rotulado de desfechos reais, que não existe publicamente |
+| Explicações SHAP | <StatusBadge status="NOT_IMPLEMENTED" /> | As regras listam seus fatores; o Isolation Forest lista as contribuições por sinal |
+| Regra IQR | <StatusBadge status="NOT_IMPLEMENTED" /> | Coberta pelo z robusto |
 
-### 3b. Aprendizado de máquina (planejado)
+### Por que o aprendizado de máquina continua experimental
 
-O plano do projeto (`PROJECT_MASTER.md`, seção 9.3) segue o princípio "estatística explicável primeiro, depois aprendizado de máquina":
+- **Sem dados reais.** Não há telemetria pública contínua de astronautas nem desfechos rotulados; o detector só viu dados simulados, então pode estar aprendendo principalmente o simulador.
+- **Explicação primeiro.** Seção 9.1 do plano: estatística explicável primeiro, depois aprendizado de máquina. Um flight surgeon precisa ver por que um nível mudou, então o detector não pode mudar nenhum.
+- **Pessoal, não populacional.** O detector é treinado por astronauta, nos dias da própria pessoa, o mesmo princípio da baseline.
+- **Não objetivo.** O plano exclui treinar um modelo clínico robusto com pequenas bases históricas (seção 2.4).
 
-| Método | Objetivo | Prioridade no plano | Pré-requisito |
-| --- | --- | --- | --- |
-| Isolation Forest | Anomalia multivariada | P1 | Dados reais com volume suficiente |
-| ARIMA | Séries temporais adequadas | P2 | Séries longas e estacionárias |
-| XGBoost | Estimar risco | P2 | **Dataset rotulado suficiente**, que não existe hoje |
-| SHAP | Explicar modelos compatíveis | Junto com XGBoost | Um modelo de ML para explicar |
-| Análise de sobrevivência | Tempo até evento | Futuro | Dados longitudinais apropriados |
+## Modelo de linguagem: o assistente Ask AHI {#language-model-the-ask-ahi-assistant}
 
-Também citados no plano e **não implementados**: regra IQR e CUSUM. A mediana com MAD e a deriva EWMA cumprem papéis equivalentes.
-
-::: warning ATENÇÃO
-Treinar um modelo clínico com poucas pessoas ou com dados simulados seria enganoso. O documento mestre lista isso como não objetivo do MVP: "Treinamento de modelo clínico robusto exclusivamente com pequenas bases históricas".
-:::
-
-### 4. LLM: camada de explicação planejada
-
-O documento mestre (seção 9.7 e US-024, prioridade P2) prevê uma camada de **explicação em linguagem natural**. O desenho é restrito:
+<StatusBadge status="EXPERIMENTAL" /> O assistente segue o papel estreito do US-024 e da seção 9.7 do plano: fica **depois** do motor e explica.
 
 ```mermaid
 flowchart LR
-    R[Regras identificam a condição] --> C[Catálogo oferece ações aprovadas]
-    C --> F[Contexto da missão filtra]
-    F --> L[LLM explica a recomendação já escolhida]
-    L --> H[Humano revisa]
-    F -. sem LLM .-> H
+    R["Motor de regras<br/>status, risco, alertas"] --> C["Catálogo de recomendações<br/>ações aprovadas"]
+    C --> S["Retrato fundamentado<br/>(valores, faixas, alertas,<br/>data_origin, NO_DATA)"]
+    S --> L["Modelo de linguagem<br/>explica em palavras simples<br/>(demo: Claude API)"]
+    L --> H["Tripulação e flight surgeon<br/>decidem"]
+    S -. "assistente offline:<br/>o app funciona igual" .-> H
 ```
 
-*Conceitual (não implementado).*
-
-Critérios do US-024:
-
-- o LLM **só recebe uma recomendação já selecionada** pelas regras;
-- resposta estruturada, mostrando fonte e limitações;
-- não pode criar diagnóstico ou prescrição;
-- **fallback sem LLM**: a plataforma continua funcionando igual sem ele.
-
-O LLM **não pode**: inventar limite clínico, diagnosticar, recomendar medicamento, criar tratamento, transformar correlação em causalidade nem ocultar incerteza ou origem simulada. O documento mestre também lista "LLM como núcleo de decisão clínica" entre o que evitar.
-
-## O que não existe na plataforma
-
-| Item | Status |
+| O modelo pode | O modelo não pode |
 | --- | --- |
-| LLM em tempo de execução | <StatusBadge status="NOT_IMPLEMENTED" /> |
-| Treinamento ou ajuste fino de modelos | <StatusBadge status="NOT_IMPLEMENTED" /> |
-| RAG (busca em documentos para alimentar um modelo) | <StatusBadge status="NOT_IMPLEMENTED" /> |
-| Agentes autônomos ou prompts | <StatusBadge status="NOT_IMPLEMENTED" /> |
-| Envio de dados a serviços de IA externos | <StatusBadge status="NOT_IMPLEMENTED" /> |
-| Uso dos datasets reais do OSDR para treinar ou ajustar o motor | <StatusBadge status="NOT_IMPLEMENTED" /> |
+| Explicar status, alertas e recomendações que já estão no app | Inventar um limite clínico |
+| Terminar cada resposta com "Based on:" citando o que usou | Diagnosticar |
+| Ser desligado, com o app funcionando sem ele | Recomendar medicamento ou criar tratamento |
+| Dizer "o app não mostra isso" | Transformar correlação em causalidade, esconder incerteza ou a origem simulada dos dados |
+
+Um modelo em nuvem só é aceitável para a demo do hackathon. Uma missão real precisa de um modelo embarcado e offline; veja [Ask AHI](/pt/product/assistant#the-onboard-target).
 
 ## IA no desenvolvimento
 
-O projeto foi desenvolvido com assistência de IA (Claude Code) para escrever código, testes e documentação. Isso é uma **ferramenta de desenvolvimento**, não uma funcionalidade da plataforma: nada dessa assistência roda dentro do app. Todo o código passa pelos mesmos testes, checagem de tipos e build no CI.
-
-## Por que esta escolha
-
-| Critério | Estatística e regras | ML ou LLM no MVP |
-| --- | --- | --- |
-| Explicação | Cada nível tem regra e peso legíveis | Exige camada extra (SHAP) ou não é garantida |
-| Dados necessários | Funciona com o histórico da própria pessoa | Exige dataset rotulado que não existe |
-| Teste | Comportamento determinístico, coberto por testes unitários | Mais difícil de testar e reproduzir |
-| Risco de alucinação | Nenhum | Real para LLM |
-| Execução offline no navegador | Sim | Difícil ou inviável |
+O código e estes documentos foram desenvolvidos com ajuda de um assistente de programação com IA (Claude Code). Isso é uma propriedade de como o projeto foi construído, como a escolha do editor; ele não roda dentro da plataforma, não vê dados da tripulação e não toma nenhuma decisão no produto. Todo o comportamento do motor está em código revisado e coberto por testes ([Estratégia de testes](/pt/engineering/testing)).
 
 ## Próximos passos
 
-- [Visão geral e status dos métodos](/pt/intelligence/overview).
-- [Model card](/pt/validation/model-card): uso pretendido e limitações.
-- [Roadmap](/pt/resources/roadmap): quando ML e LLM poderiam entrar.
+- [Visão geral e status dos métodos](/pt/intelligence/overview)
+- [Model card](/pt/validation/model-card)

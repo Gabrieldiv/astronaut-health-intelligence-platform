@@ -1,13 +1,13 @@
 ---
 title: Data Dictionary
-description: The 21 metric codes of the Astronaut Health Intelligence Platform with unit, cadence, stale window, body region, bad direction, device and data origin, plus the check-in and lab record formats.
+description: The 29 metric codes of the Astronaut Health Intelligence Platform with unit, cadence, stale window, body region, bad direction, device and data origin, plus the check-in and lab record formats.
 status: IMPLEMENTED
 origin: SIMULATED, MANUAL, REAL_PUBLIC
 code:
   - frontend/web/src/engine/catalog.ts
   - frontend/web/src/engine/config.ts
   - frontend/web/src/types/domain.ts
-verified: 2026-11-14
+verified: 2026-11-15
 ---
 
 # Data Dictionary
@@ -16,7 +16,7 @@ This is the canonical table of the metrics in the Astronaut Health Intelligence 
 
 ## Metric catalog
 
-21 metrics: 17 per astronaut and 4 for the cabin (`subject_id: "CABIN"`). The canonical unit is the unit data must have when it reaches the engine. **Cadence** is what the simulator emits and the engine expects. **Stale after** is how long a metric can go without a valid value before it becomes `NO_DATA`. **Bad direction** is the side of the personal band that counts as worse.
+29 metrics: 25 per astronaut (8 of them from periodic eye and hearing exams) and 4 for the cabin (`subject_id: "CABIN"`). The canonical unit is the unit data must have when it reaches the engine. **Cadence** is what the simulator emits and the engine expects. **Stale after** is how long a metric can go without a valid value before it becomes `NO_DATA`. **Bad direction** is the side of the personal band that counts as worse.
 
 | Code | Label | Unit | Cadence | Stale after | Region | Bad direction | Device (simulated) | Origin |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -37,6 +37,14 @@ This is the canonical table of the metrics in the Astronaut Health Intelligence 
 | `MOOD` | Mood (self report) | 1 to 5 | daily | 50 h | brain | down | Daily check-in | <OriginBadge origin="SIMULATED, MANUAL" /> |
 | `PERCEIVED_FATIGUE` | Fatigue (self report) | 1 to 5 | daily | 50 h | brain | up | Daily check-in | <OriginBadge origin="SIMULATED, MANUAL" /> |
 | `STRESS` | Stress (self report) | 1 to 5 | daily | 50 h | brain | up | Daily check-in | <OriginBadge origin="SIMULATED, MANUAL" /> |
+| `RETINAL_THICKNESS` | Retinal thickness (OCT) | µm | per eye exam | none (exam) | eyes | up | Simulated eye exam | <OriginBadge origin="SIMULATED" /> |
+| `CHOROIDAL_FOLDS` | Choroidal folds (OCT) | present | per eye exam | none (exam) | eyes | up | Simulated eye exam | <OriginBadge origin="SIMULATED" /> |
+| `OPTIC_NERVE_SHEATH_DIAMETER` | Optic nerve sheath (ultrasound) | mm | per eye exam | none (exam) | eyes | up | Simulated eye exam | <OriginBadge origin="SIMULATED" /> |
+| `VISUAL_ACUITY` | Visual acuity | logMAR | per eye exam | none (exam) | eyes | up | Simulated eye exam | <OriginBadge origin="SIMULATED" /> |
+| `HEARING_THRESHOLD_HIGH` | Hearing threshold, high pitch (2, 3, 4 kHz) | dB HL | per hearing test | none (exam) | ears | up | Simulated hearing test | <OriginBadge origin="SIMULATED" /> |
+| `HEARING_THRESHOLD_LOW` | Hearing threshold, low pitch (0.25, 0.5, 1 kHz) | dB HL | per hearing test | none (exam) | ears | up | Simulated hearing test | <OriginBadge origin="SIMULATED" /> |
+| `NOISE_EXPOSURE` | Noise exposure (work period) | dBA | daily | none (exam) | ears | up | Crew worn noise reading | <OriginBadge origin="SIMULATED" /> |
+| `NOISE_DOSE` | Daily noise dose | % | daily | none (exam) | ears | up | Crew worn noise reading | <OriginBadge origin="SIMULATED" /> |
 | `CO2` | Cabin CO2 | ppm | 1 min | 10 min | environment | up | Cabin environment sensor | <OriginBadge origin="SIMULATED" /> |
 | `CABIN_TEMPERATURE` | Cabin temperature | °C | 1 min | 10 min | environment | both | Cabin environment sensor | <OriginBadge origin="SIMULATED" /> |
 | `RELATIVE_HUMIDITY` | Humidity | % | 1 min | 10 min | environment | both | Cabin environment sensor | <OriginBadge origin="SIMULATED" /> |
@@ -48,6 +56,7 @@ Notes:
 - `EXERCISE_LOAD` is relative to the person's own usual sessions; the daily summary also tracks exercise minutes against the plan.
 - Fixed demo thresholds that apply to some of these metrics are listed only in [Thresholds and limitations](../intelligence/thresholds).
 - The real OSDR lab analytes (CBC and CMP) are not part of this catalog; they are listed in the [Dataset catalog](./dataset-catalog).
+- Exam metrics are compared per side (left and right eye or ear) with the person's own pre-flight baseline, not with a rolling band; before the first in-flight exam they read "No exam yet" (`NO_DATA`). Rules: [Eye health and hearing](../intelligence/eye-and-hearing).
 
 ## Body regions
 
@@ -60,8 +69,10 @@ Notes:
 | `muscles` | Muscles | Musculoskeletal | Activity, exercise performance |
 | `bones` | Skeleton | Bone and radiation | Accumulated dose |
 | `skin` | Skin | Thermal | Skin temperature |
+| `eyes` | Eyes | Vision (SANS monitoring) | Retinal thickness, choroidal folds, optic nerve sheath, visual acuity |
+| `ears` | Ears | Hearing and noise | Hearing thresholds, noise exposure, daily noise dose |
 
-Cabin metrics map to `environment`. A region with all its metrics missing is `NO_DATA`, never `LOW`. The eyes have no metric: in the 3D body they are context only structures.
+Cabin metrics map to `environment`. A region with all its metrics missing is `NO_DATA`, never `LOW`.
 
 Which anatomical structures of the 3D atlas report under each region, and which are context only, is defined in [Anatomy to health mapping](../architecture/data-model#anatomy-to-health-mapping).
 
@@ -69,13 +80,13 @@ Which anatomical structures of the 3D atlas report under each region, and which 
 
 | Device | Kind | Assigned | Metrics |
 | --- | --- | --- | --- |
-| Bio-Monitor shirt (sim) | `BIO_MONITOR` | each astronaut | HR, HRV, SpO2, breathing rate, skin temperature, systolic and diastolic BP |
-| Actigraphy watch (sim) | `ACTIGRAPHY` | each astronaut | Activity, sleep duration, sleep efficiency |
-| CEVIS cycle ergometer, ARED resistive exercise device, T2 treadmill (sim) | `EXERCISE_*` | shared | Exercise performance |
-| Personal dosimeter (sim) | `DOSIMETER` | each astronaut | Accumulated dose |
-| Cabin environment sensor (sim) | `ENV_SENSOR` | cabin | CO2, temperature, humidity |
-| Area radiation monitor (sim) | `DOSIMETER` | cabin | Dose rate |
-| Reaction self-test and fluid intake log (sim) | app based | each astronaut | Reaction time, hydration (not listed as devices in the UI) |
+| Bio-Monitor shirt | `BIO_MONITOR` | each astronaut | HR, HRV, SpO2, breathing rate, skin temperature, systolic and diastolic BP |
+| Actigraphy watch | `ACTIGRAPHY` | each astronaut | Activity, sleep duration, sleep efficiency |
+| CEVIS cycle ergometer, ARED resistive exercise device, T2 treadmill | `EXERCISE_*` | shared | Exercise performance |
+| Personal dosimeter | `DOSIMETER` | each astronaut | Accumulated dose |
+| Cabin environment sensor | `ENV_SENSOR` | cabin | CO2, temperature, humidity |
+| Area radiation monitor | `DOSIMETER` | cabin | Dose rate |
+| Reaction self-test and fluid intake log | app based | each astronaut | Reaction time, hydration (not listed as devices in the UI) |
 
 Device behavior (states, battery, failures) is described in [Device simulation and scenarios](../intelligence/scenario-simulation).
 

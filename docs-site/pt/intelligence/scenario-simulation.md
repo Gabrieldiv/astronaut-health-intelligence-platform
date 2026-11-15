@@ -1,6 +1,6 @@
 ---
 title: Simulação de dispositivos e cenários
-description: Os adapters de dispositivos simulados, o modelo fisiológico e de cabine, a rotina da tripulação e os seis cenários da Astronaut Health Intelligence Platform.
+description: Os adapters de dispositivos simulados, o modelo fisiológico, de exames e de cabine, a rotina da tripulação, os sete cenários e a pausa de dispositivos pelo operador na Astronaut Health Intelligence Platform.
 status: IMPLEMENTED
 origin: SIMULATED
 code:
@@ -10,18 +10,22 @@ code:
   - frontend/web/src/engine/sim/schedule.ts
   - frontend/web/src/engine/sim/profiles.ts
   - frontend/web/src/engine/sim/scenarios.ts
+  - frontend/web/src/engine/sim/exams.ts
   - frontend/web/src/engine/random.ts
+  - frontend/web/src/features/vitals/DevicesIndicator.tsx
+  - frontend/web/src/features/attention/MeasuredBy.tsx
 tests:
   - frontend/web/src/engine/engine.test.ts
   - frontend/web/src/engine/stats.test.ts
-verified: 2026-11-14
+  - frontend/web/src/engine/devicePause.test.ts
+verified: 2026-11-15
 ---
 
 # Simulação de dispositivos e cenários
 
 ## O que faz
 
-Gera, no navegador, os dados de uma tripulação de 4 pessoas e da cabine, como se viessem de equipamentos reais. Na Astronaut Health Intelligence Platform (AHI) **toda leitura de dispositivo é simulada** e carrega `data_origin: 'SIMULATED'`. Os seis cenários roteirizados alteram esse "estado verdadeiro" para testar o motor.
+Gera, no navegador, os dados de uma tripulação de 4 pessoas, dos seus exames periódicos de olhos e audição e da cabine, como se viessem de equipamentos reais. Na Astronaut Health Intelligence Platform (AHI) **toda leitura de dispositivo é simulada** e carrega `data_origin: 'SIMULATED'`. Os sete cenários roteirizados alteram esse "estado verdadeiro" para testar o motor.
 
 ::: warning ATENÇÃO
 O modelo fisiológico é **simplificado e plausível**, não validado. Os parâmetros de cada perfil são valores de simulação, não referência para pessoas reais. Dado simulado não é evidência clínica.
@@ -35,6 +39,7 @@ O modelo fisiológico é **simplificado e plausível**, não validado. Os parâm
 | Perfis da tripulação | Idade, sexo e deslocamento individual semeado (`profiles.ts`) |
 | Rotina | Cronograma diário em UTC (`schedule.ts`) |
 | Cenário ativo e intervenções registradas | `scenarios.ts` |
+| Perfil de missão | Lançamento, ISS, Lua ou trânsito para Marte: muda a taxa do dosímetro ([Perfis de missão](/pt/intelligence/mission-profiles)) |
 
 ## Método
 
@@ -74,24 +79,48 @@ flowchart LR
 
 ### Cabine
 
-CO₂ com oscilação diária em torno de 2600 ppm, temperatura e umidade com ruído OU, e taxa de dose com modulação orbital (período de cerca de 92,7 min) e passagens pela Anomalia do Atlântico Sul. São valores de simulação, não medidas da ISS. O contexto científico está em [Radiação e ambiente da cabine](/pt/science/radiation-and-environment).
+CO₂ com oscilação diária em torno de 2600 ppm, temperatura e umidade com ruído OU, e taxa de dose com modulação orbital (período de cerca de 92,7 min) e passagens pela Anomalia do Atlântico Sul. São valores de simulação, não medidas da ISS. Fora do perfil ISS, a taxa de dose segue a referência do perfil de missão. O contexto científico está em [Radiação e ambiente da cabine](/pt/science/radiation-and-environment).
+
+### Exames
+
+`sim/exams.ts` gera exames oculares periódicos (OCT, ultrassom ocular, acuidade visual) e testes de audição no cronograma de [Saúde ocular e audição](/pt/intelligence/eye-and-hearing), além de uma leitura diária de ruído usada pelo tripulante.
 
 ### Adapters simulados
 
 | Adapter | ID | Tipo (`DeviceKind`) | Métricas |
 | --- | --- | --- | --- |
-| Camiseta inteligente (Bio-Monitor) | `DEV-BIO-AST-0n` | `BIO_MONITOR` | FC, HRV, SpO₂, respiração, temperatura da pele, pressão |
-| Relógio de actigrafia | `DEV-ACT-AST-0n` | `ACTIGRAPHY` | Atividade, duração e eficiência do sono |
-| Cicloergômetro, aparelho resistido, esteira | `DEV-EX-CEVIS`, `DEV-EX-ARED`, `DEV-EX-T2` | `EXERCISE_CEVIS`, `EXERCISE_ARED`, `EXERCISE_T2` | Desempenho de exercício |
-| Teste de reação (app) | `APP-RST-AST-0n` | interno | Tempo de reação |
-| Registro de ingestão de líquidos (app) | `APP-H2O-AST-0n` | interno | Índice de hidratação |
-| Sensor ambiental da cabine | `DEV-ENV-01` | `ENV_SENSOR` | CO₂, temperatura, umidade |
-| Monitor de radiação de área | `DEV-DOS-AREA` | `DOSIMETER` | Taxa de dose |
-| Dosímetro pessoal | `DEV-DOS-AST-0n` | `DOSIMETER` | Dose acumulada |
+| Bio-Monitor shirt | `DEV-BIO-AST-0n` | `BIO_MONITOR` | FC, HRV, SpO₂, respiração, temperatura da pele, pressão |
+| Actigraphy watch | `DEV-ACT-AST-0n` | `ACTIGRAPHY` | Atividade, duração e eficiência do sono |
+| CEVIS cycle ergometer, ARED resistive exercise device, T2 treadmill | `DEV-EX-CEVIS`, `DEV-EX-ARED`, `DEV-EX-T2` | `EXERCISE_CEVIS`, `EXERCISE_ARED`, `EXERCISE_T2` | Desempenho de exercício |
+| Reaction self-test (app da tripulação, não listado como dispositivo) | `APP-RST-AST-0n` | interno | Tempo de reação |
+| Fluid intake log (app da tripulação, não listado como dispositivo) | `APP-H2O-AST-0n` | interno | Índice de hidratação |
+| Cabin environment sensor | `DEV-ENV-01` | `ENV_SENSOR` | CO₂, temperatura, umidade |
+| Area radiation monitor | `DEV-DOS-AREA` | `DOSIMETER` | Taxa de dose |
+| Personal dosimeter | `DEV-DOS-AST-0n` | `DOSIMETER` | Dose acumulada |
 
-Cada adapter implementa `read(simNow)`, `readEvents(from, to)` (opcional, para métricas diárias) e `status(simNow)`. Estados: `ONLINE`, `DEGRADED` (sinal fraco, valores `QUESTIONABLE`), `DATA_STALE` e `OFFLINE`, com bateria e sinal. Unidades, cadências e regiões estão no [Dicionário de dados](/pt/data/data-dictionary). Os equipamentos reais equivalentes estão em [Monitoramento de saúde em missões](/pt/science/health-monitoring-in-missions).
+A primeira coluna traz o nome exibido no app (em inglês). Os nomes não têm mais o sufixo "(sim)"; toda leitura continua `data_origin: 'SIMULATED'` e o app sempre mostra o selo **SIMULATED**.
 
-### Os seis cenários
+Cada adapter implementa `read(simNow)`, `readEvents(from, to)` (opcional, para métricas diárias) e `status(simNow)`. Estados: `ONLINE`, `DEGRADED` (sinal fraco, valores `QUESTIONABLE`), `DATA_STALE`, `OFFLINE` e `PAUSED` (pausado pelo operador), com bateria e sinal. Unidades, cadências e regiões estão no [Dicionário de dados](/pt/data/data-dictionary). Os equipamentos reais equivalentes estão em [Monitoramento de saúde em missões](/pt/science/health-monitoring-in-missions).
+
+### Pausa de um dispositivo {#pausing-a-device}
+
+Um operador pode **pausar** um dispositivo no popover Devices da faixa de sinais vitais (por exemplo, uma camiseta retirada para o banho). A pausa pede uma confirmação rápida.
+
+| Durante a pausa | Comportamento |
+| --- | --- |
+| Estado do dispositivo | `PAUSED`, exibido como "Paused by operator at hh:mm" |
+| Suas métricas | `NO_DATA` com o motivo "Paused by operator", nunca normal |
+| Alarmes | Nenhum alarme de falha de sensor: a pausa é uma ação conhecida do operador, não uma falha |
+| Valores | Nenhum valor é inventado para o período pausado; a lacuna continua lacuna |
+| Auditoria | Entradas `DEVICE_PAUSED` e `DEVICE_RESUMED` |
+
+Depois de **retomar**, o dispositivo espera a primeira leitura ("Resumed at hh:mm, waiting for the first reading").
+
+### Measured by {#measured-by}
+
+Os painéis de detalhe de região e de estrutura listam os dispositivos que alimentam as leituras mostradas: nome, tipo, estado, bateria, último contato e origem do dado. Leituras que vêm do app da tripulação (check-ins, autotestes, registro de líquidos) são identificadas como tal, então sempre fica claro de onde vem cada número.
+
+### Os sete cenários
 
 Todos começam às **08:00 UTC** do tempo simulado (14/11/2026), sobre 5 dias de histórico por minuto e 14 dias de métricas diárias. Cada cenário devolve uma **severidade de 0 a 1** que evolui a partir do início.
 
@@ -103,6 +132,7 @@ Todos começam às **08:00 UTC** do tempo simulado (14/11/2026), sobre 5 dias de
 | `ENVIRONMENTAL_CO2` | "Cabin CO₂ rise" | Cabine e todos | Degradação do removedor eleva o CO₂ em cerca de 3900 ppm ao longo de cerca de 3,5 h; respiração e tempo de reação mudam |
 | `PROGRESSIVE_FATIGUE` | "Progressive fatigue" | LYRA (AST-02) | Em 54 h: dorme mais tarde, eficiência do sono cai, HRV cai até 38% e FC de repouso sobe até 8 bpm |
 | `PERFORMANCE_DECLINE` | "Exercise performance decline" | ATLAS (AST-04) | Rendimento dos treinos cai cerca de 7,5% por dia, no máximo 32% |
+| `SANS_PROGRESSION` | "Eye changes (SANS like)" | ORION (AST-01) | Exames oculares simulados se afastam da linha de base pré-voo ao longo da missão: retina mais espessa, bainha do nervo óptico mais larga, depois dobras novas (Watch no dia de voo 30, Warning no dia de voo 90) |
 
 ### Alívio hipotético das intervenções
 
@@ -135,7 +165,7 @@ Os cenários servem para **demonstrar e testar** o motor. Os tempos de detecçã
 
 ## Saídas
 
-`HealthObservation` com origem `SIMULATED`, estados de `Device`, check-ins simulados e o histórico inicial. Origem: <OriginBadge origin="SIMULATED" />.
+`HealthObservation` com origem `SIMULATED`, estados de `Device` (popover Devices, Measured by e a aba Simulated devices de Data and model), check-ins simulados e o histórico inicial. Origem: <OriginBadge origin="SIMULATED" />.
 
 ## Limitações
 
@@ -145,7 +175,7 @@ Os cenários servem para **demonstrar e testar** o motor. Os tempos de detecçã
 
 ## Status
 
-<StatusBadge status="IMPLEMENTED" /> Coberto por `engine.test.ts` (reprodutibilidade com a mesma semente, histórico pronto na inicialização, os seis cenários) e `stats.test.ts` (aleatoriedade semeada e ruído OU).
+<StatusBadge status="IMPLEMENTED" /> Coberto por `engine.test.ts` (reprodutibilidade com a mesma semente, histórico pronto na inicialização, os cenários), `stats.test.ts` (aleatoriedade semeada e ruído OU), `devicePause.test.ts` (métricas pausadas ficam `NO_DATA`, sem alarme de falha de sensor, retomada) e `exams.test.ts` (cronograma de exames, cenário SANS).
 
 ## Próximos passos
 
