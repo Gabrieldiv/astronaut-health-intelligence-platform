@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { CloudOff, Loader2, Mic, MicOff, RefreshCw, Send, Sparkles, Square, Volume2, VolumeX } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useAppStore } from '../../state/store'
+import { useUiStore } from '../../app/uiStore'
 import { Badge, Button, Drawer, IconButton } from '../../components/ui'
 import { buildAssistantContext } from './context'
 import {
@@ -27,31 +28,60 @@ export const DEMO_NOTE = 'Demo: answers come from a cloud AI model. Not medical 
 let nextId = 0
 const newId = () => `m${++nextId}`
 
-/** Launcher button plus the chat drawer. Mounted once in the app shell. */
+/**
+ * Top bar entry point for Ask AHI. The assistant lives in a side drawer the user explicitly opens
+ * (this button or the K key) and closes (Esc, the close button or the backdrop); nothing floats
+ * over the dashboard while it is closed.
+ */
+export function AssistantLauncher({ showLabel = true }: { showLabel?: boolean }) {
+  const open = useUiStore((s) => s.assistantOpen)
+  const setOpen = useUiStore((s) => s.setAssistantOpen)
+  const t = useT()
+  const label = t('assistant.launcher')
+  return (
+    <button
+      type="button"
+      data-assistant-launcher
+      onClick={() => setOpen(true)}
+      aria-haspopup="dialog"
+      aria-expanded={open}
+      aria-keyshortcuts="K"
+      aria-label={showLabel ? undefined : label}
+      title={t('assistant.launcherTitle')}
+      className={clsx(
+        'focus-ring flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl text-xs font-semibold whitespace-nowrap text-ink-100 ring-1 ring-white/[0.08] transition-colors hover:bg-white/[0.06]',
+        showLabel ? 'px-3' : 'w-9',
+        open && 'bg-accent/[0.14] text-accent ring-accent/35',
+      )}
+    >
+      <Sparkles size={15} className="text-accent" aria-hidden />
+      {showLabel && label}
+    </button>
+  )
+}
+
+/** Chat drawer host. Mounted once in the app shell; renders nothing while closed. */
 export function Assistant() {
-  const [open, setOpen] = useState(false)
-  const launcher = useRef<HTMLButtonElement>(null)
+  const open = useUiStore((s) => s.assistantOpen)
+  const setOpen = useUiStore((s) => s.setAssistantOpen)
+  // Whatever opened the drawer (top bar button, or the page for the K key) gets focus back on close.
+  const opener = useRef<HTMLElement | null>(null)
+  // Captured synchronously on the open transition, before the drawer moves focus into itself.
+  useEffect(
+    () =>
+      useUiStore.subscribe((s, prev) => {
+        if (!s.assistantOpen || prev.assistantOpen) return
+        const el = document.activeElement
+        opener.current = el instanceof HTMLElement && el !== document.body ? el : null
+      }),
+    [],
+  )
   const close = useCallback(() => {
     setOpen(false)
-    launcher.current?.focus()
-  }, [])
-  const t = useT()
-  return (
-    <>
-      <button
-        ref={launcher}
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        className="focus-ring glass-strong fixed right-4 bottom-4 z-50 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-ink-100 shadow-lg ring-1 ring-accent/30 transition-colors hover:bg-white/[0.08]"
-      >
-        <Sparkles size={16} className="text-accent" aria-hidden />
-        {t('assistant.launcher')}
-      </button>
-      {open && <AssistantDrawer onClose={close} />}
-    </>
-  )
+    const el = opener.current ?? document.querySelector<HTMLElement>('[data-assistant-launcher]')
+    if (el && document.contains(el)) el.focus()
+  }, [setOpen])
+  return open ? <AssistantDrawer onClose={close} /> : null
 }
 
 function AssistantDrawer({ onClose }: { onClose: () => void }) {

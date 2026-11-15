@@ -193,7 +193,7 @@ export default withMermaid(
     ignoreDeadLinks: 'localhostLinks',
 
     head: [
-      ['link', { rel: 'icon', type: 'image/svg+xml', href: `${BASE}favicon.svg` }],
+      ['link', { rel: 'icon', type: 'image/svg+xml', href: `${BASE}favicon.svg?v=3` }],
       ['meta', { name: 'theme-color', content: '#0b1220' }],
       ['meta', { property: 'og:type', content: 'website' }],
       ['meta', { property: 'og:site_name', content: SITE_NAME }],

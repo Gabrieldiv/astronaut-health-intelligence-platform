@@ -63,6 +63,10 @@ interface UiState extends Persisted {
   shortcutsOpen: boolean
   setShortcutsOpen: (open: boolean) => void
 
+  /** Ask AHI drawer. Opened only on demand (top bar button or the K key), never floating over content. */
+  assistantOpen: boolean
+  setAssistantOpen: (open: boolean) => void
+
   tour: TourState
   /** View mode before the tour started, restored on exit. */
   tourReturnView: ViewMode | null
@@ -104,9 +108,12 @@ export const useUiStore = create<UiState>()((set, get) => {
     shortcutsOpen: false,
     setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen }),
 
+    assistantOpen: false,
+    setAssistantOpen: (assistantOpen) => set({ assistantOpen }),
+
     tour: { active: false, step: 0, autoplay: false },
     tourReturnView: null,
-    startTour: () => set((s) => ({ tour: { active: true, step: 0, autoplay: false }, tourReturnView: s.viewMode, alertsOpen: false, shortcutsOpen: false })),
+    startTour: () => set((s) => ({ tour: { active: true, step: 0, autoplay: false }, tourReturnView: s.viewMode, alertsOpen: false, shortcutsOpen: false, assistantOpen: false })),
     setTourStep: (step) => set((s) => ({ tour: { ...s.tour, step } })),
     setTourAutoplay: (autoplay) => set((s) => ({ tour: { ...s.tour, autoplay } })),
     endTour: () => {

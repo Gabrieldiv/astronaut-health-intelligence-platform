@@ -4,6 +4,7 @@ import type en from '../en/assistant'
 const m: Record<keyof typeof en, string> = {
   'assistant.launcher': 'AHI に質問',
   'assistant.title': 'AHI に質問',
+  'assistant.launcherTitle': 'クルーについて AHI に質問 (K)',
   'assistant.theCrew': 'クルー',
   'assistant.emptyAnswer': 'アシスタントの回答が空でした。',
   'assistant.stopped': '停止しました。',

@@ -39,5 +39,6 @@ const m: Record<keyof typeof en, string> = {
   'crewview.systemsTitle': 'あなたの体のシステム',
   'crewview.systemsHint': 'タップすると体の上に表示されます',
   'crewview.statusAria': 'あなたの状態',
+  'crewview.inRangeCount': '{total} 項目中 {n} 項目が通常範囲内',
 }
 export default m

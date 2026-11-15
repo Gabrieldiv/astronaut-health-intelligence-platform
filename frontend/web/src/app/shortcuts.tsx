@@ -60,6 +60,10 @@ export function useGlobalShortcuts() {
         case 'V':
           ui.toggleViewMode()
           break
+        case 'k':
+        case 'K':
+          if (!ui.tour.active) ui.setAssistantOpen(!ui.assistantOpen)
+          break
         case '?':
           ui.setShortcutsOpen(!ui.shortcutsOpen)
           break
@@ -81,6 +85,7 @@ const SHORTCUTS: { keys: string[]; label: MessageKey }[] = [
   { keys: ['V'], label: 'shortcuts.switchView' },
   { keys: ['P'], label: 'shortcuts.presentation' },
   { keys: ['A'], label: 'shortcuts.alerts' },
+  { keys: ['K'], label: 'shortcuts.assistant' },
   { keys: ['Space'], label: 'shortcuts.play' },
   { keys: ['Esc'], label: 'shortcuts.esc' },
   { keys: ['?'], label: 'shortcuts.help' },

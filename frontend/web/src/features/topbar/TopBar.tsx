@@ -11,6 +11,7 @@ import { useUiStore } from '../../app/uiStore'
 import { ProvenanceBadge } from './ProvenancePopover'
 import { ScenarioControl } from './ScenarioControl'
 import { ToolsMenu } from './ToolsMenu'
+import { AssistantLauncher } from '../assistant/AssistantPanel'
 import { usePriorityCollapse } from './usePriorityCollapse'
 import { ConnectivityChip } from '../connectivity'
 import { MissionLinkControl } from '../mission/MissionContext'
@@ -30,6 +31,7 @@ const STEPS = [
   'speedIcon', // gauge icon in the speed picker
   'scenarioWord', // "Scenario" word before the scenario name
   'toolsLabel', // "Tools" text on the menu button
+  'askLabel', // "Ask AHI" text (icon, tooltip and the K key stay)
   'viewLabels', // Ground / Crew text on the view toggle
   'missionName', // mission name block (MET stays)
   'restartToMenu', // restart button moves into the Tools menu
@@ -245,7 +247,7 @@ const Divider = () => <div className="h-6 w-px shrink-0 bg-white/[0.08]" aria-hi
  * the sides allow it:
  *  - left: logo, SIMULATED chip, mission name, mission and Earth link control, MET clock (UTC in its tooltip)
  *  - center: scenario player capsule
- *  - right: Ground / Crew toggle, Tools menu, Start demo, alerts bell
+ *  - right: Ground / Crew toggle, Tools menu, Ask AHI, Start demo, alerts bell
  * Every control is 36 px tall (h-9) with a 12 px radius.
  */
 /** Thin underline in the mission accent color (same color as the stage platform ring). */
@@ -287,6 +289,7 @@ export function TopBar() {
         <ConnectivityChip />
         {!on('viewToMenu') && <ViewToggle showLabels={!on('viewLabels')} />}
         <ToolsMenu showLabel={!on('toolsLabel')} withRestart={on('restartToMenu')} withView={on('viewToMenu')} />
+        <AssistantLauncher showLabel={!on('askLabel')} />
         <Divider />
         <DemoButton mode={on('demoIcon') ? 'icon' : on('demoShort') ? 'short' : 'full'} />
         <AlertsBell />
