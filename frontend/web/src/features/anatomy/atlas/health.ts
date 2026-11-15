@@ -39,6 +39,7 @@
 import type { Alert, Anomaly, AppState, AstronautHealth, BodyRegionId, MetricCode, MetricState, Status, TimePoint } from '../../../types/domain'
 import { METRIC_CATALOG } from '../../../engine/catalog'
 import type { AnatomySystemId, AtlasManifest, AtlasStructure } from './types'
+import { t, translatedRecord } from '../../../i18n'
 
 // ---------------------------------------------------------------------------
 // Structure -> region
@@ -157,86 +158,77 @@ export interface SystemInfo {
   monitoring: string
 }
 
+// The texts below live in src/i18n/locales/*/anatomy.ts: getters return the current language
+// (English by default, so tests and the English UI read exactly the original sentences).
+const systemInfo = (id: AnatomySystemId, coverage: SystemInfo['coverage']): SystemInfo => ({
+  get label() {
+    return t(`anatomy.system.${id}.label`)
+  },
+  get description() {
+    return t(`anatomy.system.${id}.description`)
+  },
+  coverage,
+  get monitoring() {
+    return t(`anatomy.system.${id}.monitoring`)
+  },
+})
+
 export const SYSTEM_INFO: Record<AnatomySystemId, SystemInfo> = {
-  integumentary: {
-    label: 'Integumentary system',
-    description: 'The skin: the body surface and its first barrier.',
-    coverage: 'monitored',
-    monitoring: 'Tracked through skin temperature from the smart shirt.',
-  },
-  skeletal: {
-    label: 'Skeletal system',
-    description: 'Bones, cartilage and joints that support and protect the body.',
-    coverage: 'partial',
-    monitoring: 'Tracked through accumulated radiation dose, as long term bone health context. Teeth are shown for reference only.',
-  },
-  muscular: {
-    label: 'Muscular system',
-    description: 'Skeletal muscles and tendons that move the body.',
-    coverage: 'monitored',
-    monitoring: 'Tracked through activity and exercise performance against the personal usual.',
-  },
-  cardiovascular: {
-    label: 'Cardiovascular system',
-    description: 'The heart and the blood vessels that carry blood around the body.',
-    coverage: 'monitored',
-    monitoring: 'Tracked through heart rate, heart rate variability and blood pressure.',
-  },
-  respiratory: {
-    label: 'Respiratory system',
-    description: 'Airways and lungs: breathing and gas exchange.',
-    coverage: 'monitored',
-    monitoring: 'Tracked through breathing rate and blood oxygen.',
-  },
-  nervous: {
-    label: 'Nervous system',
-    description: 'Brain, spinal cord and nerves.',
-    coverage: 'partial',
-    monitoring: 'Only brain structures have related indicators (sleep, reaction time, self report). The spinal cord and nerves are shown for reference only.',
-  },
-  digestive: {
-    label: 'Digestive system',
-    description: 'Organs that take in and process food.',
-    coverage: 'context',
-    monitoring: 'No device or metric of this prototype relates to the digestive system.',
-  },
-  urinary: {
-    label: 'Urinary system',
-    description: 'Kidneys, ureters and bladder: fluid balance and waste removal.',
-    coverage: 'partial',
-    monitoring: 'Only the kidneys have a related indicator (hydration index from fluid intake logs). Ureters and bladder are shown for reference only.',
-  },
-  other: {
-    label: 'Other organs',
-    description: 'Endocrine glands, lymphoid organs and sense organs.',
-    coverage: 'partial',
-    monitoring: 'Only the eyes have related indicators (periodic eye exams for SANS). Glands and lymphoid organs are shown for reference only.',
-  },
+  integumentary: systemInfo('integumentary', 'monitored'),
+  skeletal: systemInfo('skeletal', 'partial'),
+  muscular: systemInfo('muscular', 'monitored'),
+  cardiovascular: systemInfo('cardiovascular', 'monitored'),
+  respiratory: systemInfo('respiratory', 'monitored'),
+  nervous: systemInfo('nervous', 'partial'),
+  digestive: systemInfo('digestive', 'context'),
+  urinary: systemInfo('urinary', 'partial'),
+  other: systemInfo('other', 'partial'),
 }
 
 /** "Left side", "Right side" or null for midline or merged structures. */
 export function sideLabel(s: Pick<AtlasStructure, 'side'>): string | null {
-  return s.side === 'L' ? 'Left side' : s.side === 'R' ? 'Right side' : null
+  return s.side === 'L' ? t('anatomy.side.L') : s.side === 'R' ? t('anatomy.side.R') : null
 }
+
+const originInfo = (id: AtlasStructure['origin']) => ({
+  get label() {
+    return t(`anatomy.origin.${id}.label`)
+  },
+  get detail() {
+    return t(`anatomy.origin.${id}.detail`)
+  },
+})
 
 /** Where the geometry of a structure comes from, for the "Reference anatomy" note. */
 export const ORIGIN_INFO: Record<AtlasStructure['origin'], { label: string; detail: string }> = {
-  'z-anatomy': {
-    label: 'Z-Anatomy atlas',
-    detail: 'Open 3D atlas of human anatomy (CC BY-SA 4.0), based on BodyParts3D.',
-  },
-  'ahi-procedural': {
-    label: 'AHI procedural',
-    detail: 'Shape built by AHI code and fitted to the position and size of the atlas organ, because the upstream model is not redistributable.',
-  },
+  'z-anatomy': originInfo('z-anatomy'),
+  'ahi-procedural': originInfo('ahi-procedural'),
 }
 
-/** The atlas is one reference body, never the crew member's own anatomy. */
+/**
+ * The atlas is one reference body, never the crew member's own anatomy.
+ * English constant; UI in another language reads `referenceModelNote()`.
+ */
 export const REFERENCE_MODEL_NOTE = 'One adult reference model is used for every crew member. It is not a scan of this astronaut.'
+export const referenceModelNote = () => t('anatomy.referenceModelNote')
 
-/** Text for structures nothing monitors. Calm on purpose: it is not a warning and not a status. */
+/**
+ * Text for structures nothing monitors. Calm on purpose: it is not a warning and not a status.
+ * English constants; UI in another language reads `contextOnlyTitle()` and `contextOnlyText()`.
+ */
 export const CONTEXT_ONLY_TITLE = 'Context only'
 export const CONTEXT_ONLY_TEXT = 'No device or metric monitors this structure in the current prototype. It is shown for anatomical reference.'
+export const contextOnlyTitle = () => t('anatomy.contextOnly.title')
+export const contextOnlyText = () => t('anatomy.contextOnly.text')
+
+const relation = (r: BodyRegionId) => ({
+  get basis() {
+    return t(`anatomy.relation.${r}.basis`)
+  },
+  get caveat() {
+    return t(`anatomy.relation.${r}.caveat`)
+  },
+})
 
 /**
  * How the indicators of a region relate to its structures, in plain words. `basis` says where
@@ -244,42 +236,15 @@ export const CONTEXT_ONLY_TEXT = 'No device or metric monitors this structure in
  * measurement of the selected structure, and never as a diagnosis).
  */
 export const REGION_RELATION: Record<BodyRegionId, { basis: string; caveat: string }> = {
-  brain: {
-    basis: 'Sleep, reaction time and the daily self report are related indicators of alertness and recovery.',
-    caveat: 'They are behavioral and self reported signals, not neurological measurements.',
-  },
-  heart: {
-    basis: 'Heart rate, heart rate variability and blood pressure describe the heart and circulation as a whole.',
-    caveat: 'They are not measurements of this structure.',
-  },
-  lungs: {
-    basis: 'Breathing rate and blood oxygen describe breathing and gas exchange as a whole.',
-    caveat: 'They are not measurements of this structure.',
-  },
-  kidneys: {
-    basis: 'The hydration index is estimated from fluid intake logs.',
-    caveat: 'It is a related indicator, not a measurement of kidney function.',
-  },
-  muscles: {
-    basis: 'Activity and exercise performance describe the muscles as a whole, compared with the personal usual.',
-    caveat: 'They are not measurements of this structure.',
-  },
-  bones: {
-    basis: 'Accumulated radiation dose is whole body exposure, shown as long term bone health context.',
-    caveat: 'No device measures bone density in this prototype.',
-  },
-  skin: {
-    basis: 'Skin temperature is one surface reading from the smart shirt.',
-    caveat: 'It is not a map of the whole skin.',
-  },
-  eyes: {
-    basis: 'Periodic eye exams (retina scan, eye ultrasound, visual acuity) are compared with your own pre-flight baseline, as in NASA SANS monitoring.',
-    caveat: 'Exam results are simulated and are not a diagnosis. Between exams the status shows the last exam.',
-  },
-  ears: {
-    basis: 'Periodic hearing tests are compared with your own pre-flight baseline; noise exposure comes from a crew worn dosimeter.',
-    caveat: 'The ear is not modeled in the 3D body (the inner ear model is excluded for license reasons). The marker on the head only locates it.',
-  },
+  brain: relation('brain'),
+  heart: relation('heart'),
+  lungs: relation('lungs'),
+  kidneys: relation('kidneys'),
+  muscles: relation('muscles'),
+  bones: relation('bones'),
+  skin: relation('skin'),
+  eyes: relation('eyes'),
+  ears: relation('ears'),
 }
 
 // ---------------------------------------------------------------------------
@@ -348,13 +313,7 @@ export function regionAnomalies(anomalies: Anomaly[], astronautId: string, regio
 }
 
 /** Plain words for how an anomaly was found. */
-export const ANOMALY_METHOD_LABEL: Record<Anomaly['method'], string> = {
-  ROBUST_Z: 'Far from personal normal',
-  EWMA: 'Slow drift',
-  PERSISTENCE: 'Persistent deviation',
-  COMBINED: 'Deviation and drift',
-  DATA_QUALITY: 'Data quality',
-}
+export const ANOMALY_METHOD_LABEL: Record<Anomaly['method'], string> = translatedRecord(['ROBUST_Z', 'EWMA', 'PERSISTENCE', 'COMBINED', 'DATA_QUALITY'] as const, (m) => t(`anatomy.anomaly.${m}`))
 
 /**
  * Last measured value at or before `t` in an ascending history (binary search). null when the
@@ -432,7 +391,7 @@ export function selectStructureHealth(
       missing: [],
       alerts: [],
       anomalies: [],
-      contextNote: CONTEXT_ONLY_TEXT,
+      contextNote: contextOnlyText(),
     }
   }
   const health = state.health[astronautId]

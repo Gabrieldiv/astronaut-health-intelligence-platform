@@ -15,6 +15,8 @@ import type { AtlasStore } from '../viewer/atlasStore'
 import { describeRegion, describeStructure, positionPhrase } from './describe'
 import { NAV_START, buildNavModel, cursorOf, highlightOf, moveCursor, selectTarget, targetOf } from './keyboardNav'
 import type { NavCursor, NavTarget } from './keyboardNav'
+import { t as tr, useT } from '../../../i18n'
+import { regionLabel } from '../../../i18n/catalog'
 
 export interface KeyboardNavigatorProps {
   manifest: AtlasManifest
@@ -25,9 +27,12 @@ export interface KeyboardNavigatorProps {
   bottom: number
 }
 
-const HINT = 'Up and Down: body regions. Left and Right: structures. Enter: select. Escape: clear.'
+/** Region targets carry the English catalog label (keyboardNav.ts); show them in the current language. */
+const targetLabel = (tg: NavTarget) => (tg.kind === 'region' ? regionLabel(tg.region) : tg.label)
 
 export function KeyboardNavigator({ manifest, store, statuses, ls, bottom }: KeyboardNavigatorProps) {
+  const t = useT()
+  const HINT = t('anatomy.nav.hint')
   const model = useMemo(() => buildNavModel(manifest), [manifest])
   const selectedRegion = useAppStore((s) => s.selectedRegion)
   const selectedStructureId = useAppStore((s) => s.selectedStructureId)
@@ -37,10 +42,10 @@ export function KeyboardNavigator({ manifest, store, statuses, ls, bottom }: Key
   const owned = useRef<string | null>(null)
 
   const describe = useCallback(
-    (c: NavCursor, t: NavTarget) => {
+    (c: NavCursor, tg: NavTarget) => {
       const g = model.regions[c.region]!
-      if (t.kind === 'region') return `${describeRegion(t.region, statuses[t.region], g.structures.length)} Region ${positionPhrase(c.region, model.regions.length)}.`
-      return `${describeStructure(t.structure, statuses)} Structure ${positionPhrase(c.structure, g.structures.length)}.`
+      if (tg.kind === 'region') return tr('anatomy.nav.regionPos', { text: describeRegion(tg.region, statuses[tg.region], g.structures.length), pos: positionPhrase(c.region, model.regions.length) })
+      return tr('anatomy.nav.structurePos', { text: describeStructure(tg.structure, statuses), pos: positionPhrase(c.structure, g.structures.length) })
     },
     [model, statuses],
   )
@@ -81,10 +86,10 @@ export function KeyboardNavigator({ manifest, store, statuses, ls, bottom }: Key
     const c = cursor ?? NAV_START
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      const t = targetOf(model, c)
-      if (!t) return
-      selectTarget(t, useAppStore.getState())
-      setMessage(`Selected ${t.label}.`)
+      const tg = targetOf(model, c)
+      if (!tg) return
+      selectTarget(tg, useAppStore.getState())
+      setMessage(t('anatomy.nav.selected', { label: targetLabel(tg) }))
       return
     }
     if (e.key === 'Escape') {
@@ -94,7 +99,7 @@ export function KeyboardNavigator({ manifest, store, statuses, ls, bottom }: Key
       e.stopPropagation()
       app.selectStructure(null)
       app.selectRegion(null)
-      setMessage('Selection cleared.')
+      setMessage(t('anatomy.nav.cleared'))
       return
     }
     const next = moveCursor(model, c, e.key)
@@ -115,8 +120,8 @@ export function KeyboardNavigator({ manifest, store, statuses, ls, bottom }: Key
       <div
         tabIndex={0}
         role="application"
-        aria-roledescription="body navigator"
-        aria-label={`3D body. ${HINT}`}
+        aria-roledescription={t('anatomy.nav.roledescription')}
+        aria-label={t('anatomy.nav.aria', { hint: HINT })}
         onFocus={onFocus}
         onBlur={onBlur}
         onKeyDown={onKeyDown}
@@ -128,7 +133,7 @@ export function KeyboardNavigator({ manifest, store, statuses, ls, bottom }: Key
           {target && (
             <div className="flex items-center rounded-full border border-cyan-300/30 bg-slate-950/80 text-slate-50 backdrop-blur-md" style={{ gap: 7 * ls, fontSize: 11.5 * ls, padding: `${4 * ls}px ${11 * ls}px` }}>
               {meta && <span className="rounded-full" style={{ width: 7 * ls, height: 7 * ls, background: meta.color }} />}
-              <span className="font-semibold">{target.label}</span>
+              <span className="font-semibold">{targetLabel(target)}</span>
               {regionOfTarget && meta && (
                 <span className="uppercase tracking-wider" style={{ color: meta.color, fontSize: 9.5 * ls }}>
                   {meta.label}
@@ -136,7 +141,7 @@ export function KeyboardNavigator({ manifest, store, statuses, ls, bottom }: Key
               )}
               {selected && (
                 <span className="uppercase tracking-wider text-cyan-200/90" style={{ fontSize: 9.5 * ls }}>
-                  selected
+                  {t('anatomy.nav.selectedTag')}
                 </span>
               )}
             </div>

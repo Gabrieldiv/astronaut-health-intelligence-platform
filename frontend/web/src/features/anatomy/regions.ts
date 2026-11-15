@@ -2,6 +2,8 @@
 import type { AppState, BodyRegionId, ExamMeasureResult, ExamRegionState, MetricCode, Status } from '../../types/domain'
 import { STATUS_META } from '../../lib/status'
 import { METRIC_CATALOG } from '../../engine/catalog'
+import { formatFixed, t } from '../../i18n'
+import { metricShort } from '../../i18n/catalog'
 
 export const REGIONS: BodyRegionId[] = ['brain', 'eyes', 'ears', 'heart', 'lungs', 'kidneys', 'muscles', 'bones', 'skin']
 
@@ -137,18 +139,19 @@ export function regionValueText(s: AppState, region: BodyRegionId): string | nul
   if (!best) return null
   const m = h.metrics[best]!
   const def = METRIC_CATALOG[best]
-  if (m.current === null || m.status === 'NO_DATA') return `${def.shortLabel} no data`
+  if (m.current === null || m.status === 'NO_DATA') return t('anatomy.exam.noData', { short: metricShort(best) })
   const unit = def.unit === 'score' ? '' : def.unit.startsWith('%') ? def.unit : ` ${def.unit}`
-  return `${def.shortLabel} ${m.current.toFixed(def.decimals)}${unit}`
+  return `${metricShort(best)} ${formatFixed(m.current, def.decimals)}${unit}`
 }
 
 /** "+3 µm", "-0.02 logMAR", "new folds": change of one exam measure from the pre-flight baseline. */
 export function examChangeText(r: ExamMeasureResult): string {
   const def = METRIC_CATALOG[r.metric]
-  if (r.metric === 'CHOROIDAL_FOLDS') return r.value === null ? 'no value' : r.value >= 1 ? (r.baseline !== null && r.baseline < 1 ? 'new folds' : 'folds, unchanged') : 'no folds'
-  if (r.change === null) return r.baseline === null ? 'no baseline' : 'no value'
+  if (r.metric === 'CHOROIDAL_FOLDS')
+    return r.value === null ? t('anatomy.exam.noValue') : r.value >= 1 ? (r.baseline !== null && r.baseline < 1 ? t('anatomy.exam.newFolds') : t('anatomy.exam.foldsUnchanged')) : t('anatomy.exam.noFolds')
+  if (r.change === null) return r.baseline === null ? t('anatomy.exam.noBaseline') : t('anatomy.exam.noValue')
   const sign = r.change > 0 ? '+' : r.change < 0 ? '−' : '±' // minus sign (reads clearly next to a label)
-  return `${sign}${Math.abs(r.change).toFixed(def.decimals)} ${def.unit}`
+  return `${sign}${formatFixed(Math.abs(r.change), def.decimals)} ${def.unit}`
 }
 
 /** Key text of an exam region: the most notable change of the last exam, or "No exam yet". */
@@ -156,8 +159,8 @@ export function examValueText(ex: ExamRegionState): string {
   const latest = ex.latest
   if (!latest || !latest.results.length) {
     const day = ex.noise?.[ex.noise.length - 1]
-    if (day && day.status !== 'LOW') return `Noise ${day.leqDba.toFixed(1)} dBA`
-    return 'No exam yet'
+    if (day && day.status !== 'LOW') return t('anatomy.exam.noise', { value: formatFixed(day.leqDba, 1) })
+    return t('anatomy.exam.noExam')
   }
   const order = PREFERRED[ex.region]
   const pick = latest.results.reduce((a, b) => {
@@ -169,7 +172,7 @@ export function examValueText(ex: ExamRegionState): string {
     if (oa !== ob) return ob < oa ? b : a
     return Math.abs(b.change ?? 0) > Math.abs(a.change ?? 0) ? b : a
   })
-  return `${METRIC_CATALOG[pick.metric].shortLabel} ${examChangeText(pick)}`
+  return `${metricShort(pick.metric)} ${examChangeText(pick)}`
 }
 
 /** Regions with no catalog metric are context only: no floating label when they lack data. */

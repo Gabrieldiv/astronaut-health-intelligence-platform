@@ -6,21 +6,25 @@
  */
 import type { BodyRegionId, Status } from '../../../types/domain'
 import { STATUS_META } from '../../../lib/status'
-import { REGION_LABELS } from '../../../engine/catalog'
 import type { AtlasStructure } from '../atlas/types'
-import { CONTEXT_ONLY_TITLE, SYSTEM_INFO, regionOfStructure, sideLabel } from '../atlas/health'
+import { SYSTEM_INFO, contextOnlyTitle, regionOfStructure, sideLabel } from '../atlas/health'
+import { getLang, t, tp } from '../../../i18n'
+import { regionLabel } from '../../../i18n/catalog'
+
+// German nouns keep their capital letter inside a sentence.
+const lower = (s: string) => (getLang() === 'de' ? s : s.toLowerCase())
 
 /** "Status: Nominal" style phrase. Missing data is said as such, never as normal. */
 export function statusPhrase(status: Status | null | undefined): string {
-  if (!status || status === 'NO_DATA') return 'Status: no data'
-  return `Status: ${STATUS_META[status].label}`
+  if (!status || status === 'NO_DATA') return t('anatomy.describe.noData')
+  return t('anatomy.describe.status', { status: STATUS_META[status].label })
 }
 
 /** One sentence about a body region, e.g. "Heart region. Status: Nominal. 29 structures." */
 export function describeRegion(region: BodyRegionId, status: Status | null | undefined, structureCount?: number): string {
-  const parts = [`${REGION_LABELS[region].label} region`, statusPhrase(status)]
-  if (structureCount) parts.push(`${structureCount} ${structureCount === 1 ? 'structure' : 'structures'}`)
-  else if (region === 'ears') parts.push('Not modeled in the 3D body, marked on the sides of the head')
+  const parts = [t('anatomy.describe.region', { region: regionLabel(region) }), statusPhrase(status)]
+  if (structureCount) parts.push(tp('anatomy.describe.structures', structureCount))
+  else if (region === 'ears') parts.push(t('anatomy.describe.earsNotModeled'))
   return `${parts.join('. ')}.`
 }
 
@@ -30,14 +34,16 @@ export function describeRegion(region: BodyRegionId, status: Status | null | und
  */
 export function describeStructure(s: AtlasStructure, statuses: Partial<Record<BodyRegionId, Status>>): string {
   const side = sideLabel(s)
-  const name = side && !s.name.toLowerCase().includes(side.split(' ')[0]!.toLowerCase()) ? `${s.name}, ${side.toLowerCase()}` : s.name
+  // Atlas structure names are English ("Left ventricle"): check the English side word.
+  const sideWord = s.side === 'L' ? 'left' : 'right'
+  const name = side && !s.name.toLowerCase().includes(sideWord) ? `${s.name}, ${lower(side)}` : s.name
   const region = regionOfStructure(s)
   const system = SYSTEM_INFO[s.system].label
-  if (!region) return `${name}. ${system}. ${CONTEXT_ONLY_TITLE}, not monitored.`
-  return `${name}. ${system}, ${REGION_LABELS[region].label.toLowerCase()} region. ${statusPhrase(statuses[region])}.`
+  if (!region) return t('anatomy.describe.contextOnly', { name, system, title: contextOnlyTitle() })
+  return t('anatomy.describe.structure', { name, system, region: lower(regionLabel(region)), status: statusPhrase(statuses[region]) })
 }
 
 /** "3 of 7" position suffix for list style announcements. */
 export function positionPhrase(index: number, count: number): string {
-  return `${index + 1} of ${count}`
+  return t('anatomy.describe.position', { i: index + 1, n: count })
 }

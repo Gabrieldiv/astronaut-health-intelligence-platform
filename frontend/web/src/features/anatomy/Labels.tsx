@@ -17,9 +17,10 @@ import type { LucideIcon } from 'lucide-react'
 import { Vector3 } from 'three'
 import type { BodyRegionId, Status } from '../../types/domain'
 import { STATUS_META } from '../../lib/status'
-import { REGION_LABELS } from '../../engine/catalog'
 import { useAppStore } from '../../state/store'
 import { HAS_METRICS, regionValueText } from './regions'
+import { useT } from '../../i18n'
+import { regionLabel, regionSystem } from '../../i18n/catalog'
 
 /** Same status icons as the rest of the app: shape plus color plus words, never color alone. */
 export const STATUS_SHAPE: Record<Status, LucideIcon> = {
@@ -249,6 +250,7 @@ function RegionLabel({ region, status, registry, onSelect }: { region: BodyRegio
   const slot = slotFor(registry, region)
   const ls = registry.labelScale
   const meta = STATUS_META[status]
+  const t = useT()
   useEffect(() => {
     // (re)register: StrictMode and remounts run cleanup before the next mount
     registry.slots.set(region, slot)
@@ -279,7 +281,7 @@ function RegionLabel({ region, status, registry, onSelect }: { region: BodyRegio
         }}
         type="button"
         onClick={() => onSelect(region)}
-        aria-label={`${REGION_LABELS[region].label}: ${meta.label}. Focus this region.`}
+        aria-label={t('anatomy.label.focusAria', { region: regionLabel(region), status: meta.label })}
         className="pointer-events-auto absolute left-0 top-0 flex items-center whitespace-nowrap rounded-full border bg-slate-950/60 leading-none text-slate-100 shadow-lg backdrop-blur-md transition-colors hover:bg-slate-900/85"
         style={{
           borderColor: `${meta.color}55`,
@@ -291,7 +293,7 @@ function RegionLabel({ region, status, registry, onSelect }: { region: BodyRegio
         }}
       >
         <StatusMark status={status} size={Math.round(11 * ls)} />
-        <span className="font-semibold tracking-wide">{REGION_LABELS[region].label}</span>
+        <span className="font-semibold tracking-wide">{regionLabel(region)}</span>
         <span className="font-medium uppercase tracking-wider" style={{ color: meta.color, fontSize: 10 * ls }}>
           {meta.label}
         </span>
@@ -335,7 +337,8 @@ export function TooltipShell({ registry, glow, children }: { registry: LabelRegi
 /** Tooltip for a hovered body region (used by the procedural fallback). */
 export function RegionTooltip({ region, status, selected, registry }: { region: BodyRegionId; status: Status; selected: BodyRegionId | null; registry: LabelRegistry }) {
   const meta = STATUS_META[status]
-  const info = REGION_LABELS[region]
+  const t = useT()
+  const info = { label: regionLabel(region), system: regionSystem(region) }
   const ls = registry.labelScale
   return (
     <TooltipShell registry={registry} glow={meta.glow}>
@@ -356,7 +359,7 @@ export function RegionTooltip({ region, status, selected, registry }: { region: 
       </div>
       {selected !== region && (
         <div className="mt-1 uppercase tracking-[0.14em] text-slate-500" style={{ fontSize: 9 * ls }}>
-          Click to focus
+          {t('anatomy.label.clickFocus')}
         </div>
       )}
     </TooltipShell>
