@@ -159,7 +159,7 @@ Simulated badge & \swatch{ahiViolet}\ \texttt{\#A78BFA} & Violet badge for simul
 \subsection{Typography}
 \label{subsec:typography}
 
-The interface uses the Inter family for text and JetBrains Mono for numbers and codes. Numbers use tabular figures, so that live values do not jitter as digits change. In presentation mode no text is smaller than 13 pixels, chart ticks included. The fonts are bundled with the application, so that the on board interface makes no external request.
+The interface uses the Inter family for text and JetBrains Mono for numbers and codes. Numbers use tabular figures, so that live values do not jitter as digits change. In presentation mode no text is smaller than 13 pixels, chart ticks included. The fonts are bundled with the application, so that the on board interface makes no external request. Inter covers the Latin alphabets of English, Portuguese, Spanish and German; for Japanese the interface bundles a font with Japanese characters, Noto Sans JP, with the same weights. Users can enlarge the text and increase the spacing between letters, words and lines.
 
 \subsection{Components}
 \label{subsec:ui-components}
@@ -179,7 +179,9 @@ The interface is assembled from a small set of shared components:
 
 Several decisions follow from these components. The Crew view shows at most two actions, to reduce the load, and the rest is available in the Ground view. Every recommendation says who can act, because communication delay makes autonomy part of the answer. The critical banner floats over the header of the central area, so that the 3D body keeps its size during an alert.
 
-Accessibility is part of the design: global keyboard shortcuts, keyboard navigation of timeline markers, a visible focus ring, a link that skips to what needs attention as the first focusable element, and accessible labels on every control. The target is conformance with WCAG 2.1 level AA, verified by a formal audit and by tests with a screen reader. The ground screens are designed for large displays, and the Crew view also for the tablets and laptops used on board.
+The ground screens are designed for large displays, and the Crew view also for the tablets and laptops used on board.
+
+The interface is also built for every user: it is available in five languages and can be followed and operated by audio description and voice. These features, and the accessibility foundation they rest on, are specified in \ref{sec:global-access}.
 
 \subsection{3D Anatomical Model}
 \label{subsec:3d-model}
@@ -246,7 +248,7 @@ Other & Eyes, glands, thymus, spleen & 9 & 26,008 & 0.13 \\
 The platform has four main screens for the ground team and one view for the astronaut, all over the same state.
 
 \begin{enumerate}
-\item \textbf{Astronaut health overview:} general health status, vital signs, active alerts, recent history, the level of risk in each of the eight dimensions and the time of the last update of each sensor.
+\item \textbf{Astronaut health overview:} general health status, vital signs, active alerts, recent history, the level of risk in each of the ten dimensions and the time of the last update of each sensor.
 \item \textbf{Predictive health analytics:} historical charts, physiological trends, forecasts for 24, 48 and 72 hours, the scenario without intervention and the scenario with intervention, and the confidence and uncertainty of every forecast.
 \item \textbf{Health recommendations:} identified risks, recommendations with their justification, pending actions and the evolution of the indicators after each intervention, with the review workflow of the flight surgeon.
 \item \textbf{Crew health monitoring:} the health of the whole crew, comparisons with each person's own normal, priority alerts, the history of each astronaut and the overall health situation of the mission.
@@ -255,7 +257,7 @@ The platform has four main screens for the ground team and one view for the astr
 
 The ground screens follow a deliberate reading order: who (the crew), what (the body and the headline), why and what to do (the attention panel), when (the status timeline) and the live values. \ref{fig:ground-view} and \ref{fig:crew-view} show how this design was rendered in the AHI demonstrator, with simulated data.
 
-Further screens are an alerts drawer with the history of events, an Earth link panel that shows the delay and the messages, a daily check-in dialog, a mission overview with dose, exercise and sleep summaries, a shift handover report with a FHIR export, and a data and model panel with the devices, the model cards and the data origins. A fixed notice on every screen states that the tool is decision support.
+Further screens are an alerts drawer with the history of events, an Earth link panel that shows the delay and the messages, a daily check-in dialog, a mission overview with dose, exercise and sleep summaries, a radiation panel with the career dose of each astronaut against the NASA-STD-3001 limit and the latest space weather notifications, a vision panel with the visual acuity, the eye examination results per eye and the reported symptoms next to time in flight and blood pressure, a hearing panel with the audiograms next to the noise exposure, the health assistant, available from every screen, a shift handover report with a FHIR export, and a data and model panel with the devices, the model cards and the data origins. A fixed notice on every screen states that the tool is decision support.
 
 \hwfigure{0.96}{images/ahi-ground-view.png}{Crew health monitoring in the AHI demonstrator, nominal day: crew, 3D body, attention panel, status timeline, live vitals, cabin and devices. Simulated data.}{fig:ground-view}{AHI demonstrator, screenshot by the authors with simulated data, published in the project documentation portal (\texttt{docs-site/public/screenshots/ground-view.png}).}
 

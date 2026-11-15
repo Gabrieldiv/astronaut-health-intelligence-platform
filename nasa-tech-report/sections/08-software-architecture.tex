@@ -1,7 +1,195 @@
 \section{Software Architecture}
 \label{sec:software-architecture}
 
-This section describes the architecture of AHI in its final scope. Two constraints shape it. First, the crew must keep monitoring, alerts and on board recommendations when the link to Earth is slow or interrupted, so the essential analysis runs on board. Second, the flight surgeon, mission control and researchers work on the ground with the full history, so data are synchronized to a ground system. The architecture is therefore a pair of nodes, one on board and one on the ground, built from the same six modules.
+This section describes the architecture of AHI in its final scope. Two constraints shape it. First, the crew must keep monitoring, alerts and on board recommendations when the link to Earth is slow or interrupted, so the essential analysis runs on board. Second, the flight surgeon, mission control and researchers work on the ground with the full history, so data are synchronized to a ground system. The architecture is therefore a pair of nodes, one on board and one on the ground, built from the same six modules. A third rule follows from the first: \textbf{internet access is useful, but not essential.} The demonstrator is a web application that uses the internet, including the Claude API to simulate the AI language features. A real system on board cannot depend on the internet, so the on board node is a backend that keeps the essential services on board and follows a contingency plan when there is no connection, with a local language model and local speech models (\ref{subsec:offline-llm}). \ref{subsec:requirements} lists the functional and non-functional requirements and the constraints from which this architecture follows.
+
+\subsection{Requirements}
+\label{subsec:requirements}
+
+The architecture of AHI answers a set of requirements. This subsection consolidates them in three tables: functional requirements, which state what the platform must do (\ref{tab:req-functional}); non-functional requirements, which state the qualities it must have (\ref{tab:req-nonfunctional}); and constraints, which are limits imposed on the design by safety, ethics, data access, licensing and the operational environment (\ref{tab:req-constraints}). Every requirement is derived only from the content of this report, and the section where it is described is given in brackets.
+
+The priority of each requirement follows the integration and implementation order of the platform (\ref{tab:device-priority} and \ref{tab:features}) and its importance for crew safety:
+
+\begin{itemize}
+\item \textbf{High:} essential for safe and honest operation, or part of the core of the platform (stages 1 and 2 of the implementation plan). Without it, AHI does not meet its purpose.
+\item \textbf{Medium:} part of the final scope, delivered in the later implementation stages, or a quality that improves the platform without being a condition of safe operation.
+\item \textbf{Low:} planned for when enough data or resources exist, or a refinement of presentation.
+\end{itemize}
+
+{\footnotesize
+\begin{longtable}{p{1.5cm}p{10.8cm}p{1.5cm}}
+\caption{Functional requirements of AHI.}
+\label{tab:req-functional}\\
+\hline
+\textbf{ID} & \textbf{Description} & \textbf{Priority} \\
+\hline
+\endfirsthead
+\multicolumn{3}{l}{\textit{Functional requirements, continued}} \\
+\hline
+\textbf{ID} & \textbf{Description} & \textbf{Priority} \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+\multicolumn{3}{l}{\textbf{Device integration} (\ref{sec:hardware-sensors})} \\
+FR-01 & Provide one versioned adapter per ISS device that converts its native output into canonical health observations. & High \\
+FR-02 & Support the four integration patterns: near real-time stream, session file, examination record and laboratory result. & High \\
+FR-03 & Run every value through the ingestion pipeline: capture, raw landing, parsing and validation, normalization to canonical units and UTC, identification, deduplication, quality, storage and synchronization. & High \\
+FR-04 & Store every original payload unchanged with its SHA-256 hash, adapter version and arrival time. & High \\
+FR-05 & Report the state of each device as online, degraded, stale or offline. & High \\
+FR-06 & Accept late and out of order data, keep measurement time and arrival time apart, and recompute the affected baselines and trends. & Medium \\
+FR-07 & Store the assignment of each device to a subject with its period of validity. & Medium \\
+FR-08 & Provide a simulated counterpart of every adapter that produces the same canonical observations labeled \texttt{SIMULATED}. & High \\
+\multicolumn{3}{l}{\textbf{Health data platform} (\ref{sec:data-sources} and \ref{subsec:entity-relationship-model})} \\
+FR-09 & Store each measurement as a canonical observation with identifier, subject, metric, unit, value, measured and received times, origin, source, quality and context. & High \\
+FR-10 & Record the data origin of every value (\texttt{DEVICE}, \texttt{MANUAL}, \texttt{LAB}, \texttt{DERIVED}, \texttt{REAL\_PUBLIC} or \texttt{SIMULATED}) and show it as a badge. & High \\
+FR-11 & Store sessions, examinations and laboratory results as parent records linked to their individual observations. & Medium \\
+FR-12 & Provide a daily check-in for self report of mood, stress, workload, sleep and visual symptoms, labeled as self report. & High \\
+FR-13 & Import public NASA datasets from an allow list of hosts, with hash, download time and manifest, keeping values exactly as reported. & Medium \\
+FR-14 & Keep the expected cadence of every stream to decide when a signal becomes missing. & High \\
+\multicolumn{3}{l}{\textbf{Real-time monitoring} (\ref{subsec:baseline})} \\
+FR-15 & Keep a personal baseline for each person, metric and activity context, with a robust median and MAD band, and show that the baseline is still learning until enough samples exist. & High \\
+FR-16 & Detect acute deviations from the median of the last three readings against the personal baseline. & High \\
+FR-17 & Detect slow drifts with an exponentially weighted average of the deviations and a minimum duration. & High \\
+FR-18 & Evaluate periodic data with runs outside the band, and laboratory results against previous results and their reported reference ranges. & Medium \\
+FR-19 & Set a signal to \texttt{NO\_DATA} when no valid value arrives within its expected cadence or its device is stale or offline. & High \\
+FR-20 & Compare cabin signals with limits from cited standards, such as the NASA-STD-3001 CO\textsubscript{2} limit, and with their recent trend. & Medium \\
+FR-21 & Compare the 24 hour personal noise dose with the NASA-STD-3001 limit, keeping work and sleep periods apart. & Medium \\
+FR-22 & Compare each audiogram, by frequency and ear, with the preflight audiogram and request review of a persistent shift. & Medium \\
+FR-23 & Compare vision screening and eye examination results, per eye, with the preflight examination and previous results, and request review of a change above the configured amount. & Medium \\
+FR-24 & Compute the career radiation dose of each astronaut, the fraction of the NASA-STD-3001 career limit used and its projection to the end of the mission for the mission profile. & Medium \\
+FR-25 & Recommend preparing the radiation shelter when a DONKI notification reports a solar particle event or the on board dose rate rises above its trend. & High \\
+\multicolumn{3}{l}{\textbf{Predictive analytics} (\ref{subsec:trend-analysis})} \\
+FR-26 & Project trends for 24, 48 and 72 hours with damped trend smoothing, an uncertainty interval and the time to band exit, and state when data are insufficient. & High \\
+FR-27 & Evaluate combined rules over several signals and report them as co-occurrence. & High \\
+FR-28 & Compute a transparent risk score from 0 to 100 with its level, contributing factors and confidence. & High \\
+FR-29 & Add Isolation Forest and XGBoost models behind the same interface when enough real data exist. & Medium \\
+FR-30 & Add sequence models for multivariate forecasting when long histories exist. & Low \\
+FR-31 & Produce the predictions of \ref{tab:predictions}, each with its uncertainty and never as a diagnosis. & Medium \\
+\multicolumn{3}{l}{\textbf{Prescriptive intelligence} (\ref{subsec:recommendations})} \\
+FR-32 & Select recommendations from a versioned catalog of six kinds of action: exercise, nutrition and hydration, sleep and recovery, mental health and well-being, medical follow-up, and environmental protection. & High \\
+FR-33 & Record each recommendation with its problem, evidence, action, expected result, reassessment time, intervention status and evolution of the indicators. & High \\
+FR-34 & Tag each recommendation with its autonomy and, when the Earth link is long, create an on board first step that states the earliest possible reply. & High \\
+FR-35 & Compare the projected course of the indicators with and without a selected intervention, labeled as a projection. & Medium \\
+FR-36 & Provide a review workflow in which the flight surgeon approves or rejects recommendations, and require human review for high and critical items. & High \\
+\multicolumn{3}{l}{\textbf{Explanation and assistant} (\ref{sec:artificial-intelligence} and \ref{sec:global-access})} \\
+FR-37 & Write a plain language explanation of each result from the structured output of the engine, in a crew version and a flight surgeon version. & Medium \\
+FR-38 & Check every generated text automatically against its input and show a template sentence when a check fails. & High \\
+FR-39 & Offer an ``Explain this'' control on every value, chart, alert and recommendation. & Medium \\
+FR-40 & Provide a health assistant that answers questions by text and voice, within the role of the user, listing the records and sources used. & Medium \\
+FR-41 & Generate summaries of the crew for the shift handover. & Medium \\
+\multicolumn{3}{l}{\textbf{Dashboards and interface} (\ref{sec:visual-identity-ux} and \ref{sec:global-access})} \\
+FR-42 & Provide the astronaut health overview, predictive analytics, recommendations, crew monitoring and crew view screens. & High \\
+FR-43 & Provide the alerts drawer, Earth link panel, daily check-in, mission overview, radiation panel, vision panel, hearing panel, shift handover report and data and model panel. & Medium \\
+FR-44 & Show the health status of each body region on the 3D anatomical atlas, with live heart and breathing motion and grey, still regions for missing data. & Medium \\
+FR-45 & Provide the interface, explanations, assistant and speech in English, Portuguese, Spanish, Japanese and German. & Medium \\
+FR-46 & Provide audio description of every screen, voice commands, a hands-free mode and a distinct sound for each status level. & Medium \\
+\multicolumn{3}{l}{\textbf{Interfaces and synchronization} (\ref{subsec:apis} and \ref{subsec:data-flow})} \\
+FR-47 & Expose a versioned REST interface for ingestion, health queries, actions, devices and data, export, assistant, and identity and access. & High \\
+FR-48 & Make ingestion idempotent, answering with the counts of accepted and rejected records and the reason for each rejection. & High \\
+FR-49 & Synchronize the on board and ground nodes through a store and forward queue, and show the communication delay of the mission profile on every message. & High \\
+FR-50 & Export a FHIR R4 bundle of patient, device and observation resources with pseudonymized identifiers. & Medium \\
+FR-51 & Retrieve DONKI notifications on the ground node through the NASA Open APIs and relay the relevant ones on board. & Medium \\
+\multicolumn{3}{l}{\textbf{Security and access} (\ref{subsec:security})} \\
+FR-52 & Require authentication before any health data is shown, with local authentication on board and multi-factor authentication on the ground. & High \\
+FR-53 & Enforce role-based access control for crew member, crew medical officer, flight surgeon, mission control, researcher and data engineer in screens, API, exports and assistant. & High \\
+FR-54 & Provide a time limited, recorded emergency access for the crew medical officer, reviewed afterwards by the flight surgeon. & Medium \\
+FR-55 & Record acknowledgments, interventions, review decisions, escalations and messages in a persistent audit trail with time and actor. & High \\
+\multicolumn{3}{l}{\textbf{Mission scenarios} (\ref{subsec:mission-scenarios} and \ref{subsec:mission-profiles})} \\
+FR-56 & Keep a mission profile (ISS, Moon, Mars at its closest and farthest distances) that sets the communication delay, the devices expected on board and the radiation projection. & High \\
+FR-57 & Record launch, ascent, abort, entry, descent, landing and postlanding as mission phases on the timeline, so that values and alerts are read in the context of the phase. & Medium \\
+FR-58 & Show the time in launch orientation against the cited NASA-STD-3001 limit of 3 hours and 15 minutes [V2 6113]. & Medium \\
+FR-59 & Provide a check-in after launch and after landing for self report of symptoms, labeled as self report. & Medium \\
+FR-60 & Import after flight the vehicle and crew acceleration records collected under NASA-STD-3001 [V2 6111] as records linked to the phase, without estimating injury risk. & Low \\
+FR-61 & Apply the radiation environment of the mission profile to the career dose projection and to the shelter rule, including surface activity on the Moon. & Medium \\
+\end{longtable}
+}
+
+{\footnotesize
+\begin{longtable}{p{1.5cm}p{10.8cm}p{1.5cm}}
+\caption{Non-functional requirements of AHI.}
+\label{tab:req-nonfunctional}\\
+\hline
+\textbf{ID} & \textbf{Description} & \textbf{Priority} \\
+\hline
+\endfirsthead
+\multicolumn{3}{l}{\textit{Non-functional requirements, continued}} \\
+\hline
+\textbf{ID} & \textbf{Description} & \textbf{Priority} \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+NFR-01 & \textbf{Autonomy.} Internet access is used when available but is not essential: through the on board backend and the contingency plan, monitoring, alerts, recommendations, explanations and the assistant keep working without internet access and without a link to Earth (\ref{subsec:offline-llm}). & High \\
+NFR-02 & \textbf{Self-contained deployment.} Fonts, 3D model files, translations, the curated library and the models are served from the platform itself, so that no external request is needed for them on board (\ref{sec:visual-identity-ux}). & High \\
+NFR-03 & \textbf{Graceful degradation.} Without a language model the platform shows template text; without the atlas it shows the procedural body; without DONKI it marks space weather data as stale and keeps the on board trigger (\ref{sec:artificial-intelligence}). & High \\
+NFR-04 & \textbf{Traceability.} Every status, prediction and recommendation can be traced to its data and to the version of the model or rule that produced it (\ref{sec:analytical-methodology}). & High \\
+NFR-05 & \textbf{Transparency of quality.} Every value carries its quality status, confidence and whether it is estimated, and confidence falls with each missing or questionable key signal (\ref{subsec:trend-analysis}). & High \\
+NFR-06 & \textbf{Visible uncertainty.} Every forecast shows its interval and confidence, and no output is presented as a certainty (\ref{sec:analytical-methodology}). & High \\
+NFR-07 & \textbf{Explainability.} Every risk estimate shows the factors that drove it, and every learned model has a model card (\ref{sec:artificial-intelligence}). & High \\
+NFR-08 & \textbf{Confidentiality.} Data are encrypted in transit and at rest, identifiers are pseudonymized outside the medical roles, and researchers receive de-identified extracts (\ref{subsec:security}). & High \\
+NFR-09 & \textbf{Integrity.} The audit trail is persistent and tamper evident, and imported data are hashed, parsed as data and never executed (\ref{subsec:security}). & High \\
+NFR-10 & \textbf{Privacy of voice.} Recorded audio is not kept after transcription, and private data are not read aloud on a speaker without an explicit choice of the user (\ref{sec:global-access}). & High \\
+NFR-11 & \textbf{Robustness to the link.} A batch resent after a link interruption creates no duplicates, and queued data are sent in order when the link returns (\ref{subsec:data-flow}). & High \\
+NFR-12 & \textbf{Usability.} Plain language first and technical term second; the crew view shows at most two actions; explanations use short sentences and at most two numbers per sentence (\ref{sec:global-access}). & Medium \\
+NFR-13 & \textbf{Accessibility.} Conformance to WCAG 2.1 level AA as the design target, keyboard operation, and a status language that never relies on color alone (\ref{subsec:accessibility}). & Medium \\
+NFR-14 & \textbf{Internationalization.} No visible text in the code; message catalogs per language with local conventions for numbers; times in UTC; fallback to English (\ref{subsec:languages}). & Medium \\
+NFR-15 & \textbf{Responsiveness.} Live values, charts and the 3D scene update without rendering the whole interface again, and the 3D viewer and its largest files load on demand (\ref{sec:visual-identity-ux}). & Medium \\
+NFR-16 & \textbf{Interoperability.} FHIR R4 export and LOINC codes where they exist (\ref{subsec:technology-stack}). & Medium \\
+NFR-17 & \textbf{Maintainability.} A modular monolith with clear module boundaries; an analytics engine with no dependency on the interface or storage; versioned adapters, so that a new device needs a new adapter and not a change to the database or the analysis (\ref{sec:software-architecture}). & Medium \\
+NFR-18 & \textbf{Verifiability.} Continuous integration with lint, type checks, tests and build, and a reproducible evaluation that can be run with one command (\ref{sec:results}). & Medium \\
+NFR-19 & \textbf{Reproducibility.} The simulator is seeded and reproducible, and public data imports follow a recorded, repeatable path (\ref{sec:implementation-demo} and \ref{sec:data-sources}). & Medium \\
+NFR-20 & \textbf{Controlled model change.} A new model version runs in shadow mode, without affecting the crew view, until its evaluation is reviewed (\ref{sec:artificial-intelligence}). & Medium \\
+NFR-21 & \textbf{Readability of numbers.} Tabular figures for live values, and no text smaller than 13 pixels in presentation mode (\ref{subsec:typography}). & Low \\
+NFR-22 & \textbf{Delay awareness.} No on board response assumes an answer from Earth faster than the round trip delay of the mission profile, and every high priority item has on board first steps (\ref{subsec:mission-scenarios}). & High \\
+\end{longtable}
+}
+
+{\footnotesize
+\begin{longtable}{p{1.5cm}p{10.8cm}p{1.5cm}}
+\caption{Constraints on AHI.}
+\label{tab:req-constraints}\\
+\hline
+\textbf{ID} & \textbf{Description} & \textbf{Priority} \\
+\hline
+\endfirsthead
+\multicolumn{3}{l}{\textit{Constraints, continued}} \\
+\hline
+\textbf{ID} & \textbf{Description} & \textbf{Priority} \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+CR-01 & \textbf{Decision support only.} AHI is not a medical device: it does not diagnose, does not recommend medication, doses or treatment, and does not replace the flight surgeon or mission protocols (\ref{sec:limitations-ethics}). & High \\
+CR-02 & \textbf{No invented limits.} Status comes from personal baselines; any fixed threshold must come from a cited standard or from review by a flight surgeon and is labeled as configuration, never as an official NASA limit (\ref{sec:analytical-methodology}). & High \\
+CR-03 & \textbf{Missing data is never normal.} An absent or stale signal is always reported as no data (\ref{subsec:baseline}). & High \\
+CR-04 & \textbf{Generative AI does not compute.} The language model never computes status, risk or forecasts and never selects or changes recommendations (\ref{sec:artificial-intelligence}). & High \\
+CR-05 & \textbf{Correlation is not causation.} Signals that move together are reported as co-occurrence, including noise exposure and hearing (\ref{sec:analytical-methodology}). & High \\
+CR-06 & \textbf{Limits on escalation.} Self report alone cannot raise the level above moderate, questionable values cannot escalate beyond moderate on their own, and a critical level requires at least one critical finding (\ref{subsec:trend-analysis}). & High \\
+CR-07 & \textbf{No diagnosis of the mind or the eye.} The psychological dimension uses indicators only and never diagnoses depression or anxiety; the vision dimension never diagnoses SANS (\ref{sec:analytical-methodology}). & High \\
+CR-08 & \textbf{Radiation within the published limit only.} A dosimeter value is compared with the NASA-STD-3001 limit only when reported as effective dose, and AHI does not estimate radiation health risk (\ref{sec:scientific-foundation}). & High \\
+CR-09 & \textbf{Hardware premise.} Only equipment that public NASA, CSA or JAXA sources describe as used on the ISS is a data source (\ref{sec:hardware-sensors}). & High \\
+CR-10 & \textbf{No assumed access.} No open interface of ISS equipment is assumed; a real integration requires interface documentation, permission of the agencies, a security review, a data handling agreement and validation of each adapter (\ref{subsec:integration-assumptions}). & High \\
+CR-11 & \textbf{Simulated data labeled.} Every simulated value carries \texttt{SIMULATED}, the interface always shows a simulated badge, and simulated values are never mixed with crew data (\ref{sec:data-sources}). & High \\
+CR-12 & \textbf{Internet is not essential.} The ISS may or may not have internet access, so no essential function may depend on it; services reached through the internet, such as the Claude API and DONKI, are optional and have a contingency (\ref{sec:software-architecture}). & High \\
+CR-13 & \textbf{AI simulated with the Claude API.} The demonstrator simulates the AI language features with the Claude API, and its texts are labeled as generated through the API (\ref{sec:implementation-demo}). & Medium \\
+CR-14 & \textbf{Minimum data to the language model.} The language model receives only structured, pseudonymized outputs of the engine and curated passages, never raw signals, names or identifying data (\ref{sec:artificial-intelligence}). & High \\
+CR-15 & \textbf{Secret API key.} The NASA Open APIs key is stored in the configuration of the ground node, never in the interface code, the repository or this report (\ref{subsec:space-weather}). & High \\
+CR-16 & \textbf{Models and real data.} A model trained only on simulated data is not used for crew decisions, and learned models are added only when enough real data exist (\ref{sec:artificial-intelligence}). & High \\
+CR-17 & \textbf{Populations never mixed.} Analog, commercial, long duration and non human data are kept apart, analog results are never presented as astronaut results, and fields a source does not state are never imputed (\ref{sec:limitations-ethics}). & High \\
+CR-18 & \textbf{Limited on board computing.} On board software must run on the limited station computers, which leads to a modular monolith and a small local language model (\ref{sec:software-architecture}). & Medium \\
+CR-19 & \textbf{Licensing of the 3D atlas.} Files derived from Z-Anatomy are shared under CC BY-SA 4.0 with visible attribution, and upstream content with non commercial licenses is excluded (\ref{subsec:3d-model}). & Medium \\
+CR-20 & \textbf{Validation before operational use.} Thresholds, wording and the recommendation catalog require flight surgeon review, translations require review by native speakers, and accessibility requires a formal audit and tests with users before operational use (\ref{sec:limitations-ethics}). & High \\
+CR-21 & \textbf{Not a flight control system.} AHI does not act on the vehicle or on launch, abort, entry or landing decisions; during the dynamic phases it records and never commands (\ref{subsec:mission-profiles}). & High \\
+CR-22 & \textbf{Scenario figures are context.} Radiation values of different missions come from different instruments, shielding and solar conditions; they are shown only as context and never used as limits (\ref{subsec:mission-scenarios}). & High \\
+\end{longtable}
+}
 
 \subsection{Components}
 \label{subsec:components}
@@ -20,8 +208,8 @@ Device integration & One adapter per ISS device. Converts native output to canon
 Health data platform & Current and historical observations, baselines, model outputs, recommendations and the audit trail, with origin and quality on every record & On board (recent window) and ground (full history) \\
 Analytics and prediction engine & Baselines, anomaly detection, combined rules, risk score, forecasts and learned models & On board (essential) and ground (full models and retraining) \\
 Recommendation engine & Selection of interventions from the catalog, autonomy, follow-up of their effect & On board and ground \\
-Explanation layer & Claude API with retrieval of curated sources and output checks; a local model specialized in AHI when contact is lost (\ref{sec:artificial-intelligence}) & Claude API through the link to Earth; local model on board \\
-Dashboards and review & Crew view, crew health overview, predictive and recommendation screens, flight surgeon review workflow & Crew view on board; all screens on the ground \\
+Explanation and assistant layer & Plain language explanations and the health assistant by text and voice, with retrieval of curated sources and output checks (\ref{sec:artificial-intelligence}) & Demonstrator: Claude API, simulating the AI. Without internet: local model on board \\
+Dashboards and review & Crew view, crew health overview, predictive and recommendation screens, flight surgeon review workflow; five languages and audio description & Crew view on board; all screens on the ground \\
 \hline
 \end{tabular}
 \vspace{1.2em}
@@ -40,7 +228,12 @@ The ground node exposes a REST interface under a versioned path, and the on boar
 \item \textbf{Actions:} acknowledgment of an alert, logging of an intervention and its result, review decisions of the flight surgeon, and messages between crew and ground.
 \item \textbf{Devices and data:} device status, import of public datasets and readiness checks.
 \item \textbf{Export:} a FHIR R4 bundle of patient, device and observation resources, with pseudonymized identifiers and the origin of every value.
+\item \textbf{Assistant:} a question in text or transcribed speech, with the language of the user, answered with the generated text, the records and sources used, and the result of the guardrail checks.
+\item \textbf{Identity and access:} sign in, session renewal and sign out, with the role and permissions of the session (\ref{subsec:security}).
 \end{itemize}
+
+\medskip\noindent\textbf{External integrations.} The ground node is the only part of AHI that calls services outside the mission systems. The first is DONKI, reached through the NASA Open APIs with an API key issued at \texttt{api.nasa.gov} \cite{nasa_donki,nasa_open_apis} (\ref{subsec:space-weather}). A scheduled job of the ground node requests recent notifications in short date windows, filters those about solar energetic particles, flares and coronal mass ejections, stores each one with its message identifier and sends the relevant ones on board through the store and forward queue. The API key is kept in the server configuration as a secret, outside the code and the repository, and it is never sent to the interface. If the service is unreachable or the key is rejected, the job records the failure, the radiation panel shows that space weather data are stale, and the on board dose rate rule keeps working.
+
 
 \subsection{Entity-Relationship Model}
 \label{subsec:entity-relationship-model}
@@ -83,7 +276,7 @@ Around this record the model has the following entities. An astronaut is assigne
 \item Each adapter identifies the astronaut, the device, the time and the context of every measurement and produces canonical observations.
 \item The health data platform consolidates current and historical data and checks quality, units and duplicates.
 \item The analytics and prediction engine identifies anomalies, computes risks and estimates future trends.
-\item The dashboards present the current situation and the possible scenarios, and the explanation layer describes them in plain language.
+\item The dashboards present the current situation and the possible scenarios, in the language of the user, and the explanation layer describes them in plain language, in writing or aloud.
 \item The recommendation engine suggests interventions and routes the relevant cases to medical review.
 \end{enumerate}
 
@@ -106,7 +299,10 @@ Interface & React, TypeScript, Tailwind CSS; three.js for the 3D body; a chartin
 Server & Python, FastAPI, Pydantic, as a modular monolith with background jobs \\
 Storage & PostgreSQL with TimescaleDB for time series; Redis for queues and cache \\
 Analytics & pandas, NumPy, SciPy, scikit-learn, XGBoost; a deep learning library for sequence models \\
-Language model & Claude API with retrieval over a curated library of NASA and peer reviewed sources; a local model specialized in AHI on board for periods without contact \\
+Language model & Demonstrator: Claude API, simulating the AI. Contingency without internet: a local open model specialized in AHI, on board, with retrieval over a curated library of NASA and peer reviewed sources \\
+Speech & Demonstrator: speech services of the browser. Contingency without internet: local speech to text and text to speech models for the five languages \\
+Localization & Message catalogs per language with plural and number rules; bundled fonts with Japanese characters \\
+External data & DONKI through the NASA Open APIs, called by the ground node only \\
 Interoperability & FHIR R4 export; LOINC codes where they exist \\
 Delivery & Containers; continuous integration with lint, type checks, tests and build \\
 \hline
@@ -119,4 +315,33 @@ Delivery & Containers; continuous integration with lint, type checks, tests and 
 \subsection{Security and Access}
 \label{subsec:security}
 
-Crew health data are among the most sensitive data of a mission. Access is role based, with roles for crew member, crew medical officer, flight surgeon, mission control, researcher and data engineer, and each role sees only what it needs. Data are encrypted in transit and at rest, identifiers are pseudonymized outside the medical roles, and the audit trail is persistent and tamper evident. Researchers receive de-identified extracts. Data imported from outside are treated as untrusted: they are hashed, parsed as data and never executed.
+Crew health data are among the most sensitive data of a mission. Data are encrypted in transit and at rest, identifiers are pseudonymized outside the medical roles, and the audit trail is persistent and tamper evident. Researchers receive de-identified extracts. Data imported from outside are treated as untrusted: they are hashed, parsed as data and never executed.
+
+\medskip\noindent\textbf{Role-based access control.} Access follows Role-Based Access Control (RBAC): permissions are given to roles, and users receive roles, so that what a person can see and do is decided by their function and not case by case. The clinical workflow depends on it. A crew member must see their own data without seeing the medical details of colleagues, and a recommendation that needs ground review must be approved by a flight surgeon and by nobody else. \ref{tab:rbac} lists the roles and their main permissions.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Roles of AHI and their main permissions.}
+\label{tab:rbac}
+\footnotesize
+\begin{tabular}{p{2.8cm}p{5.2cm}p{6.0cm}}
+\hline
+\textbf{Role} & \textbf{Can see} & \textbf{Can do} \\
+\hline
+Crew member & Own status, values, forecasts and recommendations; crew status words only & Daily check-in, acknowledge own alerts, log own interventions, ask the assistant about own data \\
+Crew medical officer & Health data of the whole crew on board & Acknowledge alerts, log interventions and examinations, start on board steps \\
+Flight surgeon & Full clinical history of the crew & Approve or reject recommendations, set clinical configuration such as review thresholds, request examinations \\
+Mission control & Status level and availability of each crew member, without clinical detail & Plan around the status, send messages \\
+Researcher & De-identified extracts & Export for retrospective analysis \\
+Data engineer & Device state, ingestion logs, model cards; no clinical values & Manage adapters, devices and model versions \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+The same rule applies everywhere: the screens, the API, the exports and the health assistant all check the permissions of the session, so that no feature can show data that the role may not see.
+
+\medskip\noindent\textbf{Authentication.} Every user signs in before seeing health data, and every action is recorded with its author. On the ground, sign in uses the identity provider of the mission organization with multi-factor authentication. On board, authentication must work without a link to Earth, so the on board node keeps its own copy of the accounts and roles of the crew, synchronized from the ground, and verifies credentials locally. Sessions are short and renew while the user is active. A shared tablet returns to a locked screen after inactivity, and an audible or spoken summary never reads private data aloud on a speaker without the user having asked for it.
+
+\medskip\noindent\textbf{Emergency access.} In a medical emergency, the crew medical officer can open the data of a crew member beyond their normal scope through a recorded emergency access. The access is time limited, shown to the person concerned and reviewed afterwards by the flight surgeon.

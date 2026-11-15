@@ -3,7 +3,7 @@
 
 This section defines the equipment that AHI assumes as its data sources. The premise of the report is that all operational data, for the crew and for the cabin, come from these devices. The selection criterion is strict: \textbf{a device is included only if public NASA, CSA or JAXA sources describe it as used on the ISS.} Devices that were tested only on the ground or in analog habitats are left out, even when they are relevant.
 
-The descriptions below repeat what the cited sources state. Where a source does not establish which signal a device exposes, the report says so, and AHI does not assume more. The existence of a device on board does not imply that a data interface is open or available to third parties (\ref{subsec:integration-assumptions}). Figures \ref{fig:hw-biomonitor-info} to \ref{fig:hw-env-jaxa} show each device as published by NASA, CSA and JAXA.
+The descriptions below repeat what the cited sources state. Where a source does not establish which signal a device exposes, the report says so, and AHI does not assume more. The existence of a device on board does not imply that a data interface is open or available to third parties (\ref{subsec:integration-assumptions}). \ref{fig:hw-biomonitor-info} to \ref{fig:hw-sv104a} show each device as published by NASA, CSA and JAXA.
 
 \subsection{Wearables}
 \label{subsec:wearables}
@@ -35,9 +35,13 @@ Medical equipment produces scheduled, clinical measurements. Its data arrive as 
 \item \textbf{Blood pressure and ECG monitor.} JAXA lists a blood pressure and ECG monitor among the ISS medical equipment \cite{jaxa_medops_system}, and NASA lists health monitoring of blood pressure, ECG and heart rate among the systems it maintains on the ISS \cite{nasa_jsc_exercise_countermeasures}.
 \item \textbf{Holter Monitor 2.} An ambulatory ECG that measures the electrical activity of the heart for up to 24 hours through electrode pads on the torso \cite{nasa_issmp_hardware}.
 \item \textbf{Pulse oximeter.} A finger device that measures pulse and oxygen saturation, used with ISS medical project hardware \cite{nasa_issmp_hardware}.
-\item \textbf{Ultrasound 2.} A General Electric Vivid q unit used for cardiac, muscle, vessel and blood flow analysis, with features to estimate muscle volume changes and analyze cardiac strain \cite{nasa_issmp_hardware}. It is used regularly on the station, and its scans of the heart and veins can be viewed by doctors on the ground in real time \cite{nasa_ultrasound_2025}.
+\item \textbf{Ultrasound 2.} A General Electric Vivid q unit used for cardiac, muscle, vessel and blood flow analysis, with features to estimate muscle volume changes and analyze cardiac strain \cite{nasa_issmp_hardware}. It is used regularly on the station, and its scans of the heart and veins can be viewed by doctors on the ground in real time \cite{nasa_ultrasound_2025}. Ocular ultrasound is also part of the in-flight eye surveillance for SANS \cite{brunstetter2023brief}.
 \item \textbf{Urine analyzer.} JAXA lists the Urolax urine analyzer among the ISS medical equipment \cite{jaxa_medops_system}. The source does not detail the parameters it reports, so AHI treats its output as a set of named results with units, defined when the interface is documented.
 \item \textbf{Blood, saliva and urine collection.} The ISS medical project carries blood collection kits, saliva session packs, urine collection kits and a refrigerated centrifuge \cite{nasa_issmp_hardware}, and blood collection and saliva samples are part of NASA Standard Measures \cite{nasa_standard_measures}. These are not sensors. Samples are collected at set times and analyzed later, so their results reach AHI with a delay. NASA immune research uses such samples to study stress hormones and the reactivation of dormant viruses \cite{nasa_immune_biomarkers}.
+\item \textbf{Optical coherence tomography (OCT).} A near infrared imaging device that produces cross sections of the retina and the optic nerve head. NASA uses it to follow the eye changes of spaceflight associated neuro-ocular syndrome: a Spectralis OCT of the same model used before flight is on the ISS, and in one study crew members were imaged around flight days 10, 30, 60, 90, 120 and 150 \cite{macias2020ocular}. NASA describes OCT as its most critical tool to detect and monitor SANS, on board the ISS since 2013 \cite{brunstetter2023brief}. AHI receives the structured measurements of each examination, such as retinal and nerve fiber layer thickness, per eye, and never the image itself.
+\item \textbf{Fundoscope (retinal photography).} A handheld camera that photographs the retina and the optic nerve head. Retinal photography is part of the in-flight eye surveillance for SANS \cite{brunstetter2023brief}, and the examination can be made with remote support from doctors on the ground (\ref{fig:hw-fundoscope}). AHI receives the structured findings of the reviewer per eye, not the photograph.
+\item \textbf{Vision screening.} Visual acuity, the Amsler grid, which shows distorted or missing areas of central vision, and a vision survey, performed at the same points of the flight as the imaging \cite{brunstetter2023brief}. These tests measure how well the person sees, while OCT, fundoscopy and ultrasound show the structure of the eye, and both are needed because structural changes can exist without symptoms. AHI does not use a webcam, a phone camera or an on-screen letter chart as a substitute for these examinations.
+\item \textbf{On-Orbit Hearing Assessment (OOHA).} A hearing test performed on board with headphones, which measures the pure tone hearing thresholds of crew members who stay on orbit longer than 30 days. Flight surgeons on the ground review the results for significant changes. The ISS system, called EarQ, was upgraded in 2021 to the KUDUwave software, which allows a more comprehensive assessment \cite{coste2024hearing}. AHI receives each audiogram as thresholds per frequency and per ear, in decibels hearing level.
 \end{itemize}
 
 \hwfigure{0.45}{images/hardware/bp-ecg-monitor-jaxa.jpg}{Blood pressure and ECG monitor of the ISS medical operations equipment.}{fig:hw-bpecg}{JAXA, Medical Operations, \url{https://humans-in-space.jaxa.jp/en/biz-lab/med-in-space/healthcare/medops/system/}}
@@ -51,6 +55,12 @@ Medical equipment produces scheduled, clinical measurements. Its data arrive as 
 \hwfigure{0.45}{images/hardware/urolax-jaxa.jpg}{Urolax urine analyzer of the ISS medical operations equipment.}{fig:hw-urolax}{JAXA, Medical Operations, \url{https://humans-in-space.jaxa.jp/en/biz-lab/med-in-space/healthcare/medops/system/}}
 
 \hwfigure{0.92}{images/hardware/blood-collection-slide.jpg}{Blood collection consumables of the ISS Medical Project: open blood tube kit, blood sample kits and insulated blood pouch.}{fig:hw-blood}{NASA ISS Medical Project, On-Orbit Hardware (2016), slide 17, \url{https://www.nasa.gov/sites/default/files/atoms/files/issmp_on-orbit_hardware.pdf}}
+
+\hwfigure{0.75}{images/hardware/oct-adenot.jpg}{ESA astronaut Sophie Adenot, Expedition 74, with the optical coherence tomography device used for eye examinations on the ISS, 3 April 2026. Doctors on the ground can follow the examination in real time (NASA image iss074e0433179).}{fig:hw-oct}{NASA Image and Video Library, credit ESA/Sophie Adenot, \url{https://images.nasa.gov/details/iss074e0433179}}
+
+\hwfigure{0.75}{images/hardware/fundoscope-aunon-chancellor.jpg}{NASA astronaut Serena Au\~n\'on-Chancellor examines her eye with a fundoscope on board the ISS with remote support from doctors on the ground, 13 July 2018 (NASA image iss056e096896).}{fig:hw-fundoscope}{NASA Image and Video Library, \url{https://images.nasa.gov/details/iss056e096896}}
+
+\hwfigure{0.75}{images/hardware/hearing-assessment.jpg}{Roscosmos cosmonaut Anna Kikina, Expedition 68, wears headphones for a hearing assessment inside the Quest airlock of the ISS, 21 October 2022 (NASA image iss068e017876).}{fig:hw-hearing}{NASA Image and Video Library, \url{https://images.nasa.gov/details/iss068e017876}}
 
 \subsection{Exercise Equipment}
 \label{subsec:exercise-equipment}
@@ -80,7 +90,9 @@ The health of a crew does not depend only on the body. A closed cabin can cause 
 \item \textbf{Air Quality Monitor (AQM).} Two AQM units use gas chromatography and differential mobility spectrometry to detect and quantify 23 target volatile organic compounds \cite{nasa_toxicology_envchem}.
 \item \textbf{CO\textsubscript{2} monitors.} A CO\textsubscript{2} monitor uses non-dispersive infrared to detect elevated carbon dioxide \cite{nasa_toxicology_envchem}. The Personal CO\textsubscript{2} Monitor investigation used sensors attached to clothing to measure the immediate surroundings of the wearer \cite{nasa_wearable_tech_iss}. Elevated CO\textsubscript{2} has been linked to headaches in ISS crews \cite{nasa_ochmo_tb004_co2}.
 \item \textbf{Combustion product analyzer.} The compound specific analyzer for combustion products uses electrochemical sensors to detect compounds produced by fire \cite{nasa_toxicology_envchem}.
-\item \textbf{Radiation monitors and personal dosimeters.} Radiation measurement devices installed in the ISS are monitored in real time, and each astronaut wears a personal dosimeter that records the accumulated dose \cite{jaxa_medops_system}. Examples on the ISS include the ESA Active Dosimeter and the CSA EVARM dosimeters \cite{nasa_wearable_tech_iss}.
+\item \textbf{Radiation monitors and personal dosimeters.} Radiation measurement devices installed in the ISS are monitored in real time, and each astronaut wears a personal dosimeter that records the accumulated dose \cite{jaxa_medops_system}. Examples on the ISS include the ESA Active Dosimeter and the CSA EVARM dosimeters \cite{nasa_wearable_tech_iss}. AHI uses the area dose rate for the radiation shelter rule and the personal dose for the career dose of each astronaut (\ref{sec:analytical-methodology}).
+\item \textbf{Acoustic Monitor (crew-worn acoustic dosimeter).} NASA's name for the Svantek SV 102A+, a Class 1 dual channel noise dosimeter used on the ISS since November 2017, with three calibrated units on board at all times. Crew members wear it for a continuous 24 hours, covering work and sleep, to measure their typical noise exposure, and it is also placed at fixed locations. Its data are downloaded to a station computer through USB. The ISS flight rule on noise uses the 16 hour work period and 8 hour sleep period equivalent levels measured by crew-worn dosimeters, and sets actions such as the use of hearing protection \cite{limardo2021noise}. A newer personal dosimeter, the SV104A, was tested in a technology demonstration (\ref{fig:hw-sv104a}).
+\item \textbf{Sound level meter (SLM).} Sound level meter measurements and acoustic noise dosimetry are routinely performed on the ISS \cite{nasa_ochmo_tb035_acoustics}. The meter surveys the sound level and its frequency content at points of the station, which shows where the noise comes from.
 \item \textbf{Water and microbial monitoring.} The Environmental Health System includes monitoring of water, air and microbes \cite{jaxa_medops_system}. Water quality is checked with a colorimetric kit for biocide concentration and a total organic carbon analyzer \cite{nasa_toxicology_envchem}.
 \item \textbf{Cabin temperature and humidity.} Station environmental data, of the kind published for research mission periods in the Environmental Data Application \cite{osdr_eda}.
 \end{itemize}
@@ -96,6 +108,10 @@ The health of a crew does not depend only on the body. A closed cabin can cause 
 \hwfigure{0.40}{images/hardware/toca.jpg}{The U.S. Total Organic Carbon Analyzer (TOCA), used to test water quality in real time on the ISS.}{fig:hw-toca}{NASA, Toxicology and Environmental Chemistry, \url{https://www.nasa.gov/directorates/esdmd/hhp/toxicology-and-environmental-chemistry/}}
 
 \hwfigure{0.65}{images/hardware/environment-sampling-jaxa.jpg}{Image used by JAXA to illustrate station environment monitoring of air, water and microbes.}{fig:hw-env-jaxa}{JAXA, Medical Operations, \url{https://humans-in-space.jaxa.jp/en/biz-lab/med-in-space/healthcare/medops/system/}}
+
+\hwfigure{0.75}{images/hardware/sound-level-meter.jpg}{NASA astronaut Steve Swanson, Expedition 40 commander, uses a sound level meter in the Destiny laboratory of the ISS, 1 August 2014 (NASA image ISS040-E-086654).}{fig:hw-slm}{NASA Image and Video Library, \url{https://images.nasa.gov/details/iss040e086654}}
+
+\hwfigure{0.30}{images/hardware/sv104a-dosimeter.jpg}{The SV104A personal noise dosimeter, which measures noise dose and noise levels from 55 to 140 dB on board the ISS, tested in the Wireless Acoustics technology demonstration. Image courtesy of SVANTEK (NASA image jsc2025e044837).}{fig:hw-sv104a}{NASA Image and Video Library, \url{https://images.nasa.gov/details/jsc2025e044837}}
 
 \subsection{Measured Variables}
 \label{subsec:measured-variables}
@@ -118,14 +134,19 @@ Dry-EEG Headband & Sleep stages, sleep duration, awakenings & Sleep and circadia
 BP/ECG monitor & Systolic and diastolic pressure, ECG, heart rate & Cardiovascular \\
 Holter Monitor 2 & 24 hour ECG, rhythm & Cardiovascular \\
 Pulse oximeter & Oxygen saturation, pulse & Respiratory \\
-Ultrasound 2 & Cardiac, vascular and muscle examination results & Cardiovascular, musculoskeletal \\
+Ultrasound 2 & Cardiac, vascular, muscle and eye examination results & Cardiovascular, musculoskeletal, vision \\
+Optical coherence tomography & Retinal and nerve fiber layer thickness, structured findings per eye & Vision \\
+Fundoscope & Structured findings of the retinal photograph per eye & Vision \\
+Vision screening & Visual acuity per eye, Amsler grid result, vision survey & Vision \\
+On-Orbit Hearing Assessment & Hearing thresholds per frequency and ear & Hearing \\
 Urine analyzer & Urinalysis results & Metabolic, renal and nutrition \\
 Blood and saliva samples & Blood counts, chemistry, stress hormones, immune markers & Immune, metabolic \\
 CEVIS & Workload, duration, heart rate during exercise & Cardiovascular, musculoskeletal \\
 ARED & Load, repetitions, sets, duration & Musculoskeletal \\
 T2 with COLBERT & Speed, duration, harness load & Musculoskeletal, cardiovascular \\
 AQM, CO\textsubscript{2} monitors & Volatile organic compounds, cabin and personal CO\textsubscript{2} & Respiratory, environment \\
-Radiation monitors, dosimeters & Area dose rate, personal accumulated dose & Environment \\
+Radiation monitors, dosimeters & Area dose rate, personal mission dose, career dose & Environment \\
+Acoustic Monitor, sound level meter & Equivalent noise levels for work and sleep, 24 hour noise dose, levels by frequency band & Hearing, sleep, environment \\
 Water and microbial monitoring & Water quality, microbial sampling results & Immune, environment \\
 \hline
 \end{tabular}
@@ -137,7 +158,7 @@ Some variables are measured directly and others are estimated. Heart rate variab
 \subsection{Imaging and Periodic Examinations}
 \label{subsec:imaging}
 
-Several risks are followed by periodic examinations and not by continuous sensors. On the ISS the main imaging device is the Ultrasound 2. Bone mineral density is measured by densitometry before and after flight \cite{lang2004bone,leblanc2007skeletal}, and the eye findings of spaceflight associated neuro-ocular syndrome are followed with optical coherence tomography, ultrasound and other examinations \cite{nasa_hrr_sans}. AHI does not process images. It receives the results of an examination as point measurements, with the date, the examiner's structured findings and the device, and places them on the timeline of the crew member.
+Several risks are followed by periodic examinations and not by continuous sensors. Bone mineral density is measured by densitometry before and after flight \cite{lang2004bone,leblanc2007skeletal}. The eye findings of spaceflight associated neuro-ocular syndrome are followed with optical coherence tomography, ultrasound and other examinations \cite{nasa_hrr_sans,macias2020ocular}, and hearing with the On-Orbit Hearing Assessment \cite{coste2024hearing}. AHI does not process images or audio. It receives the result of each examination as point measurements, with the date, the device, the eye or ear concerned and the examiner's structured findings, and places them on the timeline of the crew member as examination observations of the same canonical model. Each new result is compared with the person's preflight examination and with their previous results, never with a population average.
 
 \subsection{Device Priority}
 \label{subsec:device-priority}
@@ -159,8 +180,10 @@ Integrating every device at once is not realistic. \ref{tab:device-priority} giv
 3 & CEVIS, ARED, T2 & Physical performance and training load \\
 4 & BP/ECG monitor & Systolic and diastolic blood pressure, ECG \\
 5 & CO\textsubscript{2} monitors and AQM & Environmental exposure \\
-6 & Radiation dosimeters & Area and personal dose \\
-7 & Sample results, ultrasound, urine analyzer, Holter, Dry-EEG Headband & Periodic clinical and research data \\
+6 & Radiation dosimeters & Area dose rate, personal and career dose \\
+7 & Acoustic Monitor, sound level meter & Personal noise exposure \\
+8 & Vision screening, optical coherence tomography, fundoscope, On-Orbit Hearing Assessment & Eye and hearing examinations \\
+9 & Sample results, ultrasound, urine analyzer, Holter, Dry-EEG Headband & Periodic clinical and research data \\
 \hline
 \end{tabular}
 \vspace{1.2em}
@@ -171,14 +194,14 @@ Integrating every device at once is not realistic. \ref{tab:device-priority} giv
 
 \textbf{AHI does not consume data from any ISS device.} The project has no access to the equipment, to its interfaces or to crew data, and every value in the AHI demonstrator comes from a simulator. Even so, the team studied how a real integration would work, from the moment a device records a value to the moment that value is stored in the database of the platform. The purpose of this study is that the data model, the database and the adapters are designed for the real data path from the start, so that a simulator can later be replaced by a real feed without changing the analysis. This subsection describes that study at a theoretical and conceptual level. Where a step rests on a public source it is cited, and every other step is a design assumption of the team.
 
-\medskip\noindent\textbf{What the public sources establish about the data path.} The ISS research hardware already provides much of the infrastructure an integration needs. The Human Research Facility racks connect to the ISS Ethernet and video services, and their laptops are used to control equipment, to collect and store data and crew notes, and to provide uplink and downlink \cite{nasa_issmp_hardware}. The Ultrasound 2 connects to the Human Research Facility rack to allow real-time downlink of its video \cite{nasa_issmp_hardware}, and doctors on the ground can view the scans in real time \cite{nasa_ultrasound_2025}. The Actiwatch Spectrum kit includes a dock, a USB cable and the Actiware software \cite{nasa_issmp_hardware}, which means its data are recorded on the watch and transferred later. The Bio-Monitor includes a tablet application \cite{canadian_space_agency_biomonitor}, and the software of ARED and T2 collects, stores and displays exercise data \cite{nasa_jsc_exercise_countermeasures}. In ground testing of the Astroskin technology, 24 hour monitoring showed lessons about data loss and wireless connectivity \cite{toscano2017astroskin}. Radiation devices installed in the station are monitored in real time, while personal dosimeters record the accumulated dose \cite{jaxa_medops_system}.
+\medskip\noindent\textbf{What the public sources establish about the data path.} The ISS research hardware already provides much of the infrastructure an integration needs. The Human Research Facility racks connect to the ISS Ethernet and video services, and their laptops are used to control equipment, to collect and store data and crew notes, and to provide uplink and downlink \cite{nasa_issmp_hardware}. The Ultrasound 2 connects to the Human Research Facility rack to allow real-time downlink of its video \cite{nasa_issmp_hardware}, and doctors on the ground can view the scans in real time \cite{nasa_ultrasound_2025}. The Actiwatch Spectrum kit includes a dock, a USB cable and the Actiware software \cite{nasa_issmp_hardware}, which means its data are recorded on the watch and transferred later. The Bio-Monitor includes a tablet application \cite{canadian_space_agency_biomonitor}, and the software of ARED and T2 collects, stores and displays exercise data \cite{nasa_jsc_exercise_countermeasures}. In ground testing of the Astroskin technology, 24 hour monitoring showed lessons about data loss and wireless connectivity \cite{toscano2017astroskin}. Radiation devices installed in the station are monitored in real time, while personal dosimeters record the accumulated dose \cite{jaxa_medops_system}. The Acoustic Monitor records a 24 hour session and is then connected to a station computer through USB to download its data \cite{limardo2021noise}.
 
 \medskip\noindent\textbf{Integration patterns.} From these facts, the team identified four ways in which data leave a device. Each pattern needs a different kind of adapter, as summarized in \ref{tab:integration-patterns}.
 
 \begin{itemize}
 \item \textbf{Near real-time stream.} The device or its host application produces values continuously, and the adapter reads them as they arrive. This is the target pattern for the Bio-Monitor and for cabin environmental telemetry.
-\item \textbf{Session file.} The device records a session and the data are transferred afterwards as a file, through a dock, a cable or the host computer. This is the pattern of the Actiwatch Spectrum, the Holter Monitor 2, the Dry-EEG Headband and the exercise sessions of CEVIS, ARED and T2. The adapter reads the exported file and keeps the original measurement times.
-\item \textbf{Examination record.} A clinical examination, such as an ultrasound scan, a blood pressure and ECG session or a urinalysis, produces a result reviewed by a person. The adapter receives the structured findings, not the raw image or waveform, with the date, the device and the examiner.
+\item \textbf{Session file.} The device records a session and the data are transferred afterwards as a file, through a dock, a cable or the host computer. This is the pattern of the Actiwatch Spectrum, the Holter Monitor 2, the Dry-EEG Headband, the Acoustic Monitor and the exercise sessions of CEVIS, ARED and T2. The adapter reads the exported file and keeps the original measurement times.
+\item \textbf{Examination record.} A clinical examination, such as an ultrasound scan, an optical coherence tomography, a retinal photograph, a vision screening, a hearing assessment, a blood pressure and ECG session or a urinalysis, produces a result reviewed by a person. The adapter receives the structured findings, not the raw image or waveform, with the date, the device and the examiner.
 \item \textbf{Laboratory result.} Blood, saliva and urine samples are collected on board, stored and analyzed later, often on the ground. The result reaches AHI days or weeks after the collection, and the adapter keeps the collection time and the result time apart.
 \end{itemize}
 
@@ -200,11 +223,18 @@ BP/ECG monitor & Examination record & Session result on the host computer & Minu
 Pulse oximeter & Examination record & Session result & Minutes \\
 Ultrasound 2 & Examination record & Structured findings after review & Hours to days \\
 Urine analyzer & Examination record & Analyzer result & Minutes to hours \\
+Optical coherence tomography & Examination record & Structured measurements per eye after review & Hours to days \\
+Fundoscope & Examination record & Structured findings per eye after review & Hours to days \\
+Vision screening & Examination record & Results entered on the station computer & Minutes \\
+On-Orbit Hearing Assessment & Examination record & Audiogram on the station computer & Minutes; ground review later \\
 Blood and saliva samples & Laboratory result & Ground laboratory report & Days to weeks \\
 CEVIS, ARED, T2 & Session file & Exercise software export per session & Minutes to hours \\
 CO\textsubscript{2} monitors, AQM & Stream & Station environmental telemetry & Minutes \\
 Radiation monitors & Stream & Station radiation telemetry & Minutes \\
 Personal dosimeters & Session file & Periodic dosimeter readout & Days or longer \\
+Acoustic Monitor & Session file & USB download to a station computer after the 24 hour session & About one day \\
+Sound level meter & Examination record & Survey results per location & Hours \\
+DONKI (not a device) & External notification & Ground node polling of the NASA Open APIs, relayed on board & Minutes on the ground, plus link delay \\
 Water and microbial monitoring & Laboratory result & Analysis report & Days \\
 \hline
 \end{tabular}

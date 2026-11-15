@@ -26,6 +26,10 @@ Missing data handling & Share of missing or stale signals reported as no data & 
 Recommendation review & Share of recommendations accepted, modified or rejected by the flight surgeon & Level 3 \\
 Explanation fidelity & Share of generated texts whose numbers and citations match their inputs & Explanation layer \\
 Usability & Task success and time for crew and flight surgeons & Interface \\
+Assistant answer quality & Share of answers judged correct, grounded and in plain language by reviewers, per language & Health assistant \\
+Speech recognition accuracy & Word error rate of spoken questions, in a recorded noisy cabin environment, per language & Voice and audio description \\
+Access control correctness & Share of test requests where a role sees or does only what it is allowed to & Security \\
+Shelter warning time & Time from the first trigger to the shelter recommendation, with and without the link to Earth & Radiation rule \\
 \hline
 \end{tabular}
 \vspace{1.2em}
@@ -56,6 +60,9 @@ Missing data is never reported as normal & Stage 1: sensor failure scenario and 
 Forecast intervals cover close to their stated share of values & Stage 2: replay of cabin and daily metrics \\
 Learned models improve on rules only when enough real data exist & Stage 2 and 3: compare with the rules on held out data \\
 Generated explanations contain no number or limit absent from their input & Explanation fidelity on reference cases \\
+The local model of the contingency plan reaches the explanation fidelity of the Claude API on the reference cases & The same reference cases, in the five languages, run on both \\
+Blind users and users busy with a task can complete the main tasks by audio and voice alone & Usability study with audio description and hands-free mode \\
+The on board dose rate trigger recommends the shelter without any link to Earth & Stage 1: solar particle event scenario with the link down \\
 \hline
 \end{tabular}
 \vspace{1.2em}
@@ -103,7 +110,8 @@ Sensitivity and specificity against a clinical reference & Labeled outcomes revi
 Calibration of risk models & Enough labeled events \\
 Review of thresholds and recommendations & Flight surgeons \\
 Usability with crew and flight surgeons & A study with representative users \\
-Accessibility & A formal audit and screen reader tests \\
+Accessibility & A formal audit, screen reader tests and tests with blind, low vision and dyslexic users \\
+Quality of translations & Review by native speakers with health background in each language \\
 \hline
 \end{tabular}
 \vspace{1.2em}

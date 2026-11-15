@@ -1,0 +1,257 @@
+\section{Global Access and Inclusion}
+\label{sec:global-access}
+
+Space exploration is international, and so are its crews. The ISS is operated by agencies from several countries, crew members and flight surgeons do not share one first language, and future missions will include people with different backgrounds and abilities. A health platform is only useful if every one of them can understand it quickly, including under stress, without medical or statistical training and without depending on sight. AHI treats this as a requirement of the product, not as an extra, and this section specifies the three features that carry it:
+
+\begin{enumerate}
+\item \textbf{Plain language explanations and a health assistant} that turn statistical results into short, direct sentences for lay readers, by text and by voice (\ref{subsec:lay-explanations} and \ref{subsec:assistant}).
+\item \textbf{Internationalization} of the whole platform into English, Portuguese, Spanish, Japanese and German (\ref{subsec:languages}).
+\item \textbf{Audio description and voice operation}, so that blind and low vision users, people with dyslexia and astronauts busy with a task can follow and operate the platform without looking at a screen (\ref{subsec:accessibility}).
+\end{enumerate}
+
+\subsection{Principles}
+\label{subsec:global-principles}
+
+Five principles apply to all three features, and \ref{tab:inclusion-users} relates the groups of users to their needs and to the features that serve them.
+
+\begin{itemize}
+\item \textbf{One truth, many forms.} The analytical engine produces one structured result. Text, translation, speech and sound are different ways of presenting the same result, and none of them may change a value, a level or a recommendation.
+\item \textbf{Plain language first, technical term second.} Every user sees the plain version first and can open the technical version, with the numbers, at any time.
+\item \textbf{More than one channel.} Every piece of information has at least two forms: a word and an icon, a sound and a text, a spoken sentence and a written one. No information depends on color, sight or hearing alone.
+\item \textbf{Works without internet.} The internet is used when available, as in the demonstrator, which simulates the AI with the Claude API. Without it, the contingency plan uses translations, speech models and a language model installed on board (\ref{subsec:offline-llm}).
+\item \textbf{Grounded in published guidance.} The writing rules, the words for uncertainty and the accessibility features are based on published standards and studies: WCAG 2.1 for accessibility \cite{w3c_wcag21}, plain language guidance for the wording \cite{plain_language_guide}, and research on how verbal expressions of uncertainty are understood \cite{budescu2009uncertainty,mastrandrea2010ipcc}. Generated texts are checked automatically against their inputs, which is part of the design. This project does not run user studies or reviews by native speakers: tests with blind, low vision and dyslexic users and the review of the translations are requirements before operational use (\ref{sec:future-work}).
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Groups of users, their needs and the AHI features that serve them.}
+\label{tab:inclusion-users}
+\footnotesize
+\begin{tabular}{p{3.4cm}p{5.0cm}p{5.6cm}}
+\hline
+\textbf{Group} & \textbf{Need} & \textbf{Features} \\
+\hline
+Crew member without medical training & Understand their own data and what to do & Plain language explanations, health assistant, ``Explain this'' on every value \\
+Speaker of another language & Use the platform in their own language & Five languages, reviewed medical glossary, assistant and speech in the same language \\
+Blind user & Operate the platform without sight & Audio description of every screen, keyboard and voice navigation, spoken alerts \\
+User with low vision & Read the screen comfortably & Large text, high contrast, zoom, spoken description on demand \\
+User with dyslexia & Read without effort & Read aloud with highlighting, wider text spacing, short sentences \\
+Astronaut busy with a task & Stay informed without looking & Hands-free mode, short spoken summaries, sounds per status level, spoken questions \\
+User with reduced hearing & Not miss spoken information & Every sound and spoken message also written; adjustable volume and speed \\
+Flight surgeon & Precise, technical detail & Technical version of every explanation, full numbers and sources \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\subsection{Explaining Statistics to Lay Readers}
+\label{subsec:lay-explanations}
+
+The engine of AHI speaks the language of statistics: robust z-scores, bands of median plus or minus a multiple of the MAD, drift indices, forecast intervals, confidence values and a noisy-OR risk score (\ref{sec:analytical-methodology}). These outputs are precise, but most crew members are not statisticians, and a value such as $z=-2.4$ does not tell anyone what to do. The language model of AHI (\ref{subsec:llm-layer}) translates these outputs into plain language. It does not compute anything: it receives the structured result of the engine and writes it in words.
+
+\medskip\noindent\textbf{What needs to be translated.} \ref{tab:lay-concepts} lists the statistical concepts that appear in AHI and the plain wording the language model is instructed to use for each one.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Statistical concepts of AHI and how they are explained to lay readers. Example sentences use simulated values.}
+\label{tab:lay-concepts}
+\footnotesize
+\begin{tabular}{p{3.0cm}p{4.4cm}p{6.6cm}}
+\hline
+\textbf{Concept} & \textbf{What the engine outputs} & \textbf{Plain explanation} \\
+\hline
+Personal baseline & Median and MAD band per context & ``Your normal range for resting heart rate is 58 to 66, based on your last two weeks at rest.'' \\
+Deviation & Robust z-score & ``Today's value is clearly lower than usual for you.'' The number is shown only in the technical version. \\
+Slow drift & Exponentially weighted drift index & ``Over the last five days your heart rate variability has slowly gone down.'' \\
+Forecast & Damped trend projection with interval & ``If nothing changes, it will probably leave your normal range in about a day.'' \\
+Uncertainty & Interval width and confidence & ``This estimate is fairly uncertain, because two nights of sleep data are missing.'' \\
+Risk level & Noisy-OR score from 0 to 100 & ``Act soon. Three signs point the same way: short sleep, lower heart rate variability and a higher resting heart rate.'' The score is never described as a probability. \\
+Co-occurrence & Combined rule & ``Cabin CO\textsubscript{2} rose at the same time as your breathing rate. This does not show that one caused the other.'' \\
+Missing data & No data status & ``There is no heart rate data from the shirt for 40 minutes, so this value is unknown, not normal.'' \\
+Cited limit & Value against a standard & ``You have used 31\% of the career radiation limit set by the NASA standard.'' \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\medskip\noindent\textbf{Writing rules.} The instructions given to the language model, and the checks applied to its output, follow a fixed set of rules:
+
+\begin{itemize}
+\item \textbf{Start with what it means.} The first sentence says the status and what to do; details come after.
+\item \textbf{Compare with the person, not with a population.} ``Lower than usual for you'', never ``abnormal''.
+\item \textbf{Few, rounded numbers.} At most two numbers per sentence, rounded to what the reader needs, with units written in words when read aloud.
+\item \textbf{Consistent words for uncertainty.} Confidence is mapped to a small fixed set of words, such as ``likely'', ``fairly uncertain'' and ``very uncertain''. The mapping is configuration, identical in every language, so the same confidence always produces the same word, as in the calibrated uncertainty language of scientific assessments \cite{mastrandrea2010ipcc}. Because readers interpret such words in different ways, a study of that language recommends pairing the words with numeric ranges \cite{budescu2009uncertainty}, so the numeric version is always one tap away. The mapping must be reviewed by flight surgeons before operational use.
+\item \textbf{Say what is missing.} Missing or questionable data that lowered the confidence are always named.
+\item \textbf{No diagnosis, no cause.} No disease names, no medication, and co-occurrence is never written as cause.
+\item \textbf{Short and calm.} Short sentences, everyday words and a calm tone, with no alarming adjectives. Urgency is carried by the status word, not by the wording.
+\end{itemize}
+
+\medskip\noindent\textbf{How an explanation is produced.} For every explanation the platform follows the same pipeline:
+
+\begin{enumerate}
+\item The engine produces the structured result: metric, value, baseline band, deviation, forecast, interval, confidence, factors, missing data and recommendation.
+\item The platform adds the reader profile (crew or flight surgeon), the language of the user and, if needed, passages from the curated library.
+\item The language model writes the explanation following the writing rules.
+\item Automatic checks verify that every number in the text exists in the input, that the status word matches the level, that the uncertainty word matches the confidence mapping, that no forbidden term appears and that sentences stay short.
+\item If every check passes, the text is shown with a ``Show the numbers'' control that opens the technical version. If a check fails, a template sentence built directly from the structured result is shown instead.
+\end{enumerate}
+
+\medskip\noindent\textbf{Two readers, one result.} The same result produces two versions. The crew version is the plain text above. The flight surgeon version keeps the plain first sentence and adds the band, the z-score, the interval, the confidence value and the factors, in technical terms. Both versions come from the same input, so they can never disagree.
+
+\medskip\noindent\textbf{``Explain this'' everywhere.} Every value, chart, alert and recommendation has an ``Explain this'' control. It opens the plain explanation of that item, in writing and, if the user wishes, read aloud. It is the shortest path from a number to its meaning, and it is the entry point of the health assistant.
+
+\subsection{Health Assistant}
+\label{subsec:assistant}
+
+The health assistant is a chat that answers questions about the health of the astronaut in easy, direct language for lay readers. It is meant for the crew member who wants to understand their own data without medical training, and for any user who prefers to ask instead of searching the screens. It can be used by typing or by speaking, and it answers in writing and aloud. Typical questions are:
+
+\begin{itemize}
+\item ``Why is my status \textit{Keep an eye} today?''
+\item ``Is my sleep getting better or worse this week?''
+\item ``What does the radiation alert mean for me?''
+\item ``What can I do before my next exercise session?''
+\item ``What does \textit{fairly uncertain} mean in this forecast?''
+\end{itemize}
+
+\medskip\noindent\textbf{How an answer is built.} The assistant does not answer from general knowledge. For each question it identifies what is asked (a status, a trend, a recommendation, a term or a scientific background question), collects the relevant structured results from the analytical engine, retrieves the relevant passages of the curated library, and asks the language model to compose a short answer from those inputs only, in the language of the user and with the writing rules of \ref{subsec:lay-explanations}. The answer goes through the same checks before it is shown, and it ends with the records and sources it used, one tap away. If the checks fail, the assistant shows the structured data instead and says so. Follow-up questions keep the context of the conversation, so that ``And yesterday?'' refers to the metric just discussed.
+
+\medskip\noindent\textbf{Voice.} The user holds a button, or says a wake phrase in hands-free mode, and speaks the question. Speech to text turns it into a question, and text to speech reads the answer at an adjustable speed. The written answer stays on the screen. The ISS is a noisy place (\ref{sec:hardware-sensors}), so voice use is designed for a headset, which also keeps spoken health information private in a shared module.
+
+\medskip\noindent\textbf{Limits of the assistant.} The assistant answers only with data that the role of the user may see (\ref{subsec:security}), so a crew member cannot ask about another crew member. It never diagnoses, never suggests medication and never contradicts the level or the recommendation of the engine; a question of that kind is answered with an offer to contact the flight surgeon. It is never the path for an emergency: critical alerts reach the crew through the alert system, whether or not anyone asks. Conversations are recorded as text in the audit trail, and recorded audio is not kept after transcription.
+
+\medskip\noindent\textbf{With and without internet.} In the demonstrator the assistant uses the Claude API, which simulates the AI; without a connection, the contingency plan uses the local model on board, with the same inputs and checks (\ref{subsec:offline-llm}).
+
+\subsection{Internationalization}
+\label{subsec:languages}
+
+The interface of AHI is available in \textbf{English, Portuguese, Spanish, Japanese and German}. Each user chooses their language, which follows them on every screen, in the explanations, in the health assistant, in the speech and in the exported reports. English is the reference language, so that a crew member and a flight surgeon who use different languages can always switch to a common one during a discussion.
+
+\medskip\noindent\textbf{What is translated.} Everything the user reads or hears: the interface texts, the status words, the metric and dimension names, the recommendation catalog, the template sentences, the generated explanations, the assistant answers, the audio description and the spoken alerts. Stored values, codes and identifiers are never translated, so the data are the same whatever the language.
+
+\medskip\noindent\textbf{Status words in five languages.} The status language is the most critical text of the platform, because it carries the urgency. \ref{tab:status-i18n} shows the proposed translations. They are a working proposal of the team, not yet reviewed, and must be reviewed by native speakers with health background before operational use.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Status words in the five languages of AHI. Proposal of the team, subject to review by native speakers.}
+\label{tab:status-i18n}
+\footnotesize
+\begin{tabular}{p{2.3cm}p{2.4cm}p{2.3cm}p{2.3cm}p{3.0cm}}
+\hline
+\textbf{English} & \textbf{Portuguese} & \textbf{Spanish} & \textbf{Japanese} & \textbf{German} \\
+\hline
+All good & Tudo bem & Todo bien & \ja{良好} & Alles gut \\
+Keep an eye & Fique atento & Atenci\'on & \ja{要注意} & Im Blick behalten \\
+Act soon & Aja em breve & Actuar pronto & \ja{早めに対応} & Bald handeln \\
+Act now & Aja agora & Actuar ahora & \ja{今すぐ対応} & Jetzt handeln \\
+Signal lost & Sinal perdido & Se\~nal perdida & \ja{信号なし} & Signal verloren \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\medskip\noindent\textbf{Local conventions, same data.} \ref{tab:locale-formats} summarizes how presentation changes with the language. Numbers follow the decimal mark of each language, units stay in the International System, and times stay in UTC, as in mission operations, so that a time read aloud in any language refers to the same moment.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Presentation conventions per language. The stored values never change.}
+\label{tab:locale-formats}
+\footnotesize
+\begin{tabular}{p{2.4cm}p{2.6cm}p{3.0cm}p{5.6cm}}
+\hline
+\textbf{Language} & \textbf{Decimal mark} & \textbf{Example value} & \textbf{Notes} \\
+\hline
+English & Point & 36.8 \textdegree C & Reference language \\
+Portuguese & Comma & 36,8 \textdegree C & Plain language in Brazilian and European usage reviewed \\
+Spanish & Comma & 36,8 \textdegree C & Neutral Spanish for international crews \\
+Japanese & Point & 36.8 \textdegree C & Bundled font with Japanese characters; denser text \\
+German & Comma & 36,8 \textdegree C & Long compound words; layouts tested for length \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\medskip\noindent\textbf{How it is built.}
+
+\begin{itemize}
+\item \textbf{No text in the code.} Every visible text lives in a message catalog per language, with rules for plurals and variables, so that adding a language is a translation task and not a code change.
+\item \textbf{One medical glossary per language.} Status words, metric names and recommendation texts come from one glossary per language, so that \textit{Act soon} is meant to be as urgent in Japanese as in English. The language model and the speech models use the same glossary (\ref{subsec:guardrails}). The glossary of this report is a proposal of the team; its review by native speakers with health background is a requirement before operational use.
+\item \textbf{The language model writes, it does not translate.} Explanations and assistant answers are written directly in the language of the user from the structured result, instead of being written in English and machine translated, and they pass the same checks in every language.
+\item \textbf{Layouts that stretch.} German words are long and Japanese text is dense, so components must hold the longest translation without cutting a status word, which can be checked automatically with artificially lengthened text.
+\item \textbf{Fonts on board.} Inter covers English, Portuguese, Spanish and German, and the bundled Noto Sans JP covers Japanese (\ref{subsec:typography}).
+\item \textbf{Mixed language crews.} Each user sees their own language. Shared artifacts, such as the shift handover report, are produced in English and, on request, in the language of the reader.
+\item \textbf{Fallback.} A text missing in one language falls back to English, and the missing key is logged for the translators.
+\item \textbf{Offline.} All catalogs are bundled with the application, and no translation service is called while the platform runs.
+\end{itemize}
+
+\subsection{Audio Description and Voice Operation}
+\label{subsec:accessibility}
+
+Accessibility is part of the design, with conformance to WCAG 2.1 level AA as the design target \cite{w3c_wcag21}. The features below follow the success criteria of that standard; conformance has not been verified in this project and would require a formal audit and tests with users before operational use. The foundation is the same for every user: global keyboard shortcuts, keyboard navigation of timeline markers, a visible focus ring, a link that skips to what needs attention as the first focusable element, accessible labels on every control, live regions that announce new alerts to screen readers, and a status language that never relies on color alone, since every status has its own word, icon and shape (\ref{tab:status-language}).
+
+On top of this foundation, AHI offers \textbf{audio description}: the platform describes aloud what is on the screen and lets the user operate it by voice. It is generated from the same state as the screens, as a structured description of each screen (its headline, its regions and its items), so that the spoken version and the visual version always show the same thing.
+
+\medskip\noindent\textbf{Describing what is visual.}
+
+\begin{itemize}
+\item \textbf{The 3D body.} The body is described as a list of regions with their status, the most urgent first, for example: ``Heart: act now, heart rate 142, above your normal of 58 to 72. Lungs: keep an eye. All other regions: all good.'' The user can move from region to region with the keyboard or by voice, and selecting a region reads its detail.
+\item \textbf{Charts.} A chart is described by its trend, its position against the personal normal, the gaps of missing data and the forecast, for example: ``Heart rate variability, last seven days: going down slowly, below your normal since Tuesday, two hours of missing data last night; forecast: likely to stay low tomorrow.''
+\item \textbf{Alerts.} New alerts are announced as soon as they appear, in order of urgency. A critical alert interrupts any other speech; lower levels wait for a pause.
+\item \textbf{Recommendations.} Each recommendation is read with its action, who can act and when it will be reassessed.
+\end{itemize}
+
+\medskip\noindent\textbf{Voice operation.} The main actions of the crew view can be done by voice, as listed in \ref{tab:voice-commands}. Commands exist in the five languages, and every command has a keyboard equivalent.
+
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Main voice commands of AHI (English form).}
+\label{tab:voice-commands}
+\footnotesize
+\begin{tabular}{p{3.8cm}p{10.2cm}}
+\hline
+\textbf{Command} & \textbf{Effect} \\
+\hline
+``Status'' & Reads the status word of the user and the one sentence summary \\
+``Read alerts'' & Reads the open alerts, the most urgent first \\
+``Explain'' plus a metric & Reads the plain explanation of that metric (\ref{subsec:lay-explanations}) \\
+``What should I do?'' & Reads the recommended actions that can be taken on board \\
+``Done'' & Logs the current recommended action as done, after confirmation \\
+``Next'', ``Back'', ``Repeat'' & Moves through regions, items or the last message \\
+``Slower'', ``Faster'' & Changes the speed of speech \\
+``Ask'' plus a question & Sends the question to the health assistant (\ref{subsec:assistant}) \\
+``Stop'' & Stops speaking immediately \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+\medskip\noindent\textbf{For each group of users.}
+
+\begin{itemize}
+\item \textbf{Blind users} operate the whole crew view by keyboard, screen reader or voice, with every screen available in its spoken form.
+\item \textbf{Users with low vision} use large text, high contrast and zoom without loss of content, with the spoken description available at any time.
+\item \textbf{Users with dyslexia} can have any text read aloud with the current sentence highlighted, increase letter, word and line spacing, and rely on the short sentence rule.
+\item \textbf{Astronauts busy with a task,} during exercise, maintenance or an experiment, use hands-free mode: AHI reads short status summaries at chosen moments, announces new alerts and answers spoken questions.
+\item \textbf{Users with reduced hearing}, including crew members whose hearing assessment shows a threshold shift (\ref{sec:analytical-methodology}), can raise the volume of speech or rely on the written version, since every spoken message is also shown.
+\end{itemize}
+
+\medskip\noindent\textbf{Sounds per status level.} Each status level has its own short sound, distinct in pitch and rhythm, so that the level can be recognized without looking. Sounds never replace words: every sound is followed by the status word and has a written equivalent.
+
+\medskip\noindent\textbf{Privacy and environment.} Audio is designed for a headset, because the cabin is noisy and because spoken health information should not be heard by the whole module. Reading private data aloud on a speaker requires an explicit choice of the user. Volume, speed, voice and level of detail are personal settings.
+
+\subsection{Guardrails and Validation Required}
+\label{subsec:inclusion-evaluation}
+
+The guardrails of \ref{subsec:guardrails} apply to every text of this section, in every language and in every form, written or spoken. The design choices of this section rest on the published guidance cited above; they have not been validated with users in this project. Before operational use, the following evaluations would be required, with the metrics of \ref{sec:results}:
+
+\begin{itemize}
+\item \textbf{Explanation fidelity and readability:} the share of explanations whose numbers, status word and uncertainty word match their input, and their reading level, per language.
+\item \textbf{Comprehension:} whether lay readers understand the status, the trend and the recommended action from the plain explanation alone, measured in a usability study.
+\item \textbf{Translation quality:} review of the glossary and of a sample of explanations by native speakers with health background.
+\item \textbf{Speech accuracy:} word error rate of spoken questions and commands in a recorded noisy cabin environment, per language.
+\item \textbf{Accessibility:} a formal WCAG audit and task tests with blind, low vision and dyslexic users and with users in hands-free mode.
+\end{itemize}

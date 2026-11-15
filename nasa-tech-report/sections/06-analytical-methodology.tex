@@ -8,12 +8,12 @@ All numeric parameters in this section, such as band widths, level cutoffs, weig
 \subsection{Health Dimensions}
 \label{subsec:dimensions}
 
-AHI organizes monitoring into eight dimensions. For each one, \ref{tab:dimensions} lists what is measured, what is analyzed and which risks the analysis helps to identify. The sources are the ISS devices of \ref{sec:hardware-sensors}.
+AHI organizes monitoring into ten dimensions. For each one, \ref{tab:dimensions} lists what is measured, what is analyzed and which risks the analysis helps to identify. The sources are the ISS devices of \ref{sec:hardware-sensors}.
 
 \begin{table}[htbp]
 \centering
 \vspace{0.8em}
-\caption{The eight health dimensions of AHI.}
+\caption{The ten health dimensions of AHI.}
 \label{tab:dimensions}
 \scriptsize
 \begin{tabular}{p{2.3cm}p{4.0cm}p{4.2cm}p{3.5cm}}
@@ -25,6 +25,8 @@ Respiratory and oxygenation & Breathing rate and volume, oxygen saturation, brea
 Muscle and bone & Strength, endurance, exercise load and volume, muscle findings from ultrasound, bone results from periodic exams and markers & Progressive loss of strength, lower tolerated load, reduced exercise capacity & Muscle atrophy, bone loss, reduced physical capacity \\
 Immune & Blood cell counts, stress hormones, immune markers, signs of latent virus reactivation & Changes of immune markers against the personal baseline, links between stress, sleep and immunity & Altered immunity, higher susceptibility to infection \\
 Neurological and sensorimotor & Reaction time, cognition test results, symptoms of space motion sickness, balance and coordination tests & Slower responses, worse attention and memory, coordination problems & Sensorimotor and vestibular changes \\
+Vision & Visual acuity and Amsler grid per eye; visual symptoms reported by the crew; retinal photograph, optical coherence tomography and ocular ultrasound findings per eye & Change of each eye against the preflight examination, trend across the scheduled examinations, new symptoms between examinations, co-occurrence with blood pressure and time in flight & Eye changes of SANS, blurred vision \\
+Hearing & Hearing thresholds per frequency and ear; personal noise exposure during work and sleep & Change of each ear against the preflight audiogram, trend across tests, noise dose next to hearing results & Hearing threshold shift, interference with communication, alarms and sleep \\
 Sleep and circadian rhythm & Sleep duration, efficiency, stages when the headband is used, awakenings, light exposure, regularity & Accumulated sleep debt, circadian shift, fragmented sleep, links with performance and recovery & Sleep loss, fatigue, lower performance \\
 Psychological and behavioral & Self reported mood, stress, workload, rest quality and isolation; structured questionnaires & Persistent change of mood or stress, mental fatigue, links between isolation, sleep and performance & Behavioral changes and team problems; indicators only, never a diagnosis \\
 Metabolic, renal and nutritional & Urinalysis results, blood chemistry, fluid intake and diet reported by the crew & Dehydration, nutritional imbalance, kidney stone risk factors, links between diet, exercise and recovery & Renal problems, bone loss, inadequate nutrition \\
@@ -33,7 +35,7 @@ Metabolic, renal and nutritional & Urinalysis results, blood chemistry, fluid in
 \vspace{1.2em}
 \end{table}
 
-The evidence behind the choice of dimensions is in \ref{sec:scientific-foundation}. Two constraints shape how each one is analyzed. First, the dimensions with frequent data (cardiovascular, respiratory, sleep, activity and exercise) support time series analysis, while the immune and metabolic dimensions rely on periodic samples and allow only slow, sparse trends. Second, the psychological dimension uses indicators of risk and a request for appropriate evaluation. AHI never diagnoses depression, anxiety or any other condition from heart rate, messages or expressions.
+The evidence behind the choice of dimensions is in \ref{sec:scientific-foundation}. Two constraints shape how each one is analyzed. First, the dimensions with frequent data (cardiovascular, respiratory, sleep, activity and exercise) support time series analysis, while the immune, metabolic, vision and hearing dimensions rely on periodic samples and examinations and allow only slow, sparse trends. Second, the psychological dimension uses indicators of risk and a request for appropriate evaluation. AHI never diagnoses depression, anxiety or any other condition from heart rate, messages or expressions.
 
 \subsection{Level 1: Real-Time Monitoring}
 \label{subsec:baseline}
@@ -69,6 +71,42 @@ A drift that stays above a level for a minimum time raises an alert, so that a s
 \medskip\noindent\textbf{Periodic data.} Sleep, exercise sessions, cognition tests and check-ins arrive once a day or less, and they use runs of consecutive values outside the band. Laboratory, urinalysis and ultrasound results are compared with the person's previous results and with the reference ranges reported with them.
 
 \medskip\noindent\textbf{Environment.} Cabin signals have no personal normal. They are compared with limits taken from cited standards, such as the NASA-STD-3001 limit for the one hour average CO\textsubscript{2} partial pressure \cite{nasa_ochmo_tb004_co2}, and with their own recent trend.
+
+\medskip\noindent\textbf{Noise and hearing.} Personal noise exposure is compared with a cited limit and not with a personal normal: the 24 hour noise dose $D$ measured by the crew-worn dosimeter is compared with the NASA-STD-3001 limit $D\le100$ \cite{nasa_ochmo_tb035_acoustics}, and the work and sleep period levels are kept as separate observations, because noise during sleep also affects rest. Hearing is compared with the person. Each audiogram is compared, frequency by frequency and ear by ear, with the preflight audiogram of the same person, which is the baseline of this dimension:
+
+\begin{equation}
+\Delta T_{f,e}=T_{f,e}-T^{\text{pre}}_{f,e}
+\end{equation}
+
+where $T_{f,e}$ is the threshold at frequency $f$ for ear $e$, in decibels hearing level. A shift that persists in a later test is flagged for review by the flight surgeon; the size of shift that counts as significant is configuration that the flight surgeon sets, not a value invented by AHI. The platform shows the noise exposure and the hearing results on the same timeline, so that a reviewer can see whether a shift followed a period of high exposure. It reports this as co-occurrence and not as cause, all the more because low frequency shifts on the ISS are not typically caused by noise \cite{coste2024hearing}.
+
+\medskip\noindent\textbf{Eyes.} The vision dimension combines tests of how well the person sees, such as visual acuity and the Amsler grid, with examinations of the structure of the eye, such as OCT, retinal photography and ocular ultrasound, because structural changes can exist without symptoms \cite{brunstetter2023brief}. Each result, for example the retinal and nerve fiber layer thickness measured by OCT, is compared per eye with the preflight examination and with the previous in-flight results. AHI shows the change and its trend across the scheduled examinations and requests review when an eye changes more than the configured amount.
+
+Between examinations, the daily check-in lets the crew member report visual symptoms: blurred vision, difficulty focusing, distorted lines or images, or a change in near or distant vision. A new symptom creates a request to inform the crew surgeon, as NASA asks crew members to do for any vision change \cite{brunstetter2023brief}, and can bring the next screening forward. Since SANS severity is related to mission duration \cite{brunstetter2023brief} and its leading hypothesis is the headward fluid shift \cite{nasa_fluid_shifts_study}, the vision panel places time in flight, blood pressure and fluid related indicators, when available, on the same timeline as the eye results. These relations are shown as co-occurrence. AHI does not interpret images, does not decide whether a finding is SANS and does not diagnose SANS automatically.
+
+\medskip\noindent\textbf{Career radiation dose.} NASA-STD-3001 limits the total career effective dose of an astronaut from spaceflight radiation to less than 600~mSv, for all ages and sexes \cite{nasa_ochmo_tb020_radiation}. This is a published, cited limit, so AHI follows it directly. For each astronaut, the career dose is the sum of the dose from previous missions, taken from the medical record, the dose of the current mission measured by the personal dosimeter, and an estimate for the time since the last readout, computed from the area monitors and labeled as derived:
+
+\begin{equation}
+D_{\text{career}}=D_{\text{prior}}+D_{\text{mission}}+\hat{D}_{\text{since readout}},\qquad
+u=\frac{D_{\text{career}}}{600~\text{mSv}}
+\end{equation}
+
+The platform shows the fraction $u$ of the limit already used and projects it to the end of the mission at the recent dose rate $\dot{D}$, for the mission profile in use (ISS, Moon or Mars):
+
+\begin{equation}
+\hat{D}_{\text{end}}=D_{\text{career}}+\dot{D}\,T_{\text{remaining}}
+\end{equation}
+
+The projection is a planning aid for the flight surgeon and for mission planning. As stated in \ref{subsec:spaceflight-challenges}, a dosimeter value is compared with the limit only when it is reported as effective dose, and AHI does not estimate cancer or any other radiation health risk.
+
+\medskip\noindent\textbf{Radiation shelter rule.} NASA-STD-3001 requires a method to alert the crew when radiation levels are expected to exceed acceptable levels, and the NASA technical brief notes that the time course of solar particle events usually allows the crew to reconfigure the vehicle and prepare a shelter, for example with water and stowage around the crew quarters \cite{nasa_ochmo_tb020_radiation}. AHI turns this into a rule with two independent triggers:
+
+\begin{enumerate}
+\item \textbf{Space weather notification.} A DONKI notification of a solar energetic particle event, or of a flare or coronal mass ejection with a predicted particle event, relayed on board by the ground node (\ref{subsec:space-weather}).
+\item \textbf{On board measurement.} A rise of the area dose rate measured by the station radiation monitors well above its recent trend, which needs no link to Earth. The size of the rise is configuration.
+\end{enumerate}
+
+Either trigger creates a high priority recommendation for the whole crew: prepare the radiation shelter according to the mission protocol, and review any planned extravehicular activity. It is marked as an on board action, because the crew can act at once, and it is sent to the ground for confirmation. The recommendation shows its trigger, the notification identifier or the measured dose rate, and it is closed when the dose rate returns to its trend and the notification period ends. AHI recommends; the decision to shelter follows the flight rules of the mission.
 
 \medskip\noindent\textbf{Data quality.} A signal with no valid value within its expected cadence becomes \texttt{NO\_DATA}, and a device reported as stale or offline has the same effect. Questionable values cannot escalate beyond a moderate level on their own. \textbf{Missing data is never treated as normal.}
 
@@ -143,6 +181,9 @@ Immune changes & Blood, saliva, stress hormones, history & Trend of immune chang
 Dehydration & Fluid intake, urinalysis, clinical indicators & Risk of fluid imbalance \\
 Psychological deterioration & Questionnaires, sleep, stress, isolation & Risk of worse well-being \\
 Environmental risk & CO\textsubscript{2}, radiation, contaminants, history & Accumulated exposure and possible effect on health \\
+Vision change & Vision screening, OCT, retinal photograph and ultrasound findings, symptoms, time in flight & Trend of each eye against the preflight examination; never a SANS diagnosis \\
+Hearing change & Audiograms, noise dose, sleep period noise & Trend of thresholds against the preflight audiogram, with exposure alongside \\
+Career radiation dose & Personal dosimeter, area monitors, prior missions, mission profile & Fraction of the NASA-STD-3001 career limit used, projected to the end of the mission \\
 \hline
 \end{tabular}
 \vspace{1.2em}
@@ -151,14 +192,15 @@ Environmental risk & CO\textsubscript{2}, radiation, contaminants, history & Acc
 \subsection{Level 3: Prescriptive Intelligence}
 \label{subsec:recommendations}
 
-The third level turns predictions into actions. For each relevant risk, the recommendation engine selects interventions from a versioned catalog, considering the current condition, the history, the evolution of the indicators, the schedule and workload, sleep, exercise, diet, the cabin environment, and medical restrictions and mission protocols. The catalog contains five kinds of action:
+The third level turns predictions into actions. For each relevant risk, the recommendation engine selects interventions from a versioned catalog, considering the current condition, the history, the evolution of the indicators, the schedule and workload, sleep, exercise, diet, the cabin environment, and medical restrictions and mission protocols. The catalog contains six kinds of action:
 
 \begin{itemize}
 \item \textbf{Exercise:} adjust training intensity, resistance or aerobic work and recovery periods. Example: a decline of muscle performance leads to a suggestion to review the training prescription with the specialist.
 \item \textbf{Nutrition and hydration:} follow fluid and protein intake and flag possible deficiencies. Example: low fluid intake leads to a suggestion to follow a hydration plan approved by the medical team.
 \item \textbf{Sleep and recovery:} regular rest periods, lighting, pauses between activities. Example: three consecutive nights of short sleep lead to a suggestion to review the rest schedule.
 \item \textbf{Mental health and well-being:} breathing and relaxation exercises, leisure time, planned contact with family, and a psychological evaluation when needed. Example: persistent signs of stress lead to a suggestion of a relaxation activity and of contact with the psychological support team.
-\item \textbf{Medical follow-up:} request a medical evaluation, repeat an examination or refer to a specialist. Example: persistent cardiovascular changes lead to a request for review by the flight surgeon.
+\item \textbf{Medical follow-up:} request a medical evaluation, repeat an examination or refer to a specialist. Example: persistent cardiovascular changes lead to a request for review by the flight surgeon, a report of blurred vision leads to a request to inform the crew surgeon, and a hearing threshold shift leads to a request to repeat the hearing assessment.
+\item \textbf{Environmental protection:} radiation shelter, hearing protection and exposure reduction, following mission protocols. Example: a solar particle event leads to a suggestion to prepare the radiation shelter, and a high noise dose during sleep leads to a suggestion to use hearing protection and to check the noise sources near the crew quarters.
 \end{itemize}
 
 The catalog never recommends medication, doses or treatment. Each recommendation is a record with seven fields: the problem identified, the evidence that justifies it, the suggested action, the expected result, the time for reassessment, the status of the intervention and the evolution of the indicators after it. The last two fields close the loop: over time the platform learns which interventions are followed by better indicators, always within the protocols validated by the medical team.

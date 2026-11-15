@@ -24,10 +24,15 @@ The platform is built in stages that follow the device priority of \ref{sec:hard
 4. Periodic data & Sample results, urine analyzer, ultrasound findings, Holter, Dry-EEG Headband & Immune and metabolic dimensions, examination results on the timeline \\
 5. Learned models & Mission and authorized historical data & Isolation Forest and XGBoost behind the same interface, with model cards and shadow mode \\
 6. Explanation and review & Curated source library & Language model explanation layer with guardrails, flight surgeon review workflow, persistent audit \\
+7. Radiation and space weather & Personal dosimeters, area monitors, DONKI through the NASA Open APIs & Career dose against the NASA-STD-3001 limit, projection per mission profile, radiation shelter rule \\
+8. Vision and hearing & Vision screening, optical coherence tomography, fundoscope, Ultrasound 2, visual symptoms in the check-in, On-Orbit Hearing Assessment, Acoustic Monitor, sound level meter & Vision and hearing as two new dimensions: eye and hearing results against the preflight examinations, noise dose, co-occurrence view \\
+9. Global access & Accounts and roles; message catalogs; speech models & Role-based access and authentication, five languages, health assistant by text and voice, audio description \\
 \hline
 \end{tabular}
 \vspace{1.2em}
 \end{table}
+
+\medskip\noindent\textbf{Language features in the demonstrator.} The demonstrator is a web application, planned to be deployed on Vercel, so it runs with internet access. Its explanations and health assistant use the Claude API to simulate the AI language features (\ref{subsec:offline-llm}). The internet is not essential to the design: a real system on board would follow the contingency plan of \ref{subsec:offline-llm} without a connection. The interface labels these texts as generated through the API, and when the API is not reachable the demonstrator falls back to template text, which is the same behavior that the contingency plan has without any model.
 
 \subsection{Scenarios}
 \label{subsec:scenarios}
@@ -54,6 +59,8 @@ Exercise performance decline & Exercise output falls day after day & Slow single
 \end{tabular}
 \vspace{1.2em}
 \end{table}
+
+Two scenarios are planned for the new features of the final scope. In a \textit{solar particle event}, a DONKI notification arrives through the ground node and, a while later, the on board dose rate rises; the platform recommends preparing the radiation shelter from the first trigger, and the scenario is repeated with the link to Earth down to show that the on board trigger works alone. In a \textit{hearing threshold shift}, a period of high noise during sleep is followed by an audiogram with a low frequency shift; the platform requests a repeat assessment and shows the exposure next to the result without claiming a cause.
 
 \subsection{Presentation Script}
 \label{subsec:presentation-script}

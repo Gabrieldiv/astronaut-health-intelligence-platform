@@ -1,7 +1,9 @@
 \section{Artificial Intelligence}
 \label{sec:artificial-intelligence}
 
-AHI combines three kinds of artificial intelligence, each with a different job: statistical models that establish what is normal for each person, machine learning models that detect patterns and estimate risk, and a large language model (LLM) that writes the results in plain, direct language. The LLM is accessed through the \textbf{Claude API} from Anthropic \cite{anthropic_claude_api} whenever there is a link to Earth, and through a \textbf{local model specialized in AHI}, running on board, when there is not. The central rule is that \textbf{generative AI explains the results but is never responsible for the clinical calculations}. Status, risk, forecasts and the choice of recommendations come from the analytical engine of \ref{sec:analytical-methodology}, where every output can be traced to data and to a versioned model or rule.
+AHI combines three kinds of artificial intelligence, each with a different job: statistical models that establish what is normal for each person, machine learning models that detect patterns and estimate risk, and a large language model (LLM) that writes the results in plain, direct language and powers a health assistant that answers questions by text and voice. The central rule is that \textbf{generative AI explains the results but is never responsible for the clinical calculations}. Status, risk, forecasts and the choice of recommendations come from the analytical engine of \ref{sec:analytical-methodology}, where every output can be traced to data and to a versioned model or rule.
+
+A second rule shapes the whole section: \textbf{internet access is useful, but never essential.} The AHI demonstrator is a web application, and it uses the \textbf{Claude API} from Anthropic \cite{anthropic_claude_api} to simulate the AI language features, showing how they work with a capable language model. If the ISS has internet access, features like this one are available. A real system on board, however, cannot depend on the internet, so AHI includes an on board backend and a contingency plan: without a connection, monitoring, alerts and recommendations keep working, and the language features move to a local model specialized in AHI, installed on the computers of the ISS or of the Artemis spacecraft. \ref{subsec:offline-llm} describes this contingency.
 
 \subsection{Roles of Each Layer}
 \label{subsec:ai-roles}
@@ -18,8 +20,9 @@ AHI combines three kinds of artificial intelligence, each with a different job: 
 \hline
 Statistical & Robust baselines, drift detection, damped trend projection, explicit rules & Personal normal, acute and slow deviations, first forecasts; works from the first day \\
 Machine learning & Isolation Forest, XGBoost, random forests; later LSTM and Temporal Fusion Transformer & Multivariate anomalies, risk estimates, factor ranking, multivariate forecasts \\
-Language model, connected & Claude API with retrieval of curated sources & Plain language explanations of predictions, alerts and recommendations; summaries and handover text \\
-Language model, on board & A local model specialized in the AHI context & The same explanations when the link to Earth is lost \\
+Language model, connected & Claude API in the demonstrator, used to simulate the AI language features & Plain language explanations of predictions, alerts and recommendations; the health assistant; summaries and handover text; needs the internet \\
+Language model, contingency & A local model specialized in the AHI context, running on board, with retrieval over a local library of curated sources & The same tasks without any connection \\
+Speech, contingency & Speech to text and text to speech models for the five languages, running on board & Voice questions to the assistant and audio description of the screens \\
 \hline
 \end{tabular}
 \vspace{1.2em}
@@ -38,10 +41,10 @@ Language model, on board & A local model specialized in the AHI context & The sa
 
 \medskip\noindent\textbf{Governance.} Each model has a model card with its purpose, features, training data, version, evaluation results and known limits. Each output records the model version that produced it. A new model version runs in shadow mode, next to the current one and without affecting the crew view, until its evaluation is reviewed.
 
-\subsection{Claude API Explanation Layer}
+\subsection{Language Model Explanation Layer}
 \label{subsec:llm-layer}
 
-Statistical predictions are precise but hard to read under pressure. A line such as ``projected resting heart rate 71 beats per minute at 48 hours, 80\% interval 66 to 76, band exit in 31 hours, confidence 0.72'' is correct, but it does not tell a crew member what it means. AHI uses the Claude API to rewrite such outputs in a more direct way, for example: ``If the current trend continues, your resting heart rate is likely to rise above your usual range in about a day. The estimate is moderately certain because two nights of sleep data are missing.'' The numbers in the sentence are the numbers of the engine, and nothing is added.
+Statistical predictions are precise but hard to read under pressure. A line such as ``projected resting heart rate 71 beats per minute at 48 hours, 80\% interval 66 to 76, band exit in 31 hours, confidence 0.72'' is correct, but it does not tell a crew member what it means. The language model rewrites such outputs in a more direct way, for example: ``If the current trend continues, your resting heart rate is likely to rise above your usual range in about a day. The estimate is moderately certain because two nights of sleep data are missing.'' The numbers in the sentence are the numbers of the engine, and nothing is added. In the demonstrator these texts are written through the Claude API, which simulates the AI; without a connection, by the local model.
 
 The tasks of the layer are the following:
 
@@ -49,42 +52,67 @@ The tasks of the layer are the following:
 \item \textbf{Write predictions directly:} turn each forecast, with its horizon, interval and confidence, into one or two plain sentences.
 \item \textbf{Explain alerts and recommendations} already selected by the engine: what changed, compared with what, and why it matters.
 \item \textbf{Summarize} the condition of a crew member or of the crew for a shift handover.
-\item \textbf{Answer questions} about the data of the platform, citing the records and the curated scientific sources it used.
-\item \textbf{Adapt to the reader:} plain language for the crew, technical detail for the flight surgeon.
+\item \textbf{Adapt to the reader and the language:} plain language for the crew, technical detail for the flight surgeon, in the language chosen by the user.
+\item \textbf{Answer questions} through the health assistant, by text and voice.
 \end{itemize}
 
-The API receives only structured outputs of the engine, such as the metric, the value, the baseline, the forecast, the factors, the confidence and the recommendation, with pseudonymized identifiers and passages from a curated library of NASA and peer reviewed sources. It does not receive raw signals, names or identifying data, and it does not compute status or risk. The model in use is recorded with every generated text. The choice of model follows the current Claude models available through the API, and it is revised as new models are released.
+The model receives only structured outputs of the engine, such as the metric, the value, the baseline, the forecast, the factors, the confidence and the recommendation, with pseudonymized identifiers and passages from a curated library of NASA and peer reviewed sources. It does not receive raw signals, names or identifying data, and it does not compute status or risk. The model in use is recorded with every generated text. In the demonstrator, the choice of model follows the current Claude models available through the API. How these explanations are written for lay readers, the health assistant, and their use in five languages and in spoken form are specified in \ref{sec:global-access}.
 
-\subsection{Operation Without Contact with Earth}
+\subsection{Internet Access and Contingency Plan}
 \label{subsec:offline-llm}
 
-The Claude API is an internet service. It is reachable only while the spacecraft has a link to Earth. Space links are interrupted: during Artemis~II, the Orion spacecraft lost all contact with Earth for about 40 minutes while it passed behind the Moon \cite{ctv_artemis2_blackout}, and the communication delay grows with distance up to about 24 minutes one way for Mars \cite{nasa_space_communications_seven_things}. Interruptions are also possible on the ISS. Health monitoring cannot stop during these periods, and it is exactly when the crew is alone that a clear explanation matters most.
+A language model reached through an internet service is available only while the spacecraft has a link to Earth. Space links are interrupted: during Artemis~II, the Orion spacecraft lost all contact with Earth for about 40 minutes while it passed behind the Moon \cite{ctv_artemis2_blackout}, and the communication delay grows with distance up to about 24 minutes one way for Mars \cite{nasa_space_communications_seven_things}. Interruptions are also possible on the ISS. Health monitoring cannot stop during these periods, and it is exactly when the crew is alone that a clear explanation matters most. For this reason AHI treats internet services as optional: it uses them when a connection exists, and a contingency plan keeps the platform working when it does not.
 
-The analytical engine already runs on board and does not depend on the link (\ref{sec:software-architecture}). For the explanation layer, the proposed solution is to \textbf{train a local language model specialized in the context of AHI}, installed on the computers of the ISS or of the Artemis spacecraft and available to the astronauts without any connection. Its design follows four principles:
+The analytical engine runs in the on board backend and does not depend on the link (\ref{sec:software-architecture}). For the language features, the contingency is to \textbf{train a local language model specialized in the context of AHI}, installed on the computers of the ISS or of the Artemis spacecraft and available to the astronauts without any connection. \ref{tab:offline-architecture} compares the demonstrator with the contingency mode, and the design follows five principles:
 
 \begin{itemize}
-\item \textbf{Specialized and small.} The local model does not need general knowledge. It needs to explain the outputs of AHI: the metric catalog, the eight health dimensions, the rules, the forecasts, the recommendation catalog and the curated scientific library. An open model small enough for the on board computers is adapted to this context with examples written and reviewed by the team and by flight surgeons.
-\item \textbf{Same inputs, same guardrails.} It receives the same structured outputs as the Claude API and its texts go through the same checks (\ref{subsec:guardrails}).
-\item \textbf{Automatic switch.} When the link is lost, the platform switches to the local model and labels its texts as generated on board. When the link returns, texts can again be written through the Claude API, and the history is synchronized with the ground.
-\item \textbf{Validated before flight.} The local model is evaluated on reference cases before it is installed, for factual consistency, absence of diagnostic wording and correct use of citations, and a new version is installed only after review.
+\item \textbf{Specialized and small.} The local model does not need general knowledge. It needs to explain the outputs of AHI and to answer questions about them: the metric catalog, the ten health dimensions, the rules, the forecasts, the recommendation catalog and the curated scientific library. An open model small enough for the on board computers would be adapted to this context with examples written by the team and reviewed by flight surgeons, in the five languages of the interface. Its weights are compressed (quantized) so that it runs on the processors available on board.
+\item \textbf{Everything it needs is on board.} The curated library is stored on board with its search index, and the speech to text and text to speech models for the five languages are installed locally. The interface translations are bundled with the application, so no translation service is called at run time.
+\item \textbf{One interface, two implementations.} The platform calls the language model through one internal interface. The demonstrator connects that interface to the Claude API, and the contingency mode connects it to the local model. Switching from one to the other changes configuration, not the application, and both receive the same inputs and pass the same guardrails.
+\item \textbf{Validated before flight, updated as a package.} The local model is evaluated on reference cases before it is installed, for factual consistency, absence of diagnostic wording, correct use of citations and quality in each language. A new version is sent from the ground as a signed package and installed only after review.
+\item \textbf{The internet helps, but is never required.} When a connection exists, AHI may use remote models and services, and the ground node may use larger models for ground team tasks, such as long handover summaries, when policy allows. Without it, nothing essential stops: the local model, the engine and the alerts keep working.
 \end{itemize}
 
-If neither model is available, the platform shows the structured result with template text. Monitoring, alerts and recommendations never depend on a language model.
+\begin{table}[htbp]
+\centering
+\vspace{0.8em}
+\caption{Language and speech features in the demonstrator and in the contingency mode.}
+\label{tab:offline-architecture}
+\footnotesize
+\begin{tabular}{p{3.0cm}p{5.0cm}p{6.0cm}}
+\hline
+\textbf{Feature} & \textbf{Demonstrator, with internet} & \textbf{Contingency mode, no internet} \\
+\hline
+Explanations and assistant & Claude API, simulating the AI & Local model specialized in AHI, on board \\
+Curated sources & Library bundled with the demonstrator & Library and search index stored on board \\
+Speech to text, text to speech & Speech services available in the browser & Local speech models for the five languages \\
+Translations & Message catalogs bundled with the application & The same catalogs, bundled \\
+Space weather & DONKI through the NASA Open APIs & Ground node calls DONKI and relays notifications; on board dose rate rule works alone \\
+Model updates & Not applicable & Signed packages from the ground, installed after review \\
+Without any model & Template text & Template text \\
+\hline
+\end{tabular}
+\vspace{1.2em}
+\end{table}
+
+If no language model is available, the platform shows the structured result with template text in the language of the user, and the assistant offers the structured data instead of an answer. Monitoring, alerts and recommendations never depend on a language model.
 
 \subsection{Guardrails}
 \label{subsec:guardrails}
 
-The same rules apply to the Claude API and to the local model:
+The same rules apply to the Claude API in the demonstrator and to the local model:
 
 \begin{itemize}
 \item \textbf{No diagnosis and no prescription.} The model does not name diseases, does not suggest medication or doses, and does not change the level or the recommendation selected by the engine.
 \item \textbf{Grounded statements only.} Every number in a generated text must exist in the structured input, and every scientific statement must cite a passage from the curated library. A text that fails these checks is not shown, and the structured result is shown instead.
 \item \textbf{No invented limits.} The model never states a threshold or an official limit that is not in its input.
 \item \textbf{Uncertainty kept visible.} Confidence, missing data and limitations from the input must appear in the text, and a forecast is never written as a certainty.
-\item \textbf{Origin visible.} Generated text is labeled as generated, with the model and the place where it ran, and the structured result is always one click away.
+\item \textbf{Role scope.} The assistant uses only data that the role of the user may see.
+\item \textbf{Same meaning in every language.} Status words and medical terms come from one glossary for each language, to be reviewed by native speakers before operational use, so that a translation does not make a level sound milder or more severe.
+\item \textbf{Origin visible.} Generated text is labeled as generated, with the model and the place where it ran, and the structured result is always one tap away.
 \end{itemize}
 
 \subsection{Open Decisions}
 \label{subsec:ai-open-decisions}
 
-Four decisions remain open and need input from mission medical and security staff. The first is the data agreement for the Claude API: which structured, pseudonymized data may leave the spacecraft, and under which retention terms. The second is the choice of the open model for the local layer and of the on board hardware that runs it. The third is how the local model is updated during a long mission, given limited bandwidth. The fourth is the shared evaluation of both language layers, with a set of reference cases that checks factual consistency, the absence of diagnostic wording and the correct use of citations.
+Four decisions remain open and need input from mission medical and security staff. The first is the choice of the open model for the local layer, of the speech models, and of the on board hardware that runs them. The second is how the local model is updated during a long mission, given limited bandwidth. The third is the shared evaluation of the language features, with a set of reference cases in the five languages that checks factual consistency, the absence of diagnostic wording, the correct use of citations and the accuracy of speech recognition in a noisy cabin. The fourth is the data agreement for any use of external models on the ground: which structured, pseudonymized data may leave the mission systems, and under which retention terms.
