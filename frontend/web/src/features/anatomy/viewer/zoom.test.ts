@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { PerspectiveCamera, Vector3 } from 'three'
-import { wheelScale, zoomToward } from './zoom'
+import { keepOutside, wheelScale, zoomToward } from './zoom'
 
 function setup() {
   const camera = new PerspectiveCamera(30, 1.5, 0.03, 40)
@@ -57,6 +57,66 @@ describe('zoomToward', () => {
     expect(zoomToward(camera, target, 0.3, 0.3, 0.5, 0.18, 6)).toBe(false)
     zoomToward(camera, target, -0.2, 0.1, 1000, 0.18, 6)
     expect(camera.position.distanceTo(target)).toBeCloseTo(6, 6)
+  })
+})
+
+describe('zoomToward on the body surface', () => {
+  /** Distance from the camera to the plane z = zPlane along the ray under (x, y). */
+  function surfaceAt(camera: PerspectiveCamera, x: number, y: number, zPlane: number) {
+    camera.updateMatrixWorld()
+    const d = new Vector3(x, y, 0.5).unproject(camera).sub(camera.position).normalize()
+    return (zPlane - camera.position.z) / d.z
+  }
+
+  it('stops a small gap before the surface, never passing through it', () => {
+    const { camera, target } = setup()
+    // the "chest" is a wall at z = 0.12, in front of the target
+    for (let i = 0; i < 40; i++) zoomToward(camera, target, 0, 0, 0.5, 0.08, 6, { surface: surfaceAt(camera, 0, 0, 0.12), gap: 0.07 })
+    expect(camera.position.z).toBeCloseTo(0.19, 6)
+    // at the gap there is nothing left to zoom
+    expect(zoomToward(camera, target, 0, 0, 0.5, 0.08, 6, { surface: surfaceAt(camera, 0, 0, 0.12), gap: 0.07 })).toBe(false)
+  })
+
+  it('keeps the pointed spot under the pointer and pivots at its depth', () => {
+    const { camera, target } = setup()
+    const spot = new Vector3(0.5, 0.7, 0.1)
+    const [x, y] = ndcOf(camera, spot)
+    zoomToward(camera, target, x, y, 0.4, 0.08, 6, { surface: camera.position.distanceTo(spot), gap: 0.07 })
+    const [x2, y2] = ndcOf(camera, spot)
+    expect(x2).toBeCloseTo(x, 6)
+    expect(y2).toBeCloseTo(y, 6)
+    // the orbit target sits on the view axis at the depth of the spot, not behind the body
+    const fwd = target.clone().sub(camera.position).normalize()
+    expect(spot.clone().sub(camera.position).dot(fwd)).toBeCloseTo(camera.position.distanceTo(target), 6)
+  })
+
+  it('zooming out brings the body back to the home framing', () => {
+    const { camera, target } = setup()
+    const home = target.clone()
+    zoomToward(camera, target, 0.8, 0.6, 0.2, 0.08, 6)
+    expect(target.distanceTo(home)).toBeGreaterThan(0.05)
+    for (let i = 0; i < 20; i++) zoomToward(camera, target, 0.8, 0.6, 1.5, 0.08, 6, { home, homeDistance: 4 })
+    expect(target.distanceTo(home)).toBeLessThan(1e-6)
+    // the view direction never changed, so the body did not jump while recentering
+    expect(target.clone().sub(camera.position).normalize().z).toBeCloseTo(-1, 6)
+  })
+})
+
+describe('keepOutside', () => {
+  it('pushes the camera out of the body along the same line', () => {
+    const target = new Vector3(0, 1, 0)
+    const position = new Vector3(0.05, 1, 0.05)
+    expect(keepOutside(position, target, 0.2, 0.07)).toBeCloseTo(0.27, 9)
+    expect(position.distanceTo(target)).toBeCloseTo(0.27, 9)
+    expect(position.x).toBeCloseTo(position.z, 9)
+  })
+
+  it('leaves a camera that is already clear alone', () => {
+    const target = new Vector3(0, 1, 0)
+    const position = new Vector3(0, 1, 2)
+    expect(keepOutside(position, target, 0.2, 0.07)).toBeNull()
+    expect(keepOutside(position, target, null, 0.07)).toBeNull()
+    expect(position.z).toBe(2)
   })
 })
 

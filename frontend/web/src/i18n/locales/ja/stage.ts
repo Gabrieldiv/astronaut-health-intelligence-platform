@@ -16,5 +16,8 @@ const m: Record<keyof typeof en, string> = {
   'stage.contextOnly': '参考表示のみ',
   'stage.bodySystems': '体のシステム: {list}',
   'stage.bodyOverview': '体の概要',
+  'stage.ind.inRange': '{ok}/{total} 正常範囲',
+  'stage.ind.noData': '{n} データなし',
+  'stage.ind.aria': '指標 {total} 件中 {ok} 件が普段の範囲内、注意 {flagged} 件、データなし {missing} 件。',
 }
 export default m

@@ -16,5 +16,8 @@ const m: Record<keyof typeof en, string> = {
   'stage.contextOnly': 'Apenas contexto',
   'stage.bodySystems': 'Sistemas do corpo: {list}',
   'stage.bodyOverview': 'Visão geral do corpo',
+  'stage.ind.inRange': '{ok}/{total} no normal',
+  'stage.ind.noData': '{n} sem dados',
+  'stage.ind.aria': '{ok} de {total} indicadores dentro do seu normal, {flagged} em destaque, {missing} sem dados.',
 }
 export default m

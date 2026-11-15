@@ -14,4 +14,7 @@ export default {
   'stage.contextOnly': 'Context only',
   'stage.bodySystems': 'Body systems: {list}',
   'stage.bodyOverview': 'Body overview',
+  'stage.ind.inRange': '{ok}/{total} in range',
+  'stage.ind.noData': '{n} no data',
+  'stage.ind.aria': '{ok} of {total} indicators within your normal range, {flagged} flagged, {missing} without data.',
 }
