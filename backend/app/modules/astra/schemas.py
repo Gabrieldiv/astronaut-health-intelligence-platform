@@ -75,6 +75,16 @@ class DayResult(BaseModel):
         description="Standardized deviation u per metric. BODY_WEIGHT is the weight rate of change, not the weight."
     )
     message: str
+    multivariate_score: float | None = Field(
+        default=None,
+        description="INFORMATIONAL. Isolation Forest score of the day (0 to 1, higher = more unusual combination of vitals). "
+        "null when no metric could be evaluated. Never changes level.",
+    )
+    multivariate_flag: bool = Field(
+        default=False,
+        description="INFORMATIONAL. True when the score stayed at or above multivariate_threshold on the required consecutive "
+        "days. Never changes level.",
+    )
 
 
 class BaselineInfo(BaseModel):
@@ -92,5 +102,8 @@ class DeviationResponse(BaseModel):
     data_origin: Literal["DERIVED"] = "DERIVED"
     baselines: list[BaselineInfo]
     invalid_values: int = Field(description="Values outside the physical plausibility limits, treated as missing.")
+    multivariate_threshold: float = Field(
+        description="INFORMATIONAL. Score at or above which a day counts for multivariate_flag (99th percentile of simulated healthy days)."
+    )
     results: list[DayResult]
     limitations: list[str]

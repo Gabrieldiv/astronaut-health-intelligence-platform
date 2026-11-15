@@ -1430,6 +1430,24 @@
           "message": {
             "type": "string",
             "title": "Message"
+          },
+          "multivariate_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Multivariate Score",
+            "description": "INFORMATIONAL. Isolation Forest score of the day (0 to 1, higher = more unusual combination of vitals). null when no metric could be evaluated. Never changes level."
+          },
+          "multivariate_flag": {
+            "type": "boolean",
+            "title": "Multivariate Flag",
+            "description": "INFORMATIONAL. True when the score stayed at or above multivariate_threshold on the required consecutive days. Never changes level.",
+            "default": false
           }
         },
         "type": "object",
@@ -1523,6 +1541,11 @@
             "title": "Invalid Values",
             "description": "Values outside the physical plausibility limits, treated as missing."
           },
+          "multivariate_threshold": {
+            "type": "number",
+            "title": "Multivariate Threshold",
+            "description": "INFORMATIONAL. Score at or above which a day counts for multivariate_flag (99th percentile of simulated healthy days)."
+          },
           "results": {
             "items": {
               "$ref": "#/components/schemas/DayResult"
@@ -1546,6 +1569,7 @@
           "method",
           "baselines",
           "invalid_values",
+          "multivariate_threshold",
           "results",
           "limitations"
         ],

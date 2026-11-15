@@ -157,3 +157,94 @@ def test_unsorted_days_give_the_same_answer(client: TestClient) -> None:
 def test_endpoint_is_listed_in_openapi(client: TestClient) -> None:
     schema = client.get("/openapi.json").json()
     assert "/api/v1/analytics/deviation" in schema["paths"]
+
+
+# ----------------------------------------------------------------------------------------
+# Isolation Forest (informational: score and flag, never the level)
+# ----------------------------------------------------------------------------------------
+def test_multivariate_fields_for_a_calm_person(client: TestClient) -> None:
+    out = post(client, person()).json()
+    assert 0.4 < out["multivariate_threshold"] < 0.7
+    scores = [r["multivariate_score"] for r in out["results"]]
+    assert all(s is not None and 0 < s < 1 for s in scores)
+    assert max(scores) < out["multivariate_threshold"]
+    assert not any(r["multivariate_flag"] for r in out["results"])
+    assert any("informational" in x for x in out["limitations"])
+
+
+def test_multivariate_flags_an_unusual_combination(client: TestClient) -> None:
+    def odd(metric: str, in_day: int, v: float) -> float:
+        if 21 <= in_day <= 26:
+            return v + {"HEART_RATE": 25.0, "BODY_TEMPERATURE": 1.2, "SYSTOLIC_BP": -30.0, "RESPIRATORY_RATE": 6.0}.get(metric, 0.0)
+        return v
+
+    out = post(client, person(change=odd)).json()
+    by_day = {r["rel_day"]: r for r in out["results"]}
+    assert any(by_day[d]["multivariate_flag"] for d in range(21, 29))
+    assert not any(by_day[d]["multivariate_flag"] for d in range(1, 20))
+    scores = [by_day[d]["multivariate_score"] for d in range(21, 27)]
+    assert max(scores) >= out["multivariate_threshold"]
+
+
+def test_multivariate_never_changes_the_level(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    from dataclasses import replace
+
+    from app.modules.astra import service
+
+    body = person()
+    baseline = post(client, body).json()
+    real_forest = service.load_forest()
+    monkeypatch.setattr(service, "load_forest", lambda: replace(real_forest, threshold=0.0))  # flags every day
+    flagged = post(client, body).json()
+    assert all(r["multivariate_flag"] for r in flagged["results"][1:])
+    assert [r["level"] for r in flagged["results"]] == [r["level"] for r in baseline["results"]]
+    assert {r["level"] for r in flagged["results"]} == {"LOW"}
+
+
+def test_multivariate_is_null_when_nothing_can_be_evaluated(client: TestClient) -> None:
+    out = post(client, person(pre=5)).json()
+    assert all(r["multivariate_score"] is None and r["multivariate_flag"] is False for r in out["results"])
+
+
+def test_forest_score_matches_scikit_learn() -> None:
+    """The numpy walk over the flattened trees gives the same score as IsolationForest.score_samples."""
+    import numpy as np
+    from sklearn.ensemble import IsolationForest
+
+    from app.modules.astra.service import Forest, avg_path_length, forest_score
+
+    rng = np.random.default_rng(3)
+    train = rng.normal(size=(600, 11))
+    model = IsolationForest(n_estimators=25, random_state=7, n_jobs=1).fit(train)
+    feature: list[int] = []
+    value: list[float] = []
+    left: list[int] = []
+    right: list[int] = []
+    first: list[int] = []
+    for est in model.estimators_:
+        tree = est.tree_
+        base = len(feature)
+        first.append(base)
+        depth = np.zeros(tree.node_count)
+        for i in range(tree.node_count):
+            if tree.children_left[i] != -1:
+                depth[tree.children_left[i]] = depth[tree.children_right[i]] = depth[i] + 1
+        for i in range(tree.node_count):
+            is_leaf = tree.children_left[i] == -1
+            feature.append(-1 if is_leaf else int(tree.feature[i]))
+            value.append(float(depth[i] + avg_path_length(float(tree.n_node_samples[i]))) if is_leaf else float(tree.threshold[i]))
+            left.append(-1 if is_leaf else base + int(tree.children_left[i]))
+            right.append(-1 if is_leaf else base + int(tree.children_right[i]))
+    forest = Forest(
+        version="test",
+        threshold=0.5,
+        consec=2,
+        max_samples=int(model.max_samples_),
+        first_node=np.asarray(first),
+        feature=np.asarray(feature),
+        value=np.asarray(value),
+        left=np.asarray(left),
+        right=np.asarray(right),
+    )
+    x = rng.normal(scale=2.0, size=(200, 11))
+    assert np.allclose(forest_score(forest, x), -model.score_samples(x), atol=1e-9)
