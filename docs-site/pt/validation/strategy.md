@@ -32,7 +32,7 @@ flowchart TB
 
 | Camada | Pergunta | Como | Status |
 | --- | --- | --- | --- |
-| 1. Verificação de código | O código faz o que a função promete? | `npx tsc -b`, 143 testes vitest | <StatusBadge status="IMPLEMENTED" /> |
+| 1. Verificação de código | O código faz o que a função promete? | `npx tsc -b`, 430 testes vitest | <StatusBadge status="IMPLEMENTED" /> |
 | 2. Verificação de comportamento | Cada cenário produz o padrão esperado? | Testes de cenário em `engine.test.ts` | <StatusBadge status="IMPLEMENTED" /> |
 | 3. Consistência interna | O motor detecta os cenários e fica quieto no nominal, com várias sementes? | `npm run evaluate` | <StatusBadge status="IMPLEMENTED" /> |
 | 4. Validação de dados | Os dados reais são o que dizem ser? | SHA-256, conferência com metadados ISA, checklist de qualidade | <StatusBadge status="IMPLEMENTED" /> |

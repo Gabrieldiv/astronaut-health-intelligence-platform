@@ -1,0 +1,24 @@
+\section{What AHI Does}
+\label{sec:what-is-ahi}
+
+\textbf{Astronaut Health Intelligence (AHI)} is a health monitoring platform for crews on space missions. It joins the data of wearables, medical, exercise and cabin devices, compares every astronaut with \textbf{their own normal}, and turns the result into a plain status, an explanation and a few actions, on three levels (\ref{tab:levels}). This handbook is a hands-on tutorial; the science is in the AHI technical report \cite{ahi_tech_report}, written for the Space Apps 2026 health monitoring challenge \cite{nasa_health_monitoring_challenge_2026}.
+
+\begin{table}[H]
+\centering
+\caption{The three levels of AHI and where you see them on screen.}
+\label{tab:levels}
+\footnotesize
+\begin{tabular}{p{3.4cm}p{7.6cm}p{5.4cm}}
+\hline
+\textbf{Level} & \textbf{What it does} & \textbf{Where you see it} \\
+\hline
+1. Monitoring (present) & Compares each reading with the personal normal band; detects sudden changes, slow drifts and missing data & Crew cards, 3D body, vitals, alerts \\
+2. Prediction (future) & Projects trends with their uncertainty and estimates a risk score from 0 to 100 & Forecast cones, risk gauge \\
+3. Recommendation (action) & Suggests actions with their evidence and says who can act & Recommended actions, what-if \\
+\hline
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Main features.} A crew dashboard with a 3D anatomical body; personal baselines instead of one fixed limit for everyone; alerts with combined rules, sound and escalation; forecasts and what-if comparisons; mission tools (Earth link delay up to Mars, daily check-in, mission overview, shift handover with FHIR R4 export, real NASA OSDR data); Ground and Crew views; five languages, audio description and the Ask AHI assistant.
+
+\tipbox{Read this first.}{AHI is \textbf{decision support, not a medical device}: it does not diagnose, prescribe or replace the flight surgeon. All device data in the demonstrator is \textbf{simulated} and a violet \texttt{SIMULATED} badge is always visible. Missing data is never shown as normal: it is shown as \textit{Signal lost}.}

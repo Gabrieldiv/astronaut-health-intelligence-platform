@@ -9,6 +9,8 @@ code:
   - frontend/web/src/engine/missions/dose.ts
   - frontend/web/src/engine/missions/spaceWeather.ts
   - frontend/web/src/features/mission/MissionContext.tsx
+  - frontend/web/src/features/mission/backdrops/facts.ts
+  - frontend/web/src/features/mission/backdrops/MissionBackdrop.tsx
 tests:
   - frontend/web/src/engine/missions/missions.test.ts
   - frontend/web/src/state/missionProfile.test.ts
@@ -24,7 +26,7 @@ A mesma tripulação, os mesmos dispositivos e o mesmo motor podem ser lidos em 
 Os perfis são **independentes dos cenários** ([Cenários de demo](/pt/product/demo-scenarios)): um cenário roteiriza o que acontece com um tripulante, um perfil define o ambiente ao redor.
 
 ::: info Onde encontrar no app
-O seletor de perfil fica na barra superior. O botão de informação abre o diálogo de **contexto da missão** ("mission context"): perigos do perfil, valores de referência com fontes, a barra de dose da missão e o aviso de clima espacial.
+O controle Mission and Earth link fica na barra superior e abre um painel com três abas. A aba **Mission** tem a escolha do perfil e mostra os perigos do perfil, valores de referência com fontes, a barra de dose da missão e o aviso de clima espacial. O palco 3D também mostra um [cenário](#mission-backdrops) do perfil ativo.
 :::
 
 ## Os quatro perfis {#the-four-profiles}
@@ -79,6 +81,31 @@ A falta de dados de clima espacial nunca aparece como "tudo certo". Cada aviso a
 
 A janela de 72 horas e o corte "classe X" são configuração de demo em `config.ts` (`SPACE_WEATHER`), não limites oficiais. O texto do abrigo segue o procedimento geral de tripulação descrito pela NASA; não é uma instrução médica.
 
+## Cenários da missão {#mission-backdrops}
+
+Atrás do corpo 3D, o palco mostra uma cena do perfil ativo: a plataforma de lançamento com a pluma da subida, a Terra vista da órbita baixa, a superfície lunar, ou o arco de transferência da Terra a Marte com a nave. É contexto e decoração; nunca carrega um status de saúde. Um chip compacto mostra o nome do perfil e dois ou três fatos. **Todo número do chip é lido da tabela citada dos perfis acima** (`facts.ts`); o cenário não acrescenta nenhum valor de referência novo.
+
+| Perfil | Fatos do chip | Elemento extra |
+| --- | --- | --- |
+| Lançamento e subida | Até 3 g, 8,5 min de voo propulsado[^m9][^m10] | Medidor do pico de g: o pico de referência citado, não uma leitura ao vivo |
+| ISS | 400 km de altitude, sem peso, 0,65 mSv/dia[^m3][^m5] | Progresso da órbita no relógio simulado, período de cerca de 92 min (derivado, veja abaixo) |
+| Lua | 0,165 g, 384.400 km da Terra, atraso de 1,3 s[^m7] | nenhum |
+| Trânsito para Marte | 1,8 mSv/dia, atraso de 4 a 24 min[^m2][^m11] | Posição da nave no arco: o dia de missão simulado sobre o trânsito citado de 253 dias[^m2] |
+
+O período orbital da ISS é **derivado**, não citado: uma órbita circular na altitude citada de 400 km, com a terceira lei de Kepler, o raio médio da Terra (6371 km) e o parâmetro gravitacional da Terra (398.600 km³/s²)[^m16], dá cerca de 92 minutos. O atraso da Lua é a distância média dividida pela velocidade da luz. Os números seguem o idioma escolhido na interface. Como o cenário é desenhado: [Anatomia 3D](/pt/architecture/anatomy-3d#mission-backdrop).
+
+### O que o perfil altera
+
+O chip é um botão: abre o painel Missão e link com a Terra, que agora começa com **O que o perfil de missão altera**. O perfil altera apenas o lado do ambiente e da comunicação na simulação:
+
+- a **radiação** lida pelos dosímetros e a dose da missão em relação ao limite de carreira da NASA;
+- o **link com a Terra**: o atraso das mensagens e quem decide primeiro (tripulação ou solo);
+- as **recomendações**: frases de contexto extras onde o ambiente torna uma regra mais relevante;
+- o **aviso de clima espacial**: abrigo na Lua e em trânsito a Marte, monitoramento na ISS, a partir de eventos reais do NASA DONKI;
+- o **cenário e o chip** no palco 3D.
+
+Ele **não** altera os sinais vitais, o sono nem o exercício simulados dos astronautas: eles seguem o cenário de demonstração escolhido e a linha de base de cada pessoa.
+
 ## Limitações {#limitations}
 
 - Um valor de referência por perfil; as taxas reais variam com o ciclo solar, a blindagem e o local no veículo.
@@ -107,6 +134,7 @@ A janela de 72 horas e o corte "classe X" são configuração de demo em `config
 [^m13]: NASA OCHMO-TB-020 Rev. E, Design for Ionizing Radiation Protection ([V1 4031], limite por evento de partículas solares). <https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf>
 [^m14]: Shavers M. et al. 2024. Space agency-specific standards for crew dose and risk assessment of ionising radiation exposures for the International Space Station. *Z Med Phys* 34(1):14-30. <https://pmc.ncbi.nlm.nih.gov/articles/PMC10919966>
 [^m15]: NOAA Space Weather Prediction Center, Solar flares (radio blackouts): letras de classe das erupções pelo pico de fluxo de raios X. <https://www.spaceweather.gov/phenomena/solar-flares-radio-blackouts>
+[^m16]: NASA NSSDC, Earth Fact Sheet (raio médio volumétrico de 6371 km, GM de 0,39860 x 10^6 km³/s²). <https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html>
 
 ## Próximos passos {#next-steps}
 

@@ -91,6 +91,7 @@ const m: Record<keyof typeof en, string> = {
   'shortcuts.switchView': 'Zwischen Boden- und Crew-Ansicht wechseln',
   'shortcuts.presentation': 'Präsentationsmodus (auch unter Werkzeuge)',
   'shortcuts.alerts': 'Warnungen öffnen oder schließen',
+  'shortcuts.assistant': 'AHI fragen öffnen oder schließen',
   'shortcuts.play': 'Simulation abspielen oder pausieren',
   'shortcuts.esc': 'Ein Panel schließen oder aus dem Körperdetail zurück',
   'shortcuts.help': 'Diese Hilfe anzeigen',
@@ -100,6 +101,6 @@ const m: Record<keyof typeof en, string> = {
 
   'skip.label': 'Sprunglinks',
   'skip.main': 'Zum Hauptinhalt springen',
-  'skip.attention': 'Zu dem springen, was Aufmerksamkeit braucht',
+  'skip.attention': 'Zu „Was Aufmerksamkeit braucht“ springen',
 }
 export default m

@@ -16,5 +16,15 @@ const m: Record<keyof typeof en, string> = {
   'stage.contextOnly': 'Apenas contexto',
   'stage.bodySystems': 'Sistemas do corpo: {list}',
   'stage.bodyOverview': 'Visão geral do corpo',
+  'stage.ind.inRange': '{ok}/{total} indicadores normais',
+  'stage.ind.title': 'Indicadores de saúde: {name}',
+  'stage.ind.explain': 'Cada segmento é um indicador medido, como frequência cardíaca, sono ou oxigênio no sangue, comparado com a faixa normal de {name} e não com uma pessoa média.',
+  'stage.ind.summary': '{ok} de {total} indicadores estão na faixa normal',
+  'stage.ind.environment': 'Exposição da cabine e radiação',
+  'stage.ind.showOnBody': 'Mostrar este sistema no corpo',
+  'stage.ind.missingNote': 'Indicadores sem dados nunca são contados como normais.',
+  'stage.ind.open': 'O que esses indicadores cobrem? Abrir o detalhamento',
+  'stage.ind.noData': '{n} sem dados',
+  'stage.ind.aria': '{ok} de {total} indicadores dentro do seu normal, {flagged} em destaque, {missing} sem dados.',
 }
 export default m

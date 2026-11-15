@@ -91,6 +91,7 @@ const m: Record<keyof typeof en, string> = {
   'shortcuts.switchView': 'Alternar visão Solo / Tripulação',
   'shortcuts.presentation': 'Modo apresentação (também em Ferramentas)',
   'shortcuts.alerts': 'Abrir ou fechar alertas',
+  'shortcuts.assistant': 'Abrir ou fechar o "Pergunte ao AHI"',
   'shortcuts.play': 'Iniciar ou pausar a simulação',
   'shortcuts.esc': 'Fechar um painel, ou voltar do detalhe do corpo',
   'shortcuts.help': 'Mostrar esta ajuda',

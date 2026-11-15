@@ -1,0 +1,41 @@
+name: Visual baselines
+
+# Generates the Linux visual baselines for the Playwright visual tests. It runs only when a branch
+# named visual/** is pushed, and uploads the snapshots as an artifact to commit by hand:
+#   git push origin HEAD:refs/heads/visual/baselines
+# then download the artifact "visual-baselines-linux" into frontend/web/e2e/__screenshots__/linux.
+
+on:
+  push:
+    branches: ['visual/**']
+
+permissions:
+  contents: read
+
+jobs:
+  baselines:
+    name: Generate Linux visual baselines
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/web/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Update visual snapshots
+        run: npx playwright test e2e/visual.spec.ts --update-snapshots
+        env:
+          E2E_VISUAL: '1'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines-linux
+          path: frontend/web/e2e/__screenshots__/linux/
+          if-no-files-found: error
+          retention-days: 7

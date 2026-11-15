@@ -1,12 +1,13 @@
 ---
 title: Testing Strategy
-description: How the Astronaut Health Intelligence Platform is tested, the 37 vitest files with 375 tests and the backend pytest suite, what each covers, plus what is not tested yet.
+description: How the Astronaut Health Intelligence Platform is tested, the 48 vitest files with 430 tests, the Playwright end to end and visual tests and the backend pytest suite, what each covers, plus what is not tested yet.
 status: IMPLEMENTED
 code:
   - frontend/web/package.json
   - .github/workflows/ci.yml
   - .github/workflows/docs-check.yml
   - backend/tests
+  - frontend/web/playwright.config.ts
 tests:
   - frontend/web/src/engine/engine.test.ts
   - frontend/web/src/engine/risk.test.ts
@@ -22,8 +23,9 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 
 | Fact | Value (2026-11-15) |
 | --- | --- |
-| Web test files | 38 |
-| Web tests | 375, all passing |
+| Web test files | 48 |
+| Web tests | 430, all passing |
+| End to end tests (Playwright) | 14 functional tests plus 6 visual tests (`npm run e2e` in `frontend/web`) |
 | Backend tests | 44 in 6 files (`python -m pytest` in `backend`) |
 | Typecheck | `npx tsc -b` clean |
 | Production build | `npx vite build` ok |
@@ -36,14 +38,15 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | --- | --- | --- |
 | Unit | Statistics, baseline, forecast, risk, alerts, FHIR export | <StatusBadge status="IMPLEMENTED" /> |
 | Scenario (engine level integration) | Full engine runs per scenario with seeded data | <StatusBadge status="IMPLEMENTED" /> |
-| Store | Slices, references, actions; structure, region and metric selection | <StatusBadge status="IMPLEMENTED" /> (14 tests in 2 files) |
+| Store | Slices, references, actions; structure, region and metric selection | <StatusBadge status="IMPLEMENTED" /> (14 tests in 3 files) |
 | Anatomy data layer | Structure to region mapping, structure health view, manifest contract against the real GLB files | <StatusBadge status="IMPLEMENTED" /> (29 tests in 2 files) |
 | Anatomy assets | `npm run anatomy:validate` on the published files ([3D anatomy assets](../data/anatomy-assets#rebuild)) | <StatusBadge status="IMPLEMENTED" /> (script, not a test) |
-| Viewer logic | Zoom math, interaction modes, retry policy, scan timing, keyboard navigation | <StatusBadge status="IMPLEMENTED" /> (36 tests in 5 files) |
-| 3D rendering | Visual states, picking, loading and fallback, checked by hand on `anatomy-lab.html` | <StatusBadge status="NOT_IMPLEMENTED" /> (no pixel test) |
+| Viewer logic | Zoom math, whole body framing, idle rotation rule, interaction modes, retry policy, scan timing, keyboard navigation | <StatusBadge status="IMPLEMENTED" /> (48 tests in 7 files) |
+| 3D rendering | Visual states, picking, loading and fallback, checked by hand on `anatomy-lab.html`; the canvas is masked in the visual tests | <StatusBadge status="NOT_IMPLEMENTED" /> (no pixel test) |
 | Evaluation | Headless replay with metrics ([Results](../validation/results)) | <StatusBadge status="IMPLEMENTED" /> (script, not a test) |
 | UI component tests | React components | <StatusBadge status="PLANNED" /> |
-| End to end (browser) | Open dashboard, select astronaut, run scenario, acknowledge alert (spec section 16) | <StatusBadge status="PLANNED" /> |
+| End to end (browser) | Playwright: the demo script flows, including run scenario, acknowledge alert and write the audit trail (spec section 16) ([details](#end-to-end-and-visual-tests)) | <StatusBadge status="IMPLEMENTED" /> (14 tests, run in CI) |
+| Visual regression of panels | Playwright screenshots of six panels | <StatusBadge status="PLANNED" /> (6 tests, no committed baselines yet, skipped in CI) |
 | API, database, ingestion integration | Health and registry, ingestion and observations, NASA connectors, assistant, analytics, OpenAPI schema | <StatusBadge status="IMPLEMENTED" /> (pytest, 44 tests) |
 | Data tests | Schema, units, timestamps, duplicates, provenance | Partial: enforced inside the OSDR import script (fails on sex mismatch, counts missing cells), not as separate tests |
 
@@ -84,11 +87,34 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | <CodeLink path="frontend/web/src/features/assistant/assistant.test.ts" /> | 11 | Grounded snapshot; "Based on:" split; speech text without markdown; stream parsing |
 | <CodeLink path="frontend/web/src/features/anatomy/atlas/examRegions.test.ts" /> | 11 | Eyes and ears regions on the atlas; ear anchors; exam metrics per region |
 | <CodeLink path="frontend/web/src/features/anatomy/a11y/keyboardNav.test.ts" /> | 12 | Region and structure order; arrows, Home and End; announcements with status and no data |
-| <CodeLink path="frontend/web/src/features/anatomy/viewer/zoom.test.ts" /> | 5 | Zoom toward the pointer keeps the aimed point; distance limits; no move at a limit |
+| <CodeLink path="frontend/web/src/features/anatomy/viewer/zoom.test.ts" /> | 10 | Zoom toward the pointer keeps the aimed point; distance limits; no move at a limit |
 | <CodeLink path="frontend/web/src/features/anatomy/viewer/interaction.test.ts" /> | 5 | Monitor and Explore: which structures are interactive; persisted mode with safe fallback |
 | <CodeLink path="frontend/web/src/features/anatomy/viewer/retry.test.ts" /> | 8 | Backoff 0.6, 1.8, 5.4 s; 4 tries; error keeps the last cause; non retryable errors |
 | <CodeLink path="frontend/web/src/features/anatomy/viewer/scan.test.ts" /> | 6 | Scan timing; one pass per cycle; reduced motion is slow and dim |
 | <CodeLink path="frontend/web/src/i18n/i18n.test.ts" /> | 60 | Five languages, English first and the only reviewed one; every locale has exactly the English keys, no empty strings, the same placeholders, no dash characters and the protected tokens untranslated; status words and catalog labels follow the language |
+| <CodeLink path="frontend/web/src/features/anatomy/viewer/autoRotate.test.ts" /> | 3 | Idle rotation: turns when idle, stops during a drag and resumes 3 s after the last interaction, stays still while something is selected or hovered or the camera flies |
+| <CodeLink path="frontend/web/src/features/anatomy/viewer/framing.test.ts" /> | 4 | Whole body framing fills the free height, is limited by the width on a narrow viewport, grows when the reserved bands shrink, and a close up is never farther than the whole body shot |
+| <CodeLink path="frontend/web/src/features/attention/feedState.test.ts" /> | 2 | Paused (not Signal lost) while paused, Waiting during the resume grace, then Live; a missing reading with no healthy device stays Signal lost |
+| <CodeLink path="frontend/web/src/features/stage/indicators.test.ts" /> | 4 | Indicator count: all normal, flagged first and worst first, a reading with no current value never counted as normal, empty before the first evaluation |
+| <CodeLink path="frontend/web/src/features/stage/indicatorBreakdown.test.ts" /> | 3 | Breakdown by body system counts every indicator, puts the most urgent group first and keeps missing data out of the normal ones |
+| <CodeLink path="frontend/web/src/components/viz/scale.test.ts" /> | 8 | Gauge scale, change versus the personal median (missing data never read as a change or as normal), limit fraction, change bar width, delay clock fraction |
+| <CodeLink path="frontend/web/src/app/useStatusFavicon.test.ts" /> | 2 | Red dot on the tab icon only for an open CRITICAL alert; the icon is an SVG data URL |
+| <CodeLink path="frontend/web/src/features/a11y/languageSpeech.test.ts" /> | 3 | A language change cancels the old voice and announces once in the new language; a quick second change speaks only the latest; silent with audio description off |
+| <CodeLink path="frontend/web/src/lib/api/connectivity.test.ts" /> | 7 | Automatic, Online and Offline: stored choice, `VITE_API_URL=off` wins, top bar chip, blocked storage, Offline never touches the network, Online reports an unreachable API and still serves the bundled snapshot |
+| <CodeLink path="frontend/web/src/i18n/engineText.test.ts" /> | 14 | Engine sentences through structured messages: English byte for byte, every sampled sentence translated in each language, mission profiles and exam rule titles, every engine key exists in English |
+
+## End to end and visual tests {#end-to-end-and-visual-tests}
+
+Playwright (Chromium only) drives the real app in a browser. Configuration: <CodeLink path="frontend/web/playwright.config.ts" />. Run them with `npm run e2e` inside `frontend/web` (needs a Chromium that can run WebGL).
+
+| Suite | Tests | What it covers |
+| --- | --- | --- |
+| <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> | 14 | The demo script as a user: the ground view with the SIMULATED badge, progressive fatigue, acute cardio event with the audit trail, sensor failure (no data, never normal), pausing and resuming a device, forecast horizons, Mars transit guidance, Crew view body system cards, skip link, the keyboard body navigator, Ask AHI offline and closing with Esc, the NASA context tab in offline mode, switching language to Japanese and back |
+| <CodeLink path="frontend/web/e2e/visual.spec.ts" /> | 6 | Screenshots of stable panels: top bar, crew list, attention panel, devices panel, Crew view side column, Mission and Earth link panel. The 3D canvas is masked |
+
+- The tests start their own dev server on port 5190 and always run in offline demo mode: the API address points at a port nothing listens on, and every request to it is aborted.
+- The simulation is seeded and paused at a fixed simulated time, so the screenshots are repeatable.
+- **Visual baselines are not committed yet.** Snapshots are platform specific (`e2e/__screenshots__/<platform>/`). Generate them with `npm run e2e:update` on the machine that will compare them. For Linux (CI), push a branch named `visual/baselines`: the workflow `.github/workflows/visual-baselines.yml` runs the visual tests with `E2E_VISUAL=1` and uploads the snapshots as an artifact to commit under `frontend/web/e2e/__screenshots__/linux/`. Until then the visual tests are skipped on Linux (set `E2E_VISUAL=1` to run them).
 
 ## Principles
 
@@ -100,7 +126,7 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 
 ## In CI
 
-The CI workflow (`.github/workflows/ci.yml`) runs lint, the typecheck, `npm test` and the production build on pushes and pull requests to `master` that touch `frontend/web/**`. The documentation build runs in pull requests (`docs-check.yml`) and in the deploy on `master`. See [Documentation and deployment](./deployment#validation).
+The CI workflow (`.github/workflows/ci.yml`) has two jobs. **App** runs lint, the typecheck, `npm test` and the production build. **End to end** installs Chromium and runs `npm run e2e` (the functional tests; the visual tests are skipped on Linux). Both run on pushes to `master` and pull requests to `master` or `develop` that touch `frontend/web/**`. The backend has its own workflow (`backend.yml`). The documentation build runs in pull requests (`docs-check.yml`) and in the deploy on `master`. A manual workflow (`visual-baselines.yml`, branches named `visual/**`) generates the Linux visual baselines. See [Documentation and deployment](./deployment#validation).
 
 ## Next steps
 

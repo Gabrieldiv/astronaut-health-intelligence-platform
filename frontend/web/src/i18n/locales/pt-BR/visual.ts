@@ -18,7 +18,7 @@ const visual = {
   'visual.dir.up': 'acima',
   'visual.dir.down': 'abaixo',
   'visual.dir.flat': 'perto do usual',
-  'visual.factorAria': '{metric} {dir} {pct}% em relação ao seu normal. Abrir {metric}.',
+  'visual.factorAria': '{metric}: {dir}, {pct}% em relação ao seu normal. Abrir {metric}.',
   'visual.factorAriaNoPct': '{metric}. Abrir {metric}.',
   'visual.when.NOW': 'Agora',
   'visual.when.HOUR': 'Em até 1 h',
@@ -40,7 +40,7 @@ const visual = {
   'visual.dose.aria': 'Dose da missão até agora {sofar}, projetada {projected}, de um limite de carreira de {limit} mSv',
   'visual.dose.unknown': 'indisponível',
   'visual.delay.title': 'Atraso das mensagens',
-  'visual.delay.oneWay': 'só ida',
+  'visual.delay.oneWay': 'só de ida',
 }
 
 export default visual

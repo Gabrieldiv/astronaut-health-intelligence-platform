@@ -13,7 +13,7 @@
  * when the history is too short for it (FORECAST_HORIZONS.minHistoryRatio, demo rule).
  * This is a statistical projection of simulated data, never a clinical prediction.
  */
-import type { ForecastHorizonHours, ForecastPoint, MetricCode, Prediction } from '../types/domain'
+import type { EngineMsg, ForecastHorizonHours, ForecastPoint, MetricCode, Prediction } from '../types/domain'
 import { FORECAST, FORECAST_HORIZONS, FORECAST_METHOD } from './config'
 import { clamp, sd } from './stats'
 import { DAY_MS, HOUR_MS, MIN_MS } from './text'
@@ -106,10 +106,15 @@ export function binMeans(points: Array<{ t: number; v: number }>, t0: number, bi
   return [...sums.entries()].sort((a, b) => a[0] - b[0]).map(([k, e]) => ({ t: t0 + (k + 0.5) * binMs, v: e.s / e.n }))
 }
 
+const DISCLAIMER_MSG = msg('forecast.disclaimer')
+
 export const FORECAST_DISCLAIMER = said(
   'Statistical projection from recent simulated data. Not a clinical prediction: uncertainty grows with the horizon and the projection assumes recent conditions continue.',
-  msg('forecast.disclaimer'),
+  DISCLAIMER_MSG,
 )
+
+/** Method note of context adjusted metrics (engine.ts), translated as a known phrase. */
+export const CONTEXT_NOTE = 'context adjusted to resting values, exercise excluded'
 
 export interface ForecastInput {
   astronautId: string
@@ -124,17 +129,41 @@ export interface ForecastInput {
   methodNote?: string
 }
 
-function ineligible(input: ForecastInput, why: string): Prediction {
+const INTERVAL_MSG = msg('forecast.interval')
+const METHOD_MSG = msg('forecast.method')
+
+/** Method line ("Damped Holt linear smoothing v1 (context adjusted ...)") with its structured message. */
+function methodOf(input: ForecastInput): { method: string; methodMsg: EngineMsg } {
+  if (!input.methodNote) return { method: said(FORECAST_METHOD, METHOD_MSG), methodMsg: METHOD_MSG }
+  const methodMsg = msg('forecast.methodWith', { method: METHOD_MSG, note: input.methodNote === CONTEXT_NOTE ? msg('forecast.note.context') : input.methodNote })
+  return { method: said(`${FORECAST_METHOD} (${input.methodNote})`, methodMsg), methodMsg }
+}
+
+/** Why a projection was not made: plain English plus its structured message. */
+type Why = { en: string; msg: EngineMsg }
+const why = {
+  bins: (n: number): Why => ({ en: `${n} of ${FORECAST.minBins} half-hour windows with data`, msg: msg('forecast.why.bins', { n, min: FORECAST.minBins }) }),
+  events: (n: number): Why => ({ en: `${n} of ${FORECAST.minEvents} daily values`, msg: msg('forecast.why.events', { n, min: FORECAST.minEvents }) }),
+  noRecent: (): Why => ({ en: 'no recent values', msg: msg('forecast.why.noRecent') }),
+  fewPoints: (): Why => ({ en: 'too few points', msg: msg('forecast.why.fewPoints') }),
+  historyShort: (): Why => ({ en: 'history too short', msg: msg('forecast.why.historyShort') }),
+}
+
+function ineligible(input: ForecastInput, w: Why): Prediction {
+  const disclaimerMsg = msg('forecast.insufficient', { why: w.msg })
   return {
     astronautId: input.astronautId,
     metric: input.metric,
-    method: FORECAST_METHOD,
+    method: said(FORECAST_METHOD, METHOD_MSG),
+    methodMsg: METHOD_MSG,
     horizonHours: 0,
     points: [],
-    intervalLabel: '80% interval',
+    intervalLabel: said('80% interval', INTERVAL_MSG),
+    intervalLabelMsg: INTERVAL_MSG,
     hoursToBandExit: null,
     eligible: false,
-    disclaimer: `Insufficient data for a projection (${why}).`,
+    disclaimer: said(`Insufficient data for a projection (${w.en}).`, disclaimerMsg),
+    disclaimerMsg,
   }
 }
 
@@ -148,22 +177,22 @@ export function buildPrediction(input: ForecastInput): Prediction {
     const binMs = FORECAST.binMin * MIN_MS
     const t0 = input.now - FORECAST.windowHours * HOUR_MS
     series = binMeans(input.points, t0, binMs)
-    if (series.length < FORECAST.minBins) return ineligible(input, `${series.length} of ${FORECAST.minBins} half-hour windows with data`)
+    if (series.length < FORECAST.minBins) return ineligible(input, why.bins(series.length))
     const last = series[series.length - 1]!
-    if (input.now - last.t > 2 * HOUR_MS) return ineligible(input, 'no recent values')
+    if (input.now - last.t > 2 * HOUR_MS) return ineligible(input, why.noRecent())
     stepMs = binMs
     const horizonH = series.length >= FORECAST.binsFor24h ? 24 : 6
     steps = (horizonH * HOUR_MS) / binMs
   } else {
     series = input.points.slice(-14)
-    if (series.length < FORECAST.minEvents) return ineligible(input, `${series.length} of ${FORECAST.minEvents} daily values`)
+    if (series.length < FORECAST.minEvents) return ineligible(input, why.events(series.length))
     const last = series[series.length - 1]!
-    if (input.now - last.t > 2 * DAY_MS) return ineligible(input, 'no recent values')
+    if (input.now - last.t > 2 * DAY_MS) return ineligible(input, why.noRecent())
     stepMs = DAY_MS
     steps = series.length >= FORECAST.eventsFor72h ? 3 : 1
   }
   const fit = holtFit(series.map((p) => p.v))
-  if (!fit) return ineligible(input, 'too few points')
+  if (!fit) return ineligible(input, why.fewPoints())
   const central = holtForecast(fit, steps)
   const lastT = series[series.length - 1]!.t
   const startT = input.kind === 'continuous' ? input.now : lastT
@@ -182,13 +211,15 @@ export function buildPrediction(input: ForecastInput): Prediction {
   return {
     astronautId: input.astronautId,
     metric: input.metric,
-    method: input.methodNote ? `${FORECAST_METHOD} (${input.methodNote})` : FORECAST_METHOD,
+    ...methodOf(input),
     horizonHours,
     points: pts,
-    intervalLabel: '80% interval',
+    intervalLabel: said('80% interval', INTERVAL_MSG),
+    intervalLabelMsg: INTERVAL_MSG,
     hoursToBandExit,
     eligible: true,
-    disclaimer: FORECAST_DISCLAIMER,
+    disclaimer: said(FORECAST_DISCLAIMER, DISCLAIMER_MSG),
+    disclaimerMsg: DISCLAIMER_MSG,
   }
 }
 
@@ -231,6 +262,11 @@ export function fmtSpan(hours: number): string {
   return hours >= 48 ? `${Math.round((hours / 24) * 10) / 10} days` : `${Math.round(hours)} h`
 }
 
+/** Structured form of fmtSpan. */
+function spanMsg(hours: number): EngineMsg {
+  return hours >= 48 ? msg('forecast.span.days', { n: Math.round((hours / 24) * 10) / 10 }) : msg('forecast.span.hours', { n: Math.round(hours) })
+}
+
 /** Keep at most `max` points, evenly spaced, always keeping the last one (the horizon end). */
 export function thinPoints<T>(pts: T[], max: number): T[] {
   if (pts.length <= max) return pts
@@ -263,14 +299,16 @@ export function buildHorizonPrediction(input: ForecastInput, horizon: ForecastHo
   const historyHours = Math.round(historyHoursOf(input) * 10) / 10
   const base = { historyHours, horizonHours: horizon }
   if (historyHours < neededH) {
+    const disclaimerMsg = msg('forecast.historyShort', { horizon: msg(`forecast.h.${horizon}`), need: spanMsg(neededH), have: spanMsg(historyHours) })
     return {
-      ...ineligible(input, 'history too short'),
+      ...ineligible(input, why.historyShort()),
       ...base,
       ineligibleReason: 'HISTORY_TOO_SHORT',
-      disclaimer: `Not enough history for this horizon: a ${horizonLabel(horizon)} projection needs at least ${fmtSpan(neededH)} of history, ${fmtSpan(historyHours)} available.`,
+      disclaimer: said(`Not enough history for this horizon: a ${horizonLabel(horizon)} projection needs at least ${fmtSpan(neededH)} of history, ${fmtSpan(historyHours)} available.`, disclaimerMsg),
+      disclaimerMsg,
     }
   }
-  const notEnough = (why: string): Prediction => ({ ...ineligible(input, why), ...base, ineligibleReason: 'INSUFFICIENT_DATA' })
+  const notEnough = (w: Why): Prediction => ({ ...ineligible(input, w), ...base, ineligibleReason: 'INSUFFICIENT_DATA' })
   const lo = input.physicalMin ?? -Infinity
   const hi = input.physicalMax ?? Infinity
   const windowH = Math.max(FORECAST.windowHours, neededH)
@@ -282,19 +320,19 @@ export function buildHorizonPrediction(input: ForecastInput, horizon: ForecastHo
     const t0 = input.now - windowH * HOUR_MS
     // Pre-binned on the same half-hour grid (see buildHorizonPredictions): keep the bins of this window.
     series = binned ? binned.filter((p) => p.t >= t0 + stepMs / 2) : binMeans(input.points, t0, stepMs)
-    if (series.length < FORECAST.minBins) return notEnough(`${series.length} of ${FORECAST.minBins} half-hour windows with data`)
-    if (input.now - series[series.length - 1]!.t > 2 * HOUR_MS) return notEnough('no recent values')
+    if (series.length < FORECAST.minBins) return notEnough(why.bins(series.length))
+    if (input.now - series[series.length - 1]!.t > 2 * HOUR_MS) return notEnough(why.noRecent())
     steps = Math.round((horizon * HOUR_MS) / stepMs)
   } else {
     const from = input.now - Math.max(14 * 24, neededH) * HOUR_MS
     series = input.points.filter((p) => p.t >= from).sort((a, b) => a.t - b.t)
-    if (series.length < FORECAST.minEvents) return notEnough(`${series.length} of ${FORECAST.minEvents} daily values`)
-    if (input.now - series[series.length - 1]!.t > 2 * DAY_MS) return notEnough('no recent values')
+    if (series.length < FORECAST.minEvents) return notEnough(why.events(series.length))
+    if (input.now - series[series.length - 1]!.t > 2 * DAY_MS) return notEnough(why.noRecent())
     stepMs = DAY_MS
     steps = Math.max(1, Math.floor(horizon / 24))
   }
   const fit = holtFit(series.map((p) => p.v))
-  if (!fit) return notEnough('too few points')
+  if (!fit) return notEnough(why.fewPoints())
   const central = holtForecast(fit, steps)
   const sds = holtIntervalSds(fit, steps)
   const startT = input.kind === 'continuous' ? input.now : series[series.length - 1]!.t
@@ -302,17 +340,21 @@ export function buildHorizonPrediction(input: ForecastInput, horizon: ForecastHo
     const s = FORECAST.z80 * sds[i]!
     return { t: startT + (i + 1) * stepMs, v: clamp(v, lo, hi), lo: clamp(v - s, lo, hi), hi: clamp(v + s, lo, hi) }
   })
-  const longNote = horizon > FORECAST_HORIZONS.longHorizonHours ? ' Long horizon: read it as a rough trend, not a value to expect.' : ''
+  const long = horizon > FORECAST_HORIZONS.longHorizonHours
+  const longNote = long ? ' Long horizon: read it as a rough trend, not a value to expect.' : ''
+  const disclaimerMsg = long ? msg('forecast.disclaimerLong', { base: DISCLAIMER_MSG }) : DISCLAIMER_MSG
   return {
     astronautId: input.astronautId,
     metric: input.metric,
-    method: input.methodNote ? `${FORECAST_METHOD} (${input.methodNote})` : FORECAST_METHOD,
+    ...methodOf(input),
     horizonHours: horizon,
     points: thinPoints(full, FORECAST_HORIZONS.maxPoints),
-    intervalLabel: '80% interval',
+    intervalLabel: said('80% interval', INTERVAL_MSG),
+    intervalLabelMsg: INTERVAL_MSG,
     hoursToBandExit: bandExit(input, series, fit, full),
     eligible: true,
-    disclaimer: FORECAST_DISCLAIMER + longNote,
+    disclaimer: said(FORECAST_DISCLAIMER + longNote, disclaimerMsg),
+    disclaimerMsg,
     historyHours,
   }
 }

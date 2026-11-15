@@ -58,4 +58,5 @@ export default {
   'timeline.clickToView': 'Click to view',
   'timeline.notRecorded': 'Not recorded',
   'timeline.noStatus': 'No status recorded at this time.',
+  'timeline.nowLabel': 'Now',
 }

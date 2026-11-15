@@ -10,6 +10,15 @@
  *
  * Usage (inside frontend/web): node scripts/i18n-sweep.mjs [--json]
  * Combine with the dev pseudo locale (?lang=qps) to see the same gaps on screen.
+ *
+ * Runtime pass (optional): with `--url <dev server>` (or the AHI_SWEEP_URL environment variable)
+ * the script also opens the running dev app with `?lang=qps` in headless Chromium (Playwright),
+ * walks a few demo states (exams, forecasts, sensor failure, a paused device, mission context,
+ * crew view, alerts) and lists visible text and accessible names that are not wrapped in the
+ * pseudo locale brackets. In the pseudo locale, engine text only gets brackets when the engine
+ * attached a structured message, so untranslatable engine sentences show up too.
+ *   npx vite --port 5184 --strictPort   (another terminal)
+ *   node scripts/i18n-sweep.mjs --url http://localhost:5184
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
@@ -93,3 +102,111 @@ if (process.argv.includes('--json')) {
   }
   console.log(`\n${total} candidate string(s) in ${byArea.size} area(s). Heuristic: review before translating.`)
 }
+
+// ---------------------------------------------------------------------------
+// Runtime pass in the pseudo locale
+// ---------------------------------------------------------------------------
+
+const urlArg = process.argv.indexOf('--url')
+const sweepUrl = urlArg > 0 ? process.argv[urlArg + 1] : process.env.AHI_SWEEP_URL
+
+/** Numbers with units only ("72 bpm", "+0.04 logMAR", "08:00 UTC"): units stay untranslated by convention. */
+const NUMERIC = /^[\s:.,;·]*([-+−±]?[\d.,:]+\s*(%|°C|µm|mm|km|dB HL|dBA|dB|logMAR|bpm|br\/min|µGy\/h|mGy|mSv|Sv|ppm|UTC|min\/s|h\/s|ms|s|h|d|g)?[\s,;·]*)+$|^[\s:.,;·]*(br\/min|µGy\/h|mGy|mSv|dBA|logMAR|bpm)[\s:.,;·]*$/
+
+/** Strips every pseudo bracketed segment (innermost first) and returns what is left, per line. */
+function leftovers(text) {
+  let s = text
+  for (let prev = ''; prev !== s; ) {
+    prev = s
+    s = s.replace(/⟦[^⟦⟧]*⟧/g, ' ')
+  }
+  return s
+    .split(/\n+/)
+    .map((x) => interesting(x.replace(/[⟦⟧]/g, ' ')))
+    .filter((x) => x && !/^[A-Z]{2,}[\s,·]*$/.test(x) && !NUMERIC.test(x))
+}
+
+async function runtimeSweep(base) {
+  const { chromium } = await import('@playwright/test')
+  const browser = await chromium.launch()
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  await page.route('**/anatomy/*.glb', (r) => r.abort('blockedbyclient'))
+  const found = new Map()
+  const snap = async (step) => {
+    await page.waitForTimeout(400)
+    const { text, attrs } = await page.evaluate(() => {
+      const attrs = []
+      for (const el of document.querySelectorAll('[title],[aria-label],[placeholder],[alt]'))
+        for (const a of ['title', 'aria-label', 'placeholder', 'alt']) {
+          const v = el.getAttribute(a)
+          if (v) attrs.push(v)
+        }
+      return { text: document.body.innerText, attrs }
+    })
+    for (const v of [...leftovers(text), ...attrs.flatMap(leftovers)]) {
+      if (!found.has(v)) found.set(v, new Set())
+      found.get(v).add(step)
+    }
+  }
+  // Dev store helpers exposed by src/app/App.tsx in dev builds.
+  const store = (body, arg) => page.evaluate(([b, a]) => new Function('s', 'a', b)(window.__ahi, a), [body, arg])
+  const ui = (body, arg) => page.evaluate(([b, a]) => new Function('u', 'a', b)(window.__ahiUi, a), [body, arg])
+  const advance = (hours, stepH) => store('for (let i = 0; i < a.n; i++) s.getState().fastForward(a.ms)', { n: Math.ceil(hours / stepH), ms: stepH * 3600000 })
+  const scenario = async (id) => {
+    await store('s.getState().pause(); s.getState().setScenario(a)', id)
+    await page.waitForTimeout(300)
+  }
+
+  await page.goto(new URL('/?lang=qps', base).href, { waitUntil: 'domcontentloaded' })
+  await page.waitForFunction(() => 'getState' in (window.__ahi ?? {}), null, { timeout: 120000 })
+  await store('s.getState().pause()')
+  await snap('start')
+
+  try {
+    await page.click('[data-tour="mission-profile"]', { timeout: 10000 })
+    for (const n of [0, 1, 2, 3]) {
+      await page.getByRole('dialog').getByRole('radio').nth(n).click({ timeout: 5000 })
+      await snap(`mission profile ${n + 1}`)
+    }
+    await page.keyboard.press('Escape')
+  } catch (e) {
+    console.warn('mission context dialog not reached:', e.message)
+  }
+
+  await scenario('SANS_PROGRESSION')
+  await advance(100 * 24, 12)
+  await store("s.getState().selectAstronaut('AST-01')")
+  for (const r of ['eyes', 'ears', 'heart', 'brain']) {
+    await store('s.getState().selectRegion(a)', r)
+    await snap(`exams/${r}`)
+  }
+
+  await scenario('SENSOR_FAILURE')
+  await advance(3, 0.25)
+  await store('s.getState().selectRegion(null)')
+  await snap('sensor failure')
+  await store("s.getState().setDevicePaused('DEV-BIO-AST-01', true)")
+  await advance(0.5, 0.1)
+  await store("s.getState().selectAstronaut('AST-01')")
+  await snap('device paused')
+
+  await scenario('PROGRESSIVE_FATIGUE')
+  await advance(72, 3)
+  await store("s.getState().selectRegion('heart')")
+  await snap('fatigue/heart')
+
+  await ui("u.getState().setViewMode('crew')")
+  await snap('crew view')
+  await ui("u.getState().setViewMode('ground'); u.getState().setAlertsOpen(true)")
+  await snap('alerts')
+  await browser.close()
+
+  const rows = [...found].sort((a, b) => a[0].localeCompare(b[0]))
+  if (process.argv.includes('--json')) console.log(JSON.stringify(Object.fromEntries(rows.map(([k, v]) => [k, [...v]])), null, 2))
+  else {
+    console.log(`\n## runtime, pseudo locale (${rows.length})`)
+    for (const [v, steps] of rows) console.log(`  [${[...steps].join(', ')}]  ${v}`)
+  }
+}
+
+if (sweepUrl) await runtimeSweep(sweepUrl)

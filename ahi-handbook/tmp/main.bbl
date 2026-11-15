@@ -1,0 +1,244 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{none/global//global/global/global}
+  \entry{ahi_tech_report}{report}{}{}
+    \name{author}{1}{}{%
+      {{hash=A}{%
+         family={{AstroHealth Tech Team}},
+         familyi={A\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{A2}
+    \strng{fullhash}{A2}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{number}{TR-0001, version 1.1}
+    \field{title}{Astronaut Health Intelligence (AHI): Technical Report}
+    \list{institution}{1}{%
+      {NASA Space Apps Challenge 2026}%
+    }
+    \field{type}{techreport}
+    \field{month}{11}
+    \field{year}{2026}
+  \endentry
+
+  \entry{nasa_health_monitoring_challenge_2026}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=N}{%
+         family={{NASA Space Apps Challenge}},
+         familyi={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{N3}
+    \strng{fullhash}{N3}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Create Health Monitoring Software for Astronauts on Space
+  Missions}
+    \verb{url}
+    \verb https://www.spaceappschallenge.org/2026/challenges/health-monitoring-
+    \verb software/
+    \endverb
+    \field{year}{2026}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{nasa_donki}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=N}{%
+         family={{NASA Community Coordinated Modeling Center}},
+         familyi={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{N1}
+    \strng{fullhash}{N1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Space Weather Database Of Notifications, Knowledge,
+  Information ({DONKI})}
+    \verb{url}
+    \verb https://ccmc.gsfc.nasa.gov/tools/DONKI/
+    \endverb
+    \field{year}{2026}
+    \field{urlday}{15}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{anthropic_claude_api}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=A}{%
+         family={{Anthropic}},
+         familyi={A\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{A1}
+    \strng{fullhash}{A1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Claude Developer Platform: Messages {API}}
+    \verb{url}
+    \verb https://platform.claude.com/docs/
+    \endverb
+    \field{year}{2026}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{z_anatomy}{online}{}{}
+    \name{author}{4}{}{%
+      {{hash=KG}{%
+         family={Kervyn},
+         familyi={K\bibinitperiod},
+         given={Gauthier},
+         giveni={G\bibinitperiod},
+      }}%
+      {{hash=ZM}{%
+         family={Zielinski},
+         familyi={Z\bibinitperiod},
+         given={Marcin},
+         giveni={M\bibinitperiod},
+      }}%
+      {{hash=VL}{%
+         family={Vinent},
+         familyi={V\bibinitperiod},
+         given={Lluis},
+         giveni={L\bibinitperiod},
+      }}%
+      {{hash=OK}{%
+         family={Okubo},
+         familyi={O\bibinitperiod},
+         given={Kousaku},
+         giveni={K\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{KGZMVLOK1}
+    \strng{fullhash}{KGZMVLOK1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{note}{CC BY-SA 4.0}
+    \field{title}{Z-Anatomy: The libre 3D atlas of anatomy (based on
+  BodyParts3D, The Database Center for Life Science)}
+    \verb{url}
+    \verb https://www.z-anatomy.com/
+    \endverb
+    \field{year}{2026}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{nasa_space_communications_seven_things}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=SK}{%
+         family={Schauer},
+         familyi={S\bibinitperiod},
+         given={Katherine},
+         giveni={K\bibinitperiod},
+      }}%
+    }
+    \list{organization}{1}{%
+      {NASA Goddard Space Flight Center}%
+    }
+    \strng{namehash}{SK1}
+    \strng{fullhash}{SK1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Space Communications: 7 Things You Need to Know}
+    \verb{url}
+    \verb https://www.nasa.gov/centers-and-facilities/goddard/space-communicati
+    \verb ons-7-things-you-need-to-know/
+    \endverb
+    \field{year}{2020}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{osdr_osd569}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=N}{%
+         family={{NASA Open Science Data Repository}},
+         familyi={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{N2}
+    \strng{fullhash}{N2}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Whole Blood Measurements from the {SpaceX} {Inspiration4}
+  Mission (RNA-seq, Epitranscriptome, {WGS}, Clonal Hematopoiesis, {CBC}),
+  dataset {OSD-569}}
+    \verb{url}
+    \verb https://osdr.nasa.gov/bio/repo/data/studies/OSD-569
+    \endverb
+    \field{year}{2024}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{osdr_osd575}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=N}{%
+         family={{NASA Open Science Data Repository}},
+         familyi={N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{N2}
+    \strng{fullhash}{N2}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{{SpaceX} {Inspiration4} Blood Serum Metabolic Panel and
+  Immune/Cardiac Cytokine Arrays (Comprehensive Metabolic Panel and Multiplex),
+  dataset {OSD-575}}
+    \verb{url}
+    \verb https://osdr.nasa.gov/bio/repo/data/studies/OSD-575
+    \endverb
+    \field{year}{2024}
+    \field{urlday}{14}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+
+  \entry{w3c_wcag21}{online}{}{}
+    \name{author}{1}{}{%
+      {{hash=W}{%
+         family={{World Wide Web Consortium}},
+         familyi={W\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{W1}
+    \strng{fullhash}{W1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Web Content Accessibility Guidelines ({WCAG}) 2.1}
+    \verb{url}
+    \verb https://www.w3.org/TR/WCAG21/
+    \endverb
+    \field{year}{2023}
+    \field{urlday}{15}
+    \field{urlmonth}{11}
+    \field{urlyear}{2026}
+  \endentry
+\enddatalist
+\endinput

@@ -1,16 +1,14 @@
 import clsx from 'clsx'
-import { Activity, AudioWaveform, BookOpen, Box, ExternalLink, Gauge, Globe, Hourglass, Info, Moon, Orbit, Radiation, Rocket, Satellite, ShieldAlert, Sun, Users, Weight, type LucideIcon } from 'lucide-react'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Activity, AudioWaveform, BookOpen, Box, Earth, ExternalLink, Gauge, Globe, Hourglass, Info, Moon, Orbit, Radiation, Rocket, Satellite, ShieldAlert, Sun, Users, Weight, type LucideIcon } from 'lucide-react'
+import { useEffect, useMemo, type KeyboardEvent, type ReactNode } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { autonomyGuidance } from '../../engine/comms'
 import {
-  HAZARD_LABEL,
   MISSION_PROFILE_ORDER,
   MISSION_SOURCES,
   NASA_CAREER_EFFECTIVE_DOSE_LIMIT,
   eventLabel,
   missionDoseExposure,
-  missionProfile,
   referenceMissionDose,
   type HazardId,
   type HazardLevel,
@@ -27,11 +25,14 @@ import { Modal } from './Modal'
 import { Details } from '../../components/viz/Details'
 import { DelayClock } from '../../components/viz/DelayClock'
 import { limitFraction } from '../../components/viz/scale'
-import { engineText } from '../../i18n/engineText'
+import { engineText, LOCAL_HAZARD_LABEL as HAZARD_LABEL, localMissionProfile as missionProfile } from '../../i18n/engineText'
 import { useSpaceWeatherAdvisory, useSpaceWeatherUi } from './spaceWeather'
-import { formatFixed, getBcp47, getLang, t, useT } from '../../i18n'
+import { formatFixed, getBcp47, getLang, t, tp, useT } from '../../i18n'
 import { tx } from '../../i18n/rich'
-import { commProfileLabel, scenarioName as scenarioLabel } from '../../i18n/catalog'
+import { scenarioName as scenarioLabel } from '../../i18n/catalog'
+import { EarthLinkMessages, LinkProfilePicker } from '../comms'
+import { PROFILE_SHORT, formatDelay, useEarthLinkStatus } from '../comms/delay'
+import { useMissionPanelUi, type MissionPanelTab } from './panelUi'
 
 const PROFILE_ICON: Record<MissionProfileId, typeof Rocket> = {
   LAUNCH: Rocket,
@@ -427,17 +428,19 @@ function RadiationSection({ p }: { p: MissionProfile }) {
 }
 
 // ---------------------------------------------------------------------------
-// Distance and autonomy
+// Earth link: distance, delay and autonomy, link profile, messages
 // ---------------------------------------------------------------------------
 
+/** Distance and light time for the mission (cited), then the simulated link and what its delay means for decisions. */
 function DistanceSection({ p }: { p: MissionProfile }) {
-  const link = useAppStore(useShallow((s) => s.commProfiles.find((c) => c.id === s.commProfileId) ?? null))
-  const guide = autonomyGuidance(link?.oneWayDelaySec ?? 0)
+  const oneWay = useAppStore((s) => s.commProfiles.find((c) => c.id === s.commProfileId)?.oneWayDelaySec ?? 0)
+  const t = useT()
+  const guide = autonomyGuidance(oneWay)
   const d = p.distanceKm.value
   const delay = p.oneWayDelaySec.value
   return (
     <Section title={t('mission.ctx.distance')} icon={<Globe size={12} />}>
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2">
         <Fact label={t('mission.ctx.distFromEarth')} value={d.label} sub={<Cite ids={p.distanceKm.sources} />} />
         <Fact
           label={t('mission.ctx.oneWayDelay')}
@@ -449,18 +452,15 @@ function DistanceSection({ p }: { p: MissionProfile }) {
             </>
           }
         />
-        <Fact
-          label={t('mission.ctx.linkInDemo')}
-          value={link ? `${commProfileLabel(link)}, ${fmtDelay(link.oneWayDelaySec)}` : t('mission.ctx.unknown')}
-          sub={<span className="text-[10px] text-ink-500">{t('mission.ctx.changeLink')}</span>}
-        />
       </div>
+      <div className="mt-4 mb-1.5 text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{t('mission.panel.linkUsed')}</div>
+      <LinkProfilePicker />
       <div className={clsx('mt-3 flex items-center gap-3 rounded-lg px-3 py-2.5 ring-1', guide.mode === 'CREW_FIRST' ? 'bg-accent/[0.07] ring-accent/30' : 'bg-white/[0.03] ring-white/[0.06]')}>
-        <DelayClock seconds={link?.oneWayDelaySec ?? 0} label={`${t('visual.delay.title')}: ${fmtDelay(link?.oneWayDelaySec ?? 0)} ${t('visual.delay.oneWay')}`} />
+        <DelayClock seconds={oneWay} label={`${t('visual.delay.title')}: ${formatDelay(oneWay)} ${t('visual.delay.oneWay')}`} />
         <div className="min-w-0 flex-1">
           <div className="text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{t('visual.delay.title')}</div>
           <div className="tabular text-[18px] leading-tight font-bold text-ink-100">
-            {fmtDelay(link?.oneWayDelaySec ?? 0)} <span className="text-[11px] font-normal text-ink-500">{t('visual.delay.oneWay')}</span>
+            {formatDelay(oneWay)} <span className="text-[11px] font-normal text-ink-500">{t('visual.delay.oneWay')}</span>
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-[12px] font-semibold text-ink-100">
             <Hourglass size={12} className="shrink-0 text-accent" aria-hidden />
@@ -476,13 +476,79 @@ function DistanceSection({ p }: { p: MissionProfile }) {
 }
 
 // ---------------------------------------------------------------------------
-// Dialog
+// Mission and Earth link panel
 // ---------------------------------------------------------------------------
 
-export function MissionContextDialog({ onClose }: { onClose: () => void }) {
+const TABS: { id: MissionPanelTab; key: 'mission.panel.tab.mission' | 'comms.title' | 'mission.panel.tab.weather' }[] = [
+  { id: 'mission', key: 'mission.panel.tab.mission' },
+  { id: 'link', key: 'comms.title' },
+  { id: 'weather', key: 'mission.panel.tab.weather' },
+]
+
+/** True when the space weather advisory deserves a flag (dot on the top bar control and on the tab). */
+function advisoryFlagged(a: SpaceWeatherAdvisory): boolean {
+  return a.kind === 'SHELTER' || a.kind === 'MONITOR' || a.kind === 'PRE_LAUNCH'
+}
+
+function PanelTabs({ tab, onChange, inTransit, advisory }: { tab: MissionPanelTab; onChange: (tab: MissionPanelTab) => void; inTransit: number; advisory: SpaceWeatherAdvisory }) {
+  const t = useT()
+  const flagColor = advisoryFlagged(advisory) ? STATUS_META[advisory.level].color : null
+  const onKey = (e: KeyboardEvent) => {
+    const i = TABS.findIndex((x) => x.id === tab)
+    const next = e.key === 'ArrowRight' ? (i + 1) % TABS.length : e.key === 'ArrowLeft' ? (i - 1 + TABS.length) % TABS.length : e.key === 'Home' ? 0 : e.key === 'End' ? TABS.length - 1 : -1
+    if (next < 0) return
+    e.preventDefault()
+    onChange(TABS[next]!.id)
+    document.getElementById(`mission-panel-tab-${TABS[next]!.id}`)?.focus()
+  }
+  return (
+    <div role="tablist" aria-label={t('mission.panel.tabsAria')} className="mb-4 flex flex-wrap gap-1.5" onKeyDown={onKey}>
+      {TABS.map((x) => {
+        const on = x.id === tab
+        const Icon = x.id === 'mission' ? Rocket : x.id === 'link' ? Earth : Sun
+        return (
+          <button
+            key={x.id}
+            id={`mission-panel-tab-${x.id}`}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            aria-controls="mission-panel-section"
+            tabIndex={on ? 0 : -1}
+            onClick={() => onChange(x.id)}
+            className={clsx(
+              'focus-ring relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+              on ? 'bg-accent/12 text-accent ring-1 ring-accent/40' : 'text-ink-300 ring-1 ring-white/[0.07] hover:bg-white/[0.05] hover:text-ink-100',
+            )}
+          >
+            <Icon size={13} aria-hidden />
+            {t(x.key)}
+            {x.id === 'link' && inTransit > 0 && (
+              <span className="tabular rounded-full bg-accent/10 px-1.5 text-[10px] font-bold text-accent ring-1 ring-accent/25">
+                {inTransit}
+                <span className="sr-only"> {t('comms.inTransit')}</span>
+              </span>
+            )}
+            {x.id === 'weather' && flagColor && (
+              <span className={clsx('h-2 w-2 rounded-full', advisory.kind === 'SHELTER' && 'animate-pulse')} style={{ background: flagColor }}>
+                <span className="sr-only">{engineText('mission', advisory.title)}</span>
+              </span>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** One panel for the mission profile, the Earth link (delay, link profile, messages) and space weather. */
+export function MissionPanel({ onClose }: { onClose: () => void }) {
   const { profileId, setMissionProfile, scenario } = useAppStore(
     useShallow((s) => ({ profileId: s.missionProfileId, setMissionProfile: s.setMissionProfile, scenario: s.scenarios.find((x) => x.id === s.clock.scenarioId) })),
   )
+  const tab = useMissionPanelUi((s) => s.tab)
+  const setTab = useMissionPanelUi((s) => s.setTab)
+  const { inTransit } = useEarthLinkStatus()
   const advisory = useSpaceWeatherAdvisory()
   const t = useT()
   const scenarioName = scenario ? scenarioLabel(scenario) : ''
@@ -508,7 +574,7 @@ export function MissionContextDialog({ onClose }: { onClose: () => void }) {
       open
       onClose={onClose}
       size="lg"
-      title={t('mission.ctx.title')}
+      title={t('mission.panel.title')}
       icon={<Icon size={17} className="text-accent" aria-hidden />}
       subtitle={<span>{p.label}: {p.summary}</span>}
       headerExtra={<Badge tone="sim">{t('mission.ctx.simCrewData')}</Badge>}
@@ -516,63 +582,105 @@ export function MissionContextDialog({ onClose }: { onClose: () => void }) {
         <div className="flex items-start gap-1.5 text-[11px] leading-relaxed text-ink-500">
           <Info size={12} className="mt-0.5 shrink-0" aria-hidden />
           <span>
-            <strong className="font-semibold text-ink-300">{t('mission.ctx.footerStrong')}</strong> {t('mission.ctx.footerBody', { scenario: scenarioName })}
+            {tab === 'link' ? (
+              t('comms.footer')
+            ) : (
+              <>
+                <strong className="font-semibold text-ink-300">{t('mission.ctx.footerStrong')}</strong> {t('mission.ctx.footerBody', { scenario: scenarioName })}
+              </>
+            )}
           </span>
         </div>
       }
     >
-      <div className="space-y-4">
-        <ProfilePicker value={profileId} onChange={setMissionProfile} />
+      <PanelTabs tab={tab} onChange={setTab} inTransit={inTransit} advisory={advisory} />
+      <div id="mission-panel-section" role="tabpanel" aria-labelledby={`mission-panel-tab-${tab}`} className="space-y-4">
+        {tab === 'mission' && (
+          <>
+            <ProfilePicker value={profileId} onChange={setMissionProfile} />
 
-        <SpaceWeatherCard advisory={advisory} />
+            {advisoryFlagged(advisory) && (
+              <button
+                type="button"
+                onClick={() => setTab('weather')}
+                className="focus-ring flex w-full items-center gap-2 rounded-xl bg-white/[0.03] px-3 py-2 text-left text-[12px] text-ink-100 ring-1 ring-white/[0.07] hover:bg-white/[0.06]"
+              >
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: STATUS_META[advisory.level].color }} aria-hidden />
+                <span className="min-w-0 flex-1 font-semibold">{t('mission.panel.weatherBanner', { title: engineText('mission', advisory.title) })}</span>
+                <span className="shrink-0 text-accent">{t('mission.panel.openWeather')}</span>
+              </button>
+            )}
 
-        <Section title={t('mission.ctx.bodyEffects')} icon={<Weight size={12} />}>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Fact label={t('mission.ctx.gravity')} value={p.gravity.value.label} sub={<Cite ids={p.gravity.sources} />} />
-            <Fact label={t('mission.ctx.typicalDuration')} value={p.duration.value.label} sub={<Cite ids={p.duration.sources} />} />
-          </div>
-          <div className="mt-3 text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{t('mission.ctx.hazardsTitle')}</div>
-          <ul className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
-            {p.hazards.map((h) => (
-              <li key={h.id} className="rounded-lg bg-white/[0.025] px-2.5 py-1.5 text-[11px]">
-                <span className="flex items-center gap-2">
-                  {(() => {
-                    const HIcon = HAZARD_ICON[h.id]
-                    return <HIcon size={15} className={h.level === 'DOMINANT' ? 'shrink-0 text-orange-200' : 'shrink-0 text-ink-300'} aria-hidden />
-                  })()}
-                  <strong className="min-w-0 flex-1 truncate font-semibold text-ink-100">{HAZARD_LABEL[h.id].label}</strong>
-                  <span className={clsx('shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase ring-1', HAZARD_LEVEL_META[h.level].cls)}>{HAZARD_LEVEL_META[h.level].label}</span>
-                </span>
-                <Details className="pl-[23px]">{h.why}</Details>
-              </li>
-            ))}
-          </ul>
-          <Details className="mt-2" label={t('mission.ctx.bodyEffects')}>
-            <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-ink-300 marker:text-ink-500">
-              {p.bodyEffects.map((b) => (
-                <li key={b}>{b}</li>
-              ))}
-            </ul>
-          </Details>
-          <p className="mt-2 text-[10px] text-ink-500">
-            {tx('mission.ctx.hazardsNote', { cite: <Cite ids={['NASA_HRP_5_HAZARDS']} /> })}
-          </p>
-          <Details className="mt-3" label={t('mission.ctx.countermeasures')}>
-            <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-ink-300 marker:text-ink-500">
-              {p.countermeasures.map((c) => (
-                <li key={c}>{c}</li>
-              ))}
-            </ul>
-          </Details>
-        </Section>
+            <Section title={t('mission.changes.title')} icon={<Orbit size={12} />}>
+              <ul className="grid gap-1.5 sm:grid-cols-2">
+                {(['radiation', 'link', 'recs', 'weather', 'scene'] as const).map((k) => (
+                  <li key={k} className="rounded-lg bg-white/[0.025] px-2.5 py-1.5 text-[11.5px] leading-snug text-ink-200">
+                    {t(`mission.changes.${k}`)}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[11px] leading-snug text-ink-400">{t('mission.changes.same')}</p>
+            </Section>
 
-        <RadiationSection p={p} />
+            <Section title={t('mission.ctx.bodyEffects')} icon={<Weight size={12} />}>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Fact label={t('mission.ctx.gravity')} value={p.gravity.value.label} sub={<Cite ids={p.gravity.sources} />} />
+                <Fact label={t('mission.ctx.typicalDuration')} value={p.duration.value.label} sub={<Cite ids={p.duration.sources} />} />
+              </div>
+              <div className="mt-3 text-[10px] font-semibold tracking-[0.12em] text-ink-500 uppercase">{t('mission.ctx.hazardsTitle')}</div>
+              <ul className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
+                {p.hazards.map((h) => (
+                  <li key={h.id} className="rounded-lg bg-white/[0.025] px-2.5 py-1.5 text-[11px]">
+                    <span className="flex items-center gap-2">
+                      {(() => {
+                        const HIcon = HAZARD_ICON[h.id]
+                        return <HIcon size={15} className={h.level === 'DOMINANT' ? 'shrink-0 text-orange-200' : 'shrink-0 text-ink-300'} aria-hidden />
+                      })()}
+                      <strong className="min-w-0 flex-1 truncate font-semibold text-ink-100">{HAZARD_LABEL[h.id].label}</strong>
+                      <span className={clsx('shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase ring-1', HAZARD_LEVEL_META[h.level].cls)}>{HAZARD_LEVEL_META[h.level].label}</span>
+                    </span>
+                    <Details className="pl-[23px]">{h.why}</Details>
+                  </li>
+                ))}
+              </ul>
+              <Details className="mt-2" label={t('mission.ctx.bodyEffects')}>
+                <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-ink-300 marker:text-ink-500">
+                  {p.bodyEffects.map((b) => (
+                    <li key={b}>{b}</li>
+                  ))}
+                </ul>
+              </Details>
+              <p className="mt-2 text-[10px] text-ink-500">{tx('mission.ctx.hazardsNote', { cite: <Cite ids={['NASA_HRP_5_HAZARDS']} /> })}</p>
+              <Details className="mt-3" label={t('mission.ctx.countermeasures')}>
+                <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-ink-300 marker:text-ink-500">
+                  {p.countermeasures.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+              </Details>
+            </Section>
 
-        <DistanceSection p={p} />
+            <RadiationSection p={p} />
 
-        <Section title={t('mission.ctx.longer')} icon={<Orbit size={12} />}>
-          <ExposureComparison active={profileId} />
-        </Section>
+            <Section title={t('mission.ctx.longer')} icon={<Orbit size={12} />}>
+              <ExposureComparison active={profileId} />
+            </Section>
+          </>
+        )}
+
+        {tab === 'link' && (
+          <>
+            <DistanceSection p={p} />
+            <EarthLinkMessages />
+          </>
+        )}
+
+        {tab === 'weather' && (
+          <>
+            <p className="text-xs leading-relaxed text-ink-300">{t('mission.panel.weatherIntro', { profile: p.label })}</p>
+            <SpaceWeatherCard advisory={advisory} />
+          </>
+        )}
 
         <details className="rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]">
           <summary className="focus-ring flex cursor-pointer items-center gap-2 text-[11px] font-semibold tracking-[0.14em] text-ink-500 uppercase">
@@ -601,13 +709,16 @@ export function MissionContextDialog({ onClose }: { onClose: () => void }) {
 // ---------------------------------------------------------------------------
 
 /**
- * Mission profile selector for the top bar. Shows the active profile and opens the mission
- * context dialog (profile picker, body effects, dose vs the NASA career limit, autonomy, space
- * weather). A dot flags a space weather advisory for the active profile.
+ * The single top bar entry point for the mission and its Earth link: mission profile icon and name,
+ * a compact one way delay pill with the count of messages in transit, and a dot for a space weather
+ * advisory (or, without one, for a recent ground reply). Opens the Mission and Earth link panel.
  */
-export function MissionProfileControl({ showLabel = true }: { showLabel?: boolean }) {
-  const [open, setOpen] = useState(false)
+export function MissionLinkControl({ showProfile = true, showDelay = true }: { showProfile?: boolean; showDelay?: boolean }) {
+  const open = useMissionPanelUi((s) => s.open)
+  const openPanel = useMissionPanelUi((s) => s.openPanel)
+  const close = useMissionPanelUi((s) => s.close)
   const profileId = useAppStore((s) => s.missionProfileId)
+  const link = useEarthLinkStatus()
   const load = useSpaceWeatherUi((s) => s.load)
   const advisory = useSpaceWeatherAdvisory()
   useEffect(() => {
@@ -615,31 +726,40 @@ export function MissionProfileControl({ showLabel = true }: { showLabel?: boolea
   }, [load])
   const p = missionProfile(profileId)
   const Icon = PROFILE_ICON[profileId]
-  const flagged = advisory.kind === 'SHELTER' || advisory.kind === 'MONITOR' || advisory.kind === 'PRE_LAUNCH'
-  const flagColor = flagged ? STATUS_META[advisory.level].color : null
+  const flagged = advisoryFlagged(advisory)
+  const dotColor = flagged ? STATUS_META[advisory.level].color : link.recentReply && link.inTransit === 0 ? 'var(--color-accent)' : null
   const t = useT()
-  const label = t('mission.ctx.controlAria', { label: p.label, weather: flagged ? t('mission.ctx.controlWeather', { title: engineText('mission', advisory.title) }) : '' })
+  const delay = formatDelay(link.delaySec)
+  const vars = { mission: p.label, link: PROFILE_SHORT[link.profileId], delay, weather: flagged ? t('mission.ctx.controlWeather', { title: engineText('mission', advisory.title) }) : '' }
+  const label = link.inTransit ? tp('mission.panel.controlAriaTransit', link.inTransit, vars) : t('mission.panel.controlAria', vars)
   return (
     <>
       <button
         type="button"
-        data-tour="mission-profile"
+        data-tour="mission-link"
         aria-haspopup="dialog"
         aria-label={label}
-        title={t('mission.ctx.controlTitle', { label: p.label, summary: p.summary })}
-        onClick={() => setOpen(true)}
-        className={clsx(
-          'focus-ring relative flex h-9 shrink-0 items-center gap-1.5 rounded-xl text-xs font-semibold whitespace-nowrap text-ink-300 ring-1 ring-white/[0.08] transition-colors hover:bg-white/[0.06] hover:text-ink-100',
-          showLabel ? 'px-2.5' : 'w-9 justify-center',
-        )}
+        title={t('mission.panel.controlTitle', { label: p.label, summary: p.summary, delay })}
+        onClick={() => openPanel()}
+        className="focus-ring relative flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-xs font-semibold whitespace-nowrap text-ink-300 ring-1 ring-white/[0.08] transition-colors hover:bg-white/[0.06] hover:text-ink-100"
       >
         <Icon size={14} className="text-accent" aria-hidden />
-        {showLabel && <span>{p.shortLabel}</span>}
-        {flagColor && (
-          <span className={clsx('absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-space-900', advisory.kind === 'SHELTER' && 'animate-pulse')} style={{ background: flagColor }} aria-hidden />
+        {showProfile && <span>{p.shortLabel}</span>}
+        <span className="flex items-center gap-1 rounded-md bg-white/[0.05] px-1.5 py-0.5 text-[11px] font-medium text-ink-300" aria-hidden>
+          <Earth size={11} className="text-accent" />
+          {showDelay && <span className="tabular">{delay}</span>}
+          {link.inTransit > 0 && (
+            <span className="flex items-center gap-1 rounded-full bg-accent/10 py-px pr-1.5 pl-1 text-[10px] font-bold text-accent ring-1 ring-accent/25">
+              <span className="animate-breathe h-1.5 w-1.5 rounded-full bg-accent" />
+              {link.inTransit}
+            </span>
+          )}
+        </span>
+        {dotColor && (
+          <span className={clsx('absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-space-900', advisory.kind === 'SHELTER' && 'animate-pulse')} style={{ background: dotColor }} aria-hidden />
         )}
       </button>
-      {open && <MissionContextDialog onClose={() => setOpen(false)} />}
+      {open && <MissionPanel onClose={close} />}
     </>
   )
 }

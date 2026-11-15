@@ -13,6 +13,7 @@ import { lastHours } from '../../components/format'
 import { useHistory, useMetric, useSignalLost } from '../shared/hooks'
 import { formatFixed, t, useT } from '../../i18n'
 import { metricLabel, metricShort, roleLabel } from '../../i18n/catalog'
+import { ProfileButton } from '../profile/ProfileButton'
 
 function MiniVital({ astronautId, metric, className }: { astronautId: string; metric: MetricCode; className?: string }) {
   const ms = useMetric(astronautId, metric)
@@ -92,6 +93,7 @@ function CrewCard({ astronaut, selected, index }: { astronaut: Astronaut; select
   const t = useT()
   const role = roleLabel(astronaut.role)
   return (
+    <div className="relative">
     <button
       type="button"
       aria-pressed={selected}
@@ -133,11 +135,13 @@ function CrewCard({ astronaut, selected, index }: { astronaut: Astronaut; select
         <MiniVital astronautId={astronaut.id} metric="HEART_RATE" />
         <MiniVital astronautId={astronaut.id} metric="SPO2" />
         <MiniVital astronautId={astronaut.id} metric="RESPIRATORY_RATE" className="hidden roomy:block" />
-        <div className="min-w-0 pb-0.5" title={t('crew.trendTitle')}>
+        <div className="min-w-0 pr-7 pb-0.5 short:pr-0" title={t('crew.trendTitle')}>
           <CrewTrend astronautId={astronaut.id} color={astronaut.color} />
         </div>
       </div>
     </button>
+    <ProfileButton astronautId={astronaut.id} callsign={astronaut.callsign} variant="icon" className="absolute right-2 bottom-2" />
+    </div>
   )
 }
 

@@ -1,6 +1,9 @@
 import { FIXED_THRESHOLDS } from '../../../engine/config'
 import { PROFILE_CONTEXT, REC_CATALOG } from '../../../engine/recommendations'
 import { RULE_TITLES } from '../../../engine/ruleTitles'
+import { EXAMS } from '../../../engine/config'
+import { EXAM_METHOD } from '../../../engine/exams/method'
+import { HAZARD_LABEL, MISSION_PROFILES, missionProfileTexts } from '../../../engine/missions/profiles'
 
 /**
  * Engine sentences (src/i18n/engineText.ts renders them from the structured messages the engine
@@ -186,6 +189,90 @@ const templates = {
   'eng.rec.onboardTitle': 'Crew medical officer: start the onboard assessment protocol now',
   'eng.rec.onboardRationale':
     '{label}. Earth is about {oneWay} away each way ({profile}), so the earliest flight surgeon reply is about {earliest} after a request (2 x {oneWay} light time plus at least {reviewMin} min review), not before {clock} if sent now. Start the onboard assessment protocol and send a health packet; the ground review follows when the reply arrives.',
+
+  // Exam notes, session labels and summaries (src/engine/exams). {eye} is the side and organ.
+  'eng.exam.where.RIGHT.eye': 'right eye',
+  'eng.exam.where.LEFT.eye': 'left eye',
+  'eng.exam.where.BOTH.eye': 'both eye',
+  'eng.exam.where.RIGHT.ear': 'right ear',
+  'eng.exam.where.LEFT.ear': 'left ear',
+  'eng.exam.where.BOTH.ear': 'both ear',
+  'eng.exam.note.noValue': 'No value recorded for the {eye}. Missing data is never treated as normal.',
+  'eng.exam.note.noBaseline': 'No pre-flight baseline on file for the {eye}, so the change cannot be judged.',
+  'eng.exam.note.retina.over': '{change} µm versus before flight ({eye}): more than the usual test to test variation of {lim} µm',
+  'eng.exam.note.retina.within': '{change} µm versus before flight ({eye}): within the usual test to test variation',
+  'eng.exam.note.folds.new': 'New folds at the back of the {eye} since before flight',
+  'eng.exam.note.folds.same': 'Folds already present before flight in the {eye}, unchanged',
+  'eng.exam.note.folds.none': 'No folds seen in the {eye}',
+  'eng.exam.note.onsd.over': '{change} mm versus before flight ({eye}): wider than the demo change level of {lim} mm',
+  'eng.exam.note.onsd': '{change} mm versus before flight ({eye})',
+  'eng.exam.note.acuity.over': '{change} logMAR versus before flight ({eye}): about {n} chart line(s) less sharp',
+  'eng.exam.note.acuity': '{change} logMAR versus before flight ({eye})',
+  'eng.exam.note.hear.high.large': 'high pitch hearing {change} dB versus before flight ({eye}): a large shift',
+  'eng.exam.note.hear.high.over': 'high pitch hearing {change} dB versus before flight ({eye}): more than the {lim} dB shift criterion',
+  'eng.exam.note.hear.high': 'high pitch hearing {change} dB versus before flight ({eye})',
+  'eng.exam.note.hear.low.large': 'low pitch hearing {change} dB versus before flight ({eye}): a large shift',
+  'eng.exam.note.hear.low.over': 'low pitch hearing {change} dB versus before flight ({eye}): more than the {lim} dB shift criterion',
+  'eng.exam.note.hear.low': 'low pitch hearing {change} dB versus before flight ({eye})',
+  'eng.exam.semi': '{a}; {b}',
+  'eng.exam.fd': 'FD {n}',
+  'eng.exam.ld': 'L-{n} d',
+  'eng.exam.label.r30': 'Eye exam 30 days before return (FD {n})',
+  'eng.exam.label.eyeWeek': 'Flight day {n} eye exam (Eye Week)',
+  'eng.exam.label.ooha': 'On-orbit hearing assessment (FD {n})',
+  'eng.exam.next': ' Next: {label}.',
+  'eng.exam.more_one': ' {n} more change(s).',
+  'eng.exam.more_other': ' {n} more change(s).',
+  'eng.exam.sum.noBaseline.eyes': 'No pre-flight eye exam baseline on file, so in-flight results cannot be compared.',
+  'eng.exam.sum.noBaseline.ears': 'No pre-flight hearing test baseline on file, so in-flight results cannot be compared.',
+  'eng.exam.sum.noneYet.eyes': 'No in-flight eye exam yet (pre-flight baseline on file).{next}',
+  'eng.exam.sum.noneYet.ears': 'No in-flight hearing test yet (pre-flight baseline on file).{next}',
+  'eng.exam.sum.unusable.eyes': 'Last eye exam ({when}) has no usable value.{next}',
+  'eng.exam.sum.unusable.ears': 'Last hearing test ({when}) has no usable value.{next}',
+  'eng.exam.sum.flagged.eyes': 'Eye exam {when}: {notes}.{more}',
+  'eng.exam.sum.flagged.ears': 'Hearing test {when}: {notes}.{more}',
+  'eng.exam.sum.ok.eyes': 'Last eye exam ({when}): no change beyond the expected variation from your pre-flight baseline.',
+  'eng.exam.sum.ok.ears': 'Last hearing test ({when}): no change beyond the expected variation from your pre-flight baseline.',
+  'eng.exam.sum.withNoiseFlag': '{noise} {exam}',
+  'eng.exam.sum.withNoise': '{exam} Noise yesterday: {leq} dBA over the work period, {pct}% of the daily dose.',
+  'eng.exam.noise.dose': 'Noise dose yesterday {pct}%, above the 24 hour limit (NASA-STD-3001 V2 6115)',
+  'eng.exam.noise.leq': 'Noise yesterday {leq} dBA over the work period, above the {lim} dBA ISS flight rule level',
+  'eng.exam.hit.eyes': 'Eye exam {when} versus pre-flight baseline: {notes}',
+  'eng.exam.hit.ears': 'Hearing test {when} versus pre-flight baseline: {notes}',
+
+  // Forecast notes (src/engine/forecast.ts)
+  'eng.forecast.method': 'Damped Holt linear smoothing v1',
+  'eng.forecast.methodWith': '{method} ({note})',
+  'eng.forecast.note.context': 'context adjusted to resting values, exercise excluded',
+  'eng.forecast.interval': '80% interval',
+  'eng.forecast.disclaimerLong': '{base} Long horizon: read it as a rough trend, not a value to expect.',
+  'eng.forecast.insufficient': 'Insufficient data for a projection ({why}).',
+  'eng.forecast.why.bins': '{n} of {min} half-hour windows with data',
+  'eng.forecast.why.events': '{n} of {min} daily values',
+  'eng.forecast.why.noRecent': 'no recent values',
+  'eng.forecast.why.fewPoints': 'too few points',
+  'eng.forecast.why.historyShort': 'history too short',
+  'eng.forecast.historyShort': 'Not enough history for this horizon: a {horizon} projection needs at least {need} of history, {have} available.',
+  'eng.forecast.h.24': '24 h',
+  'eng.forecast.h.36': '36 h',
+  'eng.forecast.h.72': '72 h',
+  'eng.forecast.h.168': '7 days',
+  'eng.forecast.h.360': '15 days',
+  'eng.forecast.span.hours': '{n} h',
+  'eng.forecast.span.days': '{n} days',
+
+  // Device paused or resumed by an operator (data quality notes, src/engine/engine.ts)
+  'eng.autonomy.sec': "{n} s",
+  'eng.autonomy.near.title': "Ground support in near real time",
+  'eng.autonomy.near.body': "The crew can ask Mission Control and the flight surgeon before acting; the answer is limited by review time, not by distance.",
+  'eng.autonomy.delayed.title': "Short delay, help is far",
+  'eng.autonomy.delayed.body': "A question and its answer take about {rt} of light time. The ground can still support decisions, but the crew handles the first minutes on board.",
+  'eng.autonomy.crew.title': "Crew acts first, Earth reviews later",
+  'eng.autonomy.crew.body': "Every question to Earth costs at least {rt} of light time plus review time (earliest answer about {earliest}). For anything urgent the crew follows on board procedures without waiting; the crew medical officer leads and the ground reviews when the reply arrives.",
+  'eng.pause.label': 'Paused by operator: no {metric} data',
+  'eng.pause.phrase': '{metric} is paused by an operator',
+  'eng.resume.label': 'Device resumed by operator: waiting for the first {metric} reading',
+  'eng.resume.phrase': '{metric} is restarting',
 }
 
 type RuleId = 'R-HR-01' | 'R-HR-02' | 'R-HR-03' | 'R-HRV-01' | 'R-SPO2-01' | 'R-SPO2-02' | 'R-RR-01' | 'R-BP-01' | 'R-TEMP-01' | 'R-ACT-01' | 'R-HYD-01' | 'R-SLEEP-01' | 'R-SLEEP-02' | 'R-EX-01' | 'R-RT-01' | 'R-RAD-02' | 'R-ENV-CO2-01' | 'R-ENV-CO2-02' | 'R-ENV-TEMP-01' | 'R-ENV-RH-01' | 'R-ENV-RAD-01' | 'R-FAT-01' | 'R-CARD-01' | 'R-DQ-01' | 'R-DQ-02' | 'R-PSY-01' | 'R-PSY-02' | 'R-PSY-03' | 'R-PSY-04'
@@ -197,7 +284,17 @@ type ProfileCtxKey =
   | 'MOON.R-EX-01' | 'MOON.R-ENV-RAD-01'
   | 'LAUNCH.R-HR-01'
 
-type DerivedKey = `eng.rule.${RuleId}` | `eng.rec.${RecRuleId}.${'title' | 'why'}` | `eng.threshold.${ThresholdName}` | `eng.profileCtx.${ProfileCtxKey}`
+type HazardKey = 'RADIATION' | 'ISOLATION' | 'DISTANCE' | 'GRAVITY' | 'CLOSED_ENV' | 'ACCELERATION' | 'VIBRATION_NOISE'
+type MpField = 'label' | 'shortLabel' | 'vehicle' | 'summary' | 'plain' | 'measuredWhere' | 'gravity' | 'distance' | 'delay' | 'delayNote' | 'duration' | 'autonomy' | 'body.0' | 'body.1' | 'body.2' | 'body.3' | 'cm.0' | 'cm.1' | 'cm.2'
+/** Mission profile texts (missionProfileTexts in src/engine/missions/profiles.ts). */
+type MpKey =
+  | `${'LAUNCH' | 'ISS' | 'MOON' | 'MARS_TRANSIT'}.${MpField}`
+  | 'MARS_TRANSIT.cm.3'
+  | `LAUNCH.hazard.${'ACCELERATION' | 'VIBRATION_NOISE' | 'GRAVITY' | 'CLOSED_ENV' | 'RADIATION' | 'ISOLATION' | 'DISTANCE'}`
+  | `${'ISS' | 'MOON' | 'MARS_TRANSIT'}.hazard.${'GRAVITY' | 'RADIATION' | 'ISOLATION' | 'CLOSED_ENV' | 'DISTANCE'}`
+type ExamKey = 'method.eyes' | 'method.ears' | 'label.pre.eyes.0' | 'label.pre.eyes.1' | 'label.pre.ears.0'
+
+type DerivedKey = `eng.rule.${RuleId}` | `eng.rec.${RecRuleId}.${'title' | 'why'}` | `eng.threshold.${ThresholdName}` | `eng.profileCtx.${ProfileCtxKey}` | `eng.mp.${MpKey}` | `eng.hazard.${HazardKey}` | `eng.exam.${ExamKey}`
 
 const derived: [string, string][] = [
   ...Object.entries(RULE_TITLES).map(([id, title]): [string, string] => [`eng.rule.${id}`, title]),
@@ -209,6 +306,11 @@ const derived: [string, string][] = [
   ...Object.entries(PROFILE_CONTEXT).flatMap(([profile, byRule]) =>
     Object.entries(byRule ?? {}).map(([rule, text]): [string, string] => [`eng.profileCtx.${profile}.${rule}`, text ?? '']),
   ),
+  ...Object.values(MISSION_PROFILES).flatMap((p) => Object.entries(missionProfileTexts(p)).map(([field, text]): [string, string] => [`eng.mp.${p.id}.${field}`, text])),
+  ...Object.entries(HAZARD_LABEL).map(([id, h]): [string, string] => [`eng.hazard.${id}`, h.label]),
+  ...Object.entries(EXAM_METHOD).map(([region, text]): [string, string] => [`eng.exam.method.${region}`, text]),
+  ...EXAMS.eyes.preflight.map((p, i): [string, string] => [`eng.exam.label.pre.eyes.${i}`, p.label]),
+  ...EXAMS.ears.preflight.map((p, i): [string, string] => [`eng.exam.label.pre.ears.${i}`, p.label]),
 ]
 
 const engine = { ...templates, ...(Object.fromEntries(derived) as Record<DerivedKey, string>) }

@@ -12,6 +12,8 @@
  */
 import type {
   Astronaut,
+  EngineMsg,
+  EngineParam,
   ExamKind,
   ExamRegionId,
   ExamRegionState,
@@ -29,10 +31,11 @@ import { METRIC_CATALOG } from '../catalog'
 import { EXAMS } from '../config'
 import type { RuleHit } from '../risk'
 import { DAY_MS } from '../text'
-import { msg } from '../msg'
+import { msg, said } from '../msg'
 import { ExamSimulator, SIDES, meanThreshold } from '../sim/exams'
 import { EXAM_RULE_TITLES, assessSession, baselineMap, noiseStatus, sessionStatus } from './assess'
-import { examSchedule, flightDayLabel, nextDue, type PlannedSession } from './schedule'
+import { EXAM_METHOD, EXAM_METHOD_MSG } from './method'
+import { examSchedule, flightDayLabel, flightDayMsg, nextDue, type PlannedSession } from './schedule'
 
 export const EYE_METRICS: MetricCode[] = ['RETINAL_THICKNESS', 'CHOROIDAL_FOLDS', 'OPTIC_NERVE_SHEATH_DIAMETER', 'VISUAL_ACUITY']
 export const EAR_METRICS: MetricCode[] = ['HEARING_THRESHOLD_HIGH', 'HEARING_THRESHOLD_LOW', 'NOISE_EXPOSURE', 'NOISE_DOSE']
@@ -46,11 +49,6 @@ export const EXAM_DEVICE: Record<ExamKind, { id: string; name: string }> = {
   VISUAL_ACUITY: { id: 'SIM-ACUITY', name: 'Visual acuity chart' },
   AUDIOMETRY: { id: 'SIM-AUDIOMETER', name: 'On-orbit hearing assessment (audiometer)' },
   NOISE_DOSIMETRY: { id: 'SIM-ACOUSTIC-DOSIMETER', name: 'Crew worn acoustic dosimeter' },
-}
-
-export const EXAM_METHOD: Record<ExamRegionId, string> = {
-  eyes: 'SANS monitoring as on the ISS (NASA OCHMO-MTB-001): pre-flight baseline, then eye exams on flight days 30 and 90 and 30 days before return. Status = change from your own pre-flight baseline, same eye. Simulated data.',
-  ears: 'Hearing: pre-flight audiometry, then on-orbit hearing assessments (demo cadence: every 30 days). Status = threshold shift from your own pre-flight baseline (NASA HSRB shift metric). Noise: crew worn dosimeter, one simulated reading per day. Simulated data.',
 }
 
 export interface ExamBookOptions {
@@ -142,6 +140,7 @@ export class ExamBook {
         region,
         kinds: ps.kinds,
         label: ps.label,
+        labelMsg: ps.labelMsg,
         phase: ps.phase,
         at: ps.at,
         flightDay: ps.flightDay,
@@ -208,29 +207,43 @@ export class ExamBook {
     const sessions = visible.filter((s) => !s.isBaseline)
     const latest = sessions[sessions.length - 1] ?? null
     const nd = nextDue(this.schedules[region], now)
-    const next = nd ? { at: nd.at, flightDay: nd.flightDay, label: nd.label } : null
+    const next = nd ? { at: nd.at, flightDay: nd.flightDay, label: nd.label, labelMsg: nd.labelMsg } : null
     const nextText = next ? ` Next: ${next.label}.` : ''
+    const nextMsg: EngineParam = next ? msg('exam.next', { label: next.labelMsg }) : ''
     const what = region === 'eyes' ? 'eye exam' : 'hearing test'
 
     let examStatus: Status
     let examSummary: string
+    let examMsg: EngineMsg
     if (!baselineSessions.length) {
       examStatus = 'NO_DATA'
       examSummary = `No pre-flight ${what} baseline on file, so in-flight results cannot be compared.`
+      examMsg = msg(`exam.sum.noBaseline.${region}`)
     } else if (!latest) {
       examStatus = 'NO_DATA'
       examSummary = `No in-flight ${what} yet (pre-flight baseline on file).${nextText}`
+      examMsg = msg(`exam.sum.noneYet.${region}`, { next: nextMsg })
     } else {
       examStatus = latest.status
       const flagged = latest.results.filter((r) => isFlag(r.status)).sort((a, b) => STATUS_META[b.status].rank - STATUS_META[a.status].rank)
       const when = flightDayLabel(latest.flightDay)
-      if (examStatus === 'NO_DATA') examSummary = `Last ${what} (${when}) has no usable value.${nextText}`
-      else if (flagged.length) examSummary = `${cap(what)} ${when}: ${flagged.slice(0, 2).map((r) => r.note).join('; ')}.${flagged.length > 2 ? ` ${flagged.length - 2} more change(s).` : ''}`
-      else examSummary = `Last ${what} (${when}): no change beyond the expected variation from your pre-flight baseline.`
+      const whenMsg = flightDayMsg(latest.flightDay)
+      if (examStatus === 'NO_DATA') {
+        examSummary = `Last ${what} (${when}) has no usable value.${nextText}`
+        examMsg = msg(`exam.sum.unusable.${region}`, { when: whenMsg, next: nextMsg })
+      } else if (flagged.length) {
+        const more = flagged.length - 2
+        examSummary = `${cap(what)} ${when}: ${flagged.slice(0, 2).map((r) => r.note).join('; ')}.${flagged.length > 2 ? ` ${more} more change(s).` : ''}`
+        examMsg = msg(`exam.sum.flagged.${region}`, { when: whenMsg, notes: notesMsg(flagged.slice(0, 2)), more: flagged.length > 2 ? msg('exam.more', { n: more }) : '' })
+      } else {
+        examSummary = `Last ${what} (${when}): no change beyond the expected variation from your pre-flight baseline.`
+        examMsg = msg(`exam.sum.ok.${region}`, { when: whenMsg })
+      }
     }
 
     let status = examStatus
     let summary = examSummary
+    let summaryMsg = examMsg
     if (noise) {
       const today = noise[noise.length - 1]
       const ns: Status = today ? today.status : 'NO_DATA'
@@ -238,11 +251,26 @@ export class ExamBook {
         // noise above its reference level counts even when the hearing test is not due yet
         status = STATUS_META[ns].rank > STATUS_META[examStatus].rank ? ns : examStatus
         summary = `${noiseSentence(today!)} ${examSummary}`
+        summaryMsg = msg('exam.sum.withNoiseFlag', { noise: msg('sent1', { a: noiseMsg(today!) }), exam: examMsg })
       } else if (today) {
         summary = `${examSummary} Noise yesterday: ${today.leqDba.toFixed(1)} dBA over the work period, ${today.dosePct.toFixed(0)}% of the daily dose.`
+        summaryMsg = msg('exam.sum.withNoise', { exam: examMsg, leq: { num: today.leqDba, decimals: 1 }, pct: { num: today.dosePct, decimals: 0 } })
       }
     }
-    return { region, astronautId: id, status, summary, baselineSessions, sessions, latest, nextDue: next, noise, method: EXAM_METHOD[region] }
+    return {
+      region,
+      astronautId: id,
+      status,
+      summary: said(summary, summaryMsg),
+      summaryMsg,
+      baselineSessions,
+      sessions,
+      latest,
+      nextDue: next,
+      noise,
+      method: said(EXAM_METHOD[region], EXAM_METHOD_MSG[region]),
+      methodMsg: EXAM_METHOD_MSG[region],
+    }
   }
 
   /** Rule hits for the risk score, alerts and audit (one per rule at most). */
@@ -263,6 +291,7 @@ export class ExamBook {
         method: 'PERSISTENCE',
         kind: 'PHYSIO',
         label: noiseSentence(day).replace(/\.$/, ''),
+        labelMsg: noiseMsg(day),
         phrase: 'Noise exposure was above its reference level yesterday',
         phraseMsg: msg('exam.noisePhrase'),
         title: EXAM_RULE_TITLES['R-NOISE-01']!,
@@ -284,6 +313,7 @@ export class ExamBook {
       method: 'PERSISTENCE',
       kind: 'PHYSIO',
       label: `${eyes ? 'Eye exam' : 'Hearing test'} ${flightDayLabel(s.flightDay)} versus pre-flight baseline: ${flagged.slice(0, 3).map((r) => r.note).join('; ')}`,
+      labelMsg: msg(`exam.hit.${s.region}`, { when: flightDayMsg(s.flightDay), notes: notesMsg(flagged.slice(0, 3)) }),
       phrase: eyes ? 'Your last eye exam changed from your pre-flight baseline' : 'Your last hearing test changed from your pre-flight baseline',
       phraseMsg: msg(eyes ? 'exam.eyePhrase' : 'exam.earPhrase'),
       title: EXAM_RULE_TITLES[ruleId]!,
@@ -350,6 +380,18 @@ export class ExamBook {
 
 function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+/** Notes joined with "; " as a structured message (null notes are skipped). */
+function notesMsg(results: { note: string; noteMsg?: EngineMsg }[]): EngineParam {
+  const parts: EngineParam[] = results.map((r) => r.noteMsg ?? r.note)
+  return parts.slice(1).reduce<EngineParam>((a, b) => msg('exam.semi', { a, b }), parts[0] ?? '')
+}
+
+/** Structured noise sentence, without the final period (same words as noiseSentence). */
+function noiseMsg(d: NoiseDay): EngineMsg {
+  if (d.dosePct > EXAMS.noise.doseLimitPct) return msg('exam.noise.dose', { pct: { num: d.dosePct, decimals: 0 } })
+  return msg('exam.noise.leq', { leq: { num: d.leqDba, decimals: 1 }, lim: EXAMS.noise.workLeqDba })
 }
 
 function noiseSentence(d: NoiseDay): string {

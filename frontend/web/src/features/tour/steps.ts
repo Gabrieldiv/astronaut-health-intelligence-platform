@@ -116,7 +116,7 @@ export const TOUR_STEPS: TourStep[] = [
     id: 'comms',
     title: 'Far from Earth',
     caption: 'Now picture the same crew near Mars, 22 minutes away each way. Any answer from Earth takes at least 44 minutes, so AHI puts on-board steps first and shows the wait.',
-    anchors: ['comms'],
+    anchors: ['mission-link'],
     view: 'ground',
     durationMs: 11000,
     setup: () => app().setCommProfile('MARS_FAR'),

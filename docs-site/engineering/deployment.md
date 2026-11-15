@@ -98,12 +98,15 @@ Workflow `.github/workflows/docs-deploy.yml`:
 
 ## Validation
 
-Workflows only run when the files they check change (path filters), all with `contents: read` (except the deploy), a 10 minute timeout and cancellation of superseded runs:
+Workflows only run when the files they check change (path filters), all with `contents: read` (except the deploy), a timeout (10 minutes, 20 for the end to end and baseline jobs) and cancellation of superseded runs:
 
 | Workflow | Runs on | Steps |
 | --- | --- | --- |
-| `ci.yml` (App) | Push and pull request to `master` touching `frontend/web/**` | `npm ci`, `npm run lint` (oxlint, errors fail, warnings are reported), `npx tsc -b`, `npm test`, `npx vite build` |
-| `docs-check.yml` (Docs portal) | Pull request to `master` touching `docs-site/**` | `npm ci`, `npm run docs:build` (VitePress fails on dead internal links) |
+| `ci.yml` (App) | Push to `master` and pull request to `master` or `develop` touching `frontend/web/**` | `npm ci`, `npm run lint` (oxlint, errors fail, warnings are reported), `npx tsc -b`, `npm test`, `npx vite build` |
+| `ci.yml` (End to end) | The same triggers | `npm ci`, install Chromium, `npm run e2e` (functional tests; the visual tests are skipped on Linux) |
+| `backend.yml` (API) | Push to `master` and pull request to `master` or `develop` touching `backend/**` | Install the requirements, `python -m pytest` |
+| `visual-baselines.yml` | Push to a branch named `visual/**` (manual use) | Runs the visual tests with `E2E_VISUAL=1` and uploads the Linux snapshots as an artifact to commit ([Testing strategy](./testing#end-to-end-and-visual-tests)) |
+| `docs-check.yml` (Docs portal) | Pull request to `master` or `develop` touching `docs-site/**` | `npm ci`, `npm run docs:build` (VitePress fails on dead internal links) |
 | `docs-deploy.yml` | Push to `master` touching `docs-site/**` | Same build as the docs check, then publish; on `master` this build is the gate, so the portal is never built twice for one push |
 
 A push that changes only the README, the spec, `docs/` or other non code files starts no workflow.

@@ -4,9 +4,9 @@ import type en from '../en/crew'
 const m: Record<keyof typeof en, string> = {
   'crew.title': 'クルー',
   'crew.noData': 'データなし',
-  'crew.cardAria': '{callsign}、{role}。状態: {status}',
-  'crew.cardAriaLost': '{callsign}、{role}。状態: {status}、信号なし',
-  'crew.cardAriaPaused': '{callsign}、{role}。オペレーターがモニタリングを一時停止中、ライブ値なし',
+  'crew.cardAria': '{callsign}、{role}。状態：{status}',
+  'crew.cardAriaLost': '{callsign}、{role}。状態：{status}、信号なし',
+  'crew.cardAriaPaused': '{callsign}、{role}。オペレーターがモニタリングを一時停止中、リアルタイムの値なし',
   'crew.cardTitle': '{callsign}、{role}（キー {key}）',
   'crew.trendTitle': '心拍数、直近6時間',
 }

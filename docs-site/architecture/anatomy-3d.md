@@ -13,6 +13,9 @@ code:
   - frontend/web/src/features/anatomy/atlas/types.ts
   - frontend/web/src/features/anatomy/atlas/health.ts
   - frontend/web/src/features/anatomy/procedural/ProceduralViewer.tsx
+  - frontend/web/src/features/anatomy/viewer/autoRotate.ts
+  - frontend/web/src/features/mission/backdrops/MissionBackdrop.tsx
+  - frontend/web/src/features/mission/backdrops/parallax.ts
 tests:
   - frontend/web/src/features/anatomy/atlas/health.test.ts
   - frontend/web/src/features/anatomy/atlas/manifest.contract.test.ts
@@ -22,6 +25,7 @@ tests:
   - frontend/web/src/features/anatomy/viewer/retry.test.ts
   - frontend/web/src/features/anatomy/viewer/scan.test.ts
   - frontend/web/src/features/anatomy/a11y/keyboardNav.test.ts
+  - frontend/web/src/features/anatomy/viewer/autoRotate.test.ts
 verified: 2026-11-15
 ---
 
@@ -153,7 +157,8 @@ Everything lives in `frontend/web/src/features/anatomy/`. The public API did not
 | `viewer/runtime.ts` | Imperative three.js side: one mesh per structure, states, heart and lung motion |
 | `viewer/tissueMaterials.ts` | One material per tissue class, plus the shader patch for the viewer states |
 | `viewer/Studio.tsx` | Lighting, environment, floor and contact shadow |
-| `viewer/AtlasCamera.tsx` | Orbit controls, fly-to, preset views, idle rotation |
+| `viewer/AtlasCamera.tsx` | Orbit controls, fly-to, preset views, idle rotation; reports its azimuth to the backdrop parallax |
+| `viewer/autoRotate.ts` | Pure rule that decides when the idle rotation runs (unit tested) |
 | `viewer/SystemControls.tsx` | Layers popover, skin opacity, presets, view buttons, reset |
 | `viewer/Attribution.tsx` | Persistent source caption and the "About the reference anatomy" popover |
 | `viewer/layers.ts` | Layers derived from the manifest, presets, camera focus, label anchors |
@@ -163,7 +168,7 @@ Everything lives in `frontend/web/src/features/anatomy/`. The public API did not
 | `Labels.tsx`, `Legend.tsx`, `regions.ts`, `hooks.ts` | Shared by both viewers: floating labels, status legend, region configuration |
 | `lab.tsx` (with `anatomy-lab.html`) | Development lab page |
 
-The panel that describes a selected structure is outside this folder: `src/features/attention/StructureDetail.tsx` and `RegionEvents.tsx` ([Product tour](../product/product-tour#selecting-a-structure)).
+The panel that describes a selected structure is outside this folder: `src/features/attention/StructureDetail.tsx` and `RegionEvents.tsx` ([Product tour](../product/product-tour#selecting-a-structure)). The mission backdrop behind the canvas lives in `src/features/mission/backdrops/` ([Mission backdrop](#mission-backdrop)).
 
 ## Loading strategy and offline constraint
 
@@ -214,7 +219,7 @@ Tissue colors are a reference anatomy look, not a status encoding. Materials are
 - **Zoom to the pointer**: the mouse wheel, a trackpad and a two finger pinch zoom toward the point under the pointer (or between the fingers), so what you aim at stays under the cursor while it grows; rotating afterwards pivots around the zoomed area. The distance limits are kept. Custom code in `viewer/zoom.ts` replaces the default orbit dolly; middle button drag zoom is no longer available.
 - **Preset views**: Front, Back, Left and Right (the body's own left and right), with an animated transition.
 - **Reset**: frames the whole body again and clears the selection.
-- **Idle rotation**: the body turns slowly after 5 seconds without interaction, and stops while something is selected or hovered.
+- **Idle rotation** (`viewer/autoRotate.ts`): the body turns slowly while nobody touches it. Any pointer down, drag, wheel or touch stops it, and it resumes 3 seconds after the last interaction. It also stays still while a structure or region is selected (the selected organ must not turn away), while a structure is hovered and during a camera fly-to, and resumes 3 seconds after the selection is cleared. Embeds can turn it off with the `autoRotate` prop.
 - Whole body shots are fitted to the free height between the top margin and the controls, and fitted again when the container resizes.
 
 ### Monitor and Explore modes {#monitor-and-explore}
@@ -282,6 +287,12 @@ The eyes are two atlas structures (`eye-left`, `eye-right`) and report under the
 A bright band of light sweeps the body from head to feet every 6.5 s (the sweep itself takes 2.4 s), then rests. It is drawn by the shared tissue shader with two uniforms, so it adds **no draw call and no extra pass**. Any point of the body is crossed once per cycle, far below three flashes per second, and the band fades in and out. With `prefers-reduced-motion` the sweep is slow and dim.
 
 Measured by the team on the same integrated GPU as below (AMD Radeon Vega 8): no frame rate loss and the same 119 draw calls with the scan on. This is one observation on one machine, not a benchmark.
+
+### Mission backdrop {#mission-backdrop}
+
+The 3D stage (Ground view and Crew view) shows a scene of the active mission profile behind the body: one SVG per profile, placed behind the transparent WebGL canvas, so it costs **no draw call**. The scenery stays at the edges, the horizon and the sky; a dim layer behind the body and a vignette keep the anatomy and its status colors readable. A profile change crossfades in 0.6 s.
+
+The camera reports its orbit angle every frame; `parallax.ts` writes it as a CSS variable (`--stage-az`) on the backdrop, which shifts by at most 18 px. No React render and no WebGL work is involved. Under `prefers-reduced-motion` the backdrop is static. The facts in its chip come from the cited profile table ([Mission backdrops](../intelligence/mission-profiles#mission-backdrops)).
 
 ## Live physiology
 

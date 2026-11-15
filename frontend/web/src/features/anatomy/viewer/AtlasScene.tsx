@@ -24,6 +24,7 @@ import type { LayerModel } from './layers'
 import { AtlasRuntime } from './runtime'
 import { Studio } from './Studio'
 import { EarMarkers } from './EarMarkers'
+import type { SurfaceProbe } from './zoom'
 
 export interface AtlasSceneProps {
   manifest: AtlasManifest
@@ -41,6 +42,8 @@ export interface AtlasSceneProps {
   onFatal: (reason: string) => void
   /** Called once the first system is on screen. */
   onReady: () => void
+  /** Filled with a body surface raycast for the camera (it never passes through geometry). */
+  probe?: SurfaceProbe
 }
 
 /** Hover picks are throttled: at most one raycast every PICK_MS while the pointer moves. */
@@ -64,7 +67,7 @@ export function AtlasScene(props: AtlasSceneProps) {
   return runtime ? <SceneBody {...props} runtime={runtime} /> : null
 }
 
-function SceneBody({ manifest, model, store, labels, visible, statuses, anchors, subject, shadows, onFatal, onReady, runtime }: AtlasSceneProps & { runtime: AtlasRuntime }) {
+function SceneBody({ manifest, model, store, labels, visible, statuses, anchors, subject, shadows, onFatal, onReady, runtime, probe }: AtlasSceneProps & { runtime: AtlasRuntime }) {
   const gl = useThree((s) => s.gl)
   const camera = useThree((s) => s.camera)
   const selectedRegion = useAppStore((s) => s.selectedRegion)
@@ -113,6 +116,16 @@ function SceneBody({ manifest, model, store, labels, visible, statuses, anchors,
       alive = false
     }
   }, [needed, manifest, runtime, requiredSystems, retryNonce])
+
+  // the camera asks the scene where the body surface is, so it never passes through geometry
+  useEffect(() => {
+    if (!probe) return
+    const cast = (ray: Raycaster) => runtime.surfaceDistance(ray)
+    probe.cast = cast
+    return () => {
+      if (probe.cast === cast) probe.cast = null
+    }
+  }, [probe, runtime])
 
   // dev only: scripted checks read the scene objects (heart and lung motion)
   useEffect(() => {

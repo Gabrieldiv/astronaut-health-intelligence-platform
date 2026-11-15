@@ -11,9 +11,9 @@ const m: Record<keyof typeof en, string> = {
   'components.baseline.range': '{low} a {high}',
   'components.baseline.learnedFrom': 'Aprendido a partir de {n} leituras suas: {window}.',
   'components.baseline.median': 'O centro é o seu valor típico (mediana {median}). A largura vem de quanto você costuma variar (MAD {mad}), uma medida de dispersão robusta que ignora picos isolados.',
-  'components.baseline.learning': 'Ainda aprendendo o seu normal. Até haver dados seus suficientes, o status deste sinal fica cauteloso.',
-  'components.baseline.learningN': 'Ainda aprendendo o seu normal ({n} leituras até agora). Até haver dados seus suficientes, o status deste sinal fica cauteloso.',
-  'components.baseline.compares': 'O status compara você com você mesmo, não com a média de uma população.',
+  'components.baseline.learning': 'Ainda aprendendo o seu normal. Até haver dados seus suficientes, o estado deste sinal fica cauteloso.',
+  'components.baseline.learningN': 'Ainda aprendendo o seu normal ({n} leituras até agora). Até haver dados seus suficientes, o estado deste sinal fica cauteloso.',
+  'components.baseline.compares': 'O estado compara você com você mesmo, não com a média de uma população.',
   'components.baseline.method': 'Método da linha de base: {version}',
 
   'components.event.alert': 'Alerta',

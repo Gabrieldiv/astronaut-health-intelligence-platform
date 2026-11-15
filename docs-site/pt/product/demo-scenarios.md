@@ -116,7 +116,7 @@ O roteiro completo está em <CodeLink path="docs/demo-script.md" />. Todos os da
 | 0:20 a 0:50 | **A tela em 10 segundos** | Cartões da tripulação em palavras simples, o corpo 3D com a varredura, "What needs attention", vitais ao vivo, o selo `SIMULATED`. |
 | 0:50 a 1:10 | **Modo Monitor e zoom** | Role sobre o coração (zoom no ponteiro), clique nele: leituras, faixa pessoal, **"Measured by"**. O modo Monitor mantém o foco no que é medido. |
 | 1:10 a 2:00 | **Evento agudo, som, decisão rápida** | "Acute cardio event" em ORION: faixa CRITICAL e som de alerta. **"Mark done"** na ação de repouso, reconheça o alerta (o som para). Aperte `D` para a descrição falada. |
-| 2:00 a 2:40 | **Perfis de missão e clima espacial** | Troque para **"Mars transit"**, abra o contexto da missão: taxa de dose citada, atraso de 4 a 24 min, dose da missão contra o limite de carreira de 600 mSv da NASA, cartão de clima espacial do DONKI (aviso de abrigo se houve um flare X ou SEP recente; senão calmo; nunca "tudo certo" sem dados). |
+| 2:00 a 2:40 | **Perfis de missão e clima espacial** | Troque para **"Mars transit"**, abra o painel Mission and Earth link (o controle da barra superior): taxa de dose citada, atraso de 4 a 24 min, dose da missão contra o limite de carreira de 600 mSv da NASA, cartão de clima espacial do DONKI (aviso de abrigo se houve um flare X ou SEP recente; senão calmo; nunca "tudo certo" sem dados). |
 | 2:40 a 3:20 | **Deriva lenta** | "Progressive fatigue" em LYRA a "1 h/s": HRV abaixo da faixa dela; escolha o horizonte de 7 dias e mostre a faixa se alargando. |
 | 3:20 a 3:50 | **Olhos** | "Eye changes (SANS like)": os olhos mostram Watch pelo exame do dia de voo 30; histórico de exames contra a linha de base pré-voo. |
 | 3:50 a 4:10 | **Crew view** | `V`: palavra de status grande, duas ações, cartões **"Your body systems"**, check-in. |
@@ -131,7 +131,7 @@ Frase central (no app e no pitch, em inglês): *"We turn physiological and envir
 - **Aumento de CO₂ na cabine** ("10 min/s"): toda a tripulação muda um pouco; o app mostra coocorrência e lembra que correlação não é causalidade.
 :::
 
-Próximos passos para citar: o porte do motor para Python, um fluxo de revisão clínica, perfis de acesso e dados reais da cabine da ISS pelo NASA EDA. Veja o [roadmap](/pt/resources/roadmap).
+Próximos passos para citar: o porte do motor para Python, um fluxo de revisão clínica, autenticação e controle de acesso por papel e dados reais da cabine da ISS pelo NASA EDA. Veja o [roadmap](/pt/resources/roadmap).
 
 ## Próximos passos
 

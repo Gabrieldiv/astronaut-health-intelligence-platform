@@ -81,6 +81,8 @@ Run these inside `frontend/web`.
 | `npm run preview` | Serve the production build locally |
 | `npm run evaluate` | Replays the scenarios headless and regenerates `src/engine/evaluation.json` and `docs/model-card.md` |
 | `npm run lint` | Lint with oxlint |
+| `npm run e2e` | Playwright end to end tests in Chromium (the visual tests need committed baselines, see [Testing strategy](./testing#end-to-end-and-visual-tests)). First time: `npx playwright install chromium` |
+| `npm run e2e:update` | Regenerates the visual snapshots for this platform |
 | `npm run anatomy:validate` | Checks the published 3D atlas (`public/anatomy/`) against its manifest contract |
 | `npm run anatomy:build` | Rebuilds the 3D atlas from the Z-Anatomy source. Needs Blender 4.5 LTS (`BLENDER_BIN`) and takes about 5 minutes. Not needed to run the app: the built files are in the repository ([3D anatomy assets](../data/anatomy-assets#rebuild)) |
 | `node scripts/osdr/discover.mjs` | Searches NASA OSDR and writes `data/manifests/osdr-discovery.json` |
@@ -107,7 +109,7 @@ The project uses `erasableSyntaxOnly` (no `enum`, no parameter properties) and `
 2. **Look at the body (center).** It is a realistic anatomical model. A body system that needs attention lights up in its status color. The heart beats at the live heart rate and the lungs breathe at the live breathing rate.
 3. **Click the Heart chip** beside the body. The right panel switches to the body system detail: each metric with its trend chart, the shaded personal normal band and the forecast cone. Then **click any part of the body**, for example the skull: the camera moves to it and the panel says what the structure is and which body system it is monitored with. Structures that nothing measures, such as the intestines, are "Context only" and show no status.
 4. **Open the scenario picker** in the top bar and choose **Acute cardio event**. At **1 min/s** a CRITICAL banner appears within simulated minutes and an alert sound plays (turn it off in Tools > Accessibility and sound).
-5. **Pick a mission profile** in the top bar, for example **Mars transit**, and open its info button: hazards, cited reference values, the mission dose and the space weather advisory.
+5. **Open the Mission and Earth link control** in the top bar and pick a mission profile, for example **Mars transit**: hazards, cited reference values, the mission dose and the space weather advisory.
 6. **Mark an action done** in "What needs attention" and **acknowledge** the alert.
 7. **Press `V`** to switch to the Crew view, then `V` again to come back.
 8. **Click Start demo** to let the 10 step guided tour drive the story for you.

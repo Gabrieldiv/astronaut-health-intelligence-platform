@@ -103,7 +103,7 @@ flowchart LR
 ```
 
 - O app roda **inteiro no navegador**; sozinho, não chama nenhum serviço externo e carrega os próprios arquivos estáticos, incluindo a anatomia 3D e o snapshot do DONKI.
-- A [AHI API](/pt/architecture/backend) é **opcional**: lê dados da NASA e hospeda a demo do assistente. Autenticação e perfis de acesso estão [planejados](/pt/resources/roadmap).
+- A [AHI API](/pt/architecture/backend) é **opcional**: lê dados da NASA e hospeda a demo do assistente. Autenticação e controle de acesso por papel **não estão implementados** (a demo não tem login); estão [planejados](/pt/resources/roadmap#access-profiles).
 - **Não há conexão com a ISS** nem com equipamentos reais. O contrato de adapters está pronto para fontes reais no futuro.
 - O "médico de voo" que responde pelo "Earth link" é **simulado**.
 - Os dados reais da NASA (painéis OSDR e eventos de clima espacial do DONKI) **não são a tripulação mostrada** e não alimentam baselines, regras ou limiares.

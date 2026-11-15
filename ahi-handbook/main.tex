@@ -1,0 +1,155 @@
+% Define Class: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Same class and front matter as the AHI technical report (../nasa-tech-report).
+% The handbook template prints "User Handbook" on the title page and turns off
+% the lists of figures, tables, listings and acronyms to stay within 10 pages.
+\documentclass[template=tech-report]{nasa-latex-docs}
+
+% Preamble Section: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Add bibliography file
+\addbibresource{main.bib}
+% Repeat author names instead of printing a dash for a repeated author (project rule: no dashes).
+\makeatletter
+\AtEveryBibitem{\global\def\bbx@lasthash{}}
+\makeatother
+% Compact references: no "visited on" date.
+\AtEveryBibitem{\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}}
+
+% Figure source line, printed under the caption.
+\newcommand{\figsource}[1]{\par\vspace{0.3em}\parbox{\linewidth}{\footnotesize\raggedright\textbf{Source:} #1}\par\vspace{0.2em}}
+
+% Screenshot in the text flow (not a float, because floats followed by text overlap in this template).
+% #1 width, #2 file, #3 caption, #4 label
+\newcommand{\screenfig}[4]{%
+\par\medskip\noindent
+\begin{minipage}{\linewidth}
+\centering
+\includegraphics[width=#1\textwidth]{#2}
+\captionof{figure}{#3}
+\label{#4}
+\end{minipage}
+\par\medskip}
+
+% Two screenshots side by side. #1 file A, #2 caption A, #3 label A, #4 file B, #5 caption B, #6 label B
+\newcommand{\screenpair}[6]{%
+\par\smallskip\noindent\hspace*{0.09\linewidth}%
+\begin{minipage}[t]{0.39\linewidth}
+\centering
+\includegraphics[width=\linewidth]{#1}
+\captionof{figure}{#2}
+\label{#3}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.39\linewidth}
+\centering
+\includegraphics[width=\linewidth]{#4}
+\captionof{figure}{#5}
+\label{#6}
+\end{minipage}\hspace*{0.09\linewidth}
+\par\smallskip}
+
+% Text beside a screenshot. #1 text width (fraction), #2 text, #3 file, #4 caption, #5 label
+\newcommand{\sidefig}[5]{%
+\par\smallskip\noindent
+\begin{minipage}[t]{#1\linewidth}
+\vspace{0pt}\setlength{\parskip}{4pt}#2
+\end{minipage}\hfill
+\begin{minipage}[t]{\dimexpr0.97\linewidth-#1\linewidth\relax}
+\vspace{0pt}\centering
+\includegraphics[width=\linewidth]{#3}
+\captionof{figure}{#4}
+\label{#5}
+\end{minipage}
+\par\smallskip}
+
+% Keyboard key
+\newcommand{\key}[1]{\tikz[baseline=(k.base)]\node[draw=black!45,fill=black!5,rounded corners=1.5pt,inner xsep=3pt,inner ysep=1.5pt,font=\footnotesize\ttfamily](k){#1};}
+
+% Numbered callout used in the screen map
+\newcommand{\callout}[1]{\tikz[baseline=(c.base)]\node[circle,fill=ahiTeal,text=white,inner sep=1.2pt,minimum size=1.15em,font=\scriptsize\bfseries](c){#1};}
+
+% Tip box
+\newcommand{\tipbox}[2]{%
+\par\smallskip\noindent
+\fcolorbox{ahiTeal}{ahiTeal!8}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{\small\textbf{#1} #2}}
+\par\smallskip}
+
+% AHI status colors (frontend/web/src/lib/status.ts)
+\definecolor{ahiTeal}{HTML}{0F9488}
+\definecolor{ahiSpace900}{HTML}{070C16}
+\definecolor{ahiNominal}{HTML}{34D399}
+\definecolor{ahiWatch}{HTML}{FBBF24}
+\definecolor{ahiWarning}{HTML}{FB923C}
+\definecolor{ahiCritical}{HTML}{F43F5E}
+\definecolor{ahiNoData}{HTML}{94A3B8}
+\newcommand{\statuspill}[2]{\tikz[baseline=-0.6ex]\node[fill=#1,rounded corners=4pt,inner xsep=5pt,inner ysep=2.5pt,text=ahiSpace900,font=\footnotesize\bfseries]{#2};}
+\newcommand{\nodatapill}{\tikz[baseline=-0.6ex]\node[draw=ahiNoData,dashed,line width=0.8pt,rounded corners=4pt,inner xsep=5pt,inner ysep=2.5pt,text=black!60,font=\footnotesize\bfseries]{Signal lost};}
+
+% Document parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\docTypeTitle[NASA Space Apps Challenge - 2026 Project] % Project or Team Name
+\docTitle[Astronaut Health Intelligence (AHI): \\ How to Use the Platform] % Handbook Title
+\docNumber[HB-0001]
+\docVersion[1.0]
+\docDate[November 15, 2026]
+\docOrganization[AstroHealth Tech Team \\ Santo André, São Paulo - Brazil] % Team name \\ City, Country
+\docHeader[Document Header]
+\docFooter[] % Document Footer
+
+% No executive summary page: section 1 introduces the platform.
+\docAbstract[]
+
+\docLogo[SpaceApps]
+\docOrgLogo[NASA_Logo]
+
+% Remove the revision-log instruction page
+\docRevisionLog[]
+
+% Authors
+\docAuthor[1]{Igor Fernando Casita}{Team Leader \& AI Lead}{University of São Paulo (USP)}{Brazil}
+\docAuthor[2]{Lucas Palhares Barbosa}{Senior Software Engineer \& AI Engineer}{FATEC Rio Preto}{Brazil}
+\docAuthor[3]{Gabriel da Silva Simões}{Senior Data Scientist}{University of São Paulo (USP)}{Brazil}
+\docAuthor[4]{Daniel Hiro Batista}{Data Researcher}{University of São Paulo (USP)}{Brazil}
+\docAuthor[5]{Ricardo Camargo}{Senior Data Analyst}{USP ESALQ}{Brazil}
+
+\docSigned[true] % /s/ - eletronic signature
+\docSignDate[November 15, 2026]
+
+% Contributors and approvers: empty entries hide those pages.
+\docContributor[1]{}{}{}{}
+\docContributor[2]{}{}{}{}
+\docApprover[1]{}{}{}{}
+\docApprover[2]{}{}{}{}
+
+% Main Document Content: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+% Tighter paragraph spacing than the technical report, so the handbook fits in 10 pages.
+\setlength{\parskip}{4pt}
+\raggedbottom
+% No bonus for breaking a page before a heading (it left half-empty pages).
+\makeatletter\@secpenalty=0\makeatother
+\titlespacing*{\section}{0pt}{10pt}{4pt}
+\titlespacing*{\subsection}{0pt}{6pt}{2pt}
+\captionsetup[figure]{font={bf,small},skip=3pt}
+\captionsetup[table]{font={bf,small},skip=3pt}
+\setlist{itemsep=1pt,topsep=2pt,parsep=0pt}
+\renewcommand*{\bibfont}{\footnotesize}
+
+\input{sections/01-what-is-ahi}
+
+\input{sections/02-getting-started}
+
+\input{sections/03-screen-at-a-glance}
+
+\input{sections/04-tutorial}
+
+\input{sections/05-mission-tools}
+
+\input{sections/06-scenarios}
+
+\input{sections/07-access-assistant}
+
+\input{sections/08-troubleshooting}
+
+\printbibliography
+
+\end{document}
+% End of Document %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

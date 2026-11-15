@@ -10,10 +10,16 @@ code:
   - frontend/web/src/features/attention/StructureDetail.tsx
   - frontend/web/src/features/attention/RegionEvents.tsx
   - frontend/web/src/features/crewview/CrewView.tsx
+  - frontend/web/src/features/profile/CrewProfileDialog.tsx
   - frontend/web/src/features/mission/MissionContext.tsx
   - frontend/web/src/features/attention/MeasuredBy.tsx
   - frontend/web/src/features/attention/HorizonPicker.tsx
   - frontend/web/src/features/vitals/DevicesIndicator.tsx
+  - frontend/web/src/features/attention/FeedStatus.tsx
+  - frontend/web/src/components/viz/BandGauge.tsx
+  - frontend/web/src/features/mission/backdrops/MissionBackdrop.tsx
+  - frontend/web/src/features/connectivity/index.tsx
+  - frontend/web/src/app/useStatusFavicon.ts
 verified: 2026-11-15
 ---
 
@@ -61,11 +67,12 @@ The top bar has three zones: identity on the left, the scenario player in the ce
 | Element | What it does |
 | --- | --- |
 | AHI logo and **SIMULATED** chip | Always visible. Click the chip to see where the data comes from (simulated device adapters, planned real data, derived values) |
-| Mission name and **mission profile** | Launch and ascent, ISS, Moon (Artemis class) or Mars transit. Its info button opens the mission context dialog: hazards, cited reference values, mission dose and space weather. See [Mission profiles](../intelligence/mission-profiles) |
+| Mission name and the **Mission and Earth link** control | The mission name, and one control that shows the mission profile (Launch and ascent, ISS, Moon (Artemis class) or Mars transit), the Earth link and the one way delay, with a dot when the space weather advisory needs a look. It opens the **Mission and Earth link** panel with three tabs: **Mission** (profile picker, what the profile changes, hazards, cited reference values, mission dose), **Earth link** (profile, messages in transit and delivered) and **Space weather**. See [Mission profiles](../intelligence/mission-profiles) and [Mission features](./mission-features#earth-link-and-mars-delay) |
 | **MET** | Mission elapsed time on the simulated clock. The UTC time is in the tooltip |
 | **Scenario player** | Scenario picker, play and pause, speed (Real time, 1 min/s, 10 min/s, 1 h/s) and restart |
-| **Earth link** | Current profile (ISS, Moon, Mars near, Mars far), one way delay and messages in transit. Opens the Earth link drawer. See [Mission features](./mission-features#earth-link-and-mars-delay) |
+| **Ask AHI** | Opens the assistant drawer (key `K`). See [Ask AHI](./assistant) |
 | **Ground / Crew** | View toggle |
+| **Connection chip** | "Offline demo", "Live NASA data", "API unreachable" or "Checking connection". Opens Data and model, where the [Online and offline switch](../architecture/backend#online-and-offline-switch) lives |
 | **Tools** menu | Mission overview, Shift handover, Data and model, Presentation mode, Accessibility and sound, Language, Keyboard shortcuts |
 | **Start demo** | Starts the 10 step [guided demo](./demo-scenarios#guided-demo) |
 | **Alerts bell** | Count of alerts not yet acknowledged. Pulses red when one is CRITICAL. Opens the alerts drawer (`A`) |
@@ -84,6 +91,23 @@ The left column has one card per astronaut (ORION, LYRA, VEGA, ATLAS) with:
 
 Click a card, or press `1` to `4`, to select that astronaut. Everything else on the screen follows the selection.
 
+### Crew profile {#crew-profile}
+
+Each card has a small person button ("Open profile of ORION"). The same button sits in the 3D stage header (Ground view) and next to the name in the Crew view, and the `I` key opens the profile of the selected astronaut. It opens a dialog with all the data of one person, visual first (icon, color and number first, sentences behind each **Details** toggle). The switcher at the top moves between the four astronauts without closing it, `Esc` closes it and focus returns to the button that opened it.
+
+| Section | What it shows |
+| --- | --- |
+| Identity | Callsign, pseudonymized ID, role, age, sex, mission day, mission and vehicle, with the SIMULATED badge and a note that the data is simulated and pseudonymized |
+| Today | Status pill, attention score, one segment per tracked indicator, open alerts, the headline behind Details |
+| Personal baselines | Per metric, a band gauge with the person's own normal range, the current value, the typical value (median) and how many readings the baseline rests on, grouped as heart and circulation, breathing and oxygen, sleep and recovery, activity and exercise, mind and mood, environment exposure |
+| Wearables and devices | Devices worn by the person with state, battery, last contact and the metrics they feed |
+| Latest check-in | Mood, fatigue, stress and sleep quality in plain words, symptoms behind Details |
+| Eye and hearing exams | Latest exam session and when the next exam is due |
+| Radiation | Mission dose versus the NASA career limit (600 mSv, NASA-STD-3001), with the citation |
+| Recent events | Last alerts, logged actions and log lines that name the person |
+
+A section without data says "No data" explicitly: a missing reading is never shown as normal and a missing dose is never shown as zero. **Print summary** prints the profile with the same print stylesheet as the handover report. Decision support only, not a diagnosis, and all the data is simulated.
+
 ## 3D body and body system chips
 
 The center stage shows the selected astronaut:
@@ -91,10 +115,12 @@ The center stage shows the selected astronaut:
 - **Headline**: callsign, role, mission day, current activity (Sleeping, Resting, Working, Exercising) and one plain sentence about their state.
 - **3D body**: a realistic anatomical model (the Z-Anatomy atlas) with natural tissue colors under a translucent skin. A body system that needs attention lights up in its status color, the heart beats at the live heart rate and the lungs breathe at the live breathing rate. A status change sends a short scan pulse from that region. When data is missing the organ turns grey and stops moving.
 - **Body system chips** beside the body: Brain, Eyes, Lungs, Heart and Kidneys on the left; Ears, Muscles, Skeleton and Skin on the right. Each chip shows a status dot. A chip always means the whole body system.
+- **Health indicators count** next to the headline (for example "25/25 indicators normal"): each segment is one measured indicator, such as heart rate, sleep or blood oxygen, compared with the astronaut's own normal range. Click it to see the breakdown by body system, with the flagged and the missing indicators named. Indicators without data are never counted as normal.
 - **Body scan**: a soft band of light sweeps the body from head to feet every few seconds, a cue that monitoring is live (slow and dim with reduced motion).
 - **Control pill** under the body: **Layers**, the **Monitor / Explore** mode button, the preset views **Front**, **Back**, **Left** and **Right**, and a reset button.
 - **Status legend** in the corner, with the five levels and the note "Vs personal baseline. Simulated data."
 - **Reference anatomy caption** under the body: "Reference anatomy: Z-Anatomy atlas (CC BY-SA 4.0)". Its info button explains that this is one adult reference model shown for every crew member, not the astronaut's own scan, and lists the credits.
+- **Mission backdrop** behind the body: a dimmed scene of the active mission profile (launch pad, Earth from low orbit, lunar surface, Earth to Mars transfer) and a small chip with the profile name and two or three cited facts. It is decoration and context, never a health status ([Mission backdrops](../intelligence/mission-profiles#mission-backdrops)).
 
 ### Layers, views and skin opacity
 
@@ -107,7 +133,7 @@ The center stage shows the selected astronaut:
 | **Monitor / Explore** | Monitor (default): only monitored body systems respond to hover and click; the rest is quieter and click-through. Explore: every structure can be selected, for anatomical reference. Remembered on this device |
 | **Reset** | Shows the whole body again and clears the selection |
 
-Drag to rotate and pan. The mouse wheel, a trackpad or a pinch **zoom toward the point under the pointer**, so what you aim at stays in place. The body turns slowly on its own when nothing is selected. A system that is still downloading shows its progress, and "try 2" or "try 3" while it retries; if it still fails it shows **retry** and stays clickable. The rest of the body stays usable.
+Drag to rotate and pan. The mouse wheel, a trackpad or a pinch **zoom toward the point under the pointer**, so what you aim at stays in place. The body turns slowly on its own while nobody touches it: any pointer down, drag, wheel or touch stops it, it stays still while a structure is hovered or selected, and it resumes 3 seconds after the last interaction ([3D anatomy](../architecture/anatomy-3d#navigation-and-preset-views)). A system that is still downloading shows its progress, and "try 2" or "try 3" while it retries; if it still fails it shows **retry** and stays clickable. The rest of the body stays usable.
 
 **Keyboard**: `Tab` to the body, then `Up` / `Down` for body systems, `Left` / `Right` for structures, `Enter` to select and `Esc` to clear. Each step is announced ([Accessibility](./accessibility)).
 
@@ -147,6 +173,10 @@ The right panel answers three questions for the selected astronaut: how are they
 | **Why** | Contributing factors in plain language with a weight bar, for example "HRV 28% below personal baseline for 3 days". Missing signals are listed as such. When the experimental detector sees an unusual mix of signals, a neutral note "Unusual combination" lists the signals that contributed most, the model version and "Experimental, machine learning"; it does not change the status |
 | **Forecast** | Per metric: "Stable over next 6 h", "Projected to leave your normal range in ~5 h" or "Not enough data to forecast yet" |
 
+::: info Visual first
+The panel shows a picture first and keeps the full sentence behind a **Details** toggle. Each **Why** item is a chip with the signal icon, the metric, the direction and size of the change, a mini gauge of the value against the personal normal and the weight bar. Each action card has an icon and a time hint: **Now** (critical), **Within 1 h** (high) or **Today** (everything else); the hint is a UI convention of the demo, not a clinical rule. Forecast rows show the trend (Rising, Falling, Steady), the expected range and "Leaves normal in N h" or "Stays normal". Text behind a closed **Details** toggle is still read by screen readers and audio description ([Design system](./design-system#visual-first-panels)).
+:::
+
 ### Autonomy badges
 
 Every recommendation says who can close the loop:
@@ -163,7 +193,7 @@ Click a body system chip to switch the right panel to **Body system detail**. Cl
 
 ![Body system detail: the 3D body with one body system selected, and its metric rows, personal normal and trend chart in the right panel](/screenshots/body-detail.png)
 
-Each metric row shows the current value, the deviation from the personal normal ("11% above your normal"), the normal range ("Your normal: 66 to 80 bpm") and the robust z score. Expand a row to see:
+Each metric row shows the current value, the deviation from the personal normal ("11% above your normal"), the normal range ("Your normal: 66 to 80 bpm") and the robust z score. A **band gauge** draws the personal normal as a soft stripe and the current value as a marker in the status color; without a value it draws the band only, never a marker. A metric without a reading says why: **Paused by operator**, **Waiting for data** or **Signal lost** ([Live vitals, cabin and devices](#live-vitals-cabin-and-devices)). Expand a row to see:
 
 - **Trend chart** with a window of 6 h, 24 h or 72 h:
   - shaded **personal normal band** labeled "Your normal",
@@ -188,7 +218,7 @@ The slim strip under the stage has one lane per astronaut plus the cabin, colore
 | Check-in | A daily check-in (simulated or typed) |
 | Earth link | A message to or from Earth, in transit or delivered |
 
-Choose **24 h**, **72 h** or **All**. Click a marker to jump to that crew member and body system (Earth link markers open the Earth link drawer). With the timeline focused, arrow keys step through markers and `Enter` opens one.
+Choose **24 h**, **72 h** or **All**. Click a marker to jump to that crew member and body system (Earth link markers open the Earth link tab of the Mission and Earth link panel). With the timeline focused, arrow keys step through markers and `Enter` opens one.
 
 ![Status timeline during progressive fatigue: LYRA's lane drifts from green to amber and orange over days](/screenshots/timeline-fatigue.png)
 
@@ -200,6 +230,16 @@ The bottom strip has three parts:
 - **Cabin**: CO2, cabin temperature, relative humidity and radiation dose rate, with the cabin status.
 - **Devices**: how many simulated devices are online, the worst device state (Online, Degraded, Data stale, Offline, Paused by operator) and battery. Click to open the device list, where each device can be **paused** (with a confirmation) and resumed. A paused device's readings show "Paused by operator" and no data, never normal values ([Pausing a device](../intelligence/scenario-simulation#pausing-a-device)).
 
+Panels say why a metric has no reading, in a neutral color:
+
+| State | Meaning |
+| --- | --- |
+| **Paused by operator** | An operator paused the device that feeds it: a decision, not a fault. An inline **Resume** button sits right there |
+| **Waiting for data** | The device is back online (for example just resumed), the first reading is on its way |
+| **Signal lost** | No reading and no healthy device behind it (the usual missing data case) |
+
+Only a live reading carries a value; none of these states is shown as normal. A body system shows Paused or Waiting only when every metric without data is in that state.
+
 ## Alerts drawer
 
 Open with the bell or `A`.
@@ -210,6 +250,8 @@ Open with the bell or `A`.
 - **Sounds**: critical alerts ring by default and repeat until acknowledged, with a more urgent sound after 2 minutes; warnings can ring too. Settings in Tools > Accessibility and sound ([Accessibility](./accessibility#alert-sounds)).
 
 A prominent **critical banner** also appears over the stage for the newest unacknowledged CRITICAL alert. It floats over the headline so the 3D body keeps its full size. You can hide the banner without acknowledging the alert.
+
+**Browser tab.** While a CRITICAL alert is open (not acknowledged, not resolved), the tab icon gets a red dot, so a hidden tab still shows that someone must look. The normal icon comes back as soon as the alert is acknowledged or resolved.
 
 ![Critical banner during the acute cardio event](/screenshots/critical-alert.png)
 
@@ -225,6 +267,7 @@ A prominent **critical banner** also appears over the stage for the newest unack
 | `V` | Switch Ground / Crew view |
 | `P` | Presentation mode (also in Tools) |
 | `A` | Open or close alerts |
+| `I` | Open or close the profile of the selected crew member |
 | `Space` | Play or pause the simulation |
 | `Esc` | Close a panel, or back from body or anatomy detail |
 | `?` | Show the shortcuts help |
@@ -235,7 +278,7 @@ Shortcuts are ignored while you type in a field or hold a modifier key.
 
 ## Ask AHI
 
-The **Ask AHI** button at the bottom right opens the assistant: plain language answers about what the app shows, streamed, with a "Based on:" line, voice input where the browser supports it and optional read aloud. It needs the backend with a key; otherwise it shows "Assistant offline". See [Ask AHI](./assistant).
+The **Ask AHI** button in the top bar (key `K`) opens the assistant: plain language answers about what the app shows, streamed, with a "Based on:" line, voice input where the browser supports it and optional read aloud. It needs the backend with a key; otherwise it shows "Assistant offline". See [Ask AHI](./assistant).
 
 ## Screen sizes
 

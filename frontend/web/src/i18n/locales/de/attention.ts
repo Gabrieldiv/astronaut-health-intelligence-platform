@@ -2,7 +2,7 @@
 import type en from '../en/attention'
 
 const m: Record<keyof typeof en, string> = {
-  'attention.disclaimer': 'Nur Entscheidungshilfe. Keine Diagnose. Simulierte Daten.',
+  'attention.disclaimer': 'Nur Entscheidungsunterstützung. Keine Diagnose. Simulierte Daten.',
   'attention.title.overview': 'Was Aufmerksamkeit braucht',
   'attention.title.anatomy': 'Anatomie im Detail',
   'attention.title.region': 'Körpersystem im Detail',
@@ -20,7 +20,7 @@ const m: Record<keyof typeof en, string> = {
   'attention.missingList': '{list} und {n} weitere',
   'attention.missingLabel': 'Keine Live-Daten für {list}. Fehlende Daten gelten nie als normal: Sensor prüfen.',
   'attention.regionNoData': 'keine aktuellen Daten. Fehlende Daten gelten nicht als normal.',
-  'attention.nothingStandsOut': 'Nichts fällt auf. Alle erfassten Signale liegen in Ihrem normalen Bereich.',
+  'attention.nothingStandsOut': 'Nichts fällt auf. Alle erfassten Signale liegen in deinem Normalbereich.',
   'attention.pctOfScore': '{pct}% des Werts',
   'attention.showLess': 'Weniger anzeigen',
   'attention.showMore': '{n} weitere anzeigen',
@@ -48,7 +48,7 @@ const m: Record<keyof typeof en, string> = {
   'attention.forecastEmpty': 'Prognosen erscheinen, sobald genug Daten gesammelt sind.',
   'attention.forecast.historyShort': 'Nicht genug Verlauf für diesen Zeitraum',
   'attention.forecast.notEnough': 'Noch nicht genug Daten für eine Prognose',
-  'attention.forecast.leaves': 'Verlässt voraussichtlich Ihren normalen Bereich in {when}',
+  'attention.forecast.leaves': 'Verlässt voraussichtlich deinen Normalbereich in {when}',
   'attention.forecast.stable': 'Stabil über die nächsten {span}',
   'attention.forecast.historyNote': 'Braucht mindestens {need} Verlauf, {have} vorhanden (Demo-Regel).',
   'attention.span.days': '{n} Tage',
@@ -66,7 +66,7 @@ const m: Record<keyof typeof en, string> = {
   'attention.autonomy.onboard': 'Jetzt an Bord machbar',
   'attention.autonomy.groundTitle': 'Ein Flugarzt auf der Erde sollte das prüfen.',
   'attention.autonomy.ground': 'Flugarzt nötig',
-  'attention.autonomy.replyTitle': 'Frühestmögliche Antwort von der Erde: einfache Verzögerung hin und zurück.',
+  'attention.autonomy.replyTitle': 'Frühestmögliche Antwort von der Erde: Verzögerung für Hin- und Rückweg.',
   'attention.autonomy.reply': 'Antwort der Erde in {time}+',
 
   'attention.mv.aria': 'Ungewöhnliche Kombination, experimentell',
@@ -75,7 +75,7 @@ const m: Record<keyof typeof en, string> = {
   'attention.mv.up': '{metric} höher',
   'attention.mv.down': '{metric} niedriger',
   'attention.mv.note':
-    'Nur zur Information: Ihr Status ändert sich dadurch nicht. Erscheint nur, wenn das Muster anhält und die langsameren Trendregeln zustimmen. Modell {version}, trainiert mit {n} Zeitpunkten Ihrer eigenen jüngsten Daten.',
+    'Nur zur Information: Dein Status ändert sich dadurch nicht. Erscheint nur, wenn das Muster anhält und die langsameren Trendregeln zustimmen. Modell {version}, trainiert mit {n} Zeitpunkten deiner eigenen jüngsten Daten.',
 
   'attention.measuredBy': 'Gemessen mit',
   'attention.devices_one': '{n} Gerät',
@@ -90,13 +90,13 @@ const m: Record<keyof typeof en, string> = {
   'attention.fromApp': '{list}: aus der Crew-App (täglicher Check-in, Selbsttest oder Aufnahmeprotokoll), nicht von einem getragenen Gerät.',
 
   'attention.range': '{low} bis {high} {unit}',
-  'attention.stillLearningNormal': 'Lernt Ihren Normalwert noch',
+  'attention.stillLearningNormal': 'Lernt deinen Normalwert noch',
   'attention.signalLost': 'Signal verloren',
-  'attention.yourNormal': 'Ihr Normalbereich: {band}',
+  'attention.yourNormal': 'Dein Normalbereich: {band}',
   'attention.dataQuality': 'Datenqualität',
   'attention.chartWindow': 'Diagrammzeitraum',
   'attention.hours': '{n} h',
-  'attention.legend.band': 'Ihr Normalbereich',
+  'attention.legend.band': 'Dein Normalbereich',
   'attention.legend.measured': 'Gemessen',
   'attention.legend.forecast': 'Prognose ({interval})',
   'attention.legend.gaps': 'Lücken bedeuten keine Daten',
@@ -187,6 +187,6 @@ const m: Record<keyof typeof en, string> = {
   'attention.exam.noHearingTest': 'Bisher wurde im Flug kein Hörtest gemacht. Eine noch nicht gemachte Untersuchung gilt nie als normal.',
   'attention.exam.newestFirst': '{title}, neueste zuerst',
   'attention.exam.noiseTitle': 'Lärmbelastung, letzte {n} Tage',
-  'attention.exam.decisionSupport': 'Nur Entscheidungshilfe, keine Diagnose.',
+  'attention.exam.decisionSupport': 'Nur Entscheidungsunterstützung, keine Diagnose.',
 }
 export default m
