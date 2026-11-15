@@ -158,7 +158,7 @@ function forecastText(p: Prediction): string {
 
 /** Forecast line for the on screen report, in the current language. */
 function forecastLabel(p: Prediction): string {
-  return t('report.forecast', { metric: metricLabel(p.metric), hours: formatHours(p.hoursToBandExit!), method: p.method, interval: p.intervalLabel })
+  return t('report.forecast', { metric: metricLabel(p.metric), hours: formatHours(p.hoursToBandExit!), method: engineText('forecast', p.method, p.methodMsg), interval: engineText('forecast', p.intervalLabel, p.intervalLabelMsg) })
 }
 
 /** Plain text version sent to ground (kept short: Earth link bandwidth). Always English. */

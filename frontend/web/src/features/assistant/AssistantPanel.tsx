@@ -66,21 +66,27 @@ export function Assistant() {
   const setOpen = useUiStore((s) => s.setAssistantOpen)
   // Whatever opened the drawer (top bar button, or the page for the K key) gets focus back on close.
   const opener = useRef<HTMLElement | null>(null)
-  // Captured synchronously on the open transition, before the drawer moves focus into itself.
+  // Captured synchronously on the open transition, before the drawer moves focus into itself, and
+  // given back on any close (button, Esc, backdrop or the K key toggle).
   useEffect(
     () =>
       useUiStore.subscribe((s, prev) => {
-        if (!s.assistantOpen || prev.assistantOpen) return
-        const el = document.activeElement
-        opener.current = el instanceof HTMLElement && el !== document.body ? el : null
+        if (s.assistantOpen === prev.assistantOpen) return
+        if (s.assistantOpen) {
+          const el = document.activeElement
+          opener.current = el instanceof HTMLElement && el !== document.body ? el : null
+          return
+        }
+        const el = opener.current ?? document.querySelector<HTMLElement>('[data-assistant-launcher]')
+        opener.current = null
+        // after the drawer has unmounted, so the focus does not land in a node that is going away
+        queueMicrotask(() => {
+          if (el && document.contains(el)) el.focus()
+        })
       }),
     [],
   )
-  const close = useCallback(() => {
-    setOpen(false)
-    const el = opener.current ?? document.querySelector<HTMLElement>('[data-assistant-launcher]')
-    if (el && document.contains(el)) el.focus()
-  }, [setOpen])
+  const close = useCallback(() => setOpen(false), [setOpen])
   return open ? <AssistantDrawer onClose={close} /> : null
 }
 

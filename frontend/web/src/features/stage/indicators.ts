@@ -1,5 +1,5 @@
-import { STATUS_META } from '../../lib/status'
-import type { MetricCode, MetricState, Status } from '../../types/domain'
+import { METRIC_CATALOG } from '../../engine/catalog'
+import type { BodyRegionId, MetricCode, MetricState, Status } from '../../types/domain'
 
 export interface IndicatorSummary {
   /** Tracked indicators, worst first: flagged, then missing, then normal ones. */
@@ -34,5 +34,21 @@ export function summarizeIndicators(metrics: Partial<Record<MetricCode, MetricSt
   return { items, total: items.length, ok, missing, flagged: items.length - ok - missing }
 }
 
-/** Color of one segment (missing data is drawn hollow and dashed by the component). */
-export const segmentColor = (s: Status) => STATUS_META[s].color
+export type IndicatorGroup = { key: BodyRegionId | 'environment'; items: { metric: MetricCode; status: Status }[] }
+
+/**
+ * Groups the tracked indicators by the body system they belong to, worst group first, so the
+ * count on screen ("25/25") can be traced back to what it is made of. Pure and tested.
+ */
+export function groupIndicators(metrics: Partial<Record<MetricCode, MetricState>> | undefined): IndicatorGroup[] {
+  const summary = summarizeIndicators(metrics)
+  const groups = new Map<IndicatorGroup['key'], IndicatorGroup>()
+  for (const item of summary.items) {
+    const key = METRIC_CATALOG[item.metric]?.region ?? 'environment'
+    const g = groups.get(key) ?? { key, items: [] }
+    g.items.push(item)
+    groups.set(key, g)
+  }
+  const rank = (g: IndicatorGroup) => Math.min(...g.items.map((i) => ['CRITICAL', 'HIGH', 'MODERATE', 'NO_DATA', 'LOW'].indexOf(i.status)))
+  return [...groups.values()].sort((a, b) => rank(a) - rank(b))
+}

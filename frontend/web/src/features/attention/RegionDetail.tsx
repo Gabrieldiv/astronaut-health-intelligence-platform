@@ -140,7 +140,7 @@ function MetricRow({ astronautId, metric, expanded, onToggle }: { astronautId: s
             </span>
             {prediction?.eligible && (
               <span className="flex items-center gap-1">
-                <span className="inline-block h-2 w-3 rounded-sm bg-white/15" aria-hidden /> {t('attention.legend.forecast', { interval: prediction.intervalLabel })}
+                <span className="inline-block h-2 w-3 rounded-sm bg-white/15" aria-hidden /> {t('attention.legend.forecast', { interval: engineText('forecast', prediction.intervalLabel, prediction.intervalLabelMsg) })}
               </span>
             )}
             <EventLegend events={events} />

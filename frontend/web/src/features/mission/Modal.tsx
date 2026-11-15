@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { IconButton } from '../../components/ui'
 import { useT } from '../../i18n'
+import { trapTab } from '../../lib/focusTrap'
 
 /**
  * Centered modal dialog shared by the v2 feature buttons (mission overview, handover report,
@@ -48,20 +49,7 @@ export function Modal({
         e.stopPropagation()
         closeRef.current()
       }
-      if (e.key === 'Tab' && panelRef.current) {
-        // Keep keyboard focus inside the dialog.
-        const items = panelRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), textarea, select, [tabindex]:not([tabindex="-1"])')
-        if (items.length === 0) return
-        const first = items[0]!
-        const last = items[items.length - 1]!
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault()
-          last.focus()
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault()
-          first.focus()
-        }
-      }
+      trapTab(e, panelRef.current)
     }
     window.addEventListener('keydown', onKey)
     panelRef.current?.focus()
