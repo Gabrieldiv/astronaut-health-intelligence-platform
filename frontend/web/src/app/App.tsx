@@ -10,6 +10,7 @@ import { A11yLayer, SkipLinks } from '../features/a11y'
 import { TimelineStrip } from '../features/timeline'
 import { CrewView } from '../features/crewview/CrewView'
 import { Tour } from '../features/tour/Tour'
+import { Assistant } from '../features/assistant/AssistantPanel'
 import { ShortcutsOverlay, useGlobalShortcuts } from './shortcuts'
 import { useUiStore } from './uiStore'
 
@@ -68,6 +69,7 @@ export default function App() {
       <ShortcutsOverlay />
       <Tour />
       <A11yLayer />
+      <Assistant />
     </div>
   )
 }
