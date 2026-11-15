@@ -16,7 +16,7 @@ const m: Record<keyof typeof en, string> = {
   'whatif.title': 'Was wäre wenn: {action}',
   'whatif.subtitleMetric': ' · {metric}, nächste {n} h',
   'whatif.simulated': 'Simuliert',
-  'whatif.footer': 'Nur Entscheidungsunterstützung. Keine Diagnose. Mit dem medizinischen Crew-Offizier besprechen.',
+  'whatif.footer': 'Nur Entscheidungsunterstützung. Keine Diagnose. Mit dem Crew Medical Officer besprechen.',
   'whatif.recompute': 'Ab jetzt neu berechnen',
   'whatif.disclaimer': 'Simulation nur zur Besprechung. Kein Nachweis einer klinischen Wirksamkeit.',
   'whatif.noneTitle': 'Für diese Maßnahme ist kein Vergleich verfügbar',

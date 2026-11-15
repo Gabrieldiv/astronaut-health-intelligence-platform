@@ -6,7 +6,7 @@ const m: Record<keyof typeof en, string> = {
   'backdrop.name.LAUNCH': 'Start und Aufstieg',
   'backdrop.name.ISS': 'ISS, niedrige Erdumlaufbahn',
   'backdrop.name.MOON': 'Mond, Artemis-Klasse',
-  'backdrop.name.MARS_TRANSIT': 'Marstransit, tiefer Weltraum',
+  'backdrop.name.MARS_TRANSIT': 'Marstransfer, tiefer Weltraum',
   'backdrop.fact.upToG': 'Bis zu {g} g',
   'backdrop.fact.poweredMin': '{n} min angetriebener Flug',
   'backdrop.fact.altitude': '{km} km Höhe',

@@ -18,7 +18,7 @@ const m: Record<keyof typeof en, string> = {
 
   'components.event.alert': 'Alerta',
   'components.event.intervention': 'Acción registrada',
-  'components.event.checkin': 'Check-in',
+  'components.event.checkin': 'Chequeo',
   'components.chart.now': 'Ahora',
   'components.chart.noHistory': 'Aún sin historial',
   'components.chart.aria': 'Tendencia de {label} en las últimas {n} horas',

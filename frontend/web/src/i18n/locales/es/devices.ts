@@ -11,7 +11,7 @@ const m: Record<keyof typeof en, string> = {
   'devices.wearablePausedHeadline': 'Un operador pausó el monitoreo del dispositivo vestible. La falta de datos nunca se trata como normal: reanúdalo para ver las lecturas en vivo.',
 
   'devices.tile.SYSTOLIC_BP': 'Presión arterial',
-  'devices.tile.HRV_RMSSD': 'Variabilidad cardiaca',
+  'devices.tile.HRV_RMSSD': 'Variabilidad cardíaca',
   'devices.tileShort.SYSTOLIC_BP': 'PA',
   'devices.vitalAria': '{label}: {value}. Estado {status}. Abrir detalles.',
   'devices.vitalPausedAria': 'sin datos, dispositivo pausado por el operador',
@@ -48,6 +48,6 @@ const m: Record<keyof typeof en, string> = {
   'devices.indicatorOpenAria': 'Abrir lista de dispositivos.',
   'devices.minBattery': 'mín. {n}%',
   'devices.simulatedAdapters': 'Adaptadores simulados',
-  'devices.pauseNote': 'Pausar un dispositivo detiene sus lecturas hasta reanudarlo. Sus métricas muestran sin datos (nunca normal) y la acción queda registrada.',
+  'devices.pauseNote': 'Pausar un dispositivo detiene sus lecturas hasta reanudarlo. Sus métricas pasan a «sin datos» (nunca a normal) y la acción queda registrada.',
 }
 export default m

@@ -43,10 +43,10 @@ const m: Record<keyof typeof en, string> = {
 
   'common.close': '閉じる',
 
-  'shared.signalLostHeadline': 'ウェアラブルからのライブの測定値がありません。データの欠落を正常とみなすことはありません。センサーを確認してください。',
-  'shared.earth.far': '地球からの返答には最低 {rt} かかります。まず船内の手順に従ってください。',
-  'shared.earth.near': '地球との通信の遅れは片道約 {s} 秒です。地上の支援はすぐ近くにあります。',
-  'shared.earth.realtime': 'ミッションコントロールとはほぼリアルタイムで話せます。',
+  'shared.signalLostHeadline': 'ウェアラブルからリアルタイムの測定値が届いていません。データの欠落を正常とみなすことはありません。センサーを確認してください。',
+  'shared.earth.far': '地球からの返信には最低でも {rt}かかります。まず船内の手順に従ってください。',
+  'shared.earth.near': '地球との通信の遅れは片道約{s}秒です。地上の支援はすぐ近くにあります。',
+  'shared.earth.realtime': 'ミッションコントロールとは、ほぼリアルタイムで通話できます。',
   'shared.event.acknowledged': '確認済み',
   'shared.event.resolved': '解決済み',
   'shared.event.open': '未対応',

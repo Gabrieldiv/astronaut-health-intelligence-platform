@@ -4,8 +4,8 @@ import type en from '../en/crew'
 const m: Record<keyof typeof en, string> = {
   'crew.title': 'Tripulação',
   'crew.noData': 'sem dados',
-  'crew.cardAria': '{callsign}, {role}. Status: {status}',
-  'crew.cardAriaLost': '{callsign}, {role}. Status: {status}, sinal perdido',
+  'crew.cardAria': '{callsign}, {role}. Estado: {status}',
+  'crew.cardAriaLost': '{callsign}, {role}. Estado: {status}, sinal perdido',
   'crew.cardAriaPaused': '{callsign}, {role}. Monitoramento pausado pelo operador, sem leituras ao vivo',
   'crew.cardTitle': '{callsign}, {role} (tecla {key})',
   'crew.trendTitle': 'Frequência cardíaca, últimas 6 horas',
