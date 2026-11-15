@@ -8,7 +8,7 @@
  * fixed thresholds below are a safety net for the demo and must be reviewed by a
  * flight surgeon before any real use.
  */
-import type { CommProfileId, ForecastHorizonHours, InterventionKind, MetricCode, MissionPlan, RiskLevel } from '../types/domain'
+import type { CommProfileId, ExamKind, ForecastHorizonHours, InterventionKind, MetricCode, MissionPlan, RiskLevel } from '../types/domain'
 
 export const ENGINE_VERSION = 'ahi-engine 2.0.0'
 export const RISK_MODEL_VERSION = 'AHI transparent rules v2.0 (demo)'
@@ -193,6 +193,10 @@ const C = (o: Partial<MetricRuleConfig> & Pick<MetricRuleConfig, 'acuteRule' | '
   ...o,
 })
 
+function EXAM_RULE(ruleId: string): MetricRuleConfig {
+  return { kind: 'event', bucketed: false, minScale: 1, acute: false, drift: false, staleMin: 0, cadenceMin: 0, acuteRule: ruleId, driftRule: ruleId }
+}
+
 export const METRIC_RULES: Record<MetricCode, MetricRuleConfig> = {
   HEART_RATE: C({ acuteRule: 'R-HR-01', driftRule: 'R-HR-02', minScale: 3.5, physicalMin: 25, physicalMax: 220 }),
   HRV_RMSSD: C({ acuteRule: 'R-HRV-01', acute: false, minScale: 4, physicalMin: 3 }),
@@ -221,6 +225,17 @@ export const METRIC_RULES: Record<MetricCode, MetricRuleConfig> = {
   RELATIVE_HUMIDITY: C({ acuteRule: 'R-ENV-RH-01', acute: false, drift: false, bucketed: false, minScale: 3 }),
   RADIATION_DOSE_RATE: C({ acuteRule: 'R-ENV-RAD-01', acute: false, drift: false, bucketed: false, minScale: 3 }),
   RADIATION_DOSE: C({ acuteRule: 'R-RAD-02', acute: false, drift: false, bucketed: false, minScale: 1, staleMin: 45, cadenceMin: 15 }),
+  // v5 periodic exam measures. They are NOT streamed through the trackers (not in ASTRONAUT_METRICS):
+  // src/engine/exams assesses them by change from the pre-flight baseline (see EXAMS below).
+  // These entries only complete the record.
+  RETINAL_THICKNESS: EXAM_RULE('R-SANS-01'),
+  CHOROIDAL_FOLDS: EXAM_RULE('R-SANS-01'),
+  OPTIC_NERVE_SHEATH_DIAMETER: EXAM_RULE('R-SANS-01'),
+  VISUAL_ACUITY: EXAM_RULE('R-SANS-01'),
+  HEARING_THRESHOLD_HIGH: EXAM_RULE('R-HEAR-01'),
+  HEARING_THRESHOLD_LOW: EXAM_RULE('R-HEAR-01'),
+  NOISE_EXPOSURE: EXAM_RULE('R-NOISE-01'),
+  NOISE_DOSE: EXAM_RULE('R-NOISE-01'),
 }
 
 /** Metrics evaluated per astronaut (in display order). */
@@ -396,4 +411,102 @@ export const AUTONOMY = {
   nearRealTimeMaxSec: 1,
   /** At or above this one way delay, the crew acts first and the ground reviews later. */
   crewFirstMinSec: 60,
+} as const
+
+// ---------------------------------------------------------------------------
+// v5: periodic exams (src/engine/exams). Eyes (SANS monitoring) and ears (hearing, noise).
+//
+// Status always comes from the change versus the person's own pre-flight baseline (same eye or
+// ear). The few fixed numbers below are either a PUBLISHED value, cited next to it, or
+// DEMO CONFIGURATION, NOT AN OFFICIAL LIMIT. None of them is a diagnosis or a treatment trigger.
+//
+// Sources (retrieved 2026-11-15):
+// [S1] NASA OCHMO-MTB-001, "Spaceflight Associated Neuro-ocular Syndrome (SANS)", NASA-STD-3001
+//      Medical Technical Brief, 02/21/2024. https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf
+//      In-flight OCT, fundoscopy, ocular ultrasound, visual acuity and Amsler grid; "Eye Weeks" at
+//      FD 30, FD 90 and R-30 on 6 month flights; pre-flight exam 18 to 21 months before flight
+//      (OCT, acuity...) and 2-D ultrasound 6 to 9 months before; a change in peripapillary total
+//      retinal thickness of +/-19.4 µm is the range of normal measurement variability (Laurie et al.).
+// [S2] NASA HSRB, "Risk of in-mission and long-term Hearing Loss and Performance Decrements", risk
+//      record Rev B. https://www.nasa.gov/wp-content/uploads/2025/11/hsrb-hearing-loss-risk-record-rev-b-1-web.pdf
+//      Monitoring = acoustic monitoring, pre/post-flight audiometry and On-Orbit Hearing Assessments
+//      (OOHA); shift metric: > 10 dB averaged over 2, 3 and 4 kHz; ISS flight rule 72 dBA LEQ 16 h
+//      (crew worn dosimetry); sudden losses of 30 dB or more could affect mission operations.
+// [S3] NASA OCHMO-TB-035, "Acoustics", NASA-STD-3001 Technical Brief, 10/06/2023.
+//      https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-035-acoustics.pdf
+//      [V2 6115] 24-hour noise exposure: noise dose D <= 100 (equivalent to 8 h at 85 dBA TWA);
+//      [V2 6088] individual noise exposure monitoring.
+// [S4] Limardo, Allen, Danielson, "Status: Crewmember Noise Exposures on the ISS", ICES 2015,
+//      NTRS 20150011048. https://ntrs.nasa.gov/citations/20150011048
+//      Crew worn acoustic dosimetry for 24 hour periods about every 60 days.
+// ---------------------------------------------------------------------------
+
+export interface ExamSlot {
+  /** Day relative to launch (negative = before launch). */
+  day: number
+  label: string
+  kinds: readonly ExamKind[]
+}
+
+export const EXAMS = {
+  /** Flight days count from MISSION.startedAt; sessions are placed at this hour (UTC) of their day. */
+  sessionHourUtc: 13,
+  eyes: {
+    /** Pre-flight baseline sessions, days relative to launch [S1]. */
+    preflight: [
+      { day: -540, label: 'Pre-flight eye exam (about 18 months before launch)', kinds: ['OCT', 'VISUAL_ACUITY'] },
+      { day: -210, label: 'Pre-flight eye ultrasound (about 7 months before launch)', kinds: ['OCULAR_ULTRASOUND'] },
+    ] as readonly ExamSlot[],
+    /** In-flight "Eye Weeks" on flight days 30 and 90, then R-30 (30 days before return) [S1]. */
+    inflightDays: [30, 90] as readonly number[],
+    returnMinusDays: 30,
+    inflightKinds: ['OCT', 'OCULAR_ULTRASOUND', 'VISUAL_ACUITY'] as readonly ExamKind[],
+    /** [S1] published: +/-19.4 µm = normal measurement variability of peripapillary TRT on OCT. */
+    retinalThicknessChangeUm: 19.4,
+    /** DEMO CONFIGURATION, NOT AN OFFICIAL LIMIT: ONSD widening versus baseline that is flagged (mm). */
+    onsdChangeMm: 0.5,
+    /** DEMO CONFIGURATION, NOT AN OFFICIAL LIMIT: acuity loss versus baseline that is flagged (logMAR, about 1 chart line). */
+    acuityChangeLogMar: 0.1,
+    /** DEMO CONFIGURATION: flagged measures in one session at which the session reads Warning instead of Watch. */
+    signsForHigh: 2,
+  },
+  ears: {
+    /**
+     * DEMO CONFIGURATION: pre-flight audiometry day (relative to launch). [S2] confirms pre-flight
+     * audiometry but this exact day is not published in the sources above.
+     */
+    preflight: [{ day: -60, label: 'Pre-flight audiometry', kinds: ['AUDIOMETRY'] }] as readonly ExamSlot[],
+    /** DEMO CONFIGURATION: OOHA cadence (first flight day and interval). [S2] confirms OOHA, not this cadence. */
+    firstFlightDay: 15,
+    everyDays: 30,
+    /** [S2] published HSRB shift metric: mean threshold change > 10 dB at 2, 3 and 4 kHz. */
+    shiftDb: 10,
+    /** [S2] "sudden sensorineural losses (30 dB or greater) could affect mission ops": shown as Warning. */
+    largeShiftDb: 30,
+    /** Audiometer test frequencies (Hz). High pitch mean = 2, 3, 4 kHz [S2]; low pitch mean = 0.25, 0.5, 1 kHz (demo grouping). */
+    highFreqsHz: [2000, 3000, 4000] as readonly number[],
+    lowFreqsHz: [250, 500, 1000] as readonly number[],
+  },
+  noise: {
+    /** [S2] ISS flight rule: crew worn work period exposure, 72 dBA LEQ over 16 hours. */
+    workLeqDba: 72,
+    /** [S3] [V2 6115] 24 hour noise dose limit (D <= 100). */
+    doseLimitPct: 100,
+    /** [S3] criterion: 85 dBA over 8 hours equals a dose of 100. */
+    criterionDba: 85,
+    criterionHours: 8,
+    /**
+     * Exchange rate (dB per doubling of time) used to compute the dose. 3 dB is the NIOSH REL
+     * convention (DHHS NIOSH publication 98-126); [S3] does not state it. Demo assumption.
+     */
+    exchangeDb: 3,
+    /** Work and sleep period lengths (hours) used in the daily dose. */
+    workHours: 16,
+    sleepHours: 8,
+    /**
+     * DEMO CONFIGURATION: the simulator produces one crew worn reading per day so the trend is
+     * visible. On the ISS crew worn dosimetry runs for 24 hours about every 60 days [S4].
+     */
+    keepDays: 14,
+  },
 } as const

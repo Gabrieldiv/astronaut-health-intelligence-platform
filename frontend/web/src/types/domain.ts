@@ -50,6 +50,15 @@ export type MetricCode =
   | 'MOOD'
   | 'PERCEIVED_FATIGUE'
   | 'STRESS'
+  // Additive (v5): periodic exam measures (eyes: SANS monitoring; ears: hearing and noise)
+  | 'RETINAL_THICKNESS' // peripapillary total retinal thickness, OCT (µm)
+  | 'CHOROIDAL_FOLDS' // chorioretinal folds on OCT: 1 present, 0 absent
+  | 'OPTIC_NERVE_SHEATH_DIAMETER' // ocular ultrasound (mm)
+  | 'VISUAL_ACUITY' // logMAR (higher = worse)
+  | 'HEARING_THRESHOLD_HIGH' // mean hearing threshold at 2, 3 and 4 kHz (dB HL)
+  | 'HEARING_THRESHOLD_LOW' // mean hearing threshold at 0.25, 0.5 and 1 kHz (dB HL)
+  | 'NOISE_EXPOSURE' // crew worn noise exposure level over the work period, LEQ 16 h (dBA)
+  | 'NOISE_DOSE' // daily noise dose (%, 100 = the 24 hour limit)
 
 /**
  * Body regions rendered by the 3D anatomy viewer and used to group metrics.
@@ -63,6 +72,9 @@ export type BodyRegionId =
   | 'muscles' // exercise load, activity
   | 'bones' // bone loss context, radiation exposure
   | 'skin' // skin temperature, thermal load
+  // Additive (v5): periodic exam regions
+  | 'eyes' // SANS monitoring: OCT, ocular ultrasound, visual acuity (periodic exams)
+  | 'ears' // hearing tests and noise exposure (the ear is not modeled anatomically)
 
 export type DeviceKind =
   | 'BIO_MONITOR' // Astroskin / Bio-Monitor style smart shirt (simulated)
@@ -151,6 +163,101 @@ export interface HealthObservation {
   quality: { status: QualityStatus; confidence: number; is_estimated: boolean }
   context: { mission_phase: MissionPhase; activity: ActivityContext }
   metadata: Record<string, unknown>
+  /** Additive (v5): set when the value comes from a periodic exam session instead of a device stream. */
+  exam?: ExamContext
+}
+
+// ---------------------------------------------------------------------------
+// v5 additions: periodic exams (eyes, ears). All additive.
+// ---------------------------------------------------------------------------
+
+/** Kind of periodic exam. */
+export type ExamKind = 'OCT' | 'OCULAR_ULTRASOUND' | 'VISUAL_ACUITY' | 'AUDIOMETRY' | 'NOISE_DOSIMETRY'
+
+/** Body regions that are followed with periodic exams. */
+export type ExamRegionId = 'eyes' | 'ears'
+
+export type Laterality = 'LEFT' | 'RIGHT' | 'BOTH'
+
+/** Exam context of a HealthObservation that comes from a periodic exam. */
+export interface ExamContext {
+  exam_id: string
+  kind: ExamKind
+  /** Plain label of the session, e.g. "Flight day 30 eye exam". */
+  session_label: string
+  laterality: Laterality
+  /** True for pre-flight sessions: they set the personal baseline. */
+  is_baseline: boolean
+}
+
+/** One measure of an exam session compared with the pre-flight baseline (same eye or ear). */
+export interface ExamMeasureResult {
+  metric: MetricCode
+  laterality: Laterality
+  value: number | null
+  /** Pre-flight baseline value of the same measure and side. null = no baseline on file. */
+  baseline: number | null
+  /** value - baseline, null when either is missing. */
+  change: number | null
+  status: Status
+  /** Plain language, e.g. "12 µm thicker than before flight (within the usual test to test variation)". */
+  note: string
+  /** Rule that set the status, if any (e.g. "R-SANS-01"). */
+  ruleId: string | null
+}
+
+/** One exam session (several measures taken the same day). */
+export interface ExamSession {
+  id: string
+  astronautId: string
+  region: ExamRegionId
+  kinds: ExamKind[]
+  label: string
+  phase: MissionPhase
+  /** Sim epoch ms. */
+  at: number
+  /** Flight day (negative before launch). */
+  flightDay: number
+  isBaseline: boolean
+  /** Device (simulated), e.g. "SIM-OCT-ISS". */
+  device_id: string
+  data_origin: DataOrigin
+  observations: HealthObservation[]
+  /** In-flight sessions only (empty for baseline sessions). */
+  results: ExamMeasureResult[]
+  /** NO_DATA for baseline sessions (they are the reference, not an assessment). */
+  status: Status
+}
+
+/** Daily crew worn noise exposure (one value per sim day). */
+export interface NoiseDay {
+  astronautId: string
+  /** Sim epoch ms of the end of the measured day. */
+  at: number
+  flightDay: number
+  leqDba: number
+  dosePct: number
+  status: Status
+  data_origin: DataOrigin
+}
+
+/** Exam follow up of one region for one astronaut (computed by src/engine/exams). */
+export interface ExamRegionState {
+  region: ExamRegionId
+  astronautId: string
+  status: Status
+  /** Plain language summary. "No exam yet" is never "normal". */
+  summary: string
+  /** Pre-flight sessions (personal baseline), ascending. */
+  baselineSessions: ExamSession[]
+  /** In-flight sessions done so far, ascending. */
+  sessions: ExamSession[]
+  latest: ExamSession | null
+  nextDue: { at: number; flightDay: number; label: string } | null
+  /** Ears only: recent daily noise exposure, ascending (last EXAMS.noise.keepDays days). */
+  noise?: NoiseDay[]
+  /** Short provenance and method note shown under the history. */
+  method: string
 }
 
 export interface Device {
@@ -382,6 +489,8 @@ export interface AstronautHealth {
   regions: Record<BodyRegionId, RegionState>
   risk: RiskAssessment
   predictions: Partial<Record<MetricCode, Prediction>>
+  /** Additive (v5): periodic exam follow up (eyes, ears). */
+  exams?: Partial<Record<ExamRegionId, ExamRegionState>>
 }
 
 export interface EnvironmentState {
@@ -404,6 +513,7 @@ export type ScenarioId =
   | 'PERFORMANCE_DECLINE'
   | 'SENSOR_FAILURE'
   | 'ACUTE_CARDIO' // sudden tachycardia + SpO2 drop for alert demo
+  | 'SANS_PROGRESSION' // Additive (v5): gradual SANS like change in one astronaut's eye exams
 
 export interface ScenarioDefinition {
   id: ScenarioId
