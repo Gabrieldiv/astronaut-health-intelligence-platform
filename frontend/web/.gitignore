@@ -3,3 +3,6 @@ dist
 *.local
 .vite
 .cache
+
+# Vercel CLI local link and pulled env
+.vercel
