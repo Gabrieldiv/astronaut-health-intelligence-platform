@@ -28,6 +28,7 @@ import { EXAM_REGION_IDS } from '../anatomy/regions'
 import { BODY_REGIONS, focusTarget, useActions, useEscapeClearsStructure, usePendingActions, useSelectedStructure, useSignalLost } from '../shared/hooks'
 import { RegionDetail } from './RegionDetail'
 import { MultivariateNote } from './MultivariateNote'
+import { AstraNote } from '../astra/AstraNote'
 import { forHorizon, forecastMessage, historyNote, horizonText, useForecastHorizon } from './forecastHorizon'
 import { HorizonPicker } from './HorizonPicker'
 import { StructureDetail, StructureUnavailable } from './StructureDetail'
@@ -256,6 +257,7 @@ function Issues({ astronautId }: { astronautId: string }) {
         </button>
       )}
       <MultivariateNote astronautId={astronautId} />
+      <AstraNote astronautId={astronautId} />
     </section>
   )
 }

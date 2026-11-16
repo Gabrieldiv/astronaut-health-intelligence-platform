@@ -188,5 +188,15 @@ const m: Record<keyof typeof en, string> = {
   'attention.exam.newestFirst': '{title}, neueste zuerst',
   'attention.exam.noiseTitle': 'Lärmbelastung, letzte {n} Tage',
   'attention.exam.decisionSupport': 'Nur Entscheidungsunterstützung, keine Diagnose.',
+  'attention.astra.aria': 'Abweichung vom persönlichen Normalbereich, experimentell',
+  'attention.astra.title': 'Abweichung vom persönlichen Normalbereich',
+  'attention.astra.level.LOW': 'Im persönlichen Normalbereich',
+  'attention.astra.level.MODERATE': 'Mäßige Abweichung',
+  'attention.astra.level.HIGH': 'Starke Abweichung',
+  'attention.astra.level.NO_DATA': 'Nicht genug Daten',
+  'attention.astra.virtual': 'Virtueller Verlauf, kalibriert an echten NASA Bettruhe Daten. SIMULATED.',
+  'attention.astra.capped': 'Der virtuelle Verlauf endet an Missionstag {day}. Dieser Tag wird gezeigt.',
+  'attention.astra.unusual': 'Ungewöhnliche Kombination der Vitalwerte (nur zur Information, ändert nie die Stufe).',
+  'attention.astra.note': 'ASTRA Analyse von {n} Tagen. Nur Entscheidungshilfe, keine Diagnose.',
 }
 export default m
