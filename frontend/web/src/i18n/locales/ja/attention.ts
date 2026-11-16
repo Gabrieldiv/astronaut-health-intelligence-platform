@@ -188,5 +188,15 @@ const m: Record<keyof typeof en, string> = {
   'attention.exam.newestFirst': '{title}、新しい順',
   'attention.exam.noiseTitle': '騒音ばく露、過去 {n}日',
   'attention.exam.decisionSupport': '意思決定支援のみを目的としており、診断ではありません。',
+  'attention.astra.aria': '個人の基準からのずれ、試験的',
+  'attention.astra.title': '個人の基準からのずれ',
+  'attention.astra.level.LOW': '個人の範囲内',
+  'attention.astra.level.MODERATE': '中程度のずれ',
+  'attention.astra.level.HIGH': '大きなずれ',
+  'attention.astra.level.NO_DATA': 'データ不足',
+  'attention.astra.virtual': 'NASAの実測ベッドレストデータで調整した仮想履歴。SIMULATED。',
+  'attention.astra.capped': '仮想履歴はミッション{day}日目で終わります。その日を表示しています。',
+  'attention.astra.unusual': 'バイタルの珍しい組み合わせ(参考情報で、レベルは変わりません)。',
+  'attention.astra.note': 'ASTRAによる{n}日分の分析。意思決定の支援であり、診断ではありません。',
 }
 export default m
