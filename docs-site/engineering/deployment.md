@@ -103,9 +103,9 @@ Workflows only run when the files they check change (path filters), all with `co
 | Workflow | Runs on | Steps |
 | --- | --- | --- |
 | `ci.yml` (App) | Push to `master` and pull request to `master` or `develop` touching `frontend/web/**` | `npm ci`, `npm run lint` (oxlint, errors fail, warnings are reported), `npx tsc -b`, `npm test`, `npx vite build` |
-| `ci.yml` (End to end) | The same triggers | `npm ci`, install Chromium, `npm run e2e` (functional tests; the visual tests are skipped on Linux) |
+| `ci.yml` (End to end) | The same triggers | `npm ci`, install Chromium, `npm run e2e` (functional tests and the visual tests, with `E2E_VISUAL=1` against the committed Linux baselines) |
 | `backend.yml` (API) | Push to `master` and pull request to `master` or `develop` touching `backend/**` | Install the requirements, `python -m pytest` |
-| `visual-baselines.yml` | Push to a branch named `visual/**` (manual use) | Runs the visual tests with `E2E_VISUAL=1` and uploads the Linux snapshots as an artifact to commit ([Testing strategy](./testing#end-to-end-and-visual-tests)) |
+| `visual-baselines.yml` | Push to a branch named `visual/**` (manual use) | Manual: runs the visual tests with `E2E_VISUAL=1` and uploads the Linux snapshots as the artifact `visual-baselines-linux` to commit ([Testing strategy](./testing#end-to-end-and-visual-tests)) |
 | `docs-check.yml` (Docs portal) | Pull request to `master` or `develop` touching `docs-site/**` | `npm ci`, `npm run docs:build` (VitePress fails on dead internal links) |
 | `docs-deploy.yml` | Push to `master` touching `docs-site/**` | Same build as the docs check, then publish; on `master` this build is the gate, so the portal is never built twice for one push |
 
@@ -128,6 +128,21 @@ grep -rnP '\x{2014}|\x{2013}' --include=*.md --exclude-dir=node_modules .   # mu
 ## The app itself
 
 The web app is a static bundle (`npx vite build` in `frontend/web` writes `dist/`) and could be served by any static host. Hosting it publicly for judges is <StatusBadge status="PLANNED" /> ([Roadmap](../resources/roadmap)); today it runs locally ([Setup](./quick-start)).
+
+## Deploying the app (optional): Vercel
+
+The portal is deployed by GitHub Actions to GitHub Pages. The web app is a static site, so it can be deployed separately, for example on Vercel, with these settings:
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | `frontend/web` |
+| Framework Preset | Vite |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Node.js version | 22 |
+| Environment variable | `VITE_API_URL=off` |
+
+`VITE_API_URL=off` starts the app in the offline demo mode. Ask AHI shows as offline because the FastAPI backend is not part of that deployment. This page does not claim that a deployment exists.
 
 ## Next steps
 

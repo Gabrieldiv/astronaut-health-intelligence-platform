@@ -1,6 +1,6 @@
 ---
 title: Estratégia de testes
-description: Os 48 arquivos vitest com 430 testes, os testes ponta a ponta e visuais do Playwright e a suíte pytest do backend da Astronaut Health Intelligence Platform, o que cada um cobre, a avaliação do motor, o CI e as lacunas conhecidas.
+description: Os 49 arquivos vitest com 450 testes, os testes ponta a ponta e visuais do Playwright e a suíte pytest do backend da Astronaut Health Intelligence Platform, o que cada um cobre, a avaliação do motor, o CI e as lacunas conhecidas.
 status: IMPLEMENTED
 origin: SIMULATED
 code:
@@ -23,8 +23,8 @@ verified: 2026-11-15
 
 A Astronaut Health Intelligence Platform (AHI) é testada em três camadas: **testes unitários e de cenário** (vitest), **avaliação reproduzível do motor** (`npm run evaluate`) e **checagens de build** (tipos, build do app e do portal) no CI.
 
-::: info Estado em 15/11/2026
-**430 testes web em 48 arquivos, todos passando**, mais **14 testes ponta a ponta e 6 testes visuais do Playwright** (`npm run e2e`). Checagem de tipos limpa e build de produção ok. Rode com `npm test` dentro de `frontend/web`. O backend tem **44 testes pytest em 6 arquivos** (`python -m pytest` em `backend`), com o HTTP externo simulado (respx): as fontes da NASA e a Claude API nunca são chamadas.
+::: info Estado em 16/11/2026
+**450 testes web em 49 arquivos, todos passando**, mais **23 testes funcionais e 8 testes visuais do Playwright** (`npm run e2e`). Checagem de tipos limpa e build de produção ok. Rode com `npm test` dentro de `frontend/web`. O backend tem **86 testes pytest em 7 arquivos** (`python -m pytest` em `backend`), com o HTTP externo simulado (respx): as fontes da NASA e a Claude API nunca são chamadas.
 :::
 
 ## Pirâmide atual
@@ -41,9 +41,9 @@ A Astronaut Health Intelligence Platform (AHI) é testada em três camadas: **te
 | Componentes de interface | | Nenhum teste de componente React | <StatusBadge status="NOT_IMPLEMENTED" /> |
 | Lógica do visualizador | vitest | Matemática do zoom, modos de interação, política de nova tentativa, tempo da varredura, enquadramento do corpo inteiro, rotação em repouso, navegação pelo teclado (48 testes em 7 arquivos) | <StatusBadge status="IMPLEMENTED" /> |
 | Renderização 3D | | Estados visuais, picking, carga e fallback: verificação visual com `anatomy-lab.html`, sem teste de pixels | <StatusBadge status="NOT_IMPLEMENTED" /> |
-| Ponta a ponta no navegador | Playwright | O roteiro da demo: abrir o painel, selecionar astronauta, executar cenário, reconhecer alerta e a trilha de auditoria ([detalhes](#end-to-end-and-visual-tests)); 14 testes, rodam no CI | <StatusBadge status="IMPLEMENTED" /> |
-| Regressão visual de painéis | Playwright | Capturas de seis painéis; 6 testes, ainda sem imagens de referência commitadas, pulados no CI | <StatusBadge status="PLANNED" /> |
-| Integração com backend | pytest | Health e cadastro, ingestão e observações, conectores NASA, assistente, análise, schema OpenAPI (44 testes) | <StatusBadge status="IMPLEMENTED" /> |
+| Ponta a ponta no navegador | Playwright | O roteiro da demo: abrir o painel, selecionar astronauta, executar cenário, reconhecer alerta e a trilha de auditoria ([detalhes](#end-to-end-and-visual-tests)); 23 testes, rodam no CI | <StatusBadge status="IMPLEMENTED" /> |
+| Regressão visual de painéis | Playwright | Capturas de painéis estáveis ([detalhes](#testes-visuais)); 8 testes, imagens de referência de Linux commitadas, rodam no CI | <StatusBadge status="IMPLEMENTED" /> |
+| Integração com backend | pytest | Health e cadastro, ingestão e observações, conectores NASA, assistente, análise, schema OpenAPI (86 testes) | <StatusBadge status="IMPLEMENTED" /> |
 
 ## Arquivos de teste do app
 
@@ -96,8 +96,9 @@ A Astronaut Health Intelligence Platform (AHI) é testada em três camadas: **te
 | <CodeLink path="frontend/web/src/app/useStatusFavicon.test.ts" /> | 2 | Ponto vermelho no ícone da aba só com alerta CRITICAL aberto; o ícone é uma data URL SVG |
 | <CodeLink path="frontend/web/src/features/a11y/languageSpeech.test.ts" /> | 3 | Trocar de idioma cancela a voz antiga e anuncia uma vez no novo idioma; uma segunda troca rápida fala só o último; silêncio com a audiodescrição desligada |
 | <CodeLink path="frontend/web/src/lib/api/connectivity.test.ts" /> | 7 | Automático, Online e Offline: escolha guardada, `VITE_API_URL=off` vence, chip da barra superior, armazenamento bloqueado, Offline nunca toca a rede, Online avisa que a API está inacessível e ainda serve o snapshot empacotado |
+| <CodeLink path="frontend/web/src/features/profile/profileData.test.ts" /> | 20 | Dados do perfil da tripulação: métricas agrupadas por domínio sem linhas inventadas; marcador da faixa pessoal, valor ausente é `NO_DATA`; respostas do check-in em linguagem simples; dose de radiação nunca zero sem dado, comparada com o limite de carreira da NASA; alertas, ações e linhas de auditoria por astronauta; aparelhos em uso; o store do perfil |
 | <CodeLink path="frontend/web/src/i18n/engineText.test.ts" /> | 14 | Frases do motor por mensagens estruturadas: inglês byte a byte, toda frase amostrada traduzida em cada idioma, perfis de missão e títulos das regras de exame, toda chave do motor existe em inglês |
-| **Total** | **430** | |
+| **Total** | **450** | |
 
 ## Ponta a ponta e testes visuais {#end-to-end-and-visual-tests}
 
@@ -105,12 +106,20 @@ O Playwright (só Chromium) dirige o app real em um navegador. Configuração: <
 
 | Suíte | Testes | O que cobre |
 | --- | --- | --- |
-| <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> | 14 | O roteiro da demo como um usuário: a Ground view com o selo SIMULATED, fadiga progressiva, evento cardíaco agudo com a trilha de auditoria, falha de sensor (sem dado, nunca normal), pausar e retomar um aparelho, horizontes de previsão, orientação do trânsito para Marte, cartões de sistemas do corpo da Crew view, link de salto, o navegador do corpo pelo teclado, Ask AHI offline e fechar com Esc, a aba de contexto da NASA no modo offline, trocar o idioma para japonês e voltar |
-| <CodeLink path="frontend/web/e2e/visual.spec.ts" /> | 6 | Capturas de painéis estáveis: barra superior, lista da tripulação, painel de atenção, painel de aparelhos, coluna lateral da Crew view, painel Mission and Earth link. O canvas 3D é mascarado |
+| <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> | 15 | O roteiro da demo como um usuário: a Ground view com o selo SIMULATED, fadiga progressiva, evento cardíaco agudo com a trilha de auditoria, falha de sensor (sem dado, nunca normal), pausar e retomar um aparelho, horizontes de previsão, orientação do trânsito para Marte, cartões de sistemas do corpo da Crew view, link de salto, o navegador do corpo pelo teclado, Ask AHI offline e fechar com Esc, a aba de contexto da NASA no modo offline, trocar o idioma para japonês e voltar, o diálogo de perfil da tripulação (todas as seções, trocar de astronauta, Esc) |
+| <CodeLink path="frontend/web/e2e/polish.spec.ts" /> | 8 | O polimento final: a contagem de indicadores e o detalhamento por sistema do corpo, selecionar uma linha mostra o sistema no corpo, o painel Mission and Earth link e o chip do perfil da missão (Lua), manchete e título de alerta traduzidos para português e restaurados, modo Offline escondendo a lista do OSDR, pausar o Bio-Monitor |
+| <CodeLink path="frontend/web/e2e/visual.spec.ts" /> | 8 | Capturas de painéis estáveis (10 imagens): barra superior, lista da tripulação, painel de atenção, painel de aparelhos, coluna lateral da Crew view (sistemas do corpo e ações), painel Mission and Earth link (duas abas), o detalhamento dos indicadores e o que o perfil da missão muda. O canvas 3D é mascarado |
 
 - Os testes sobem o próprio servidor de desenvolvimento na porta 5190 e sempre rodam no modo demo offline: o endereço da API aponta para uma porta em que nada escuta, e toda requisição para ela é abortada.
 - A simulação tem semente e fica pausada em um instante simulado fixo, então as capturas são repetíveis.
-- **As imagens de referência dos testes visuais ainda não estão commitadas.** As capturas dependem da plataforma (`e2e/__screenshots__/<plataforma>/`). Gere-as com `npm run e2e:update` na máquina que vai compará-las. Para Linux (CI), envie um branch chamado `visual/baselines`: o workflow `.github/workflows/visual-baselines.yml` roda os testes visuais com `E2E_VISUAL=1` e publica as capturas como artefato para commitar em `frontend/web/e2e/__screenshots__/linux/`. Até lá os testes visuais são pulados no Linux (use `E2E_VISUAL=1` para rodá-los).
+
+### Testes visuais {#testes-visuais}
+
+Os 8 testes de <CodeLink path="frontend/web/e2e/visual.spec.ts" /> comparam capturas de painéis estáveis com imagens de referência commitadas (10 imagens). O canvas 3D é mascarado e as animações CSS ficam desligadas, então só a interface em volta do corpo é comparada.
+
+- **Onde ficam as imagens de referência:** `frontend/web/e2e/__screenshots__/linux/visual.spec.ts/`. Só as de Linux estão commitadas (não há imagens de Windows).
+- **No CI:** o job ponta a ponta roda com `E2E_VISUAL=1`, então os testes visuais rodam contra as imagens de Linux em todo pull request. Fora do Windows o arquivo é pulado, a menos que `E2E_VISUAL=1` esteja definido.
+- **Como regerá-las depois de uma mudança intencional de interface:** envie um branch chamado `visual/baselines`. O workflow manual `.github/workflows/visual-baselines.yml` roda os testes visuais com `E2E_VISUAL=1` e publica as imagens de Linux como o artefato `visual-baselines-linux`. Baixe-o e commite as imagens em `frontend/web/e2e/__screenshots__/linux/`. No Windows, `npm run e2e:update` regenera as imagens locais.
 
 ## Avaliação do motor
 
@@ -125,9 +134,9 @@ Os workflows rodam só quando os arquivos que eles verificam mudam:
 | Workflow | Quando roda | Passos |
 | --- | --- | --- |
 | `ci.yml`, job App | Push para `master` e pull request para `master` ou `develop` que alteram `frontend/web/**` | `npm ci`, `npm run lint`, `npx tsc -b`, `npm test`, `npx vite build` (Node 22) |
-| `ci.yml`, job End to end | Os mesmos gatilhos | `npm ci`, instala o Chromium, `npm run e2e` (só os testes funcionais; os visuais são pulados no Linux) |
+| `ci.yml`, job End to end | Os mesmos gatilhos | `npm ci`, instala o Chromium, `npm run e2e` (os testes funcionais e, com `E2E_VISUAL=1`, os visuais contra as imagens de referência de Linux commitadas) |
 | `backend.yml` | Mudanças em `backend/**` | Testes do backend |
-| `visual-baselines.yml` | Push em branches `visual/**` (manual) | Gera as imagens de referência visuais para Linux e as publica como artefato |
+| `visual-baselines.yml` | Push em branches `visual/**` (manual) | Regera as imagens de referência visuais para Linux e as publica como artefato (`visual-baselines-linux`) |
 | `docs-check.yml` (portal) | Pull request para `master` ou `develop` que altera `docs-site/**` | `npm ci`, `npm run docs:build` (falha com link interno quebrado) |
 
 Em `master`, o build do portal acontece uma vez só, dentro do deploy ([Documentação e deploy](/pt/engineering/deployment)).
@@ -136,7 +145,7 @@ Em `master`, o build do portal acontece uma vez só, dentro do deploy ([Document
 
 - Sem testes de componente React nem de acessibilidade automatizada.
 - Sem teste de pixels do 3D (o canvas é mascarado nos testes visuais). A anatomia é testada como dado, não como pixels: o mapeamento de estruturas para regiões, as regras de seleção e o manifesto são TypeScript puro e rodam em node. O teste de contrato lê os arquivos GLB publicados, então um atlas reconstruído que quebre um id do qual o app depende reprova o `npm test`.
-- As imagens de referência dos testes visuais dos painéis ainda precisam ser geradas e commitadas (Windows com `npm run e2e:update`, Linux pelo workflow `visual-baselines.yml`).
+- As imagens de referência dos testes visuais existem só para Linux; depois de mudanças de interface é preciso regerá-las pelo workflow `visual-baselines.yml`.
 - Os scripts de importação do OSDR têm checagens próprias (falham com unidade misturada ou sexo divergente), mas não têm testes vitest.
 - A avaliação não roda no CI; é executada à mão quando regras ou cenários mudam.
 

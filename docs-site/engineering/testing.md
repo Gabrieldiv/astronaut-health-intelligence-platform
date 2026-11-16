@@ -1,6 +1,6 @@
 ---
 title: Testing Strategy
-description: How the Astronaut Health Intelligence Platform is tested, the 48 vitest files with 430 tests, the Playwright end to end and visual tests and the backend pytest suite, what each covers, plus what is not tested yet.
+description: How the Astronaut Health Intelligence Platform is tested, the 49 vitest files with 450 tests, the Playwright end to end and visual tests and the backend pytest suite, what each covers, plus what is not tested yet.
 status: IMPLEMENTED
 code:
   - frontend/web/package.json
@@ -21,12 +21,12 @@ verified: 2026-11-15
 
 The rules are the product, so the Astronaut Health Intelligence Platform (AHI) tests the engine first. Web tests use **vitest**, run headless (no browser) and are deterministic because the simulator is seeded. The backend uses **pytest** with external HTTP mocked (respx), so the live NASA sources and the Claude API are never called.
 
-| Fact | Value (2026-11-15) |
+| Fact | Value (2026-11-16) |
 | --- | --- |
-| Web test files | 48 |
-| Web tests | 430, all passing |
-| End to end tests (Playwright) | 14 functional tests plus 6 visual tests (`npm run e2e` in `frontend/web`) |
-| Backend tests | 44 in 6 files (`python -m pytest` in `backend`) |
+| Web test files | 49 |
+| Web tests | 450, all passing |
+| End to end tests (Playwright) | 23 functional tests plus 8 visual tests (`npm run e2e` in `frontend/web`) |
+| Backend tests | 86 in 7 files (`python -m pytest` in `backend`) |
 | Typecheck | `npx tsc -b` clean |
 | Production build | `npx vite build` ok |
 | Where | Next to the code (`*.test.ts`) |
@@ -45,9 +45,9 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | 3D rendering | Visual states, picking, loading and fallback, checked by hand on `anatomy-lab.html`; the canvas is masked in the visual tests | <StatusBadge status="NOT_IMPLEMENTED" /> (no pixel test) |
 | Evaluation | Headless replay with metrics ([Results](../validation/results)) | <StatusBadge status="IMPLEMENTED" /> (script, not a test) |
 | UI component tests | React components | <StatusBadge status="PLANNED" /> |
-| End to end (browser) | Playwright: the demo script flows, including run scenario, acknowledge alert and write the audit trail (spec section 16) ([details](#end-to-end-and-visual-tests)) | <StatusBadge status="IMPLEMENTED" /> (14 tests, run in CI) |
-| Visual regression of panels | Playwright screenshots of six panels | <StatusBadge status="PLANNED" /> (6 tests, no committed baselines yet, skipped in CI) |
-| API, database, ingestion integration | Health and registry, ingestion and observations, NASA connectors, assistant, analytics, OpenAPI schema | <StatusBadge status="IMPLEMENTED" /> (pytest, 44 tests) |
+| End to end (browser) | Playwright: the demo script flows, including run scenario, acknowledge alert and write the audit trail (spec section 16) ([details](#end-to-end-and-visual-tests)) | <StatusBadge status="IMPLEMENTED" /> (23 tests, run in CI) |
+| Visual regression of panels | Playwright screenshots of stable panels ([details](#visual-tests)) | <StatusBadge status="IMPLEMENTED" /> (8 tests, Linux baselines committed, run in CI) |
+| API, database, ingestion integration | Health and registry, ingestion and observations, NASA connectors, assistant, analytics, OpenAPI schema | <StatusBadge status="IMPLEMENTED" /> (pytest, 86 tests) |
 | Data tests | Schema, units, timestamps, duplicates, provenance | Partial: enforced inside the OSDR import script (fails on sex mismatch, counts missing cells), not as separate tests |
 
 ## Web test files
@@ -101,6 +101,7 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | <CodeLink path="frontend/web/src/app/useStatusFavicon.test.ts" /> | 2 | Red dot on the tab icon only for an open CRITICAL alert; the icon is an SVG data URL |
 | <CodeLink path="frontend/web/src/features/a11y/languageSpeech.test.ts" /> | 3 | A language change cancels the old voice and announces once in the new language; a quick second change speaks only the latest; silent with audio description off |
 | <CodeLink path="frontend/web/src/lib/api/connectivity.test.ts" /> | 7 | Automatic, Online and Offline: stored choice, `VITE_API_URL=off` wins, top bar chip, blocked storage, Offline never touches the network, Online reports an unreachable API and still serves the bundled snapshot |
+| <CodeLink path="frontend/web/src/features/profile/profileData.test.ts" /> | 20 | Crew profile data: metrics grouped by domain with no invented rows; personal band marker, missing value is `NO_DATA`; plain language check-in answers; radiation dose never zero without data, compared with the NASA career limit; alerts, actions and audit lines per astronaut; worn devices; the profile store |
 | <CodeLink path="frontend/web/src/i18n/engineText.test.ts" /> | 14 | Engine sentences through structured messages: English byte for byte, every sampled sentence translated in each language, mission profiles and exam rule titles, every engine key exists in English |
 
 ## End to end and visual tests {#end-to-end-and-visual-tests}
@@ -109,12 +110,20 @@ Playwright (Chromium only) drives the real app in a browser. Configuration: <Cod
 
 | Suite | Tests | What it covers |
 | --- | --- | --- |
-| <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> | 14 | The demo script as a user: the ground view with the SIMULATED badge, progressive fatigue, acute cardio event with the audit trail, sensor failure (no data, never normal), pausing and resuming a device, forecast horizons, Mars transit guidance, Crew view body system cards, skip link, the keyboard body navigator, Ask AHI offline and closing with Esc, the NASA context tab in offline mode, switching language to Japanese and back |
-| <CodeLink path="frontend/web/e2e/visual.spec.ts" /> | 6 | Screenshots of stable panels: top bar, crew list, attention panel, devices panel, Crew view side column, Mission and Earth link panel. The 3D canvas is masked |
+| <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> | 15 | The demo script as a user: the ground view with the SIMULATED badge, progressive fatigue, acute cardio event with the audit trail, sensor failure (no data, never normal), pausing and resuming a device, forecast horizons, Mars transit guidance, Crew view body system cards, skip link, the keyboard body navigator, Ask AHI offline and closing with Esc, the NASA context tab in offline mode, switching language to Japanese and back, the crew profile dialog (every section, switch astronaut, Esc) |
+| <CodeLink path="frontend/web/e2e/polish.spec.ts" /> | 8 | The final polish: the indicator count and its breakdown by body system, selecting a row shows that system on the body, the Mission and Earth link panel and the mission profile chip (Moon), stage headline and alert title translated to Portuguese and restored, Offline mode hiding the OSDR list, pausing the Bio-Monitor |
+| <CodeLink path="frontend/web/e2e/visual.spec.ts" /> | 8 | Screenshots of stable panels (10 images): top bar, crew list, attention panel, devices panel, Crew view side column (body systems and actions), Mission and Earth link panel (two tabs), the indicator breakdown popover and what the mission profile changes. The 3D canvas is masked |
 
 - The tests start their own dev server on port 5190 and always run in offline demo mode: the API address points at a port nothing listens on, and every request to it is aborted.
 - The simulation is seeded and paused at a fixed simulated time, so the screenshots are repeatable.
-- **Visual baselines are not committed yet.** Snapshots are platform specific (`e2e/__screenshots__/<platform>/`). Generate them with `npm run e2e:update` on the machine that will compare them. For Linux (CI), push a branch named `visual/baselines`: the workflow `.github/workflows/visual-baselines.yml` runs the visual tests with `E2E_VISUAL=1` and uploads the snapshots as an artifact to commit under `frontend/web/e2e/__screenshots__/linux/`. Until then the visual tests are skipped on Linux (set `E2E_VISUAL=1` to run them).
+
+### Visual tests {#visual-tests}
+
+The 8 tests in <CodeLink path="frontend/web/e2e/visual.spec.ts" /> compare screenshots of stable panels with committed baseline images (10 images). The 3D canvas is masked and CSS animations are disabled, so only the interface around the body is compared.
+
+- **Where the baselines live:** `frontend/web/e2e/__screenshots__/linux/visual.spec.ts/`. Only Linux baselines are committed (no Windows baselines).
+- **In CI:** the end to end job runs with `E2E_VISUAL=1`, so the visual tests run against the Linux baselines on every pull request. Outside Windows the file is skipped unless `E2E_VISUAL=1` is set.
+- **How to regenerate them after an intended UI change:** push a branch named `visual/baselines`. The manual workflow `.github/workflows/visual-baselines.yml` runs the visual tests with `E2E_VISUAL=1` and uploads the Linux images as the artifact `visual-baselines-linux`. Download it and commit the images under `frontend/web/e2e/__screenshots__/linux/`. On Windows, `npm run e2e:update` regenerates the local images.
 
 ## Principles
 
@@ -126,7 +135,7 @@ Playwright (Chromium only) drives the real app in a browser. Configuration: <Cod
 
 ## In CI
 
-The CI workflow (`.github/workflows/ci.yml`) has two jobs. **App** runs lint, the typecheck, `npm test` and the production build. **End to end** installs Chromium and runs `npm run e2e` (the functional tests; the visual tests are skipped on Linux). Both run on pushes to `master` and pull requests to `master` or `develop` that touch `frontend/web/**`. The backend has its own workflow (`backend.yml`). The documentation build runs in pull requests (`docs-check.yml`) and in the deploy on `master`. A manual workflow (`visual-baselines.yml`, branches named `visual/**`) generates the Linux visual baselines. See [Documentation and deployment](./deployment#validation).
+The CI workflow (`.github/workflows/ci.yml`) has two jobs. **App** runs lint, the typecheck, `npm test` and the production build. **End to end** installs Chromium and runs `npm run e2e` (the functional tests and, with `E2E_VISUAL=1`, the visual tests against the committed Linux baselines). Both run on pushes to `master` and pull requests to `master` or `develop` that touch `frontend/web/**`. The backend has its own workflow (`backend.yml`). The documentation build runs in pull requests (`docs-check.yml`) and in the deploy on `master`. A manual workflow (`visual-baselines.yml`, branches named `visual/**`) regenerates the Linux visual baselines. See [Documentation and deployment](./deployment#validation).
 
 ## Next steps
 

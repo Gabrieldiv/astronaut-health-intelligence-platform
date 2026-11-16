@@ -73,7 +73,7 @@ The canonical list of what the Astronaut Health Intelligence Platform (AHI) cann
 | --- | --- | --- |
 | No React component tests. Playwright end to end tests cover the demo script, and visual tests cover the panels | UI regressions outside those flows are caught by hand | [Testing strategy](../engineering/testing) |
 | No pixel test of the 3D rendering: the canvas is masked in the visual tests, and the anatomy data layer and viewer logic are tested as data | Visual states, picking and loading of the body are checked by hand on the lab page | [Testing strategy](../engineering/testing) |
-| The Playwright visual tests have no committed baseline images yet (neither Windows nor Linux), so they are skipped in CI; the functional end to end tests run in CI | Panel visual regressions are not checked automatically until the baselines are generated and committed | [Testing strategy](../engineering/testing#end-to-end-and-visual-tests) |
+| The Playwright visual baselines are committed for Linux only (no Windows baselines); after a UI change they must be regenerated with the manual `visual-baselines.yml` workflow | A visual test fails on any intended UI change until the baselines are refreshed | [Testing strategy](../engineering/testing#end-to-end-and-visual-tests) |
 | No formal accessibility audit or screen reader test | Measures exist in code but are unverified | [Accessibility](../product/accessibility#limitations) |
 | Performance figures are informal observations on one laptop | Not a benchmark; other machines, browsers and screens were not measured | [Results](./results#measured-performance) |
 

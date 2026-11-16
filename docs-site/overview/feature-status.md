@@ -133,9 +133,9 @@ Data origins: <OriginBadge origin="SIMULATED" /> simulator output, <OriginBadge 
 | Health engine in Python (port of the TypeScript engine) | <StatusBadge status="PLANNED" /> | [Roadmap](../resources/roadmap) | <CodeLink path="backend/app/modules/engine/__init__.py" label="seam only" /> |
 | Authentication and role based access control (not implemented: the demo has no login; needs SSO and server side RBAC in the backend) | <StatusBadge status="PLANNED" /> | [Roadmap](../resources/roadmap#access-profiles) | none |
 | Persistent audit trail | <StatusBadge status="PLANNED" /> | [Governance](../data/governance-and-privacy) | none (in memory today) |
-| Unit and scenario tests (web: 430 tests in 48 files; backend: 44 pytest tests in 6 files) | <StatusBadge status="IMPLEMENTED" /> | [Testing](../engineering/testing) | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> |
+| Unit and scenario tests (web: 450 tests in 49 files; backend: 86 pytest tests in 7 files) | <StatusBadge status="IMPLEMENTED" /> | [Testing](../engineering/testing) | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> |
 | Headless evaluation of the engine | <StatusBadge status="IMPLEMENTED" /> | [Results](../validation/results) | <CodeLink path="frontend/web/scripts/evaluate.ts" /> |
-| End to end browser tests (Playwright: 14 functional tests run in CI; 6 visual tests wait for committed baselines) | <StatusBadge status="IMPLEMENTED" /> | [Testing](../engineering/testing#end-to-end-and-visual-tests) | <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> |
+| End to end browser tests (Playwright: 23 functional tests and 8 visual tests, all run in CI with committed Linux baselines) | <StatusBadge status="IMPLEMENTED" /> | [Testing](../engineering/testing#end-to-end-and-visual-tests) | <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> |
 | CI and documentation deployment (GitHub Actions, GitHub Pages) | <StatusBadge status="IMPLEMENTED" /> | [Deployment](../engineering/deployment) | <CodeLink path=".github/workflows/docs-deploy.yml" /> |
 
 ## Next steps
