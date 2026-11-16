@@ -114,6 +114,20 @@ def test_implausible_value_is_treated_as_missing(client: TestClient) -> None:
     assert {r["date"]: r for r in out["results"]}[body["days"][30]["date"]]["deviations"]["HEART_RATE"] is None
 
 
+def test_day_without_any_reading_is_no_data_even_when_weight_rate_has_a_value(client: TestClient) -> None:
+    body = person()
+    for d in body["days"][30:40]:  # ten days with the sensors off
+        d["values"] = {m: None for m in d["values"]}
+    out = post(client, body).json()
+    by_date = {r["date"]: r for r in out["results"]}
+    for d in body["days"][30:40]:
+        r = by_date[d["date"]]
+        assert r["level"] == "NO_DATA" and r["detectors"] == [] and r["main_indicator"] is None
+        assert all(v is None for v in r["deviations"].values())
+        assert r["multivariate_score"] is None and r["multivariate_flag"] is False
+    assert by_date[body["days"][41]["date"]]["level"] == "LOW"
+
+
 def test_only_baseline_days_returns_no_judged_days(client: TestClient) -> None:
     out = post(client, person(inn=0, post=0)).json()
     assert out["results"] == []
