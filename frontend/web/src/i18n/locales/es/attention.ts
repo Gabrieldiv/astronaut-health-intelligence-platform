@@ -188,5 +188,15 @@ const m: Record<keyof typeof en, string> = {
   'attention.exam.newestFirst': '{title}, los más recientes primero',
   'attention.exam.noiseTitle': 'Exposición al ruido, últimos {n} días',
   'attention.exam.decisionSupport': 'Solo apoyo a la decisión, no es un diagnóstico.',
+  'attention.astra.aria': 'Desviación del patrón personal, experimental',
+  'attention.astra.title': 'Desviación del patrón personal',
+  'attention.astra.level.LOW': 'Dentro del patrón personal',
+  'attention.astra.level.MODERATE': 'Desviación moderada',
+  'attention.astra.level.HIGH': 'Desviación alta',
+  'attention.astra.level.NO_DATA': 'Datos insuficientes',
+  'attention.astra.virtual': 'Historial virtual calibrado con datos reales de reposo en cama de la NASA. SIMULATED.',
+  'attention.astra.capped': 'El historial virtual termina en el día {day} de la misión. Se muestra ese día.',
+  'attention.astra.unusual': 'Combinación inusual de signos vitales (informativo, nunca cambia el nivel).',
+  'attention.astra.note': 'Análisis ASTRA de {n} días. Apoyo a la decisión, no es un diagnóstico.',
 }
 export default m
