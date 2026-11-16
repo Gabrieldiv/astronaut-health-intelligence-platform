@@ -80,12 +80,12 @@ Todos rodam dentro de `frontend/web`.
 | Comando | O que faz |
 | --- | --- |
 | `npm run dev` | Servidor de desenvolvimento Vite (porta 5173) |
-| `npm test` | Testes unitários e de cenário (vitest): 430 testes em 48 arquivos |
+| `npm test` | Testes unitários e de cenário (vitest): 450 testes em 49 arquivos |
 | `npx tsc -b` | Checagem de tipos (também `npm run typecheck`) |
 | `npx vite build` | Build de produção em `dist/` (`npm run build` roda `tsc -b` e depois o build) |
 | `npm run evaluate` | Roda o motor sem interface sobre os cenários e regenera `src/engine/evaluation.json` e `docs/model-card.md` |
 | `npm run lint` | Lint com oxlint |
-| `npm run e2e` | Testes ponta a ponta do Playwright no Chromium (os testes visuais precisam de imagens de referência commitadas, veja [Estratégia de testes](/pt/engineering/testing#end-to-end-and-visual-tests)). Na primeira vez: `npx playwright install chromium` |
+| `npm run e2e` | Testes ponta a ponta do Playwright no Chromium (os testes visuais comparam com as imagens de referência de Linux commitadas, veja [Estratégia de testes](/pt/engineering/testing#end-to-end-and-visual-tests)). Na primeira vez: `npx playwright install chromium` |
 | `npm run e2e:update` | Regenera as capturas visuais desta plataforma |
 | `npm run preview` | Serve o build de produção localmente |
 | `npm run anatomy:validate` | Confere o atlas 3D publicado (`public/anatomy/`) contra o contrato do manifesto |

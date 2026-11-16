@@ -97,7 +97,7 @@ Quatro outros idiomas são **opcionais**: Português (Brasil), Español, 日本�
 
 | Regra | Comportamento |
 | --- | --- |
-| Situação das traduções | **Feitas com apoio de máquina, aguardando revisão nativa.** Cada idioma além do inglês diz isso na dica do seletor; só o inglês está revisado |
+| Situação das traduções | **Feitas com apoio de máquina, aguardando revisão nativa real.** Houve uma revisão de estilo nativo do texto e o glossário de termos fixos está em `docs/i18n-glossary.md`, mas nenhum falante nativo revisou ainda. Cada idioma além do inglês diz isso na dica do seletor; só o inglês está revisado |
 | Padrão | Inglês. O idioma do navegador nunca é aplicado sozinho; a escolha fica guardada no dispositivo |
 | Carregamento | O inglês vem no pacote principal; os outros idiomas são arquivos separados, baixados só quando escolhidos. O japonês carrega uma fonte japonesa sob demanda |
 | Caminho de volta | Fora do inglês o item do menu mostra "Language" nos dois idiomas, para qualquer pessoa conseguir voltar |

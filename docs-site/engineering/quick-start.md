@@ -81,7 +81,7 @@ Run these inside `frontend/web`.
 | `npm run preview` | Serve the production build locally |
 | `npm run evaluate` | Replays the scenarios headless and regenerates `src/engine/evaluation.json` and `docs/model-card.md` |
 | `npm run lint` | Lint with oxlint |
-| `npm run e2e` | Playwright end to end tests in Chromium (the visual tests need committed baselines, see [Testing strategy](./testing#end-to-end-and-visual-tests)). First time: `npx playwright install chromium` |
+| `npm run e2e` | Playwright end to end tests in Chromium (the visual tests compare against the committed Linux baselines, see [Testing strategy](./testing#end-to-end-and-visual-tests)). First time: `npx playwright install chromium` |
 | `npm run e2e:update` | Regenerates the visual snapshots for this platform |
 | `npm run anatomy:validate` | Checks the published 3D atlas (`public/anatomy/`) against its manifest contract |
 | `npm run anatomy:build` | Rebuilds the 3D atlas from the Z-Anatomy source. Needs Blender 4.5 LTS (`BLENDER_BIN`) and takes about 5 minutes. Not needed to run the app: the built files are in the repository ([3D anatomy assets](../data/anatomy-assets#rebuild)) |

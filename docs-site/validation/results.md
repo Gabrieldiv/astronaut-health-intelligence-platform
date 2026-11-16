@@ -66,10 +66,10 @@ npm run evaluate
 
 ## Tests
 
-| Measure | Value (2026-11-15) |
+| Measure | Value (2026-11-16) |
 | --- | --- |
-| vitest tests (web) | **430 in 48 files, all passing** |
-| pytest tests (backend) | 44 in 6 files, external HTTP mocked |
+| vitest tests (web) | **450 in 49 files, all passing** |
+| pytest tests (backend) | 91 in 7 files, external HTTP mocked |
 | Anatomy atlas validation (`npm run anatomy:validate`) | passes on the published files: 250 structures in 9 GLB files, 880,356 triangles, 4.64 MB |
 | Typecheck (`npx tsc -b`) | clean |
 | Production build (`npx vite build`) | ok |
@@ -112,7 +112,7 @@ Informal observations by the team on one development laptop (AMD Ryzen 5 3500U, 
 | Performance on other machines, browsers or screens | Not measured |
 | Anatomical review of the 3D atlas by a specialist | Not done; the model is used as published by Z-Anatomy, simplified by the asset pipeline |
 | Formal accessibility audit | Not done |
-| End to end browser tests | <StatusBadge status="PLANNED" /> |
+| Visual regression on Windows (only Linux baselines are committed) | Not done |
 
 ## Next steps
 

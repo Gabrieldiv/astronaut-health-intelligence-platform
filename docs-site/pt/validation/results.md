@@ -23,7 +23,7 @@ Todos os resultados do motor vêm de **dados simulados** e medem as regras do pr
 
 | Evidência | Resultado | Fonte |
 | --- | --- | --- |
-| Testes automatizados (web) | 430 testes em 48 arquivos, todos passando | `npm test` em 15/11/2026 |
+| Testes automatizados (web) | 450 testes em 49 arquivos, todos passando | `npm test` em 16/11/2026 |
 | Testes do backend | 44 testes pytest em 6 arquivos, HTTP externo simulado | `python -m pytest` em `backend` |
 | Validação do atlas de anatomia | Passa nos arquivos publicados: 250 estruturas em 9 arquivos GLB, 880.356 triângulos, 4,64 MB | `npm run anatomy:validate` em 14/11/2026 |
 | Checagem de tipos | Limpa | `npx tsc -b` |
@@ -76,7 +76,7 @@ No cenário de cabine, o nível é o pior entre o status da cabine e o da tripul
 
 ## Testes automatizados
 
-Web: 430 testes em 48 arquivos, todos passando em 15/11/2026. Backend: 44 testes pytest em 6 arquivos. A lista arquivo por arquivo está em [Estratégia de testes](/pt/engineering/testing).
+Web: 450 testes em 49 arquivos, todos passando em 16/11/2026. Backend: 91 testes pytest em 7 arquivos. A lista arquivo por arquivo está em [Estratégia de testes](/pt/engineering/testing).
 
 ## Desempenho observado
 

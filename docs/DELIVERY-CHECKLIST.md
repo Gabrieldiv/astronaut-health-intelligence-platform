@@ -8,6 +8,7 @@ One page for the submission. Challenge: [Health Monitoring Software](https://www
 - [ ] Docs portal (Portuguese): https://lucaspalharesbarbosa.github.io/astronaut-health-intelligence-platform/pt/
 - [ ] The default branch is `master` and the last CI run on it is green (badge at the top of the README).
 - [ ] The portal opens online and the Roadmap and Limitations pages show the access control note (no login in this version).
+- [ ] The CI end to end job is green: 23 functional and 8 visual Playwright tests (Linux baselines are committed, `E2E_VISUAL=1`).
 - [ ] Licenses are in place: code is MIT (`LICENSE`), the 3D anatomy files are CC BY-SA 4.0 (`frontend/web/public/anatomy/LICENSE.md`).
 
 ## Run it in 3 commands
@@ -31,15 +32,15 @@ Full script with the talking points: [demo-script.md](demo-script.md).
 
 | Time | Click or press | Say |
 | --- | --- | --- |
-| 0:00 | Nothing. Point at the **SIMULATED** badge, the crew cards, the 3D body, **What needs attention** | The data is simulated and labeled. Each person is compared with their own normal. Decision support, not a diagnosis |
+| 0:00 | Nothing. Point at the **SIMULATED** badge, the crew cards, the 3D body, **What needs attention**. Click the indicator count ("n/total indicators normal") to open the breakdown by body system | The data is simulated and labeled. Each person is compared with their own normal. Decision support, not a diagnosis |
 | 0:30 | Hover **Monitor** under the body. Scroll over the heart to zoom, click the heart. Point at **Measured by** | Only monitored systems react. The panel shows the personal band and the device behind each reading |
 | 1:00 | Click the scenario button in the top bar, choose **Acute cardio event**. Wait for the CRITICAL banner and the sound. Click **Mark done** on the rest action, then acknowledge the alert. Press `D` | Fast alerting with sound that escalates until acknowledged, actions flagged for the flight surgeon, audio description |
-| 2:00 | Click the **Mission and Earth link** control in the top bar. In the Mission tab pick **Mars transit**. Show the dose bar, then the **Space weather** tab | Cited values, the NASA 600 mSv career limit, real NASA DONKI events as context only. Far from Earth the crew acts first |
+| 2:00 | Click the mission chip in the top bar (it opens the **Mission and Earth link** panel). In the Mission tab pick **Mars transit**. Show the dose bar, then the **Space weather** tab | Cited values, the NASA 600 mSv career limit, real NASA DONKI events as context only. Far from Earth the crew acts first |
 | 2:40 | Choose scenario **Progressive fatigue**, speed **1 h/s**. Click the **Heart** chip and pick the **7 days** horizon | Slow drifts against the personal baseline, forecast band that widens with the horizon |
-| 3:20 | Press `V` for the Crew view | The astronaut sees one status word, at most two things to do and the Your body systems cards |
+| 3:20 | Press `I` to open the crew profile of the selected astronaut, close it, then press `V` for the Crew view | The astronaut sees one status word, at most two things to do and the Your body systems cards |
 | 3:40 | Impact line, then the limitations below | See `docs/demo-script.md`, section 10 |
 
-Backup beats if there is time: **Sensor failure** scenario (organs turn grey, missing data is never normal), pause a device in the vitals strip (shows "Paused by operator"), **Ask AHI** (top bar, or key `K`; needs the backend and a key, otherwise it says Assistant offline).
+Backup beats if there is time: **Sensor failure** scenario (organs turn grey, missing data is never normal), pause a device in the vitals strip (shows "Paused by operator"), **Ask AHI** (top bar, or key `K`; needs the backend, `backend/.env` with `ANTHROPIC_API_KEY` and the connection mode on Automatic or Online, otherwise it says Assistant offline).
 
 ## Known limitations to say out loud
 - All device data is **simulated**. Real NASA data (OSDR panels, DONKI space weather) is reference and mission context only and never feeds a status.
@@ -54,4 +55,4 @@ Backup beats if there is time: **Sensor failure** scenario (organs turn grey, mi
 ## Where to read more
 - Docs portal: Product tour, Feature status matrix, Limitations, Roadmap.
 - `README.md`: quick start, scenarios, data and science, license.
-- `docs/HANDOFF-final-delivery.md`: what is left (Linux visual baselines, portal screenshots, native translation review).
+- `docs/HANDOFF-final-delivery.md`: what is left, all optional (portal screenshots, native translation review, Vercel deployment, EDA data import). The visual baselines are done and the handoff says how to regenerate them.
