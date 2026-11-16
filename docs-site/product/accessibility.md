@@ -97,7 +97,7 @@ Four other languages are **optional**: Português (Brasil), Español, 日本語 
 
 | Rule | Behavior |
 | --- | --- |
-| Status of the translations | **Machine assisted, pending native review.** Each non English entry in the picker says so in its tooltip; only English is reviewed |
+| Status of the translations | **Machine assisted, pending real native review.** A native style review of the wording was done and the glossary of fixed terms is in `docs/i18n-glossary.md`, but no native speaker has reviewed them yet. Each non English entry in the picker says so in its tooltip; only English is reviewed |
 | Default | English. The browser language is never applied automatically; the choice is remembered on the device |
 | Loading | English ships in the main bundle; the other languages are separate chunks downloaded only when picked. Japanese loads a Japanese font on demand |
 | Way back | Outside English the menu item reads "Language" in both languages, so anyone can switch back |
