@@ -226,6 +226,7 @@ The ground node exposes a REST interface under a versioned path, and the on boar
 \item \textbf{Ingestion:} batches of canonical observations, answered with the counts of accepted and rejected records and the reason for each rejection. Ingestion is idempotent, so a batch resent after a link interruption creates no duplicates.
 \item \textbf{Health queries:} current status, history, baseline, anomalies, risk, predictions and recommendations for each astronaut, and the cabin environment.
 \item \textbf{Actions:} acknowledgment of an alert, logging of an intervention and its result, review decisions of the flight surgeon, and messages between crew and ground.
+\item \textbf{Deviation analysis:} a stateless operation that receives the daily history of one person and returns, for each in-flight and post-flight day, a level and the detectors that fired against the personal baseline (\ref{subsec:astra}). Nothing is stored and the results are derived data.
 \item \textbf{Devices and data:} device status, import of public datasets and readiness checks.
 \item \textbf{Export:} a FHIR R4 bundle of patient, device and observation resources, with pseudonymized identifiers and the origin of every value.
 \item \textbf{Assistant:} a question in text or transcribed speech, with the language of the user, answered with the generated text, the records and sources used, and the result of the guardrail checks.

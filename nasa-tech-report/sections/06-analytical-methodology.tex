@@ -189,6 +189,25 @@ Career radiation dose & Personal dosimeter, area monitors, prior missions, missi
 \vspace{1.2em}
 \end{table}
 
+\subsection{ASTRA Deviation Analysis}
+\label{subsec:astra}
+
+ASTRA is a statistical analysis of the daily deviation of one person from their own baseline. It is offered by the ground node as a stateless operation (\texttt{POST /api/v1/analytics/deviation}) and its results are derived data. The caller sends the stay of one person so far, with one record per day (the daily value of each metric and the mission phase), and receives, for every in-flight and post-flight day, a level of \texttt{LOW}, \texttt{MODERATE}, \texttt{HIGH} or \texttt{NO\_DATA} together with the detectors that fired.
+
+\medskip\noindent\textbf{How a day is judged.}
+\begin{enumerate}
+\item \textbf{Personal baseline.} The pre-flight days of the person form the baseline. Each value becomes a $z$ score against the baseline mean and an effective standard deviation that shrinks the personal deviation toward the deviation of a reference population, so a short baseline does not produce an unstable scale. At least seven valid pre-flight readings are needed for each metric. Weight is judged by its rate of change over the last 14 days.
+\item \textbf{Expected adaptation.} The $z$ score is standardized by the adaptation expected on that day and by the spread of healthy people in that phase, both read from a reference pack calibrated on NASA bed rest data. Bed rest is an analog of spaceflight, not spaceflight, and this is stated wherever the result is shown.
+\item \textbf{Statistical detectors.} Three detectors run on the standardized value: a $z$ score threshold held for two days, an EWMA of the deviation and a CUSUM for small steady drifts, each requiring several consecutive days, and a fourth detector on the rate of weight change. A day without a reading never resets a run and is never read as normal.
+\item \textbf{Level.} \texttt{HIGH} requires the weight rate or at least two of the three statistical detectors on the same day. Any other confirmed alarm is \texttt{MODERATE}. No alarm is \texttt{LOW}. A day in which nothing could be evaluated is \texttt{NO\_DATA}.
+\end{enumerate}
+
+\medskip\noindent\textbf{Machine learning stays informational.} An Isolation Forest scores the combination of eleven features (the standardized vitals, their three day mean and the weight rate). Its score and flag are returned next to the level and never change it, in line with the principle that statistics come first and machine learning only adds information (\ref{sec:artificial-intelligence}).
+
+\medskip\noindent\textbf{In the interface.} The attention panel shows the latest judged day of the selected astronaut: a level in plain words (within the personal range, moderate deviation, high deviation or not enough data), the main indicator and a note that the analysis is decision support and not a diagnosis. For the simulated crew, the history sent to the analysis is a virtual history calibrated on real NASA bed rest data and labeled simulated. If the ground node is unreachable, the panel simply does not appear: the application never depends on ASTRA.
+
+\medskip\noindent\textbf{Limits.} The limits and weights are the ones calibrated in the analysis, not official limits. The reference pack comes from a bed rest analog with a small number of participants, so the thresholds must be recalibrated with real flight data before operational use (\ref{sec:future-work}).
+
 \subsection{Level 3: Prescriptive Intelligence}
 \label{subsec:recommendations}
 
