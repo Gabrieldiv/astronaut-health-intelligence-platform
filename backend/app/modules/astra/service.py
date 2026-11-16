@@ -9,10 +9,13 @@ Same computation as the ASTRA analysis pipeline (platform_output step, without t
    The expected adaptation curve and the scale come from the reference pack (params/reference_pack.json).
 4. Detectors on u: Z-Score (|u| >= 3, 2 days in a row), EWMA (L 4.5, 3 days), CUSUM (k 1, h 12, 3 days),
    weight rate (|u| >= 2.5, 5 days). Days without a reading never reset a run and are never read as normal.
-5. Level: HIGH = weight rate, or 2 or more of the 3 statistical detectors on the same day.
+5. Isolation Forest (informational): the 11 features of ASTRA (u per vital, 3 day mean of u, weight rate) are scored by
+   the forest in params/forest_pack.json. It adds a score and a flag to each day and NEVER changes the level.
+6. Level: HIGH = weight rate, or 2 or more of the 3 statistical detectors on the same day.
    MODERATE = any other confirmed alarm. LOW = no alarm. NO_DATA = nothing could be evaluated that day.
 
-The Isolation Forest of the analysis is left out on purpose: in this platform machine learning never sets a level.
+The Isolation Forest of the analysis does not enter the level on purpose: in this platform machine learning never sets
+a level. Its score and flag are returned next to it as information.
 Decision support only, not a diagnosis. Limits and weights are the ones calibrated in the ASTRA analysis, not official limits.
 """
 
@@ -31,8 +34,9 @@ from app.modules.astra.schemas import (
     DeviationResponse,
 )
 
-MODEL_VERSION = "astra-deviation v1 (statistical detectors, calibrated on NASA bed rest data)"
+MODEL_VERSION = "astra-deviation v2 (statistical detectors, calibrated on NASA bed rest data; Isolation Forest informational)"
 PACK_PATH = Path(__file__).parent / "params" / "reference_pack.json"
+FOREST_PATH = Path(__file__).parent / "params" / "forest_pack.json"
 
 # Order matters: the first five are the daily vitals standardized against their own baseline.
 VITALS: list[DeviationMetric] = ["HEART_RATE", "SYSTOLIC_BP", "DIASTOLIC_BP", "RESPIRATORY_RATE", "BODY_TEMPERATURE"]
@@ -67,6 +71,7 @@ CUSUM_K, CUSUM_H, CUSUM_CONSEC = 1.0, 12.0, 3
 RATE_WINDOW, RATE_MIN_POINTS, RATE_LIMIT, RATE_CONSEC = 14, 8, 2.5, 5
 
 LIMITATIONS = [
+    "The multivariate score and flag are informational only: machine learning never sets a level in this platform.",
     "Decision support only, not a diagnosis. Levels are attention levels of a prototype, not medical classifications.",
     "Calibrated on 23 NASA bed rest volunteers (an analog of spaceflight, not astronauts); intervals are wide.",
     "In healthy people the HIGH level still appeared in about 3 of 10 people over a stay (cross validation), so it calls for review.",
@@ -74,7 +79,8 @@ LIMITATIONS = [
 ]
 METHOD = (
     "Own PRE_FLIGHT baseline, expected adaptation discounted, deviations in units of healthy variation; "
-    "Z-Score, EWMA, CUSUM and weight rate of change with confirmation days."
+    "Z-Score, EWMA, CUSUM and weight rate of change with confirmation days set the level; "
+    "an Isolation Forest adds an informational multivariate score."
 )
 
 
@@ -104,6 +110,82 @@ def load_pack() -> ReferencePack:
         for metric, s in raw["signals"].items()
     }
     return ReferencePack(version=raw["pack_version"], pop_sd=dict(raw["pop_sd"]), signals=signals)
+
+
+@dataclass(frozen=True)
+class Forest:
+    """Isolation Forest flattened into arrays (see tools/make_forest_pack.py). Scores without scikit-learn."""
+
+    version: str
+    threshold: float
+    consec: int
+    max_samples: int
+    first_node: np.ndarray  # (n_trees,) index of each tree root in the flat arrays
+    feature: np.ndarray  # -1 on leaves
+    value: np.ndarray  # split threshold, or the final path length on leaves
+    left: np.ndarray  # absolute indexes
+    right: np.ndarray
+
+
+def avg_path_length(n: float) -> float:
+    """Average path length of an unsuccessful search in a binary search tree (as in scikit-learn)."""
+    if n <= 1:
+        return 0.0
+    if n == 2:
+        return 1.0
+    return float(2.0 * (np.log(n - 1.0) + np.euler_gamma) - 2.0 * (n - 1.0) / n)
+
+
+@lru_cache(maxsize=1)
+def load_forest() -> Forest:
+    raw = json.loads(FOREST_PATH.read_text(encoding="utf-8"))
+    offsets = np.asarray(raw["offsets"], dtype=np.int64)
+    sizes = np.diff(offsets)
+    shift = np.repeat(offsets[:-1], sizes)
+    left = np.asarray(raw["left"], dtype=np.int64)
+    right = np.asarray(raw["right"], dtype=np.int64)
+    return Forest(
+        version=raw["forest_version"],
+        threshold=float(raw["threshold"]),
+        consec=int(raw["alarm_consecutive_days"]),
+        max_samples=int(raw["max_samples"]),
+        first_node=offsets[:-1],
+        feature=np.asarray(raw["feature"], dtype=np.int64),
+        value=np.asarray(raw["threshold_or_path"], dtype=float),
+        left=np.where(left >= 0, left + shift, -1),
+        right=np.where(right >= 0, right + shift, -1),
+    )
+
+
+def forest_score(forest: Forest, x: np.ndarray) -> np.ndarray:
+    """Anomaly score in (0, 1) per row (same as -score_samples of scikit-learn's IsolationForest)."""
+    x32 = np.asarray(x, dtype=np.float32)  # scikit-learn compares float32 inputs with the float64 thresholds
+    n = len(x32)
+    node = np.repeat(forest.first_node[:, None], n, axis=1)
+    cols = np.arange(n)[None, :]
+    while True:
+        feat = forest.feature[node]
+        active = feat >= 0
+        if not active.any():
+            break
+        go_left = x32[cols, np.where(active, feat, 0)] <= forest.value[node]
+        node = np.where(active, np.where(go_left, forest.left[node], forest.right[node]), node)
+    mean_path = forest.value[node].mean(axis=0)
+    return 2.0 ** (-mean_path / avg_path_length(forest.max_samples))
+
+
+def forest_features(u: np.ndarray) -> np.ndarray:
+    """The 11 ASTRA features per judged day: u of the 5 vitals, their mean over the last 3 judged days, weight rate. NaN = 0."""
+    n = len(u)
+    vitals = u[:, : len(VITALS)]
+    u3 = np.full_like(vitals, np.nan)
+    for i in range(n):
+        window = vitals[max(0, i - 2) : i + 1]
+        count = (~np.isnan(window)).sum(axis=0)
+        sums = np.nansum(window, axis=0)
+        ok = count >= 2
+        u3[i, ok] = sums[ok] / count[ok]
+    return np.nan_to_num(np.hstack([vitals, u3, u[:, len(VITALS) :]]), nan=0.0)
 
 
 # ----------------------------------------------------------------------------------------
@@ -260,6 +342,9 @@ def analyze(req: DeviationRequest) -> DeviationResponse:
     uw = u[:, len(VITALS)]
     fw = confirm(np.abs(uw) >= RATE_LIMIT, uw, RATE_CONSEC)
     n_det = fz.astype(int) + fe.astype(int) + fc.astype(int)
+    forest = load_forest()
+    scores = forest_score(forest, forest_features(u)) if len(judged) else np.zeros(0)
+    fm = confirm(scores >= forest.threshold, np.zeros(len(judged)), forest.consec)
 
     results: list[DayResult] = []
     for i, d in enumerate(days):
@@ -290,6 +375,8 @@ def analyze(req: DeviationRequest) -> DeviationResponse:
                 deviation_u=None if main_u is None else round(main_u, 3),
                 deviations={m: (None if np.isnan(row[j]) else round(float(row[j]), 3)) for j, m in enumerate(ALL_METRICS)},
                 message=message(level, main, main_u, fired),
+                multivariate_score=None if no_data else round(float(scores[k]), 4),
+                multivariate_flag=bool(fm[k]) and not no_data,
             )
         )
     return DeviationResponse(
@@ -307,6 +394,7 @@ def analyze(req: DeviationRequest) -> DeviationResponse:
             for m in ALL_METRICS
         ],
         invalid_values=invalid,
+        multivariate_threshold=round(forest.threshold, 4),
         results=results,
         limitations=LIMITATIONS,
     )
