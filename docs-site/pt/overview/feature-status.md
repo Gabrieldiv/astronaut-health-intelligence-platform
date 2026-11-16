@@ -129,8 +129,8 @@ Definições completas em [Origens e proveniência dos dados](/pt/data/data-orig
 
 | Capacidade | Status | Origem | Código | Documentação |
 | --- | --- | --- | --- | --- |
-| Testes unitários e de cenário (web: 430 testes em 48 arquivos; backend: 44 testes pytest em 6 arquivos) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> | [Estratégia de testes](/pt/engineering/testing) |
-| Testes ponta a ponta no navegador (Playwright: 14 testes funcionais rodam no CI; 6 testes visuais aguardam imagens de referência commitadas) | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> | [Testes](/pt/engineering/testing#end-to-end-and-visual-tests) |
+| Testes unitários e de cenário (web: 450 testes em 49 arquivos; backend: 91 testes pytest em 7 arquivos) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path="frontend/web/src/engine/engine.test.ts" /> | [Estratégia de testes](/pt/engineering/testing) |
+| Testes ponta a ponta no navegador (Playwright: 23 testes funcionais e 8 testes visuais, todos rodam no CI com imagens de referência de Linux commitadas) | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/e2e/demo-script.spec.ts" /> | [Testes](/pt/engineering/testing#end-to-end-and-visual-tests) |
 | CI no GitHub Actions (lint, tipos, testes, build e testes ponta a ponta do app; build do portal em pull requests) | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path=".github/workflows/ci.yml" /> | [Documentação e deploy](/pt/engineering/deployment) |
 | Portal de documentação bilíngue no GitHub Pages | <StatusBadge status="IMPLEMENTED" /> | | <CodeLink path=".github/workflows/docs-deploy.yml" /> | [Documentação e deploy](/pt/engineering/deployment) |
 | Modo demo offline: o app roda inteiro no navegador, `VITE_API_URL=off` para hospedagem estática | <StatusBadge status="IMPLEMENTED" /> |  | <CodeLink path="frontend/web/src/lib/api/client.ts" /> | [Backend e API](/pt/architecture/backend#offline-demo-mode) |

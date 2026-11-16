@@ -72,6 +72,7 @@ All endpoints live under `/api/v1`. Interactive documentation is served at `/doc
 | `nasa` | `GET /space-weather?days=30`, `GET /nasa/osdr/studies?q=` | Real public NASA data, cached 15 min in process |
 | `assistant` | `POST /assistant/chat` (server sent events), `GET /assistant/status` | Demo assistant ([Ask AHI](../product/assistant)) |
 | `analytics` | `POST /analytics/multivariate` | Experimental, machine learning: scikit-learn parity path of the browser detector ([Anomaly detection](../intelligence/anomaly-detection#unusual-combination-experimental)) |
+| `astra` | `POST /analytics/deviation` | Statistical deviation of one person against their own pre flight baseline (z-score, EWMA, CUSUM, weight rate), with an informational Isolation Forest score that never changes the level. Stateless, results are `DERIVED`, decision support only |
 | `engine` | none | Documented seam for porting the TypeScript engine to Python |
 
 ## Ingestion rules

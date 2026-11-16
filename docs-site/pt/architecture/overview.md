@@ -142,7 +142,7 @@ Tudo gira em torno de `frontend/web/src/types/domain.ts`, compartilhado por moto
 | Decisão | Motivo | Consequência |
 | --- | --- | --- |
 | App completo no navegador, backend opcional | Demo rápida, offline e reproduzível para o hackathon | O estado do app e a auditoria se perdem ao recarregar; sem autenticação ainda |
-| Motor em TypeScript puro, separado da interface | Testável com vitest sem DOM | 430 testes web rodam sem navegador |
+| Motor em TypeScript puro, separado da interface | Testável com vitest sem DOM | 450 testes web rodam sem navegador |
 | Simulação semeada | Reprodutibilidade de cenários e avaliação | Mesmos dados com a mesma semente |
 | Contrato de adapters | Trocar simulação por fonte real sem mudar a interface | Um backend futuro entra pelo mesmo contrato |
 | Corpo 3D sobre um atlas anatômico aberto (Z-Anatomy), com fallback procedural | Anatomia real, com estruturas nomeadas que podem ser selecionadas e ligadas aos dados; o fallback mantém o painel funcionando | Os arquivos de anatomia têm licença própria (CC BY-SA 4.0, com atribuição); um pipeline com Blender gera os assets; um GLB por sistema, carregado sob demanda |

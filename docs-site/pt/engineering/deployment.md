@@ -99,9 +99,9 @@ Os workflows só rodam quando mudam os arquivos que eles verificam (filtros de c
 | Workflow | Quando roda | O que faz |
 | --- | --- | --- |
 | `ci.yml` (app) | Push para `master` e pull request para `master` ou `develop` que alteram `frontend/web/**` | `npm ci`, `npm run lint` (oxlint: erro reprova, aviso só é reportado), `npx tsc -b`, `npm test`, `npx vite build` |
-| `ci.yml` (ponta a ponta) | Os mesmos gatilhos | `npm ci`, instala o Chromium, `npm run e2e` (testes funcionais; os visuais são pulados no Linux) |
+| `ci.yml` (ponta a ponta) | Os mesmos gatilhos | `npm ci`, instala o Chromium, `npm run e2e` (testes funcionais e testes visuais, com `E2E_VISUAL=1` contra as imagens de referência de Linux commitadas) |
 | `backend.yml` (API) | Push para `master` e pull request para `master` ou `develop` que alteram `backend/**` | Instala os requisitos, `python -m pytest` |
-| `visual-baselines.yml` | Push em branch chamado `visual/**` (uso manual) | Roda os testes visuais com `E2E_VISUAL=1` e publica as capturas de Linux como artefato para commitar ([Testes](/pt/engineering/testing#end-to-end-and-visual-tests)) |
+| `visual-baselines.yml` | Push em branch chamado `visual/**` (uso manual) | Manual: roda os testes visuais com `E2E_VISUAL=1` e publica as capturas de Linux como o artefato `visual-baselines-linux` para commitar ([Testes](/pt/engineering/testing#end-to-end-and-visual-tests)) |
 | `docs-check.yml` (portal) | Pull request para `master` ou `develop` que altera `docs-site/**` | `npm ci`, `npm run docs:build` (falha com link interno quebrado) |
 | `docs-deploy.yml` | Push para `master` que altera `docs-site/**` | O mesmo build e, em seguida, a publicação; em `master` esse build é o portão, então o portal não é compilado duas vezes no mesmo push |
 
@@ -121,6 +121,21 @@ Detalhes dos testes em [Estratégia de testes](/pt/engineering/testing#ci).
 - Rótulos da interface ficam em inglês, entre aspas ou em código, com a explicação em português.
 - Capturas de tela só reais (`docs-site/public/screenshots/`), nunca montagens.
 - Diagramas conceituais levam a legenda "Conceitual (não implementado)".
+
+## Publicar o app (opcional): Vercel
+
+O portal é publicado pelo GitHub Actions no GitHub Pages. O app web é um site estático, então pode ser publicado à parte, por exemplo na Vercel, com estas configurações:
+
+| Configuração | Valor |
+| --- | --- |
+| Root Directory | `frontend/web` |
+| Framework Preset | Vite |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Versão do Node.js | 22 |
+| Variável de ambiente | `VITE_API_URL=off` |
+
+`VITE_API_URL=off` inicia o app no modo demo offline. O Ask AHI aparece como offline porque o backend FastAPI não faz parte dessa publicação. Esta página não afirma que exista uma publicação.
 
 ## Próximos passos
 
