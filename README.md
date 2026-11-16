@@ -137,7 +137,7 @@ From the repository root, `docker compose up --build` starts PostgreSQL 17 and t
 | `npm run e2e` | `frontend/web` | Playwright: 23 functional and 8 visual tests (first time: `npx playwright install chromium`). The Linux visual baselines are committed and CI runs the visual tests with `E2E_VISUAL=1` |
 | `npm run anatomy:validate` | `frontend/web` | Checks the published 3D atlas against its manifest contract |
 | `npm run anatomy:build` | `frontend/web` | Rebuilds the 3D atlas from the Z-Anatomy source (needs Blender 4.5 LTS; not needed to run the app) |
-| `python -m pytest` | `backend` | 86 backend tests in 7 files (external HTTP mocked) |
+| `python -m pytest` | `backend` | 91 backend tests in 7 files (external HTTP mocked) |
 | `python -m app.cli donki-snapshot` | `backend` | Refreshes the bundled DONKI snapshot |
 
 The first load calibrates personal baselines and downloads the 3D anatomy (about 3 MB for the default view), so it takes a few seconds. Full setup and troubleshooting: [Setup, commands and troubleshooting](https://lucaspalharesbarbosa.github.io/astronaut-health-intelligence-platform/engineering/quick-start).

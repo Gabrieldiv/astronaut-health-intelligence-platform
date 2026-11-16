@@ -24,7 +24,7 @@ verified: 2026-11-15
 A Astronaut Health Intelligence Platform (AHI) é testada em três camadas: **testes unitários e de cenário** (vitest), **avaliação reproduzível do motor** (`npm run evaluate`) e **checagens de build** (tipos, build do app e do portal) no CI.
 
 ::: info Estado em 16/11/2026
-**450 testes web em 49 arquivos, todos passando**, mais **23 testes funcionais e 8 testes visuais do Playwright** (`npm run e2e`). Checagem de tipos limpa e build de produção ok. Rode com `npm test` dentro de `frontend/web`. O backend tem **86 testes pytest em 7 arquivos** (`python -m pytest` em `backend`), com o HTTP externo simulado (respx): as fontes da NASA e a Claude API nunca são chamadas.
+**450 testes web em 49 arquivos, todos passando**, mais **23 testes funcionais e 8 testes visuais do Playwright** (`npm run e2e`). Checagem de tipos limpa e build de produção ok. Rode com `npm test` dentro de `frontend/web`. O backend tem **91 testes pytest em 7 arquivos** (`python -m pytest` em `backend`), com o HTTP externo simulado (respx): as fontes da NASA e a Claude API nunca são chamadas.
 :::
 
 ## Pirâmide atual

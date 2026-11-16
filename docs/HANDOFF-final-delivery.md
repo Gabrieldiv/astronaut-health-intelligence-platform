@@ -12,7 +12,7 @@ Docs portal: https://lucaspalharesbarbosa.github.io/astronaut-health-intelligenc
 | Item | State |
 | --- | --- |
 | `master` | Holds the final delivery. The docs portal is published from it by GitHub Actions |
-| Tests (measured on the final commit) | 450 web unit tests in 49 files (vitest), 86 backend tests in 7 files (pytest), 23 Playwright functional tests and 8 Playwright visual tests |
+| Tests (measured on the final commit) | 450 web unit tests in 49 files (vitest), 91 backend tests in 7 files (pytest), 23 Playwright functional tests and 8 Playwright visual tests |
 | Visual tests | Run in CI: the Linux baselines are committed under `frontend/web/e2e/__screenshots__/linux/visual.spec.ts/` and the end to end job sets `E2E_VISUAL=1` |
 | Docs portal | English and Portuguese, in parity |
 

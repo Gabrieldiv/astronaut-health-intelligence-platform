@@ -76,7 +76,7 @@ No cenário de cabine, o nível é o pior entre o status da cabine e o da tripul
 
 ## Testes automatizados
 
-Web: 450 testes em 49 arquivos, todos passando em 16/11/2026. Backend: 86 testes pytest em 7 arquivos. A lista arquivo por arquivo está em [Estratégia de testes](/pt/engineering/testing).
+Web: 450 testes em 49 arquivos, todos passando em 16/11/2026. Backend: 91 testes pytest em 7 arquivos. A lista arquivo por arquivo está em [Estratégia de testes](/pt/engineering/testing).
 
 ## Desempenho observado
 

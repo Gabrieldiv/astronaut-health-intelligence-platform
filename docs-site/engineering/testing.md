@@ -26,7 +26,7 @@ The rules are the product, so the Astronaut Health Intelligence Platform (AHI) t
 | Web test files | 49 |
 | Web tests | 450, all passing |
 | End to end tests (Playwright) | 23 functional tests plus 8 visual tests (`npm run e2e` in `frontend/web`) |
-| Backend tests | 86 in 7 files (`python -m pytest` in `backend`) |
+| Backend tests | 91 in 7 files (`python -m pytest` in `backend`) |
 | Typecheck | `npx tsc -b` clean |
 | Production build | `npx vite build` ok |
 | Where | Next to the code (`*.test.ts`) |
