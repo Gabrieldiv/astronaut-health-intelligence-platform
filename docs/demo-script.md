@@ -19,6 +19,7 @@ Long missions expose crews to five hazards (radiation, isolation, distance from 
 - Center: the 3D body, a realistic anatomical atlas. A scan band sweeps it to show monitoring is live. Systems that need attention light up in their status color; the heart beats at the live heart rate, the lungs breathe at the live breathing rate.
 - Right: **What needs attention**: status, why, and what to do.
 - Bottom: live vitals, cabin and devices. The `SIMULATED` badge is always visible.
+- Click the indicator count ("n/total indicators normal") on the stage: the breakdown lists, by body system, which indicators are normal, flagged or without data.
 
 ## 3. Monitor mode and zoom (20 s)
 
@@ -36,7 +37,7 @@ Long missions expose crews to five hazards (radiation, isolation, distance from 
 
 ## 5. Mission profiles and space weather (40 s)
 
-1. Click the mission control in the top bar (it opens the Mission and Earth link panel), pick **Mars transit** in the Mission tab.
+1. Click the mission chip in the top bar (it opens the Mission and Earth link panel), pick **Mars transit** in the Mission tab. The panel starts with **What the mission profile changes**: read one line from it.
 2. Show the hazards, the cited reference values (MSL RAD cruise dose, 4 to 24 min delay) and the **mission dose bar** against the NASA career limit of 600 mSv (NASA-STD-3001).
 3. Show the **space weather** card: real NASA DONKI events. If a recent X class flare or a solar particle event is in the window, it says "Move to the radiation storm shelter"; otherwise it is calm. It says whether the data is live or the bundled snapshot. Missing data reads "unknown", never all clear.
 4. Message: far from Earth, the crew acts first; the ground reviews later.
@@ -52,13 +53,13 @@ Long missions expose crews to five hazards (radiation, isolation, distance from 
 1. Pick **Eye changes (SANS like)** (ORION). The demo starts on mission day 44, so the flight day 30 eye exam already shows a change: the eyes read **Watch** right away.
 2. Click the **Eyes** chip: the exam history (OCT retinal thickness, optic nerve sheath, acuity) against the pre-flight baseline. A change beyond the published 19.4 µm variability is a Watch; two signs in one session (the flight day 90 exam in this scenario) is a Warning (demo rule). "No exam yet" is never normal. Point at the two small rings on the sides of the head: the ears, monitored with hearing tests.
 
-## 8. Crew view (20 s)
+## 8. Crew profile and Crew view (30 s)
 
-Press `V`. The astronaut's own screen: a big status word, at most two things to do, the **Your body systems** cards (tap one to highlight it on the body) and the 30 second check-in. Press `V` to come back.
+Press `I` (or click **Profile** on the crew card): the crew profile dialog shows the pseudonymized identity, mission context and indicators of the selected astronaut, with a note that it is simulated and not a medical record. Close it. Press `V`. The astronaut's own screen: a big status word, at most two things to do, the **Your body systems** cards (tap one to highlight it on the body) and the 30 second check-in. Press `V` to come back.
 
 ## 9. Ask AHI (20 s, only if a key is set)
 
-Open **Ask AHI** (top bar, or press `K`) and click "How is ORION doing?". The answer streams, explains what the engine already shows and ends with "Based on:". It never diagnoses. Say that a real mission needs an onboard offline model; the cloud model is a demo only.
+With the backend running and `ANTHROPIC_API_KEY` set (connection mode Automatic or Online), open **Ask AHI** (top bar, or press `K`) and click "How is ORION doing?". The answer streams, explains what the engine already shows and ends with "Based on:". It never diagnoses. Say that a real mission needs an onboard offline model; the cloud model is a demo only.
 
 ## 10. Impact (15 s)
 

@@ -54,7 +54,9 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
 | **3D anatomy** | A realistic anatomical atlas (Z-Anatomy) with 250 structures. Zoom toward the pointer, **Monitor** mode (only monitored systems react) or **Explore** mode (every structure), a keyboard body navigator and a scan band that shows monitoring is live. The heart beats at the live heart rate and the lungs breathe at the live breathing rate. Behind the body, a backdrop of the active mission profile with a few cited facts. |
 | **Personal baselines** | Each metric is compared with that astronaut's own normal band (robust median and MAD, aware of sleep, rest, work and exercise). |
 | **Statistics first** | Robust z, EWMA drift, CUSUM for small steady drifts and persistence rules give a status (All good, Keep an eye, Act soon, Act now, Signal lost) with reasons in plain language. An experimental Isolation Forest adds an "Unusual combination" note and never changes a status. Missing data is never shown as normal. |
-| **Mission profiles** | Launch, ISS, Moon and Mars transit with cited reference values (dose rate, gravity, distance, delay), the mission dose against the NASA 600 mSv career limit, and a space weather advisory built on real NASA DONKI events. |
+| **Mission profiles** | Launch, ISS, Moon and Mars transit with cited reference values (dose rate, gravity, distance, delay), the mission dose against the NASA 600 mSv career limit, and a space weather advisory built on real NASA DONKI events. One **mission chip** in the top bar opens the Mission and Earth link panel (tabs Mission, Earth link, Space weather), which starts with "What the mission profile changes". |
+| **Indicator breakdown** | The "n/total indicators normal" count on the stage opens a breakdown by body system: which indicators are normal, flagged or without data. |
+| **Crew profile** | A profile dialog per astronaut (pseudonymized, simulated), opened from the crew card or with key `I`: identity, mission context, indicators and a printable summary. Not a medical record. |
 | **Eyes and ears** | Periodic simulated eye exams for SANS (OCT, ultrasound, acuity) and hearing tests, compared with the pre-flight baseline; daily noise against NASA-STD-3001. |
 | **What to do** | Non-prescriptive recommended actions, tagged "Can act on board now" or "Needs flight surgeon", plus a hypothetical with vs without comparison. |
 | **Distance from Earth** | ISS, Moon and Mars link profiles. Messages travel with the light time delay, and AHI puts on board steps first when Earth is far. |
@@ -62,7 +64,7 @@ The crew needs to understand its own health **at a glance** and act early. AHI t
 | **Devices** | "Measured by" lists the devices behind every reading; an operator can pause a device. A metric without data says why: "Paused by operator" (with an inline Resume), "Waiting for data" or "Signal lost", never normal. |
 | **Accessibility** | Alert sounds per severity that repeat and escalate until acknowledged, audio description (`D`) that stops on a language change, a red dot on the browser tab while a critical alert is open, skip links, live regions and full keyboard use. Panels show a picture first and keep sentences behind "Details", still read by screen readers. |
 | **Languages** | English by default. Português (Brasil), Español, 日本語 and Deutsch are optional in Tools > Language: machine assisted, pending native review. Engine sentences are translated through structured messages; the plain text handover and the packets to the ground stay English by design. |
-| **Ask AHI** | A plain language assistant that explains what the engine shows, with a "Based on:" line. Demo with the Claude API through the backend; a real mission needs the onboard offline design in [docs/assistant-architecture.md](docs/assistant-architecture.md). |
+| **Ask AHI** | A plain language assistant in the top bar (key `K`) that explains what the engine shows, with a "Based on:" line. Demo with the Claude API through the backend (setup in [Quick start](#app-plus-backend)); a real mission needs the onboard offline design in [docs/assistant-architecture.md](docs/assistant-architecture.md). |
 | **Two views** | Ground view for flight surgeons and mission control, Crew view for the astronaut (with "Your body systems" cards). Presentation mode and a 10 step guided demo. |
 | **Backend (optional)** | FastAPI modular monolith: ingestion, observations, NASA DONKI and OSDR connectors, assistant, experimental analytics. The app runs fully without it (offline demo mode); an Automatic, Online or Offline switch in Data and model decides whether it is used. |
 
@@ -111,13 +113,13 @@ uvicorn app.main:create_app --factory --reload --port 8000
 
 API docs at http://localhost:8000/docs. Reload the app: Data and model, NASA context says "Connected to AHI API", space weather comes live from NASA DONKI and the OSDR study search is available. SQLite is used by default. No NASA API key is needed.
 
-**Ask AHI** needs a Claude API key in `backend/.env` (gitignored, never commit it):
+**Ask AHI** (top bar, or key `K`) needs the backend running (the `uvicorn` command above), a `backend/.env` copied from `backend/.env.example` and a Claude API key in it (gitignored, never commit it). The connection mode in Data and model must be **Automatic** or **Online**:
 
 ```bash
 ANTHROPIC_API_KEY=your-key-here
 ```
 
-Without it the app shows "Assistant offline" and everything else works.
+Restart the backend after editing `.env`. Without a key, or in Offline mode, the app shows "Assistant offline" and everything else works.
 
 ### Docker Compose
 
@@ -126,16 +128,16 @@ From the repository root, `docker compose up --build` starts PostgreSQL 17 and t
 | Command | Where | What it does |
 | --- | --- | --- |
 | `npm run dev` | `frontend/web` | Development server on port 5173 |
-| `npm test` | `frontend/web` | 430 unit and scenario tests (vitest) |
+| `npm test` | `frontend/web` | 450 unit and scenario tests in 49 files (vitest) |
 | `npx tsc -b` | `frontend/web` | Type check |
 | `npx vite build` | `frontend/web` | Production build into `dist/` |
 | `npm run evaluate` | `frontend/web` | Re-runs the engine evaluation and regenerates `docs/model-card.md` |
 | `npm run api:types` | `frontend/web` | Regenerates the API types from `backend/openapi.json` |
 | `npm run lint` | `frontend/web` | Lint (oxlint) |
-| `npm run e2e` | `frontend/web` | Playwright end to end tests (first time: `npx playwright install chromium`) |
+| `npm run e2e` | `frontend/web` | Playwright: 23 functional and 8 visual tests (first time: `npx playwright install chromium`). The Linux visual baselines are committed and CI runs the visual tests with `E2E_VISUAL=1` |
 | `npm run anatomy:validate` | `frontend/web` | Checks the published 3D atlas against its manifest contract |
 | `npm run anatomy:build` | `frontend/web` | Rebuilds the 3D atlas from the Z-Anatomy source (needs Blender 4.5 LTS; not needed to run the app) |
-| `python -m pytest` | `backend` | Backend tests (external HTTP mocked) |
+| `python -m pytest` | `backend` | 86 backend tests in 7 files (external HTTP mocked) |
 | `python -m app.cli donki-snapshot` | `backend` | Refreshes the bundled DONKI snapshot |
 
 The first load calibrates personal baselines and downloads the 3D anatomy (about 3 MB for the default view), so it takes a few seconds. Full setup and troubleshooting: [Setup, commands and troubleshooting](https://lucaspalharesbarbosa.github.io/astronaut-health-intelligence-platform/engineering/quick-start).
