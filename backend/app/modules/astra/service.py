@@ -352,8 +352,9 @@ def analyze(req: DeviationRequest) -> DeviationResponse:
             continue
         k = int(np.searchsorted(judged, i))
         row = u[k]
-        fired = [name for name, f in (("z", fz), ("ewma", fe), ("cusum", fc), ("weight_rate", fw)) if f[k]]
-        no_data = bool(np.isnan(row).all())
+        # A day without a single reading is NO_DATA, even if the weight rate (a 14 day window) still has a value.
+        no_data = bool(np.isnan(row).all() or np.isnan(values[i]).all())
+        fired = [] if no_data else [name for name, f in (("z", fz), ("ewma", fe), ("cusum", fc), ("weight_rate", fw)) if f[k]]
         level = "NO_DATA" if no_data else "HIGH" if (fw[k] or n_det[k] >= 2) else "MODERATE" if fired else "LOW"
         vit = np.where(np.isnan(row[: len(VITALS)]), -1.0, np.abs(row[: len(VITALS)]))
         main: str | None = None
@@ -373,7 +374,7 @@ def analyze(req: DeviationRequest) -> DeviationResponse:
                 triggered_rules=[RULE_IDS[x] for x in fired],
                 main_indicator=main,  # type: ignore[arg-type]
                 deviation_u=None if main_u is None else round(main_u, 3),
-                deviations={m: (None if np.isnan(row[j]) else round(float(row[j]), 3)) for j, m in enumerate(ALL_METRICS)},
+                deviations={m: (None if no_data or np.isnan(row[j]) else round(float(row[j]), 3)) for j, m in enumerate(ALL_METRICS)},
                 message=message(level, main, main_u, fired),
                 multivariate_score=None if no_data else round(float(scores[k]), 4),
                 multivariate_flag=bool(fm[k]) and not no_data,
