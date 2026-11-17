@@ -1,3 +1,16 @@
+## My contribution
+
+Team project for the NASA Space Apps Challenge 2026 (original repo: [lucaspalharesbarbosa/astronaut-health-intelligence-platform](https://github.com/lucaspalharesbarbosa/astronaut-health-intelligence-platform)). I owned the data/AI part, **ASTRA** (deviation detection in astronaut health), and its integration into the platform. I developed it with AI assistance (Claude).
+
+- **Analysis and modeling:** each person gets a personal pre-flight baseline; deviations are scored with Z-Score, EWMA, CUSUM and weight-rate detectors, using NASA bed rest data (23 volunteers) to estimate the parameters. Output levels: HIGH / MODERATE / LOW / NO_DATA.
+- **Isolation Forest:** multivariate "unusual combination" flag, informational only (it never sets the alert level).
+- **Backend:** `POST /api/v1/analytics/deviation` (FastAPI, pydantic, scikit-learn), with 24 tests and OpenAPI docs.
+- **Frontend:** ASTRA panel inside the attention view (React, TypeScript, i18n in 5 languages), which stays hidden when the API is offline.
+- **Simulated crew data:** virtual 4-astronaut history with scenarios (progressive fatigue, high CO2, acute cardio event, sensor failure) to demo the system.
+
+Team: see the original repository for the full list of contributors.
+
+
 <div align="center">
 
 # Astronaut Health Intelligence Platform
